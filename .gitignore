@@ -1,0 +1,8 @@
+build
+CMakeFiles
+GuiAppExample_artefacts
+JUCE
+CMakeCache.txt
+compile_commands.json
+cmake_install.cmake
+Makefile
