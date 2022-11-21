@@ -61,9 +61,9 @@ void ArrangementArea::paintGrid(juce::Graphics& g) {
     g.fillRect(background);
 
     // width of the bar grid
-    int barGridFrameWidth = (AUDIO_FRAMERATE*60) / tempo;
+    int barGridFrameWidth = ((AUDIO_FRAMERATE*60) / tempo)/viewScale;
     // color of the bar grid
-    g.setColour(juce::Colour(200, 200, 200));
+    g.setColour(juce::Colour(160, 160, 160));
     // draw the tempo grid as long as there are within borders
     for (int posBufferX = 0; posBufferX <= background.getWidth(); posBufferX += barGridFrameWidth) {
         g.drawLine(
@@ -73,19 +73,21 @@ void ArrangementArea::paintGrid(juce::Graphics& g) {
             background.getY() + FREQTIME_VIEW_HEIGHT
         );
     }
-    // color of the quarter bar grid
-    g.setColour(juce::Colour(150, 150, 150));
-    // draw bar quarters (TODO: make a function to do subdivions)
-    for (int posBufferX = 0; posBufferX <= background.getWidth(); posBufferX += barGridFrameWidth>>2) {
-        if (posBufferX % barGridFrameWidth == 0) {
-            // skip lines that overlap full bars
-            continue;
+    // if and only if the quarter of a bar is large enough in pixels
+    if((barGridFrameWidth>>2)/viewScale < 20)
+        // color of the quarter bar grid
+        g.setColour(juce::Colour(50, 50, 50));
+        // draw bar quarters (TODO: make a function to do subdivions)
+        for (int posBufferX = 0; posBufferX <= background.getWidth(); posBufferX += barGridFrameWidth>>2) {
+            if (posBufferX % barGridFrameWidth == 0) {
+                // skip lines that overlap full bars
+                continue;
+            }
+            g.drawLine(
+                posBufferX,
+                background.getY(),
+                posBufferX,
+                background.getY() + FREQTIME_VIEW_HEIGHT
+            );
         }
-        g.drawLine(
-            posBufferX,
-            background.getY(),
-            posBufferX,
-            background.getY() + FREQTIME_VIEW_HEIGHT
-        );
-    }
 }
