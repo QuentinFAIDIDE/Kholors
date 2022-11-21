@@ -6,6 +6,8 @@
 // you could `#include <JuceHeader.h>` here instead, to make all your module headers visible.
 #include <juce_gui_extra/juce_gui_extra.h>
 
+#include "Config.h"
+
 //==============================================================================
 /*
     This component lives inside our window, and this is where you should put all
