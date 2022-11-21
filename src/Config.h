@@ -12,3 +12,5 @@
 // minimum windows height to draw something
 #define MIN_SCREEN_WIDTH 700
 #define MIN_SCREEN_HEIGHT 700
+
+#define AUDIO_FRAMERATE 44100

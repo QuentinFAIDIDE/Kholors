@@ -26,6 +26,17 @@ public:
 
 private:
     //==============================================================================
-    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ArrangementArea)
+
+    // the index in audio frame of the view (relation to seconds depends on framerate)
+    int64_t viewPosition;
+    // how many audio frames per pixel to display
+    int64_t viewScale;
+    // tempo in beats per minute
+    int tempo;
+    // size and position of main content widget
+    juce::Rectangle<int> bounds;
+
+    //==============================================================================
+    void paintGrid(juce::Graphics&);
 };
