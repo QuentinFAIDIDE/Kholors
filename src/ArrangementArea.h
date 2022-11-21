@@ -22,7 +22,10 @@ public:
 
     //==============================================================================
     void paint (juce::Graphics&) override;
-    void resized() override;
+    void resized(const MouseEvent&) override;
+    void mouseDown(const MouseEvent&) override;
+    void mouseUp(const MouseEvent&) override;
+    void mouseMove(const MouseEvent&) override;
 
 private:
     //==============================================================================
@@ -36,6 +39,9 @@ private:
     int tempo;
     // size and position of main content widget
     juce::Rectangle<int> bounds;
+    // last mouse coordinates
+    int64 lastMouseX;
+    int64 lastMouseY;
 
     //==============================================================================
     void paintGrid(juce::Graphics&);

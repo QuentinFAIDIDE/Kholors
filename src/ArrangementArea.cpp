@@ -7,6 +7,8 @@ ArrangementArea::ArrangementArea()
     // initialize grid and position
     viewPosition = 0;
     viewScale = 100;
+    lastMouseX = 0;
+    lastMouseY = 0;
     // TODO: configure this in args
     tempo = 120;
 }
@@ -90,4 +92,16 @@ void ArrangementArea::paintGrid(juce::Graphics& g) {
                 background.getY() + FREQTIME_VIEW_HEIGHT
             );
         }
+}
+
+void ArrangementArea::mouseDown(const MouseEvent&) {
+
+}
+
+void ArrangementArea::mouseUp(const MouseEvent&) {
+
+}
+
+void ArrangementArea::mouseMove(const MouseEvent&) {
+
 }
