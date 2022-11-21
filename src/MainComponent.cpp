@@ -4,10 +4,6 @@
 MainComponent::MainComponent()
 {
     setSize (800, 1422);
-
-    // create arrangement area
-    arrangementArea = new ArrangementArea();
-
     // make it visible
     addAndMakeVisible(arrangementArea);
 }
@@ -25,5 +21,5 @@ void MainComponent::paint (juce::Graphics& g)
 
 void MainComponent::resized()
 {
-    arrangementArea->setBounds(getLocalBounds());
+    arrangementArea.setBounds(getLocalBounds());
 }
