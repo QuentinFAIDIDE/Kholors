@@ -7,6 +7,7 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 
 #include "Config.h"
+#include "GridLevel.h"
 
 //==============================================================================
 /*
@@ -22,10 +23,10 @@ public:
 
     //==============================================================================
     void paint (juce::Graphics&) override;
-    void resized(const MouseEvent&) override;
-    void mouseDown(const MouseEvent&) override;
-    void mouseUp(const MouseEvent&) override;
-    void mouseMove(const MouseEvent&) override;
+    void resized() override;
+    void mouseDown(const juce::MouseEvent&) override;
+    void mouseUp(const juce::MouseEvent&) override;
+    void mouseMove(const juce::MouseEvent&) override;
 
 private:
     //==============================================================================
@@ -40,9 +41,11 @@ private:
     // size and position of main content widget
     juce::Rectangle<int> bounds;
     // last mouse coordinates
-    int64 lastMouseX;
-    int64 lastMouseY;
+    int64_t lastMouseX;
+    int64_t lastMouseY;
+    // levels to display bars
+    std::vector<GridLevel> gridSubdivisions;
 
     //==============================================================================
-    void paintGrid(juce::Graphics&);
+    void paintBars(juce::Graphics&s);
 };
