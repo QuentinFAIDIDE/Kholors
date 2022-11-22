@@ -12,7 +12,10 @@ ArrangementArea::ArrangementArea()
     lastMouseY = 0;
     // TODO: configure this in args or config file
     tempo = 120;
+    // WARNING: they will be drawned reversed order
+    // so watch out 
     gridSubdivisions.push_back((GridLevel){1, 160});
+    gridSubdivisions.push_back((GridLevel){3, 80});
 }
 
 ArrangementArea::~ArrangementArea()
@@ -52,6 +55,7 @@ void ArrangementArea::resized()
     // update their positions.
 }
 
+// warning buggy with bars over 4 subdivisions due to << operator
 void ArrangementArea::paintBars(juce::Graphics& g) {
 
     // set the arrangement area size to 600 pixels at the middle of the screen
