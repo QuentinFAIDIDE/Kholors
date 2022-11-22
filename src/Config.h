@@ -16,6 +16,8 @@
 // the ratio of horizontal to vertical movement needed to trigger actions (min and max)
 #define FREQVIEW_MIN_HORIZONTAL_MOVE_RATIO 2.0
 #define FREQVIEW_MIN_VERTICAL_MOVE_RATIO 0.5
+// maximum allowed scaling movement
+#define FREQVIEW_MAX_ABSOLUTE_SCALE_MOVEMENT 20
 
 // minimum windows height to draw something
 #define MIN_SCREEN_WIDTH 350

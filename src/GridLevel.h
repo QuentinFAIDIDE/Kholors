@@ -2,7 +2,9 @@
 #define DEF_GRIDLEVEL_HPP
 
 typedef struct GridLevel {
-    int subdivision;
+    // which number to divide full bar height to get this one
+    int subdivisions;
+    // which amound of while over 255 to use
     int shade;
 } GridLevel;
 

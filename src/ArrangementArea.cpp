@@ -21,10 +21,9 @@ ArrangementArea::ArrangementArea()
     isResizing = false;
     // TODO: configure this in args or config file
     tempo = 120;
-    // WARNING: they will be drawned reversed order
-    // so watch out 
+    // bars drawned in order, watch for overlaps (use smaller subdiv first)
+    gridSubdivisions.push_back((GridLevel){4, 80});
     gridSubdivisions.push_back((GridLevel){1, 160});
-    gridSubdivisions.push_back((GridLevel){3, 80});
 }
 
 ArrangementArea::~ArrangementArea()
@@ -81,32 +80,37 @@ void ArrangementArea::paintBars(juce::Graphics& g) {
     g.fillRect(background);
 
     // width of the bar grid
-    int barGridPixelWidth = ((AUDIO_FRAMERATE*60) / (tempo*viewScale));
+    int barGridPixelWidth = floor((float(AUDIO_FRAMERATE*60) / float(tempo))/float(viewScale))+1;
     // two buffer values for the next for loop
     int64_t subdivisionWidth, subdivisionShift;
 
     // for each subdivision in the reversed order
-    for(int i=gridSubdivisions.size()-1; i>=0; i--) {
+    for(int i=0; i<gridSubdivisions.size(); i++) {
 
         // subdivided bar length
-        subdivisionWidth = barGridPixelWidth>>(gridSubdivisions[i].subdivision-1);
+        subdivisionWidth = barGridPixelWidth>>(gridSubdivisions[i].subdivisions-1);
 
         // pixel shifting required by view position.
-        // its the distance to the previous bar converted from audio frames to pixels
-        subdivisionShift = subdivisionWidth-((viewPosition/viewScale) % subdivisionWidth);
+        subdivisionShift = (barGridPixelWidth-((viewPosition/viewScale) % barGridPixelWidth));
 
-        if (subdivisionWidth > 20) {
+        if (subdivisionWidth > 15) {
             // set the bar color
             g.setColour(juce::Colour(
                 (int)gridSubdivisions[i].shade,
                 (int)gridSubdivisions[i].shade,
                 (int)gridSubdivisions[i].shade));
+        
+            // we won't use subdivisionWidth to add it as it has a small
+            // error that will accumulate over bars and create
+            // displacements.
+
+            // subdivision ratio
+            float subdivisionRatio = 1.0 / float(gridSubdivisions[i].subdivisions);
+
             // iterate while it's possible to draw the successive bars
-            for(
-                int64_t barPositionX=subdivisionShift;
-                barPositionX<=(int64_t)bounds.getWidth();
-                barPositionX+= subdivisionWidth
-            ) {
+            int barPositionX = 0; 
+            for(int j=-gridSubdivisions[i].subdivisions; barPositionX<bounds.getWidth(); j++) {
+                barPositionX = subdivisionShift + (j*barGridPixelWidth*subdivisionRatio);
                 // draw the bar
                 g.drawLine(
                     barPositionX,
@@ -178,6 +182,11 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent& jme) {
         if (movementRatio < FREQVIEW_MIN_VERTICAL_MOVE_RATIO) {
             // scale for vertical movements
             pixelMovement = newPosition.getY() - lastMouseY;
+            // cap the pixel movement to avoid harsh movements
+            if(abs(pixelMovement)>FREQVIEW_MAX_ABSOLUTE_SCALE_MOVEMENT) {
+                // this weird instruction is getting the sign of the integer fast
+                pixelMovement = ((pixelMovement > 0) - (pixelMovement < 0))*FREQVIEW_MAX_ABSOLUTE_SCALE_MOVEMENT;
+            }
             viewScale = viewScale + pixelMovement;
             // check if within bounds
             if(viewScale < FREQVIEW_MIN_SCALE_FRAME_PER_PIXEL) {
