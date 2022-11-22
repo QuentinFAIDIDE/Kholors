@@ -22,8 +22,9 @@ ArrangementArea::ArrangementArea()
     // TODO: configure this in args or config file
     tempo = 120;
     // bars drawned in order, watch for overlaps (use smaller subdiv first)
-    gridSubdivisions.push_back((GridLevel){4, 80});
-    gridSubdivisions.push_back((GridLevel){1, 160});
+    gridSubdivisions.push_back((GridLevel){4.0, 80});
+    gridSubdivisions.push_back((GridLevel){1.0, 160});
+    gridSubdivisions.push_back((GridLevel){0.25, 220});
 }
 
 ArrangementArea::~ArrangementArea()
@@ -88,12 +89,12 @@ void ArrangementArea::paintBars(juce::Graphics& g) {
     for(int i=0; i<gridSubdivisions.size(); i++) {
 
         // subdivided bar length
-        subdivisionWidth = barGridPixelWidth>>(gridSubdivisions[i].subdivisions-1);
+        subdivisionWidth = barGridPixelWidth/gridSubdivisions[i].subdivisions;
 
         // pixel shifting required by view position.
         subdivisionShift = (barGridPixelWidth-((viewPosition/viewScale) % barGridPixelWidth));
 
-        if (subdivisionWidth > 15) {
+        if (subdivisionWidth > 25) {
             // set the bar color
             g.setColour(juce::Colour(
                 (int)gridSubdivisions[i].shade,
@@ -105,12 +106,12 @@ void ArrangementArea::paintBars(juce::Graphics& g) {
             // displacements.
 
             // subdivision ratio
-            float subdivisionRatio = 1.0 / float(gridSubdivisions[i].subdivisions);
+            float subdivisionRatio = 1.0 / gridSubdivisions[i].subdivisions;
 
             // iterate while it's possible to draw the successive bars
             int barPositionX = 0; 
             for(int j=-gridSubdivisions[i].subdivisions; barPositionX<bounds.getWidth(); j++) {
-                barPositionX = subdivisionShift + (j*barGridPixelWidth*subdivisionRatio);
+                barPositionX = subdivisionShift + (j*barGridPixelWidth*subdivisionRatio)-barGridPixelWidth;
                 // draw the bar
                 g.drawLine(
                     barPositionX,

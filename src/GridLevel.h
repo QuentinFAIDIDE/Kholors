@@ -3,7 +3,7 @@
 
 typedef struct GridLevel {
     // which number to divide full bar height to get this one
-    int subdivisions;
+    float subdivisions;
     // which amound of while over 255 to use
     int shade;
 } GridLevel;
