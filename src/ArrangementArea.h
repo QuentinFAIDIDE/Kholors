@@ -26,6 +26,7 @@ public:
     void resized() override;
     void mouseDown(const juce::MouseEvent&) override;
     void mouseUp(const juce::MouseEvent&) override;
+    void mouseDrag(const juce::MouseEvent&) override;
     void mouseMove(const juce::MouseEvent&) override;
 
 private:
@@ -41,10 +42,12 @@ private:
     // size and position of main content widget
     juce::Rectangle<int> bounds;
     // last mouse coordinates
-    int64_t lastMouseX;
-    int64_t lastMouseY;
+    int lastMouseX;
+    int lastMouseY;
     // levels to display bars
     std::vector<GridLevel> gridSubdivisions;
+    // are we in resize mode ? (middle mouse button pressed)
+    bool isResizing;
 
     //==============================================================================
     void paintBars(juce::Graphics&s);
