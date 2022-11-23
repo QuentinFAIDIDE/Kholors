@@ -63,7 +63,9 @@ void ArrangementArea::resized() {
 
 // warning buggy with bars over 4 subdivisions due to << operator
 void ArrangementArea::paintBars(juce::Graphics& g) {
-  // TODO: make this function work for subdivision above power of 3
+
+  // TODO: this algorithm is highly sub optimal and accumulates small errors in grid positions.
+  // It needs to be reimplemented.
 
   // set the arrangement area size to 600 pixels at the middle of the screen
   juce::Rectangle<int> background(
@@ -75,19 +77,21 @@ void ArrangementArea::paintBars(juce::Graphics& g) {
 
   // width of the bar grid
   int barGridPixelWidth =
-      floor((float(AUDIO_FRAMERATE * 60) / float(tempo)) / float(viewScale)) +
-      1;
+      floor((float(AUDIO_FRAMERATE * 60) / float(tempo)) / float(viewScale));
   // two buffer values for the next for loop
-  int64_t subdivisionWidth, subdivisionShift;
+  float subdivisionWidth, subdivisionShift, subdivisionWidthFrames;
 
   // for each subdivision in the reversed order
   for (int i = 0; i < gridSubdivisions.size(); i++) {
-    // subdivided bar length
-    subdivisionWidth = barGridPixelWidth / gridSubdivisions[i].subdivisions;
+
+
+    // subdivided bar length (0.5f addedd to round instead of truncate)
+    subdivisionWidth = ((float(barGridPixelWidth) / gridSubdivisions[i].subdivisions));
+    subdivisionWidthFrames = subdivisionWidth*float(viewScale);
+
 
     // pixel shifting required by view position.
-    subdivisionShift =
-        (barGridPixelWidth - ((viewPosition / viewScale) % barGridPixelWidth));
+    subdivisionShift = (subdivisionWidthFrames - float(viewPosition%int(subdivisionWidthFrames)))/float(viewScale);
 
     if (subdivisionWidth > 25) {
       // set the bar color
@@ -104,11 +108,12 @@ void ArrangementArea::paintBars(juce::Graphics& g) {
 
       // iterate while it's possible to draw the successive bars
       int barPositionX = 0;
-      for (int j = -gridSubdivisions[i].subdivisions;
-           barPositionX < bounds.getWidth(); j++) {
-        barPositionX = subdivisionShift +
-                       (j * barGridPixelWidth * subdivisionRatio) -
-                       barGridPixelWidth;
+      for (
+        int j = 0;
+        barPositionX < bounds.getWidth();
+        j++
+      ) {
+        barPositionX = int(0.5 + subdivisionShift + (j * barGridPixelWidth * subdivisionRatio));
         // draw the bar
         g.drawLine(barPositionX, background.getY(), barPositionX,
                    background.getY() + FREQTIME_VIEW_HEIGHT);
