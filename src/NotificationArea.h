@@ -1,5 +1,5 @@
-#ifndef DEF_ARRANGEMENTAREA_HPP
-#define DEF_ARRANGEMENTAREA_HPP
+#ifndef DEF_NOTIFICATIONAREA_HPP
+#define DEF_NOTIFICATIONAREA_HPP
 
 // CMake builds don't use an AppConfig.h, so it's safe to include juce module
 // headers directly. If you need to remain compatible with Projucer-generated
@@ -8,20 +8,24 @@
 // your module headers visible.
 #include <juce_gui_extra/juce_gui_extra.h>
 
+#include <chrono>
+
 #include "Config.h"
-#include "GridLevel.h"
-#include "SampleManager.h"
+
+typedef struct {
+  int64_t timestamp;
+  juce::String message;
+} NotificationMessage;
 
 //==============================================================================
 /*
-    This component lives inside our window, and this is where you should put all
-    your controls and content.
+    This component pops up notifications
 */
-class ArrangementArea : public juce::Component, juce::FileDragAndDropTarget {
+class NotificationArea : public juce::Component {
  public:
   //==============================================================================
-  ArrangementArea(SampleManager& sm);
-  ~ArrangementArea();
+  NotificationArea();
+  ~NotificationArea();
 
   //==============================================================================
   void paint(juce::Graphics&) override;
@@ -30,34 +34,27 @@ class ArrangementArea : public juce::Component, juce::FileDragAndDropTarget {
   void mouseUp(const juce::MouseEvent&) override;
   void mouseDrag(const juce::MouseEvent&) override;
   void mouseMove(const juce::MouseEvent&) override;
-  bool isInterestedInFileDrag(const juce::StringArray&) override;
-  void filesDropped(const juce::StringArray&, int, int) override;
+  void notifyError(juce::String&);
 
  private:
   //==============================================================================
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArrangementArea)
-
-  // the index in audio frame of the view (relation to seconds depends on
-  // framerate)
-  int64_t viewPosition;
-  // how many audio frames per pixel to display
-  int64_t viewScale;
-  // tempo in beats per minute
-  int tempo;
+  bool isHidden, isAnimationRunning;
+  std::vector<NotificationMessage> notifQueue;
+  NotificationMessage lastNotification;
+  // the directirion of the notification
+  int destinationX, destinationY;
+  // the current notif box position
+  int popupX, popupY;
+  // timers for animations
+  int now, timeSinceLastPaint;
   // size and position of main content widget
   juce::Rectangle<int> bounds;
-  // last mouse coordinates
-  int lastMouseX;
-  int lastMouseY;
-  // levels to display bars
-  std::vector<GridLevel> gridSubdivisions;
-  // are we in resize mode ? (middle mouse button pressed)
-  bool isResizing;
-  // reference to the sample manager in use
-  SampleManager& sampleManager;
-
+  // have we been painting already ?
+  bool firstPaint;
   //==============================================================================
-  void paintBars(juce::Graphics& s);
+  void trimNotifications();
+
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NotificationArea)
 };
 
-#endif  // DEF_ARRANGEMENTAREA_HPP
+#endif  // DEF_NOTIFICATIONAREA_HPP
