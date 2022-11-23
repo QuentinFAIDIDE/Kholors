@@ -35,6 +35,7 @@
 #define NOTIF_OUTTER_MARGINS 20
 #define NOTIF_BORDER_RADIUS 2.0
 #define NOTIF_ANIMATION_SPEED 1
+#define NOTIF_TIMEOUT 7000
 
 // various colors
 #define COLOR_NOTIF_BACKGROUND juce::Colour(20, 20, 20)

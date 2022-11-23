@@ -10,13 +10,14 @@
 
 #include "ArrangementArea.h"
 #include "SampleManager.h"
+#include "NotificationArea.h"
 
 //==============================================================================
 /*
     This component lives inside our window, and this is where you should put all
     your controls and content.
 */
-class MainComponent : public juce::Component {
+class MainComponent : public juce::Component, public juce::DragAndDropContainer {
  public:
   //==============================================================================
   MainComponent();
@@ -29,7 +30,10 @@ class MainComponent : public juce::Component {
  private:
   //==============================================================================
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
+  // widgets
   ArrangementArea arrangementArea;
+  NotificationArea notificationArea;
+
   // the object responsible for managing the various samples imported
   SampleManager sampleManager;
 };

@@ -10,6 +10,7 @@
 
 #include "Config.h"
 #include "GridLevel.h"
+#include "NotificationArea.h"
 #include "SampleManager.h"
 
 //==============================================================================
@@ -17,10 +18,10 @@
     This component lives inside our window, and this is where you should put all
     your controls and content.
 */
-class ArrangementArea : public juce::Component, juce::FileDragAndDropTarget {
+class ArrangementArea : public juce::Component, public juce::FileDragAndDropTarget {
  public:
   //==============================================================================
-  ArrangementArea(SampleManager& sm);
+  ArrangementArea(SampleManager& sm, NotificationArea& na);
   ~ArrangementArea();
 
   //==============================================================================
@@ -55,6 +56,7 @@ class ArrangementArea : public juce::Component, juce::FileDragAndDropTarget {
   bool isResizing;
   // reference to the sample manager in use
   SampleManager& sampleManager;
+  NotificationArea& notificationArea;
 
   //==============================================================================
   void paintBars(juce::Graphics& s);

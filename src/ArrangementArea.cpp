@@ -11,7 +11,10 @@
 // So when
 
 //==============================================================================
-ArrangementArea::ArrangementArea(SampleManager& sm) : sampleManager(sm) {
+ArrangementArea::ArrangementArea(SampleManager& sm, NotificationArea& na) :
+  sampleManager(sm),
+  notificationArea(na) 
+{
   // save reference to the sample manager
   // initialize grid and position
   viewPosition = 0;
@@ -211,6 +214,8 @@ bool ArrangementArea::isInterestedInFileDrag(const juce::StringArray& files) {
 
 void ArrangementArea::filesDropped(const juce::StringArray& files, int x,
                                    int y) {
+    // to know if one sample was imported and we need to update
+    bool refreshNeeded = false;
     // converts x to an valid position in audio frame
     int64_t framePos = viewPosition + (x*viewScale);
     // we try to load the samples
@@ -218,7 +223,12 @@ void ArrangementArea::filesDropped(const juce::StringArray& files, int x,
         int id = sampleManager.addSample(files[i], framePos);
         // on failures, abort
         if(id == -1) {
-            // TODO: notify error
+            // notify error
+            notificationArea.notifyError(files[i]);
+            continue;
         }
+    }
+    if(refreshNeeded) {
+        repaint();
     }
 }

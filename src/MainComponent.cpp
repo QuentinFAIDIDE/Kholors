@@ -1,10 +1,11 @@
 #include "MainComponent.h"
 
 //==============================================================================
-MainComponent::MainComponent() : arrangementArea(sampleManager) {
+MainComponent::MainComponent() : arrangementArea(sampleManager, notificationArea) {
   setSize(800, 1422);
   // make it visible
   addAndMakeVisible(arrangementArea);
+  addAndMakeVisible(notificationArea);
 }
 
 MainComponent::~MainComponent() {}
