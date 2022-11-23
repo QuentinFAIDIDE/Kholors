@@ -38,16 +38,14 @@ void ArrangementArea::paint(juce::Graphics& g) {
   bounds = g.getClipBounds();
 
   // draw nothing if the windows is too small
-  if (bounds.getWidth() < MIN_SCREEN_WIDTH ||
-      bounds.getHeight() < MIN_SCREEN_HEIGHT) {
+  if (bounds.getWidth() < FREQVIEW_MIN_WIDTH ||
+      bounds.getHeight() < FREQVIEW_MIN_HEIGHT) {
     g.fillAll(juce::Colour(20, 20, 20));
     return;
   }
 
-  // does the grid needs to be recomputed ?
-  // if so, can we shift it to save processing ?
-  // OPTIMIZATION: can we maybe transform the grid to save some pixel if resized
-  // ? update the grid at required pixels
+
+  // OPTIMIZATION: only redraw parts where something has changed
 
   // draw the background and grid
   paintBars(g);
@@ -69,8 +67,7 @@ void ArrangementArea::paintBars(juce::Graphics& g) {
 
   // set the arrangement area size to 600 pixels at the middle of the screen
   juce::Rectangle<int> background(
-      0, (bounds.getHeight() - FREQTIME_VIEW_HEIGHT) >> 1, bounds.getWidth(),
-      FREQTIME_VIEW_HEIGHT);
+      0, 0, bounds.getWidth(), FREQTIME_VIEW_HEIGHT);
   // paint the background of the area
   g.setColour(juce::Colour(20, 20, 20));
   g.fillRect(background);
@@ -115,8 +112,7 @@ void ArrangementArea::paintBars(juce::Graphics& g) {
       ) {
         barPositionX = int(0.5 + subdivisionShift + (j * barGridPixelWidth * subdivisionRatio));
         // draw the bar
-        g.drawLine(barPositionX, background.getY(), barPositionX,
-                   background.getY() + FREQTIME_VIEW_HEIGHT);
+        g.drawLine(barPositionX, 0, barPositionX, FREQTIME_VIEW_HEIGHT);
       }
     }
   }
@@ -229,7 +225,7 @@ void ArrangementArea::filesDropped(const juce::StringArray& files, int x,
         // on failures, abort
         if(id == -1) {
             // notify error
-            notificationArea.notifyError(files[i]);
+            notificationArea.notifyError("unable to load "+files[i]);
             continue;
         }
     }

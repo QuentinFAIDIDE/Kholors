@@ -12,6 +12,8 @@
 // Max number of elements per pixel (used to preallocate cache)
 #define FREQTIME_VIEW_MAX_SINGLEPOINT_ELEMEMENTS 8
 #define FREQTIME_VIEW_HEIGHT 450
+// TODO: RENAME THESE ! I START USING FREQVIEW IN THE MIDDLE
+// IT SHOULD BE PREFIXED WITH ARRANGEMENT_AREA
 // scaling factors for mouse actions
 #define FREQVIEW_MOUSE_SCALING_FACTOR 0.05
 // minimum number of frames per pixels to have
@@ -23,18 +25,22 @@
 #define FREQVIEW_MIN_VERTICAL_MOVE_RATIO 0.5
 // maximum allowed scaling movement
 #define FREQVIEW_MAX_ABSOLUTE_SCALE_MOVEMENT 20
+// minimum sizes to draw freqview (arrangement) area
+#define FREQVIEW_MIN_WIDTH 300
+#define FREQVIEW_MIN_HEIGHT FREQTIME_VIEW_HEIGHT
 
 // minimum windows height to draw something
 #define MIN_SCREEN_WIDTH 350
 #define MIN_SCREEN_HEIGHT 600
 
 // notification constants
-#define NOTIF_WIDTH 300
-#define NOTIF_HEIGHT 130
+#define NOTIF_WIDTH 400
+#define NOTIF_HEIGHT 80
 #define NOTIF_INNER_MARGINS 20
 #define NOTIF_OUTTER_MARGINS 20
 #define NOTIF_BORDER_RADIUS 2.0
 #define NOTIF_ANIMATION_SPEED 1
+#define NOTIF_ANIMATION_TIMER_MS 30
 #define NOTIF_TIMEOUT 7000
 
 // various colors

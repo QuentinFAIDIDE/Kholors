@@ -8,6 +8,9 @@
 // your module headers visible.
 #include <juce_gui_extra/juce_gui_extra.h>
 
+#include <thread>
+#include <mutex>
+
 #include "Config.h"
 
 typedef struct {
@@ -19,20 +22,24 @@ typedef struct {
 /*
     This component pops up notifications
 */
-class NotificationArea : public juce::Component {
+class NotificationArea : public juce::Component, private juce::Timer {
  public:
   //==============================================================================
   NotificationArea();
   ~NotificationArea();
 
   //==============================================================================
+  // Component inherited
   void paint(juce::Graphics&) override;
   void resized() override;
   void mouseDown(const juce::MouseEvent&) override;
   void mouseUp(const juce::MouseEvent&) override;
   void mouseDrag(const juce::MouseEvent&) override;
   void mouseMove(const juce::MouseEvent&) override;
+  // local
   void notifyError(const juce::String&);
+  // Timer inherited
+  void timerCallback() override;
 
  private:
   //==============================================================================
@@ -49,6 +56,8 @@ class NotificationArea : public juce::Component {
   juce::Rectangle<int> bounds;
   // have we been painting already ?
   bool firstPaint;
+  // mutex for list updates
+  std::mutex notifMutex;
   //==============================================================================
   void trimNotifications();
 

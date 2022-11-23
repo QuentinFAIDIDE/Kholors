@@ -2,7 +2,7 @@
 
 NotificationArea::NotificationArea() {
   isHidden = true;
-  isAnimationRunning = true;
+  isAnimationRunning = false;
   popupY = NOTIF_OUTTER_MARGINS;
   popupX = 0;
   firstPaint = true;
@@ -24,6 +24,13 @@ void NotificationArea::paint(juce::Graphics& g) {
   now = juce::Time::getMillisecondCounter();
   // make sure the notification are filetered to remove old ones
   trimNotifications();
+  std::cout << "repainting" << std::endl;
+  std::cout << "isHidden:" << isHidden << std::endl;
+  std::cout << "isAnimationRunning:" << isAnimationRunning << std::endl;
+  std::cout << "popupX:" << popupX << std::endl;
+  std::cout << "popupY:" << popupY << std::endl;
+  std::cout << "isTimerRunning():" <<  isTimerRunning() << std::endl;
+  std::cout << "notifQueue.size():" << notifQueue.size() << std::endl;
   // if we are currently performing an animation
   if (isAnimationRunning) {
     timeSinceLastPaint = now - lastPaintTime;
@@ -37,6 +44,7 @@ void NotificationArea::paint(juce::Graphics& g) {
       if (popupX >= destinationX) {
         popupX = destinationX;
         isAnimationRunning = false;
+        stopTimer();
       }
       // if it's going in go right
     } else {
@@ -45,6 +53,7 @@ void NotificationArea::paint(juce::Graphics& g) {
       if (popupX <= destinationX) {
         popupX = destinationX;
         isAnimationRunning = false;
+        stopTimer();
       }
     }
     // if we are not performing an animation
@@ -54,6 +63,8 @@ void NotificationArea::paint(juce::Graphics& g) {
       // if so trigger the animation
       destinationX = bounds.getWidth()+NOTIF_OUTTER_MARGINS;
       isAnimationRunning = true;
+      startTimer(NOTIF_ANIMATION_TIMER_MS);
+      std::cout << "startanim1" << std::endl;
       lastPaintTime = juce::Time::getMillisecondCounter();
     }
     // check if we need to fade in
@@ -61,13 +72,15 @@ void NotificationArea::paint(juce::Graphics& g) {
       // if so trigger the animation
       destinationX = bounds.getWidth() - NOTIF_WIDTH - NOTIF_OUTTER_MARGINS;
       isAnimationRunning = true;
+      startTimer(NOTIF_ANIMATION_TIMER_MS);
+      std::cout << "startanim2" << std::endl;
       lastPaintTime = juce::Time::getMillisecondCounter();
     }
   }
   // if the box is in bound, draw it
-  if(popupX < bounds.getWidth()) {
+  if(popupX < bounds.getWidth()+NOTIF_OUTTER_MARGINS) {
     g.setColour(COLOR_NOTIF_BACKGROUND);
-    g.fillRoundedRectangle (popupX, popupY, NOTIF_WIDTH, NOTIF_HEIGHT, NOTIF_BORDER_RADIUS);
+    g.fillRoundedRectangle (popupX+NOTIF_OUTTER_MARGINS, popupY+NOTIF_OUTTER_MARGINS, NOTIF_WIDTH, NOTIF_HEIGHT, NOTIF_BORDER_RADIUS);
     // TODO: change font
     g.drawMultiLineText	(lastNotification.message,
         popupX + NOTIF_INNER_MARGINS,
@@ -84,9 +97,10 @@ void NotificationArea::trimNotifications() {
   int32_t timestamp = juce::Time::getMillisecondCounter();
   // for each notification in the reversed order
   int i = 0;
-  while (i == 0) {
+  // TODO: refactor this ugly while
+  while (i == 0 && notifQueue.size()>0) {
     // if it's outdated, remove it and continue
-    if (notifQueue.front().timestamp + NOTIF_TIMEOUT > timestamp) {
+    if (notifQueue.front().timestamp + NOTIF_TIMEOUT < timestamp) {
       notifQueue.pop();
       continue;
     }
@@ -112,4 +126,10 @@ void NotificationArea::notifyError(const juce::String& msg) {
   lastNotification.message = msg;
   // add it
   notifQueue.push(lastNotification);
+  std::cout << "New error notification at " << timestamp << ": " << msg << std::endl;
+  repaint();
+}
+
+void NotificationArea::timerCallback() {
+  repaint();
 }
