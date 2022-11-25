@@ -61,7 +61,7 @@ void NotificationArea::paint(juce::Graphics& g) {
     } else {
       // new position is the screen limit minus the notif movement toward center.
       // we make the fade in faster than fade out for aesthetic reasons
-      popupX = NOTIF_WIDTH + (2*NOTIF_OUTTER_MARGINS) - int(float(distanceDiff)*2.0);
+      popupX = NOTIF_WIDTH + (2*NOTIF_OUTTER_MARGINS) - int(float(distanceDiff)*4.0);
       // if it reached destination, stop it
       if (popupX <= destinationX) {
         popupX = destinationX;
