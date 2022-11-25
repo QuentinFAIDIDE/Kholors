@@ -11,7 +11,12 @@ MainComponent::MainComponent() : arrangementArea(sampleManager, notificationArea
 MainComponent::~MainComponent() {}
 
 //==============================================================================
-void MainComponent::paint(juce::Graphics&) {}
+void MainComponent::paint(juce::Graphics& g) {
+  // draw background over bounds
+  // paint the background of the area
+  g.setColour(COLOR_APP_BACKGROUND);
+  g.fillRect(g.getClipBounds());
+}
 
 void MainComponent::resized() {
   // TODO: Hide notifications or make it an overlay if they overlap
