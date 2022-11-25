@@ -67,6 +67,9 @@ class NotificationArea : public juce::AnimatedAppComponent {
   //                    left inner margin                    right inner margin     |
   //                                                                                screen end
 
+  // buffer value used in the drawing function
+  int maxWidth;
+
   // the current notif box positiooutput_addresses_ids[addr] 
   // timers for animations
   int now, timeSinceAnimStart, animStartTime;
@@ -74,9 +77,12 @@ class NotificationArea : public juce::AnimatedAppComponent {
   juce::Rectangle<int> bounds;
   // mutex for list updates
   std::mutex notifMutex;
+
+  float animationNormalisingFactor;
+
   //==============================================================================
   void trimNotifications();
-
+  float easeIn(float t);
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NotificationArea)
 };
 

@@ -7,7 +7,8 @@ NotificationArea::NotificationArea() {
   baseY = 0;
   popupY = NOTIF_OUTTER_MARGINS;
   popupX = NOTIF_WIDTH + (2 * NOTIF_OUTTER_MARGINS);
-  setFramesPerSecond(25);
+  setFramesPerSecond(NOTIF_ANIM_FPS);
+  animationNormalisingFactor = float(NOTIF_WIDTH+(2.0*NOTIF_OUTTER_MARGINS));
 }
 
 NotificationArea::~NotificationArea() {}
@@ -16,6 +17,7 @@ void NotificationArea::paint(juce::Graphics& g) {
 
   // TODO: do nothing whenever nothing changed
   // and nothing requires anything to start or end.
+
 
   // get the window width
   bounds = g.getClipBounds();
@@ -32,20 +34,19 @@ void NotificationArea::paint(juce::Graphics& g) {
   // make sure the notification are filetered to remove old ones
   trimNotifications();
 
-  std::cout << "repainting" << std::endl;
-  std::cout << "isHidden:" << isHidden << std::endl;
-  std::cout << "isAnimationRunning:" << isAnimationRunning << std::endl;
-  std::cout << "popupX:" << popupX << std::endl;
-  std::cout << "popupY:" << popupY << std::endl;
-  std::cout << "notifQueue.size():" << notifQueue.size() << std::endl;
-
   // if we are currently performing an animation
   if (isAnimationRunning) {
     timeSinceAnimStart = now - animStartTime;
 
     // TODO: add a formula of distance to smooth animation in and out.
 
-    int distanceDiff = int(NOTIF_ANIMATION_SPEED_PIXEL_MS * float(timeSinceAnimStart));
+    // the distance shift from the beginning of the anim
+    int distanceDiff = int(
+      // make it over 1 to use the ease in function
+      easeIn( (NOTIF_ANIMATION_SPEED_PIXEL_MS * float(timeSinceAnimStart)) /
+        animationNormalisingFactor )
+        // scale it back up after applying ease in function
+        * animationNormalisingFactor );
 
     // if it's going out go left
     if (isHidden == true) {
@@ -58,8 +59,9 @@ void NotificationArea::paint(juce::Graphics& g) {
 
       // if it's going in go right
     } else {
-      // new position is the screen limit minus the notif movement toward center
-      popupX = NOTIF_WIDTH + (2*NOTIF_OUTTER_MARGINS) - distanceDiff;
+      // new position is the screen limit minus the notif movement toward center.
+      // we make the fade in faster than fade out for aesthetic reasons
+      popupX = NOTIF_WIDTH + (2*NOTIF_OUTTER_MARGINS) - int(float(distanceDiff)*2.0);
       // if it reached destination, stop it
       if (popupX <= destinationX) {
         popupX = destinationX;
@@ -78,24 +80,25 @@ void NotificationArea::paint(juce::Graphics& g) {
       isAnimationRunning = true;
       isHidden = true;
       animStartTime = now;
-      std::cout << "startanim1" << std::endl;
     }
 
     // if we need to fade in (queue not empty and notif hidden)
     else if (notifQueue.size() > 0 && isHidden) {
       // if so trigger the animation.
-      destinationX = 0;
+      destinationX = NOTIF_OUTTER_MARGINS;
       isAnimationRunning = true;
       animStartTime = now;
       isHidden = false;
-      std::cout << "startanim2" << std::endl;
     }
   }
 
   // if the box is in bound, draw it
-  if(baseX + popupX + NOTIF_WIDTH < bounds.getWidth()) {
+  if(baseX + popupX < bounds.getWidth()) {
     g.setColour(COLOR_NOTIF_BACKGROUND);
+
     // draw background box
+    // font size: 
+    g.setFont(17); // TODO: Make it an app wide param
     g.fillRoundedRectangle(
       baseX + popupX,
       baseY + popupY,
@@ -110,7 +113,7 @@ void NotificationArea::paint(juce::Graphics& g) {
     g.drawMultiLineText	(lastNotification.message,
         baseX + popupX + NOTIF_INNER_MARGINS,
         baseY + popupY + NOTIF_INNER_MARGINS,
-        baseX + popupX + NOTIF_WIDTH - NOTIF_INNER_MARGINS*2,
+        NOTIF_WIDTH - NOTIF_INNER_MARGINS*2,
         juce::Justification::left,
         0.0f 
     );
@@ -158,7 +161,19 @@ void NotificationArea::notifyError(const juce::String& msg) {
   repaint();
 }
 
-void NotificationArea::update() {
-  std::cout << "timer called" << std::endl;
-  //repaint();
+// stolen from here: 
+// https://stackoverflow.com/questions/13462001/ease-in-and-ease-out-animation-formula
+// Implements a ease in animation
+float NotificationArea::easeIn(float t)
+{
+    if(t <= 0.5f)
+        return 2.0f * t * t;
+    if(t <= 1.0f) {
+      t -= 0.5f;
+      return 2.0f * t * (1.0f - t) + 0.5f;
+    } else {
+      return 1.0;
+    }
 }
+
+void NotificationArea::update() {}

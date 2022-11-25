@@ -1,7 +1,15 @@
 #include "MainComponent.h"
+#include "RobotoFont.h"
 
 //==============================================================================
 MainComponent::MainComponent() : arrangementArea(sampleManager, notificationArea) {
+  // create Roboto font
+  juce::Typeface::Ptr tface = juce::Typeface::createSystemTypefaceFor(
+    RobotoFont::RobotoRegular_ttf,
+    RobotoFont::RobotoRegular_ttfSize
+  );
+  juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypeface (tface);
+
   setSize(800, 1422);
   // make it visible
   addAndMakeVisible(arrangementArea);
