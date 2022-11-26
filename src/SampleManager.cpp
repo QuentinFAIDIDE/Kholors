@@ -46,17 +46,33 @@ int SampleManager::addSample(juce::String filePath, int64_t frameIndex) {
 }
 
 void SampleManager::prepareToPlay(int a, double b) {
-    // TODO: find out how to use this properly
+    // TODO: look at MixerAudioSource code to better understand it
+    // TODO: call all inputs prepareToPlay
 }
 
 void SampleManager::releaseResources() {
-    // TODO: document myself better on when this is called
-    // TODO: get main lock
-    // TODO: invalidate pointers so they can be freed
+    // TODO: look at MixerAudioSource code to better understand it
+    // TODO: call all inputs releaseResources
+
+    // clear output
 }
 
 void SampleManager::getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill) {
-    // TODO: get the block from MixerAudioSource ?
+    // get scoped lock of reentering mutex
+
+    // if there is more then one input track
+        // get a pointer to a new processed input buffer from first source
+        // we will append into this one to mix tracks together
+
+        // create a new getNextAudioBlock request that 
+        // will use our SampleManager buffer to pull
+        // block to append to the previous buffer
+
+        // for each input source
+            // get the next audio block in the buffer
+            // append it to the initial one
+
+    // if there's no tracks, clear output
 }
 
 // background thread content for allocating stuff
