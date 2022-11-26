@@ -170,6 +170,9 @@ void SampleManager::run() {
     checkForFileToImport();
     // check for buffers to free
     checkForBuffersToFree();
+    // do we need to stop playback because the cursor is not in bounds ?
+    pauseIfCursorNotInBound();
+    // wait untill next thread iteration
     wait(500);
   }
 }
@@ -185,7 +188,7 @@ void SampleManager::checkForBuffersToFree() {
   for (auto i = buffers.size(); --i >= 0;) {
     // get it
     ReferenceCountedBuffer::Ptr buffer(buffers.getUnchecked(i));
-    // if it's only referenced here and in the list
+    // if it's only referenced here and in the PositionableAudioSources
     if (buffer->getReferenceCount() == 2)
       // free it
       buffers.remove(i);
@@ -233,11 +236,16 @@ void SampleManager::checkForFileToImport() {
         reader->read(newBuffer->getAudioSampleBuffer(), 0,
                      (int)reader->lengthInSamples, 0, true, true);
 
-        // TODO: create a sample instance that points to this buffer
+        // TODO: create a new sample player
+
+        // get a scoped lock for the buffer array
         {
-          // this part has to be replaced by our custom logic
           const juce::SpinLock::ScopedLockType lock(mutex);
-          currentBuffer = newBuffer;
+
+          // TODO: add buffer to the new SamplePlayer
+          // TODO: add new SamplePlayer to the tracks list (positionable audio sources)
+
+          // add the buffer the array of audio buffers
           buffers.add(newBuffer);
         }
 
@@ -258,25 +266,39 @@ void SampleManager::checkForFileToImport() {
 }
 
 void SampleManager::setNextReadPosition(int64) {
-  // TODO
+  // TODO: here we update the nearby sample bitmask and 
+  //       update read position of all subSamples and
+  //       their AudioSource/buffers.
 }
 
 int64 SampleManager::getNextReadPosition(int64) {
-  // TODO
+  // TODO: simply returns total frame position
 }
 
 int64 SampleManager::getTotalLength() {
-  // TODO
+  // TODO: simply returns total length of the entire track in frames
 }
 
 bool SampleManager::isLooping() {
-  // TODO
+  // TODO: always return false, we don't allow looping the whole track
+  //       maybe this can be a feature for later. We could also loop only
+  //       between some loop marks in the future, even though it look like
+  //       it's not the intended use for this callback.
+  return false;
 }
 
 void SampleManager::setLooping(bool) {
-  // TODO
+  // we don't allow looping the whole track
+  //       maybe this can be a feature for later. We could also loop only
+  //       between some loop marks in the future, even though it look like
+  //       it's not the intended use for this callback.
 }
 
 void sampleManager::updateNearbySamplesBitmask() {
-  // TODO
+  // TODO: for all samples, get the closest ones to play cursor
+  //        and set a bitmask to know which sample is about to play
+}
+
+void sampleManager::pauseIfCursorNotInBound() {
+    // TODO
 }
