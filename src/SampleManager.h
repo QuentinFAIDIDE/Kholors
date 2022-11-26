@@ -9,15 +9,45 @@
 
   */
 
-#include <atomic>
-
 #include <juce_gui_extra/juce_gui_extra.h>
 
+#include <atomic>
+
+#include "NotificationArea.h"
 #include "Sample.h"
 
-class SampleManager : public juce::PositionableAudioSource, private juce::Thread {
+//==============================================================================
+// ReferenceCountedBuffer is a pointer to an AudioBuffer that includes
+// a reference counter. It's convenient way to clear the samples
+// that remains unused by any Sample.
+class ReferenceCountedBuffer : public juce::ReferenceCountedObject {
  public:
-  SampleManager();
+  typedef juce::ReferenceCountedObjectPtr<ReferenceCountedBuffer> Ptr;
+
+  ReferenceCountedBuffer(const juce::String& nameToUse, int numChannels,
+                         int numSamples)
+      : name(nameToUse), buffer(numChannels, numSamples) { }
+
+  ~ReferenceCountedBuffer() { }
+
+  juce::AudioSampleBuffer* getAudioSampleBuffer() { return &buffer; }
+
+  int position = 0;
+
+ private:
+  juce::String name;
+  juce::AudioSampleBuffer buffer;
+
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ReferenceCountedBuffer)
+};
+//==============================================================================
+
+
+//==============================================================================
+class SampleManager : public juce::PositionableAudioSource,
+                      private juce::Thread {
+ public:
+  SampleManager(NotificationArea&);
   ~SampleManager();
 
   // when called, add sample from file path with position
@@ -37,6 +67,10 @@ class SampleManager : public juce::PositionableAudioSource, private juce::Thread
   void setLooping(bool) override;
 
  private:
+
+  // we need a reference to the notification object
+  NotificationArea &notificationManager;
+
   // file formats manager
   juce::AudioFormatManager formatManager;
 
@@ -114,7 +148,7 @@ class SampleManager : public juce::PositionableAudioSource, private juce::Thread
   // path of the next file to import
   juce::String filePathToImport;
   // position to import file at
-  int64_t filePositionToImport;
+  atomic_int64_t filePositionToImport;
 
   // master bus main
   juce::dsp::Gain<float> masterGain;
@@ -126,16 +160,17 @@ class SampleManager : public juce::PositionableAudioSource, private juce::Thread
 
   // Notes on exporting:
   /**
-    When you want to write this data to a file, you should create a FileOutputStream
-    6 object and pass it your destination file in the constructor and then create an
-    AudioFormatWriter 5 using the WavAudioFormat 3 class createWriterFor() method
-    with your output stream as the first argument. You can then write a set of audio
-    samples to the output stream using the
-    AudioFormatWriter::writeFromAudioSampleBuffer() method.
+    When you want to write this data to a file, you should create a
+    FileOutputStream 6 object and pass it your destination file in the
+    constructor and then create an AudioFormatWriter 5 using the WavAudioFormat
+    3 class createWriterFor() method with your output stream as the first
+    argument. You can then write a set of audio samples to the output stream
+    using the AudioFormatWriter::writeFromAudioSampleBuffer() method.
   */
 
   // inherited from thread, this is where we will malloc and free stuff
   void run() override;
 };
+//==============================================================================
 
 #endif  // DEF_SAMPLEMANAGER_HPP

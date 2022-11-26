@@ -2,7 +2,10 @@
 #include "RobotoFont.h"
 
 //==============================================================================
-MainComponent::MainComponent() : arrangementArea(sampleManager, notificationArea) {
+MainComponent::MainComponent() : 
+  sampleManager(notificationArea),
+  arrangementArea(sampleManager, notificationArea)
+{
   // create Roboto font
   juce::Typeface::Ptr tface = juce::Typeface::createSystemTypefaceFor(
     RobotoFont::RobotoRegular_ttf,

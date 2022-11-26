@@ -42,6 +42,7 @@
 #define NOTIF_ANIMATION_SPEED_PIXEL_MS 0.7
 #define NOTIF_TIMEOUT 3000
 #define NOTIF_ANIM_FPS 60
+#define NOTIF_MAX_QUEUE_SIZE 6
 
 // various colors
 #define COLOR_NOTIF_BACKGROUND juce::Colour(20, 20, 20)
@@ -53,3 +54,6 @@
 // the headroom is positive
 #define DSP_DEFAULT_MASTER_LIMITER_HEADROOM_DB 0.6f
 #define DSP_DEFAULT_MASTER_LIMITER_RELEASE_MS 50.0
+
+// maximum number of seconds above which we refuse to load it
+#define SAMPLE_MAX_DURATION_SEC 10

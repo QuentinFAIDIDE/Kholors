@@ -14,7 +14,7 @@
 #include "Config.h"
 
 typedef struct {
-  int32_t timestamp;
+  uint32_t timestamp;
   juce::String message;
 } NotificationMessage;
 
@@ -75,9 +75,11 @@ class NotificationArea : public juce::AnimatedAppComponent {
   int now, timeSinceAnimStart, animStartTime;
   // size and position of main content widget
   juce::Rectangle<int> bounds;
-  // mutex for list updates
-  std::mutex notifMutex;
-
+  // mutex for list updates.
+  // While list appends can happen in different threads due to notifyError,
+  // other variables are only used by the gui thread and should be safe to rw.
+  juce::ReadWriteLock queueRwMutex;
+  // a value that store total width the animation have to move in
   float animationNormalisingFactor;
 
   //==============================================================================
