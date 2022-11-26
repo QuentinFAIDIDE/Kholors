@@ -13,7 +13,7 @@
 
 #include "Sample.h"
 
-class SampleManager : public juce::AudioAppComponent, private juce::Thread {
+class SampleManager : public juce::PositionableAudioSource, private juce::Thread {
  public:
   SampleManager();
   ~SampleManager();
@@ -26,6 +26,13 @@ class SampleManager : public juce::AudioAppComponent, private juce::Thread {
   void getNextAudioBlock(const juce::AudioSourceChannelInfo&) override;
   void prepareToPlay(int, double) override;
   void releaseResources() override;
+
+  // inherited from positionable audio source
+  void setNextReadPosition(int64) override;
+  int64 getNextReadPosition(int64) override;
+  int64 getTotalLength() override;
+  bool isLooping() override;
+  void setLooping(bool) override;
 
  private:
   // file formats manager
@@ -82,11 +89,26 @@ class SampleManager : public juce::AudioAppComponent, private juce::Thread {
   // mutex for buffer swapping
   juce::SpinLock mutex;
 
-  ReferenceCountedBuffer::Ptr currentBuffer;
+  // a buffer to copy paste data in the audio thread
+  juce::AudioBuffer<float> audioThreadBuffer;
+
+  // A list of raw sample outputs
+  // TODO: make sure it's impossible to play two times
+  //        a track (and create glitches)
+  juce::Array<juce::PositionableAudioSource*> tracks;
+
+  // An array of "Sample" object.
+  // They inherits from a PositionableAudioSource and read
+  // from a tracks entry.
+  // A Sample player can run dsp in getNextAudioBlock so that
+  // it adds filtering on top of tracks.
+  juce::Array<SamplePlayer> samplePlayers;
+
+  // TODO: data structure to prevent two tracks pulling same tracks.
 
   // mutex to swap the path
   // TODO: read on CriticalSection locks and SpinLock
-  juce::CriticalSection pathMutex;
+  juce::CriticalSection pathMutex, mixbusMutex;
 
   // path of the next file to import
   juce::String filePathToImport;
