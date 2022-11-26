@@ -148,6 +148,7 @@ void NotificationArea::mouseDrag(const juce::MouseEvent& me) {}
 void NotificationArea::mouseMove(const juce::MouseEvent& me) {}
 
 void NotificationArea::notifyError(const juce::String& msg) {
+  // TODO: THIS NEEDS A DAMN LOCK (all notifQueue access should use a RWLock)
   // get current timestamp
   int32_t timestamp = juce::Time::getMillisecondCounter();;
   // create the new notification
@@ -163,7 +164,7 @@ void NotificationArea::notifyError(const juce::String& msg) {
 
 // stolen from here: 
 // https://stackoverflow.com/questions/13462001/ease-in-and-ease-out-animation-formula
-// Implements a ease in animation
+// Implements an ease in speed modulation between 0 and 1
 float NotificationArea::easeIn(float t)
 {
     if(t <= 0.5f)

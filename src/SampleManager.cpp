@@ -16,6 +16,19 @@ SampleManager::SampleManager():
 
     // start the background thread that makes malloc/frees
     startThread();
+
+    // set master bus gain
+    masterGain.setGainDecibels(0.0f);
+    // make sure it's smoothing changes
+    masterGain.setRampDurationSeconds(DSP_GAIN_SMOOTHING_RAMP_SEC);
+    // warn if smoothing is disabled
+    if (!masterGain.isSmoothing()) {
+        std::cerr << "Unable to set master gain smoothing" << std::endl;
+    }
+
+    // set master limiter parameters
+    masterLimiter.setThresold(-DSP_DEFAULT_MASTER_LIMITER_HEADROOM_DB);
+    masterLimiter.setRelease(DSP_DEFAULT_MASTER_LIMITER_RELEASE_MS);
 }
 
 SampleManager::~SampleManager() {
@@ -42,32 +55,70 @@ int SampleManager::addSample(juce::String filePath, int64_t frameIndex) {
     }
     // notify the thread so it's triggered
     notify();
+    // design problem: this can't fail as it's async :D 
+    // so this return value is useless.
+    // We will notify the notification service in the background thread.
     return 0;
 }
 
-void SampleManager::prepareToPlay(int a, double b) {
-    // TODO: look at MixerAudioSource code to better understand it
-    // TODO: call all inputs prepareToPlay
+void SampleManager::prepareToPlay(int samplesPerBlockExpected, double sampleRate) {
+
+    // prepare all inputs
+    for(size_t i = 0; i<tracks.size(); i++) {
+        tracks.getUnchecked(i).prepareToPlay(samplesPerBlockExpected, sampleRate);
+    }
+
+    // prepare all master bus effects if necessary
+
+    // for the limiter we need to fill a spec object
+    currentAudioSpec.sampleRate = sampleRate;
+    currentAudioSpec.maximumBlockSize = juce::uint32(samplesPerBlockExpected);
+    currentAudioSpec.numChannels = juce::uint32(getTotalNumOutputChannels());
+
+    // reset the limiter internal states
+    masterLimiter.reset();
+    // prepare to play with these settings
+    masterLimiter.prepare(currentAudioSpec);
+
+    // TODO: look at MixerAudioSource code to double check what is performed is ok
 }
 
 void SampleManager::releaseResources() {
-    // TODO: look at MixerAudioSource code to better understand it
-    // TODO: call all inputs releaseResources
+    // TODO: look at MixerAudioSource code to double check what is performed is ok
 
-    // clear output
+    // call all inputs releaseResources
+    for(size_t i = 0; i<tracks.size(); i++) {
+        tracks.getUnchecked(i).releaseResources();
+    }
+
+    // reset the limiter internal states
+    masterLimiter.reset();
+
+    // clear output buffer
+    audioThreadBuffer.setSize (2, 0);
 }
 
 void SampleManager::getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill) {
-    // the mixing code here was initially based on MixerAudioSource one.
-    
+    // the mixing code here was initially based on the MixerAudioSource one from Juce.
+
     // get scoped lock of the reentering mutex
+    // TODO: This lock is preventing race conditions on tracks and bitmask.
+    // We don't load any yet but it's good to know !
     const ScopedLock sl (mixbusMutex);
 
+    // Idea: make it so that we use the lsit of SamplePlayer
+    // instead of the list of tracks.
+    // Also make the sample list keep nullptr in the list 
+    // isntead of deleting so that we can safely use ids.
+    // After that, we can make the bitmask atomic and
+    // try to make it so we need no mixbusMutex.
+
     // TODO: subset input tracks only to those that are
-    // likely to play
+    // likely to play using a bitmask
 
     // if there is more then one input track
     if (tracks.size() > 0) {
+
         // get a pointer to a new processed input buffer from first source
         // we will append into this one to mix tracks together
         tracks.getUnchecked(0).getNextAudioBlock(bufferToFill);
@@ -79,7 +130,7 @@ void SampleManager::getNextAudioBlock (const juce::AudioSourceChannelInfo& buffe
             &audioThreadBuffer,
             0,
             bufferToFill.numSamples
-        )
+        );
 
         // for each input source
         for(size_t i = 1; i<tracks.size(); i++) {
@@ -98,11 +149,21 @@ void SampleManager::getNextAudioBlock (const juce::AudioSourceChannelInfo& buffe
             }
         }
 
+        // apply master bus gain
+        bufferToFill.buffer.applyGain(masterGain);
+
+        // apply limiting
+        juce::dsp::ProcessContextReplacing<float> context(
+            juce::dsp::AudioBlock<float>(bufferToFill.buffer)
+        );
+        masterLimiter.process(context);
+
         // we need to update the read cursor position
-
+        positionM
+    } else {
+        // if there's no tracks, clear output
+        info.clearActiveBufferRegion();
     }
-
-    // if there's no tracks, clear output
 }
 
 // background thread content for allocating stuff

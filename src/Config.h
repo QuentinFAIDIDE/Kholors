@@ -47,3 +47,9 @@
 #define COLOR_NOTIF_BACKGROUND juce::Colour(20, 20, 20)
 #define COLOR_APP_BACKGROUND juce::Colour(32, 29, 29)
 #define COLOR_NOTIF_TEXT juce::Colour(230, 230, 230)
+
+// the gain smoothing when the value is changed
+#define DSP_GAIN_SMOOTHING_RAMP_SEC 0.03f
+// the headroom is positive
+#define DSP_DEFAULT_MASTER_LIMITER_HEADROOM_DB 0.6f
+#define DSP_DEFAULT_MASTER_LIMITER_RELEASE_MS 50.0

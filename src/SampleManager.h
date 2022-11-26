@@ -9,6 +9,8 @@
 
   */
 
+#include <atomic>
+
 #include <juce_gui_extra/juce_gui_extra.h>
 
 #include "Sample.h"
@@ -39,7 +41,7 @@ class SampleManager : public juce::PositionableAudioSource, private juce::Thread
   juce::AudioFormatManager formatManager;
 
   // play cursom position in audio frames
-  int64_t playCursor;
+  atomic_int64_t playCursor;
   // list of Sample objects that retains references to their underlying
   // ReferenceCountedBuffer or position ?
 
@@ -107,13 +109,20 @@ class SampleManager : public juce::PositionableAudioSource, private juce::Thread
   // TODO: data structure to prevent two tracks pulling same tracks.
 
   // mutex to swap the path
-  // TODO: read on CriticalSection locks and SpinLock
   juce::CriticalSection pathMutex, mixbusMutex;
 
   // path of the next file to import
   juce::String filePathToImport;
   // position to import file at
   int64_t filePositionToImport;
+
+  // master bus main
+  juce::dsp::Gain<float> masterGain;
+  // master bus limiter
+  juce::dsp::Limiter<float> masterLimiter;
+
+  // a buffer value to hold Processing specs for dsp prepare functions
+  juce::dsp::ProcessSpec currentAudioSpec;
 
   // Notes on exporting:
   /**
