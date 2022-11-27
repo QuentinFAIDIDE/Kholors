@@ -4,17 +4,14 @@
 
 // initialize the SampleManager, as well as Thread and audio inherited
 // behaviours.
-SampleManager::SampleManager(NotificationArea& na) :
-    notificationManager(na),
-    playCursor(0),
-    Thread("Background Thread")
-{
+SampleManager::SampleManager(NotificationArea& na)
+    : notificationManager(na),
+      playCursor(0),
+      Thread("Background Thread"),
+      totalFrameLength(0),
+      isPlaying(false) {
   // initialize format manager
   formatManager.registerBasicFormats();
-
-  // set 0 inputs and two outputs
-  // TODO: make this a cli arg
-  setAudioChannels(0, 2);
 
   // start the background thread that makes malloc/frees
   startThread();
@@ -31,6 +28,16 @@ SampleManager::SampleManager(NotificationArea& na) :
   // set master limiter parameters
   masterLimiter.setThresold(-DSP_DEFAULT_MASTER_LIMITER_HEADROOM_DB);
   masterLimiter.setRelease(DSP_DEFAULT_MASTER_LIMITER_RELEASE_MS);
+
+  // set the nearby samplePlayer/tracks bitmask to 0
+  for (size_t i = 0; i < SAMPLE_BITMASK_SIZE; i++) {
+    nearTracksBitmask[i] = 0;
+  }
+
+  // TODO: load a file and update bitmask
+
+  // well, I'm not sure it's really necessary unless we load tracks
+  needsPositionUpdate = true;
 }
 
 SampleManager::~SampleManager() {
@@ -81,6 +88,10 @@ void SampleManager::prepareToPlay(int samplesPerBlockExpected,
   masterLimiter.reset();
   // prepare to play with these settings
   masterLimiter.prepare(currentAudioSpec);
+
+  // recomputes nearby tracks bitmask
+  // and allocate/free memory around in the background thread
+  notify();
 
   // TODO: look at MixerAudioSource code to double check what is performed is ok
 }
@@ -166,6 +177,11 @@ void SampleManager::run() {
   while (!threadShouldExit()) {
     // update the playing SamplePlayer/tracks bitmask
     updateNearbySamplesBitmask();
+    // if we need to move cursor position
+    if(needsPositionUpdate) {
+        needsPositionUpdate = false;
+        updatePlayersPositions();
+    }
     // check for files to import
     checkForFileToImport();
     // check for buffers to free
@@ -174,6 +190,28 @@ void SampleManager::run() {
     pauseIfCursorNotInBound();
     // wait untill next thread iteration
     wait(500);
+  }
+}
+
+void SampleManager::updatePlayersPositions() {
+  // tell all SamplePlayer currently around to reconsider their
+  // position relative to the global play cursor.
+  for (size_t i = 0; i < SAMPLE_BITMASK_SIZE; i++) {
+    // iterate over bits
+    for (size_t j = 0; j <= 63; j++) {
+      // if the nth bit is set (from left to right).
+      if (nearTracksBitmask[i] & (1 << (63 - j))) {
+        // tell the track to reconsider its position
+        tracks.getUnchecked((i * 64) + j).setNextReadPosition(nextReadPosition);
+      }
+
+      // Note: nearTracksBitmask[i] & (1 << (63 - j)) seems 
+      // like an improper C++ way to check for bits.
+      // I like its simplicity and I want to read buffers
+      // of 64 bits at a time as the CPU registries will be that size.
+      // I have no idea how obtain that with std::bitset and it's
+      // not worth loosing time to me.
+    }
   }
 }
 
@@ -224,13 +262,10 @@ void SampleManager::checkForFileToImport() {
 
       // only load it if below our global constant maximum sample duration
       if (duration < SAMPLE_MAX_DURATION_SEC) {
-
         // the new buffer reference
         ReferenceCountedBuffer::Ptr newBuffer = new ReferenceCountedBuffer(
-            file.getFileName(),
-            (int)reader->numChannels,
-            (int)reader->lengthInSamples
-        );
+            file.getFileName(), (int)reader->numChannels,
+            (int)reader->lengthInSamples);
 
         // do the actual reading
         reader->read(newBuffer->getAudioSampleBuffer(), 0,
@@ -242,8 +277,9 @@ void SampleManager::checkForFileToImport() {
         {
           const juce::SpinLock::ScopedLockType lock(mutex);
 
-          // TODO: add buffer to the new SamplePlayer
-          // TODO: add new SamplePlayer to the tracks list (positionable audio sources)
+          // TODO: assign buffer to the new SamplePlayer
+          // TODO: add new SamplePlayer to the tracks list (positionable audio
+          // sources)
 
           // add the buffer the array of audio buffers
           buffers.add(newBuffer);
@@ -252,31 +288,42 @@ void SampleManager::checkForFileToImport() {
       } else {
         // notify user about sample being too long to be loaded
         notificationManager.notify(
-            juce::String("Due to a hardcoded sample duration limit of ")+
-            juce::String(SAMPLE_MAX_DURATION_SEC)+
-            juce::String(" seconds, this sample was not loaded: ")+
-            pathToOpen
-        );
+            juce::String("Due to a hardcoded sample duration limit of ") +
+            juce::String(SAMPLE_MAX_DURATION_SEC) +
+            juce::String(" seconds, this sample was not loaded: ") +
+            pathToOpen);
       }
     } else {
-        // if the file reader doesn't want to read, notify an error
-        notificationManager.notify(juce::String("Unable to read: ")+pathToOpen);
+      // if the file reader doesn't want to read, notify an error
+      notificationManager.notify(juce::String("Unable to read: ") + pathToOpen);
     }
   }
 }
 
-void SampleManager::setNextReadPosition(int64) {
-  // TODO: here we update the nearby sample bitmask and 
-  //       update read position of all subSamples and
-  //       their AudioSource/buffers.
+void SampleManager::setNextReadPosition(juce::int64 nextReadPosition) {
+  // here we update the nearby sample bitmask and update their position
+
+  // TODO: look at and fix eventual audio glitches
+
+  // update play cursor
+  playCursor = nextReadPosition;
+
+  // will let the background thread know that it needs
+  // to tell all SamplePlayers to udpate their buffer positions
+  needsPositionUpdate = true;
+
+  // tells the background thread to update position
+  notify();
 }
 
-int64 SampleManager::getNextReadPosition(int64) {
+juce::int64 SampleManager::getNextReadPosition() {
   // TODO: simply returns total frame position
+  return playCursor;
 }
 
-int64 SampleManager::getTotalLength() {
+juce::int64 SampleManager::getTotalLength() {
   // TODO: simply returns total length of the entire track in frames
+  return totalFrameLength;
 }
 
 bool SampleManager::isLooping() {
@@ -287,18 +334,66 @@ bool SampleManager::isLooping() {
   return false;
 }
 
-void SampleManager::setLooping(bool) {
-  // we don't allow looping the whole track
-  //       maybe this can be a feature for later. We could also loop only
-  //       between some loop marks in the future, even though it look like
-  //       it's not the intended use for this callback.
-}
-
 void sampleManager::updateNearbySamplesBitmask() {
-  // TODO: for all samples, get the closest ones to play cursor
-  //        and set a bitmask to know which sample is about to play
+
+  // clear the upcoming bitmask we will swap with the one audio
+  // thread uses
+  for (size_t i = 0; i < SAMPLE_BITMASK_SIZE; i++) {
+    // no need to clear above the last track
+    if(i>0 && ((i-1)*64)>tracks.size()) {
+        break;
+    }
+    backgroundNearTrackBitmask[i] = 0;
+  }
+
+  // In the following algo the approach is O(n) but it
+  // could be O(log(n)) or less.
+
+  // TODO: use an ordered list of SamplePlayer list ids to speed up
+  // the nearby track masking process.
+  // We can leverage the fact that we have a maximum SamplePlayer/buffer length
+  // to set the bits at all the ids after first than interpolates
+  // playCursor with BASE_POSITION + MAX_SAMPLE_SIZE and the first one that
+  // doesn't after that.
+  // such an ordered list can be search in log(n) time by looking at sucessive
+  // halvings from the middle track.
+
+  // less effective but simpler implementation:
+
+  int64_t rangeBuffer, baseRow;
+
+  // for each block of 64 bits of the nearby tracks bitmask
+  for (size_t i = 0; i < SAMPLE_BITMASK_SIZE; i++) {
+    // a buffer for the range of bits
+    rangeBuffer = 0;
+
+    // avoid repeating the multiplication
+    baseRow = i*64;
+
+    // for each bit representing an individual track in the range
+    for (size_t j = 0; j<64 && baseRow+j < tracks.size(); j++) {
+        // if the corresponding track is SAMPLE_MASKING_DISTANCE audio
+        // frames close to the playing cursor
+        if( tracks.getUnchecked(baseRow+j).editingPosition > playCursor-SAMPLE_MASKING_DISTANCE_FRAMES &&
+            tracks.getUnchecked(baseRow+j).editingPosition < playCursor+SAMPLE_MASKING_DISTANCE_FRAMES) {
+            
+            // set the bit
+            // TODO
+        }
+    }
+    // write the bit range
+    backgroundNearTrackBitmask[i] = rangeBuffer;
+
+    // abort if we're out of bounds
+    if(baseRow+63 >= tracks.size()) {
+        break;
+    }
+  }
+
+  // TODO: get lock and swap the bitmasks
+
 }
 
 void sampleManager::pauseIfCursorNotInBound() {
-    // TODO
+  // TODO
 }

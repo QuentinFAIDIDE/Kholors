@@ -9,12 +9,13 @@
 
   */
 
+#include <juce_audio_basics/juce_audio_basics.h>
+#include <juce_dsp/juce_dsp.h>
 #include <juce_gui_extra/juce_gui_extra.h>
 
 #include <atomic>
 
 #include "NotificationArea.h"
-#include "Sample.h"
 
 //==============================================================================
 // ReferenceCountedBuffer is a pointer to an AudioBuffer that includes
@@ -26,13 +27,11 @@ class ReferenceCountedBuffer : public juce::ReferenceCountedObject {
 
   ReferenceCountedBuffer(const juce::String& nameToUse, int numChannels,
                          int numSamples)
-      : name(nameToUse), buffer(numChannels, numSamples) { }
+      : name(nameToUse), buffer(numChannels, numSamples) {}
 
-  ~ReferenceCountedBuffer() { }
+  ~ReferenceCountedBuffer() {}
 
   juce::AudioSampleBuffer* getAudioSampleBuffer() { return &buffer; }
-
-  int position = 0;
 
  private:
   juce::String name;
@@ -42,9 +41,9 @@ class ReferenceCountedBuffer : public juce::ReferenceCountedObject {
 };
 //==============================================================================
 
-
 //==============================================================================
 class SampleManager : public juce::PositionableAudioSource,
+                      public ChangeBroadcaster,
                       private juce::Thread {
  public:
   SampleManager(NotificationArea&);
@@ -60,22 +59,29 @@ class SampleManager : public juce::PositionableAudioSource,
   void releaseResources() override;
 
   // inherited from positionable audio source
-  void setNextReadPosition(int64) override;
-  int64 getNextReadPosition(int64) override;
-  int64 getTotalLength() override;
+  void setNextReadPosition(juce::int64) override;
+  juce::int64 getNextReadPosition() override;
+  juce::int64 getTotalLength() override;
   bool isLooping() override;
   void setLooping(bool) override;
 
  private:
+  // TODO: add a readahead buffer like in audio transport source
+  // This class will mimic the AudioTransportSource implementatio
 
   // we need a reference to the notification object
-  NotificationArea &notificationManager;
+  NotificationArea& notificationManager;
 
   // file formats manager
   juce::AudioFormatManager formatManager;
 
   // play cursom position in audio frames
-  atomic_int64_t playCursor;
+  std::atomic_int64_t playCursor, totalFrameLength;
+  std::atomic<bool> isPlaying;
+  // this is set before waking up the background thread
+  // so that it knows it needs to tell all SamplePlayers
+  // to update their positions. 
+  std::atomic<bool> needsPositionUpdate;
   // list of Sample objects that retains references to their underlying
   // ReferenceCountedBuffer or position ?
 
@@ -118,37 +124,29 @@ class SampleManager : public juce::PositionableAudioSource,
   //       if we can leave one per sample and just shift samples positions as
   //       needed
 
-  // used to manage background thread allocations
-  void checkForFileToImport();
-  void checkForBuffersToFree();
-
   // mutex for buffer swapping
   juce::SpinLock mutex;
 
   // a buffer to copy paste data in the audio thread
   juce::AudioBuffer<float> audioThreadBuffer;
 
-  // A list of raw sample outputs
-  // TODO: make sure it's impossible to play two times
-  //        a track (and create glitches)
-  juce::Array<juce::PositionableAudioSource*> tracks;
+  // A list of SamplePlayer objects that inherits PositionableAudioSource
+  juce::Array<juce::SamplePlayers*> tracks;
 
-  // An array of "Sample" object.
-  // They inherits from a PositionableAudioSource and read
-  // from a tracks entry.
-  // A Sample player can run dsp in getNextAudioBlock so that
-  // it adds filtering on top of tracks.
-  juce::Array<SamplePlayer> samplePlayers;
+  // here is bitmask to identify which tracks are nearby the play cursor
+  int64_t[SAMPLE_BITMASK_SIZE] nearTracksBitmask;
+  // the one we fill before swapping pointers
+  int64_t[SAMPLE_BITMASK_SIZE] backgroundNearTrackBitmask;
 
   // TODO: data structure to prevent two tracks pulling same tracks.
 
-  // mutex to swap the path
+  // mutex to swap the path and access tracks
   juce::CriticalSection pathMutex, mixbusMutex;
 
   // path of the next file to import
   juce::String filePathToImport;
   // position to import file at
-  atomic_int64_t filePositionToImport;
+  std::atomic_int64_t filePositionToImport;
 
   // master bus main
   juce::dsp::Gain<float> masterGain;
@@ -168,8 +166,22 @@ class SampleManager : public juce::PositionableAudioSource,
     using the AudioFormatWriter::writeFromAudioSampleBuffer() method.
   */
 
+  // ===========================================================================
+
   // inherited from thread, this is where we will malloc and free stuff
   void run() override;
+
+  // update the bitmask of nearby SamplePlayers
+  void updateNearbySamplesBitmask();
+
+  // this stop the cursor from moving forward an cuts audio when nothing is
+  // playing anymore
+  void pauseIfCursorNotInBound();
+
+  // used to manage background thread allocations
+  void checkForFileToImport();
+  void checkForBuffersToFree();
+
 };
 //==============================================================================
 

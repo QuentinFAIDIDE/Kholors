@@ -57,3 +57,10 @@
 
 // maximum number of seconds above which we refuse to load it
 #define SAMPLE_MAX_DURATION_SEC 10
+// the maximum number of elements a song can have
+#define SAMPLE_MAX_PLAYERS_USED 16383
+// how many 64bits blocks the bitmask has
+#define SAMPLE_BITMASK_SIZE int(SAMPLE_MAX_PLAYERS_USED>>6)+1
+
+#define SAMPLE_MASKING_DISTANCE_SEC 2*SAMPLE_MAX_DURATION_SEC
+#define SAMPLE_MASKING_DISTANCE_FRAMES AUDIO_FRAMERATE*SAMPLE_MASKING_DISTANCE_SEC

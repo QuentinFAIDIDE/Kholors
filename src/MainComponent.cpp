@@ -11,10 +11,17 @@ MainComponent::MainComponent() :
     RobotoFont::RobotoRegular_ttf,
     RobotoFont::RobotoRegular_ttfSize
   );
+  // set roboto as default font
   juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypeface (tface);
 
+  // initialize audio app with two outputs
+  // TODO: make this a cli arg
+  setAudioChannels(0, 2);
+
+  // set size of the component
   setSize(800, 1422);
-  // make it visible
+
+  // make subwidgets visible
   addAndMakeVisible(arrangementArea);
   addAndMakeVisible(notificationArea);
 }
@@ -45,3 +52,20 @@ void MainComponent::resized() {
   localBounds.setHeight(NOTIF_HEIGHT+NOTIF_OUTTER_MARGINS+NOTIF_OUTTER_MARGINS);
   notificationArea.setBounds(localBounds);
 }
+
+void MainComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate) {
+  // pass that callback down to the sample mananger
+  sampleManager.prepareToPlay(samplesPerBlockExpected, sampleRate);
+}
+
+void MainComponent::releaseResources() {
+  // pass that callback down to the sample mananger
+  sampleManager.releaseResources();
+}
+
+void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill) {
+  // pass that callback down to the sample mananger
+  sampleManager.getNextAudioBlock(bufferToFill);
+}
+
+
