@@ -43,7 +43,6 @@ class ReferenceCountedBuffer : public juce::ReferenceCountedObject {
 
 //==============================================================================
 class SampleManager : public juce::PositionableAudioSource,
-                      public ChangeBroadcaster,
                       private juce::Thread {
  public:
   SampleManager(NotificationArea&);
@@ -60,34 +59,28 @@ class SampleManager : public juce::PositionableAudioSource,
 
   // inherited from positionable audio source
   void setNextReadPosition(juce::int64) override;
-  juce::int64 getNextReadPosition() override;
-  juce::int64 getTotalLength() override;
-  bool isLooping() override;
+  juce::int64 getNextReadPosition();
+  juce::int64 getTotalLength();
+  bool isLooping();
   void setLooping(bool) override;
 
  private:
   // TODO: add a readahead buffer like in audio transport source
-  // This class will mimic the AudioTransportSource implementatio
+  // just like AudioTransportSource implementation
 
   // we need a reference to the notification object
   NotificationArea& notificationManager;
-
   // file formats manager
   juce::AudioFormatManager formatManager;
-
-  // play cursom position in audio frames
+  // play cursom position in audio frames, as well as furthest frame
   std::atomic_int64_t playCursor, totalFrameLength;
+  // is the track currently playing ?
   std::atomic<bool> isPlaying;
   // this is set before waking up the background thread
   // so that it knows it needs to tell all SamplePlayers
   // to update their positions. 
   std::atomic<bool> needsPositionUpdate;
-  // list of Sample objects that retains references to their underlying
-  // ReferenceCountedBuffer or position ?
-
-  // list of AudioSampleBuffer or ReferenceCountedBuffer that are playing a
-  // sample ?
-  // TODO: read again the code for this class
+  // list of ReferenceCountedBuffer that are holding sample data 
   juce::ReferenceCountedArray<ReferenceCountedBuffer> buffers;
 
   /** NOTES FROM JUCE FORUM ON MIXING Audio Sources:
@@ -111,19 +104,6 @@ class SampleManager : public juce::PositionableAudioSource,
   the audio.
   **/
 
-  // SO TODO: Write my own PositionableMixerAudioSource inherited mixer.
-
-  // TODO: Use AudioProcessorGraph instead ?
-
-  // list of IIRFilterAudioSource audio sources to apply on Audio Samples ?
-  // TODO: look up how to glue sources together.
-  //       Enventually create tracks as PositionableAudioSource or AudioSource
-
-  // a MixerAudioSource class that will mix all currently playing tracks.
-  // TODO: check if we need to swap audio sources live with addInputSource.. or
-  //       if we can leave one per sample and just shift samples positions as
-  //       needed
-
   // mutex for buffer swapping
   juce::SpinLock mutex;
 
@@ -134,11 +114,9 @@ class SampleManager : public juce::PositionableAudioSource,
   juce::Array<juce::SamplePlayers*> tracks;
 
   // here is bitmask to identify which tracks are nearby the play cursor
-  int64_t[SAMPLE_BITMASK_SIZE] nearTracksBitmask;
+  int64_t nearTracksBitmask[SAMPLE_BITMASK_SIZE];
   // the one we fill before swapping pointers
-  int64_t[SAMPLE_BITMASK_SIZE] backgroundNearTrackBitmask;
-
-  // TODO: data structure to prevent two tracks pulling same tracks.
+  int64_t backgroundNearTrackBitmask[SAMPLE_BITMASK_SIZE];
 
   // mutex to swap the path and access tracks
   juce::CriticalSection pathMutex, mixbusMutex;

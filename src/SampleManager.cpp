@@ -378,7 +378,7 @@ void sampleManager::updateNearbySamplesBitmask() {
             tracks.getUnchecked(baseRow+j).editingPosition < playCursor+SAMPLE_MASKING_DISTANCE_FRAMES) {
             
             // set the bit
-            // TODO
+            rangeBuffer = rangeBuffer | (1<<(j-63));
         }
     }
     // write the bit range
@@ -390,8 +390,18 @@ void sampleManager::updateNearbySamplesBitmask() {
     }
   }
 
-  // TODO: get lock and swap the bitmasks
+  // pointer to swap arrays
+  int64_t *swapBuffer;
 
+  // get lock and swap the bitmasks
+  {
+    const juce::SpinLock::ScopedLockType lock(mutex);
+
+    // add the buffer the array of audio buffers
+    swapBuffer = nearTracksBitmask;
+    nearTracksBitmask = backgroundNearTrackBitmask;
+    backgroundNearTrackBitmask = swapBuffer;
+  }
 }
 
 void sampleManager::pauseIfCursorNotInBound() {
