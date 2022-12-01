@@ -21,6 +21,7 @@
 // ReferenceCountedBuffer is a pointer to an AudioBuffer that includes
 // a reference counter. It's convenient way to clear the samples
 // that remains unused by any Sample.
+// Taken from a juce tutorial.
 class ReferenceCountedBuffer : public juce::ReferenceCountedObject {
  public:
   typedef juce::ReferenceCountedObjectPtr<ReferenceCountedBuffer> Ptr;
@@ -65,7 +66,7 @@ class SampleManager : public juce::PositionableAudioSource,
   void setLooping(bool) override;
 
  private:
-  // TODO: add a readahead buffer like in audio transport source
+  // TODO: add a readahead buffer
   // just like AudioTransportSource implementation
 
   // we need a reference to the notification object
@@ -76,12 +77,6 @@ class SampleManager : public juce::PositionableAudioSource,
   std::atomic_int64_t playCursor, totalFrameLength;
   // is the track currently playing ?
   std::atomic<bool> isPlaying;
-  // this is set before waking up the background thread
-  // so that it knows it needs to tell all SamplePlayers
-  // to update their positions. 
-  std::atomic<bool> needsPositionUpdate;
-  // list of ReferenceCountedBuffer that are holding sample data 
-  juce::ReferenceCountedArray<ReferenceCountedBuffer> buffers;
 
   /** NOTES FROM JUCE FORUM ON MIXING Audio Sources:
   You can connect your AudioTransportSources to a MixerAudioSource 10, and call
@@ -111,7 +106,11 @@ class SampleManager : public juce::PositionableAudioSource,
   juce::AudioBuffer<float> audioThreadBuffer;
 
   // A list of SamplePlayer objects that inherits PositionableAudioSource
+  // and are objects that play buffers at some position 
   juce::Array<juce::SamplePlayers*> tracks;
+
+  // list of ReferenceCountedBuffer that are holding sample data 
+  juce::ReferenceCountedArray<ReferenceCountedBuffer> buffers;
 
   // here is bitmask to identify which tracks are nearby the play cursor
   int64_t nearTracksBitmask[SAMPLE_BITMASK_SIZE];
