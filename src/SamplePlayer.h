@@ -25,24 +25,34 @@ public:
     juce::int64 getTotalLength() override;
     bool isLooping() override;
 
-    
-    // These two functions allocate a new SamplePlayer pointing
-    // to the same audio buffer. It sets the current one to one side
-    // of the limit, and the new one to the other.
-
+    // move the sample to a new track position
+    void move(juce::int64);
+    // set the length up to which read the buffer
+    void setLength(juce::int64);
+    // get the length up to which the buffer is readead
+    void getLength(juce::int64);
+    // set the shift for the buffer reading start position
+    void setBufferShift(juce::int64);
+    // get the shift of the buffer shift
+    void getBufferShift(juce::int64);
+    // create and move a duplicate (uses same underlying audio buffer)
+    void createDuplicate(juce::int64);
     // will split the sample in two at a frquency provided
+    // (returns new other half)
     SamplePlayer* split(float frequencyLimitHz);
     // will split the sample in two at the time provided
+    // (returns new other half)
     SamplePlayer* split(juce::int64 positionLimit);
-    
-    // TODO: add all editing functions
+
 
 private:
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ReferenceCountedBuffer)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SamplePlayer)
     std::atomic<int64_t> editingPosition;
     std::atomic<int64_t> bufferPosition;
     std::atomic<int64_t> bufferStart;
     std::atomic<int64_t> bufferEnd;
+    std::atomic<float> lowPassFreq;
+    std::atomic<float> highPassFreq;
 }
 
 #endif // DEF_SAMPLEPLAYER_HPP
