@@ -15,32 +15,9 @@
 
 #include <atomic>
 
+#include "ReferenceCountedBuffer.h"
 #include "NotificationArea.h"
-
-//==============================================================================
-// ReferenceCountedBuffer is a pointer to an AudioBuffer that includes
-// a reference counter. It's convenient way to clear the samples
-// that remains unused by any Sample.
-// Taken from a juce tutorial.
-class ReferenceCountedBuffer : public juce::ReferenceCountedObject {
- public:
-  typedef juce::ReferenceCountedObjectPtr<ReferenceCountedBuffer> Ptr;
-
-  ReferenceCountedBuffer(const juce::String& nameToUse, int numChannels,
-                         int numSamples)
-      : name(nameToUse), buffer(numChannels, numSamples) {}
-
-  ~ReferenceCountedBuffer() {}
-
-  juce::AudioSampleBuffer* getAudioSampleBuffer() { return &buffer; }
-
- private:
-  juce::String name;
-  juce::AudioSampleBuffer buffer;
-
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ReferenceCountedBuffer)
-};
-//==============================================================================
+#include "SamplePlayer.h"
 
 //==============================================================================
 class SampleManager : public juce::PositionableAudioSource,
@@ -60,9 +37,9 @@ class SampleManager : public juce::PositionableAudioSource,
 
   // inherited from positionable audio source
   void setNextReadPosition(juce::int64) override;
-  juce::int64 getNextReadPosition();
-  juce::int64 getTotalLength();
-  bool isLooping();
+  juce::int64 getNextReadPosition() const override;
+  juce::int64 getTotalLength() const override;
+  bool isLooping() const override;
   void setLooping(bool) override;
 
  private:
@@ -75,6 +52,10 @@ class SampleManager : public juce::PositionableAudioSource,
   juce::AudioFormatManager formatManager;
   // play cursom position in audio frames, as well as furthest frame
   std::atomic_int64_t playCursor, totalFrameLength;
+
+  // number of channels
+  juce::int64 numChannels;
+
   // is the track currently playing ?
   std::atomic<bool> isPlaying;
 
@@ -107,7 +88,7 @@ class SampleManager : public juce::PositionableAudioSource,
 
   // A list of SamplePlayer objects that inherits PositionableAudioSource
   // and are objects that play buffers at some position 
-  juce::Array<juce::SamplePlayers*> tracks;
+  juce::Array<SamplePlayer*> tracks;
 
   // list of ReferenceCountedBuffer that are holding sample data 
   juce::ReferenceCountedArray<ReferenceCountedBuffer> buffers;

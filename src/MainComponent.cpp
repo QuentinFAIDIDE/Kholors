@@ -26,7 +26,10 @@ MainComponent::MainComponent() :
   addAndMakeVisible(notificationArea);
 }
 
-MainComponent::~MainComponent() {}
+MainComponent::~MainComponent() {
+  // shutdown the audio
+  shutdownAudio();
+}
 
 //==============================================================================
 void MainComponent::paint(juce::Graphics& g) {

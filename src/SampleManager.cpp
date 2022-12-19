@@ -9,6 +9,7 @@ SampleManager::SampleManager(NotificationArea& na)
       playCursor(0),
       Thread("Background Thread"),
       totalFrameLength(0),
+      numChannels(2),
       isPlaying(false) {
   // initialize format manager
   formatManager.registerBasicFormats();
@@ -33,18 +34,11 @@ SampleManager::SampleManager(NotificationArea& na)
   for (size_t i = 0; i < SAMPLE_BITMASK_SIZE; i++) {
     nearTracksBitmask[i] = 0;
   }
-
-  // TODO: load a file and update bitmask
-
-  // well, I'm not sure it's really necessary unless we load tracks
-  needsPositionUpdate = true;
 }
 
 SampleManager::~SampleManager() {
   // stop thread with a 4sec timeout to kill it
   stopThread(4000);
-  // shutdown the audio
-  shutdownAudio();
 }
 
 bool SampleManager::filePathsValid(const juce::StringArray& files) {
@@ -74,7 +68,10 @@ void SampleManager::prepareToPlay(int samplesPerBlockExpected,
                                   double sampleRate) {
   // prepare all inputs
   for (size_t i = 0; i < tracks.size(); i++) {
-    tracks.getUnchecked(i).prepareToPlay(samplesPerBlockExpected, sampleRate);
+    tracks.getUnchecked(i)->prepareToPlay(
+      samplesPerBlockExpected,
+      sampleRate
+    );
   }
 
   // prepare all master bus effects if necessary
@@ -82,7 +79,7 @@ void SampleManager::prepareToPlay(int samplesPerBlockExpected,
   // for the limiter we need to fill a spec object
   currentAudioSpec.sampleRate = sampleRate;
   currentAudioSpec.maximumBlockSize = juce::uint32(samplesPerBlockExpected);
-  currentAudioSpec.numChannels = juce::uint32(getTotalNumOutputChannels());
+  currentAudioSpec.numChannels = numChannels;
 
   // reset the limiter internal states
   masterLimiter.reset();
@@ -101,7 +98,7 @@ void SampleManager::releaseResources() {
 
   // call all inputs releaseResources
   for (size_t i = 0; i < tracks.size(); i++) {
-    tracks.getUnchecked(i).releaseResources();
+    tracks.getUnchecked(i)->releaseResources();
   }
 
   // reset the limiter internal states
@@ -126,7 +123,7 @@ void SampleManager::getNextAudioBlock(
   if (tracks.size() > 0) {
     // get a pointer to a new processed input buffer from first source
     // we will append into this one to mix tracks together
-    tracks.getUnchecked(0).getNextAudioBlock(bufferToFill);
+    tracks.getUnchecked(0)->getNextAudioBlock(bufferToFill);
 
     // create a new getNextAudioBlock request that
     // will use our SampleManager buffer to pull
@@ -137,28 +134,34 @@ void SampleManager::getNextAudioBlock(
     // for each input source
     for (size_t i = 1; i < tracks.size(); i++) {
       // get the next audio block in the buffer
-      tracks.getUnchecked(i).getNextAudioBlock(copyBufferDest);
+      tracks.getUnchecked(i)->getNextAudioBlock(copyBufferDest);
       // append it to the initial one
       for (int chan = 0; chan < bufferToFill.buffer->getNumChannels(); chan++) {
-        bufferToFill.addFrom(chan, bufferToFill.startSample, audioThreadBuffer,
-                             chan, 0, bufferToFill.numSamples)
+        bufferToFill.buffer->addFrom(chan, bufferToFill.startSample, audioThreadBuffer,
+                             chan, 0, bufferToFill.numSamples);
       }
     }
 
-    // apply master bus gain
-    bufferToFill.buffer.applyGain(masterGain);
+    // create context to apply dsp effects
 
-    // apply limiting
-    juce::dsp::ProcessContextReplacing<float> context(
-        juce::dsp::AudioBlock<float>(bufferToFill.buffer));
+    juce::dsp::AudioBlock<float> audioBlockRef(
+      *bufferToFill.buffer,
+      bufferToFill.startSample
+    );
+    juce::dsp::ProcessContextReplacing<float> context(audioBlockRef);
+    
+    // apply master gain
+    masterGain.process(context);
+
+    // apply limiter
     masterLimiter.process(context);
 
     // we need to update the read cursor position with the samples
     // we've sent.
-    playCursor += bufferToFill.numSamples();
+    playCursor += bufferToFill.numSamples;
   } else {
     // if there's no tracks, clear output
-    info.clearActiveBufferRegion();
+    bufferToFill.clearActiveBufferRegion();
   }
 }
 
@@ -179,15 +182,6 @@ void SampleManager::run() {
   }
 }
 
-void SampleManager::updatePlayersPositions() {
-  // tell all SamplePlayer currently around to reconsider their
-  // position relative to the global play cursor.
-  for (size_t i = 0; i < tracks.size(); i++) {
-    // tell the track to reconsider its position
-    tracks.getUnchecked(i).setNextReadPosition(nextReadPosition);
-  }
-}
-
 void SampleManager::checkForBuffersToFree() {
   // inspired by LoopingAudioSampleBuffer juce tutorial
 
@@ -198,8 +192,9 @@ void SampleManager::checkForBuffersToFree() {
   // for each buffer where we store audio samples for
   for (auto i = buffers.size(); --i >= 0;) {
     // get it
-    ReferenceCountedBuffer::Ptr buffer(buffers.getUnchecked(i));
-    // if it's only referenced here and in the PositionableAudioSources
+    BufferPtr buffer(buffers.getUnchecked(i));
+    // if it's only referenced here and in the buffer list
+    // meaning it's not used in a SamplePlayer
     if (buffer->getReferenceCount() == 2)
       // free it
       buffers.remove(i);
@@ -236,7 +231,7 @@ void SampleManager::checkForFileToImport() {
       // only load it if below our global constant maximum sample duration
       if (duration < SAMPLE_MAX_DURATION_SEC) {
         // the new buffer reference
-        ReferenceCountedBuffer::Ptr newBuffer = new ReferenceCountedBuffer(
+        BufferPtr newBuffer = new ReferenceCountedBuffer(
             file.getFileName(), (int)reader->numChannels,
             (int)reader->lengthInSamples);
 
@@ -290,7 +285,11 @@ void SampleManager::setNextReadPosition(juce::int64 nextReadPosition) {
   playCursor = nextReadPosition;
 
   // tell all samplePlayers to update positions
-
+  for (size_t i = 0; i < tracks.size(); i++) {
+    // tell the track to reconsider its position
+    tracks.getUnchecked(i)->setNextReadPosition(nextReadPosition);
+  }
+  
   // update playing tracks bitmask
   updateNearbySamplesBitmask();
 
@@ -389,3 +388,4 @@ void sampleManager::updateNearbySamplesBitmask() {
 void sampleManager::pauseIfCursorNotInBound() {
   // TODO
 }
+
