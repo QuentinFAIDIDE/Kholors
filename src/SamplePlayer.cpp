@@ -102,9 +102,10 @@ void SamplePlayer::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 }
 
 void SamplePlayer::releaseResources() {
-    // TODO
+    isSampleSet = false
+    audioBufferRef = BufferPtr(nullptr)
 }
 
 void SamplePlayer::getNextAudioBlock(const AudioSourceChannelInfo& bufferToFill) {
-    // TODO
+    // TODO: return buffer data like https://docs.juce.com/master/tutorial_looping_audio_sample_buffer_advanced.html
 }

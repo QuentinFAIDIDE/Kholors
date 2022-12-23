@@ -263,7 +263,7 @@ void SampleManager::checkForFileToImport() {
 
       } else {
         // notify user about sample being too long to be loaded
-        notificationManager.notify(
+        notificationManager.notifyError(
             juce::String("Due to a hardcoded sample duration limit of ") +
             juce::String(SAMPLE_MAX_DURATION_SEC) +
             juce::String(" seconds, this sample was not loaded: ") +
@@ -271,7 +271,7 @@ void SampleManager::checkForFileToImport() {
       }
     } else {
       // if the file reader doesn't want to read, notify an error
-      notificationManager.notify(juce::String("Unable to read: ") + pathToOpen);
+      notificationManager.notifyError(juce::String("Unable to read: ") + pathToOpen);
     }
   }
 }
