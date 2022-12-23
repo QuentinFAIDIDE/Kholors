@@ -69,6 +69,7 @@ target_sources(GuiAppExample
         src/MainComponent.cpp
         src/ArrangementArea.cpp
         src/SampleManager.cpp
+        src/SamplePlayer.cpp
         src/NotificationArea.cpp
         src/RobotoFont.cpp)
 

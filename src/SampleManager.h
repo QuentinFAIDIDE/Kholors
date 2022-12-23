@@ -94,9 +94,9 @@ class SampleManager : public juce::PositionableAudioSource,
   juce::ReferenceCountedArray<ReferenceCountedBuffer> buffers;
 
   // here is bitmask to identify which tracks are nearby the play cursor
-  int64_t nearTracksBitmask[SAMPLE_BITMASK_SIZE];
+  int64_t *nearTracksBitmask;
   // the one we fill before swapping pointers
-  int64_t backgroundNearTrackBitmask[SAMPLE_BITMASK_SIZE];
+  int64_t *backgroundNearTrackBitmask;
 
   // mutex to swap the path and access tracks
   juce::CriticalSection pathMutex, mixbusMutex;

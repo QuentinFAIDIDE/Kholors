@@ -30,9 +30,14 @@ SampleManager::SampleManager(NotificationArea& na)
   masterLimiter.setThreshold(-DSP_DEFAULT_MASTER_LIMITER_HEADROOM_DB);
   masterLimiter.setRelease(DSP_DEFAULT_MASTER_LIMITER_RELEASE_MS);
 
+  // allocate bitmask for tracks
+  nearTracksBitmask = new int64_t[SAMPLE_BITMASK_SIZE];
+  backgroundNearTrackBitmask = new int64_t[SAMPLE_BITMASK_SIZE];
+
   // set the nearby samplePlayer/tracks bitmask to 0
   for (size_t i = 0; i < SAMPLE_BITMASK_SIZE; i++) {
     nearTracksBitmask[i] = 0;
+    backgroundNearTrackBitmask[i] = 0;
   }
 }
 
@@ -297,17 +302,17 @@ void SampleManager::setNextReadPosition(juce::int64 nextReadPosition) {
   notify();
 }
 
-juce::int64 SampleManager::getNextReadPosition() {
+juce::int64 SampleManager::getNextReadPosition() const {
   // TODO: simply returns total frame position
   return playCursor;
 }
 
-juce::int64 SampleManager::getTotalLength() {
+juce::int64 SampleManager::getTotalLength() const {
   // TODO: simply returns total length of the entire track in frames
   return totalFrameLength;
 }
 
-bool SampleManager::isLooping() {
+bool SampleManager::isLooping() const {
   // TODO: always return false, we don't allow looping the whole track
   //       maybe this can be a feature for later. We could also loop only
   //       between some loop marks in the future, even though it look like
@@ -315,7 +320,7 @@ bool SampleManager::isLooping() {
   return false;
 }
 
-void sampleManager::updateNearbySamplesBitmask() {
+void SampleManager::updateNearbySamplesBitmask() {
   // clear the upcoming bitmask we will swap with the one audio
   // thread uses
   for (size_t i = 0; i < SAMPLE_BITMASK_SIZE; i++) {
@@ -354,9 +359,9 @@ void sampleManager::updateNearbySamplesBitmask() {
     for (size_t j = 0; j < 64 && baseRow + j < tracks.size(); j++) {
       // if the corresponding track is SAMPLE_MASKING_DISTANCE audio
       // frames close to the playing cursor
-      if (tracks.getUnchecked(baseRow + j).getNextReadPosition() >
+      if (tracks.getUnchecked(baseRow + j)->getNextReadPosition() >
               playCursor - SAMPLE_MASKING_DISTANCE_FRAMES &&
-          tracks.getUnchecked(baseRow + j).getNextReadPosition() <
+          tracks.getUnchecked(baseRow + j)->getNextReadPosition() <
               playCursor + SAMPLE_MASKING_DISTANCE_FRAMES) {
         // set the bit
         rangeBuffer = rangeBuffer | (1 << (j - 63));
@@ -385,7 +390,7 @@ void sampleManager::updateNearbySamplesBitmask() {
   }
 }
 
-void sampleManager::pauseIfCursorNotInBound() {
+void SampleManager::pauseIfCursorNotInBound() {
   // TODO
 }
 

@@ -31,14 +31,14 @@ public:
     // AudioSource inherited functions
     void prepareToPlay(int, double) override;
     void releaseResources() override;
-    void getNextAudioBlock(const AudioSourceChannelInfo&) override;
+    void getNextAudioBlock(const juce::AudioSourceChannelInfo&) override;
 
     // move the sample to a new track position
     void move(juce::int64);
     // set the length up to which read the buffer
     void setLength(juce::int64);
     // get the length up to which the buffer is readead
-    void getLength(juce::int64) const;
+    juce::int64 getLength() const;
     // set the shift for the buffer reading start position
     void setBufferShift(juce::int64);
     // get the shift of the buffer shift
@@ -51,6 +51,9 @@ public:
     // will split the sample in two at the time provided
     // (returns new other half)
     SamplePlayer* split(juce::int64 positionLimit);
+
+    // a lock to switch buffers
+    juce::SpinLock playerMutex;
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SamplePlayer)
