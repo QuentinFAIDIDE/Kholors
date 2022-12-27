@@ -108,6 +108,9 @@ target_link_libraries(GuiAppExample
     PRIVATE
         # GuiAppData            # If we'd created a binary data target, we'd link to it here
         juce::juce_gui_extra
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_audio_basics
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

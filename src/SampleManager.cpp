@@ -320,6 +320,10 @@ bool SampleManager::isLooping() const {
   return false;
 }
 
+void SampleManager::setLooping(bool) {
+  // TODO
+}
+
 void SampleManager::updateNearbySamplesBitmask() {
   // clear the upcoming bitmask we will swap with the one audio
   // thread uses

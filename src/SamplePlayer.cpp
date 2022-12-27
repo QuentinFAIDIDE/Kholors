@@ -23,7 +23,7 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer) {
     audioBufferRef = targetBuffer;
     // reset sample length
     bufferStart = 0;
-    bufferEnd = targetBuffer.getAudioSampleBuffer()->getNumSamples();
+    bufferEnd = targetBuffer->getAudioSampleBuffer()->getNumSamples();
     isSampleSet = true;
 }
 
@@ -55,15 +55,15 @@ void SamplePlayer::move(juce::int64 newPosition) {
 void SamplePlayer::setLength(juce::int64 length) {
     // TODO: stufy if we can remove that lock
     const juce::SpinLock::ScopedLockType lock (playerMutex);
-    if (bufferStart+length < audioBufferRef.getAudioSampleBuffer()->getNumSamples()) {
+    if (bufferStart+length < audioBufferRef->getAudioSampleBuffer()->getNumSamples()) {
         bufferEnd = bufferStart+length;
     } else {
-        bufferEnd = audioBufferRef.getAudioSampleBuffer()->getNumSamples();
+        bufferEnd = audioBufferRef->getAudioSampleBuffer()->getNumSamples();
     }
 }
 
 // get the length up to which the buffer is readead
-juce::int64 SamplePlayer::getLength(juce::int64) const {
+juce::int64 SamplePlayer::getLength() const {
     return bufferEnd-bufferStart;
 }
 
