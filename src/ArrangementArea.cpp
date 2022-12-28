@@ -44,6 +44,8 @@ void ArrangementArea::paint(juce::Graphics& g) {
     return;
   }
 
+  std::cout << "painting" << std::endl;
+
 
   // OPTIMIZATION: only redraw parts where something has changed
 
@@ -51,6 +53,7 @@ void ArrangementArea::paint(juce::Graphics& g) {
   paintBars(g);
 
   // draw samples
+
 }
 
 void ArrangementArea::resized() {
@@ -145,10 +148,12 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent& jme) {
 
   // some preallocated values
   int pixelMovement, frameMovement;
+  int64_t oldViewScale, oldViewPosition;
+  oldViewPosition = viewPosition;
+  oldViewScale = viewScale;
 
   // if in resize mode
   if (isResizing) {
-    // TODO: save some repait by comparing viewScale
     // TODO: smarter movement with time implied ?
 
     // ratio from horizontal to vertical movement
@@ -187,7 +192,10 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent& jme) {
         viewScale = FREQVIEW_MAX_SCALE_FRAME_PER_PIXEL;
       }
     }
-    repaint();
+    // save some repait by comparing viewScale and viewPosition
+    if(oldViewPosition!=viewPosition || oldViewScale!=viewScale) {
+      repaint();
+    }
   }
 
   // saving last mouse position
