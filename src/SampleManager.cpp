@@ -69,13 +69,19 @@ void SampleManager::startPlayback() {
   if (!isPlaying) {
     setNextReadPosition(playCursor);
     isPlaying = true;
+    std::cout << "Starting playback" << std::endl;
   }
 }
 
 void SampleManager::stopPlayback() {
   if (isPlaying) {
     isPlaying = false;
+    std::cout << "Stopping playback" << std::endl;
   }
+}
+
+bool SampleManager::isCursorPlaying() const {
+  return isPlaying;
 }
 
 int SampleManager::addSample(juce::String filePath, int64_t frameIndex) {

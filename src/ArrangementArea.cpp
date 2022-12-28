@@ -28,6 +28,8 @@ ArrangementArea::ArrangementArea(SampleManager& sm, NotificationArea& na)
   gridSubdivisions.push_back((GridLevel){0.25, 200});
   // play cursor color
   cursorColor = juce::Colour(240, 240, 240);
+  // enable keyboard events
+  setWantsKeyboardFocus(true);
 }
 
 ArrangementArea::~ArrangementArea() {}
@@ -289,4 +291,17 @@ void ArrangementArea::filesDropped(const juce::StringArray& files, int x,
   if (refreshNeeded) {
     repaint();
   }
+}
+
+bool ArrangementArea::keyPressed(const juce::KeyPress &key) {
+  // if the space key is pressed, play or pause
+  if(key==juce::KeyPress::spaceKey) {
+    if(sampleManager.isCursorPlaying()) {
+      sampleManager.stopPlayback();
+    } else {
+      sampleManager.startPlayback();
+    }
+  }
+  // do not intercept the signal and pass it around
+  return false;
 }

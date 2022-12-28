@@ -33,6 +33,7 @@ class ArrangementArea : public juce::Component, public juce::FileDragAndDropTarg
   void mouseMove(const juce::MouseEvent&) override;
   bool isInterestedInFileDrag(const juce::StringArray&) override;
   void filesDropped(const juce::StringArray&, int, int) override;
+  bool keyPressed(const juce::KeyPress&);
 
  private:
   //==============================================================================

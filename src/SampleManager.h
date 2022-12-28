@@ -46,6 +46,7 @@ class SampleManager : public juce::PositionableAudioSource,
   // start and stop playing
   void startPlayback();
   void stopPlayback();
+  bool isCursorPlaying() const;
 
   // access tracks from gui's MessageThread
   size_t getNumTracks() const;
