@@ -20,7 +20,7 @@ public:
     ~SamplePlayer();
     // this tells the SamplePlayer which audio buffer to use
     void setBuffer(BufferPtr targetBuffer);
-    
+
     // inherited from PositionableAudioSource
     juce::int64 getNextReadPosition() const override;
     void setNextReadPosition(juce::int64) override;
@@ -74,6 +74,9 @@ private:
     BufferPtr audioBufferRef;
     bool isSampleSet;
     juce::Colour colour;
+
+    // index of the last used color from colorPalette
+    static int lastUsedColor;
 };
 
 #endif // DEF_SAMPLEPLAYER_HPP

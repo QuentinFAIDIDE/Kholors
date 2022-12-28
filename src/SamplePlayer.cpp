@@ -1,7 +1,7 @@
 #include "SamplePlayer.h"
 #include "ColorPalette.h"
 
-#include <random>
+int SamplePlayer::lastUsedColor = 0;
 
 SamplePlayer::SamplePlayer(int64_t position):
     editingPosition(position),
@@ -13,14 +13,9 @@ SamplePlayer::SamplePlayer(int64_t position):
     highPassFreq(0),
     isSampleSet(false)
 {
-    // initialize randommness to pick a colour
-    // TODO: do not use one random_device per number
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> distrib(0, colourPalette.size());
-
     // pick a random color
-    colour = colourPalette[distrib(gen)];
+    colour = colourPalette[lastUsedColor];
+    lastUsedColor = (lastUsedColor + 1)%colourPalette.size();
 }
 
 SamplePlayer::~SamplePlayer() {
