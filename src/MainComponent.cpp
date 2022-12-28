@@ -24,6 +24,12 @@ MainComponent::MainComponent() :
   // make subwidgets visible
   addAndMakeVisible(arrangementArea);
   addAndMakeVisible(notificationArea);
+
+  // set the sampleManager callback to repaint arrangement area
+  sampleManager.setTrackRepaintCallback([this]{
+    const juce::MessageManagerLock mmLock;
+    arrangementArea.repaint();
+  });
 }
 
 MainComponent::~MainComponent() {

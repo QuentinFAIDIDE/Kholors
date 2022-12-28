@@ -14,6 +14,7 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 
 #include <atomic>
+#include <functional>
 
 #include "ReferenceCountedBuffer.h"
 #include "NotificationArea.h"
@@ -49,6 +50,9 @@ class SampleManager : public juce::PositionableAudioSource,
   // access tracks from gui's MessageThread
   size_t getNumTracks() const;
   SamplePlayer* getTrack(int index) const;
+  // set callback to safely access gui's 
+  // MessageThread to repaint tracks
+  void setTrackRepaintCallback(std::function<void()>);
 
  private:
   // TODO: add a readahead buffer
@@ -97,6 +101,8 @@ class SampleManager : public juce::PositionableAudioSource,
   // A list of SamplePlayer objects that inherits PositionableAudioSource
   // and are objects that play buffers at some position 
   juce::Array<SamplePlayer*> tracks;
+  // callback to repaint when tracks were updated
+  std::function<void()> trackRepaintCallback;
 
   // list of ReferenceCountedBuffer that are holding sample data 
   juce::ReferenceCountedArray<ReferenceCountedBuffer> buffers;

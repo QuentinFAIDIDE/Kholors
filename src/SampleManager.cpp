@@ -299,6 +299,7 @@ void SampleManager::checkForFileToImport() {
         }
 
         std::cout << "Track and audio buffer were appended" << std::endl;
+        trackRepaintCallback();
 
       } else {
         // notify user about sample being too long to be loaded
@@ -439,4 +440,8 @@ SamplePlayer* SampleManager::getTrack(int index) const {
 
   // get pointer to the value at index
   return tracks.getUnchecked(index);
+}
+
+void SampleManager::setTrackRepaintCallback(std::function<void()> f) {
+  trackRepaintCallback = f;
 }

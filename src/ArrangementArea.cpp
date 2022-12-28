@@ -28,11 +28,13 @@ ArrangementArea::ArrangementArea(SampleManager& sm, NotificationArea& na) :
   gridSubdivisions.push_back((GridLevel){4.0, 80});
   gridSubdivisions.push_back((GridLevel){1.0, 160});
   gridSubdivisions.push_back((GridLevel){0.25, 200});
+
 }
 
 ArrangementArea::~ArrangementArea() {}
 
-//==============================================================================
+
+
 void ArrangementArea::paint(juce::Graphics& g) {
   // get the window width
   bounds = g.getClipBounds();
@@ -158,7 +160,7 @@ void ArrangementArea::drawSampleTrack(juce::Graphics& g, SamplePlayer* sp, int64
   // for now, simply draw a rectangle
   g.setColour(sp->getColor());
   g.fillRoundedRectangle(
-    (trackLeftBound-sp->getEditingPosition())/viewScale,
+    (sp->getEditingPosition()-viewPosition)/viewScale,
     0,
     sp->getLength()/viewScale,
     FREQTIME_VIEW_HEIGHT,
