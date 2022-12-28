@@ -57,11 +57,14 @@ class ArrangementArea : public juce::Component, public juce::FileDragAndDropTarg
   // reference to the sample manager in use
   SampleManager& sampleManager;
   NotificationArea& notificationArea;
+  // color of the play cursor
+  juce::Colour cursorColor;
 
   //==============================================================================
   void paintBars(juce::Graphics&);
   void paintSamples(juce::Graphics&);
   void drawSampleTrack(juce::Graphics&, SamplePlayer*, int64_t);
+  void paintPlayCursor(juce::Graphics& g);
 };
 
 #endif  // DEF_ARRANGEMENTAREA_HPP

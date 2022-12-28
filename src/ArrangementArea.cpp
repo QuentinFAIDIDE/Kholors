@@ -11,10 +11,8 @@
 // So when
 
 //==============================================================================
-ArrangementArea::ArrangementArea(SampleManager& sm, NotificationArea& na) :
-  sampleManager(sm),
-  notificationArea(na) 
-{
+ArrangementArea::ArrangementArea(SampleManager& sm, NotificationArea& na)
+    : sampleManager(sm), notificationArea(na) {
   // save reference to the sample manager
   // initialize grid and position
   viewPosition = 0;
@@ -28,12 +26,11 @@ ArrangementArea::ArrangementArea(SampleManager& sm, NotificationArea& na) :
   gridSubdivisions.push_back((GridLevel){4.0, 80});
   gridSubdivisions.push_back((GridLevel){1.0, 160});
   gridSubdivisions.push_back((GridLevel){0.25, 200});
-
+  // play cursor color
+  cursorColor = juce::Colour(240, 240, 240);
 }
 
 ArrangementArea::~ArrangementArea() {}
-
-
 
 void ArrangementArea::paint(juce::Graphics& g) {
   // get the window width
@@ -51,6 +48,9 @@ void ArrangementArea::paint(juce::Graphics& g) {
 
   // draw samples
   paintSamples(g);
+
+  // paint the play cursor
+  paintPlayCursor(g);
 }
 
 void ArrangementArea::resized() {
@@ -61,13 +61,12 @@ void ArrangementArea::resized() {
 
 // warning buggy with bars over 4 subdivisions due to << operator
 void ArrangementArea::paintBars(juce::Graphics& g) {
-
-  // TODO: this algorithm is highly sub optimal and accumulates small errors in grid positions.
-  // It needs to be reimplemented.
+  // TODO: this algorithm is highly sub optimal and accumulates small errors in
+  // grid positions. It needs to be reimplemented.
 
   // set the arrangement area size to 600 pixels at the middle of the screen
-  juce::Rectangle<int> background(
-      0, 0, bounds.getWidth(), FREQTIME_VIEW_HEIGHT);
+  juce::Rectangle<int> background(0, 0, bounds.getWidth(),
+                                  FREQTIME_VIEW_HEIGHT);
   // paint the background of the area
   g.setColour(juce::Colour(20, 20, 20));
   g.fillRect(background);
@@ -80,15 +79,15 @@ void ArrangementArea::paintBars(juce::Graphics& g) {
 
   // for each subdivision in the reversed order
   for (int i = 0; i < gridSubdivisions.size(); i++) {
-
-
     // subdivided bar length (0.5f addedd to round instead of truncate)
-    subdivisionWidth = ((float(barGridPixelWidth) / gridSubdivisions[i].subdivisions));
-    subdivisionWidthFrames = subdivisionWidth*float(viewScale);
-
+    subdivisionWidth =
+        ((float(barGridPixelWidth) / gridSubdivisions[i].subdivisions));
+    subdivisionWidthFrames = subdivisionWidth * float(viewScale);
 
     // pixel shifting required by view position.
-    subdivisionShift = (subdivisionWidthFrames - float(viewPosition%int(subdivisionWidthFrames)))/float(viewScale);
+    subdivisionShift = (subdivisionWidthFrames -
+                        float(viewPosition % int(subdivisionWidthFrames))) /
+                       float(viewScale);
 
     if (subdivisionWidth > 25) {
       // set the bar color
@@ -105,12 +104,9 @@ void ArrangementArea::paintBars(juce::Graphics& g) {
 
       // iterate while it's possible to draw the successive bars
       int barPositionX = 0;
-      for (
-        int j = 0;
-        barPositionX < bounds.getWidth();
-        j++
-      ) {
-        barPositionX = int(0.5 + subdivisionShift + (j * barGridPixelWidth * subdivisionRatio));
+      for (int j = 0; barPositionX < bounds.getWidth(); j++) {
+        barPositionX = int(0.5 + subdivisionShift +
+                           (j * barGridPixelWidth * subdivisionRatio));
         // draw the bar
         g.drawLine(barPositionX, 0, barPositionX, FREQTIME_VIEW_HEIGHT);
       }
@@ -125,17 +121,17 @@ void ArrangementArea::paintSamples(juce::Graphics& g) {
   size_t nTracks = sampleManager.getNumTracks();
 
   // reference to the samplePlayer we are drawing in the loop
-  SamplePlayer *sp;
+  SamplePlayer* sp;
 
   // buffer values for each track
   int64_t trackLeftBound;
   int64_t trackRightBound;
 
   // the leftmost on-screen position in audio samples
-  int64_t viewRightBound = viewPosition + (viewScale*bounds.getWidth());
+  int64_t viewRightBound = viewPosition + (viewScale * bounds.getWidth());
 
   // for each track
-  for(size_t i=0; i<nTracks; i++) {
+  for (size_t i = 0; i < nTracks; i++) {
     // get a reference to the sample
     sp = sampleManager.getTrack(i);
     // skip nullptr in tracks list (should not happen)
@@ -143,28 +139,34 @@ void ArrangementArea::paintSamples(juce::Graphics& g) {
       continue;
     }
     // get its lock
-    const juce::SpinLock::ScopedLockType lock (sp->playerMutex);
+    const juce::SpinLock::ScopedLockType lock(sp->playerMutex);
     // compute left and right bounds
     trackLeftBound = sp->getEditingPosition();
     trackRightBound = trackRightBound + sp->getLength();
     // if it's in bound
-    if (trackRightBound>viewPosition && trackLeftBound<viewRightBound) {
+    if (trackRightBound > viewPosition && trackLeftBound < viewRightBound) {
       // draw it
       drawSampleTrack(g, sp, trackLeftBound);
     }
   }
 }
 
-void ArrangementArea::drawSampleTrack(juce::Graphics& g, SamplePlayer* sp, int64_t trackLeftBound) {
-
+void ArrangementArea::drawSampleTrack(juce::Graphics& g, SamplePlayer* sp,
+                                      int64_t trackLeftBound) {
   // for now, simply draw a rectangle
   g.setColour(sp->getColor());
-  g.fillRoundedRectangle(
-    (sp->getEditingPosition()-viewPosition)/viewScale,
+  g.fillRoundedRectangle((sp->getEditingPosition() - viewPosition) / viewScale,
+                         0, sp->getLength() / viewScale, FREQTIME_VIEW_HEIGHT,
+                         SAMPLEPLAYER_BORDER_RADIUS);
+}
+
+void ArrangementArea::paintPlayCursor(juce::Graphics& g) {
+  g.setColour(cursorColor);
+  g.fillRect(
+    ((sampleManager.getNextReadPosition()-viewPosition)/viewScale)-(PLAYCURSOR_WIDTH>>1),
     0,
-    sp->getLength()/viewScale,
-    FREQTIME_VIEW_HEIGHT,
-    SAMPLEPLAYER_BORDER_RADIUS
+    PLAYCURSOR_WIDTH,
+    FREQTIME_VIEW_HEIGHT
   );
 }
 
@@ -240,7 +242,7 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent& jme) {
       }
     }
     // save some repait by comparing viewScale and viewPosition
-    if(oldViewPosition!=viewPosition || oldViewScale!=viewScale) {
+    if (oldViewPosition != viewPosition || oldViewScale != viewScale) {
       repaint();
     }
   }
@@ -270,21 +272,21 @@ bool ArrangementArea::isInterestedInFileDrag(const juce::StringArray& files) {
 
 void ArrangementArea::filesDropped(const juce::StringArray& files, int x,
                                    int y) {
-    // to know if one sample was imported and we need to update
-    bool refreshNeeded = false;
-    // converts x to an valid position in audio frame
-    int64_t framePos = viewPosition + (x*viewScale);
-    // we try to load the samples
-    for(int i=0; i<files.size(); i++) {
-        int id = sampleManager.addSample(files[i], framePos);
-        // on failures, abort
-        if(id == -1) {
-            // notify error
-            notificationArea.notifyError("unable to load "+files[i]);
-            continue;
-        }
+  // to know if one sample was imported and we need to update
+  bool refreshNeeded = false;
+  // converts x to an valid position in audio frame
+  int64_t framePos = viewPosition + (x * viewScale);
+  // we try to load the samples
+  for (int i = 0; i < files.size(); i++) {
+    int id = sampleManager.addSample(files[i], framePos);
+    // on failures, abort
+    if (id == -1) {
+      // notify error
+      notificationArea.notifyError("unable to load " + files[i]);
+      continue;
     }
-    if(refreshNeeded) {
-        repaint();
-    }
+  }
+  if (refreshNeeded) {
+    repaint();
+  }
 }
