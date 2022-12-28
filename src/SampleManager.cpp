@@ -44,8 +44,20 @@ SampleManager::SampleManager(NotificationArea& na)
 SampleManager::~SampleManager() {
   // stop thread with a 4sec timeout to kill it
   stopThread(4000);
+  
+  // delete all tracks
+  for(size_t i=0; i<tracks.size(); i++) {
+    auto track = tracks.getUnchecked(i);
+    delete track;
+  }
+
+  // delete all buffers
+  checkForBuffersToFree();
+  
+  // free manually allocated arrays
   delete nearTracksBitmask;
   delete backgroundNearTrackBitmask;
+
 }
 
 bool SampleManager::filePathsValid(const juce::StringArray& files) {
