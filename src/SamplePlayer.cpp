@@ -1,4 +1,7 @@
 #include "SamplePlayer.h"
+#include "ColorPalette.h"
+
+#include <random>
 
 SamplePlayer::SamplePlayer(int64_t position):
     editingPosition(position),
@@ -10,11 +13,26 @@ SamplePlayer::SamplePlayer(int64_t position):
     highPassFreq(0),
     isSampleSet(false)
 {
-    // TODO
+    // initialize randommness to pick a colour
+    // TODO: do not use one random_device per number
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(0, colourPalette.size());
+
+    // pick a random color
+    colour = colourPalette[distrib(gen)];
 }
 
 SamplePlayer::~SamplePlayer() {
     // TODO
+}
+
+juce::Colour& SamplePlayer::getColor() {
+    return colour;
+}
+
+void SamplePlayer::setColor(int colorId) {
+    colour = colourPalette[colorId%colourPalette.size()];
 }
 
 void SamplePlayer::setBuffer(BufferPtr targetBuffer) {
@@ -53,7 +71,6 @@ void SamplePlayer::move(juce::int64 newPosition) {
 
 // set the length up to which reading the buffer
 void SamplePlayer::setLength(juce::int64 length) {
-    // TODO: stufy if we can remove that lock
     const juce::SpinLock::ScopedLockType lock (playerMutex);
     if (bufferStart+length < audioBufferRef->getAudioSampleBuffer()->getNumSamples()) {
         bufferEnd = bufferStart+length;
@@ -70,6 +87,7 @@ juce::int64 SamplePlayer::getLength() const {
 // set the shift for the buffer reading start position.
 // Shift parameter is the shift from audio buffer beginning.
 void SamplePlayer::setBufferShift(juce::int64 shift) {
+    const juce::SpinLock::ScopedLockType lock (playerMutex);
     // NOTE: Future feature, won't play with shift !
     
     // only change if the buffer can actuallydo it
@@ -177,5 +195,8 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferT
         bufferPosition += samplesThisTime;
         position += samplesThisTime;
     }
+}
 
+int64_t SamplePlayer::getEditingPosition() const {
+    return editingPosition;
 }

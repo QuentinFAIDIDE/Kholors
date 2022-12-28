@@ -44,16 +44,11 @@ void ArrangementArea::paint(juce::Graphics& g) {
     return;
   }
 
-  std::cout << "painting" << std::endl;
-
-
-  // OPTIMIZATION: only redraw parts where something has changed
-
   // draw the background and grid
   paintBars(g);
 
   // draw samples
-
+  paintSamples(g);
 }
 
 void ArrangementArea::resized() {
@@ -119,6 +114,56 @@ void ArrangementArea::paintBars(juce::Graphics& g) {
       }
     }
   }
+}
+
+void ArrangementArea::paintSamples(juce::Graphics& g) {
+  // NOTE: We never delete SamplePlayers in the tracks array or insert mid-array
+  // to prevent using a lock when reading.
+
+  size_t nTracks = sampleManager.getNumTracks();
+
+  // reference to the samplePlayer we are drawing in the loop
+  SamplePlayer *sp;
+
+  // buffer values for each track
+  int64_t trackLeftBound;
+  int64_t trackRightBound;
+
+  // the leftmost on-screen position in audio samples
+  int64_t viewRightBound = viewPosition + (viewScale*bounds.getWidth());
+
+  // for each track
+  for(size_t i=0; i<nTracks; i++) {
+    // get a reference to the sample
+    sp = sampleManager.getTrack(i);
+    // skip nullptr in tracks list (should not happen)
+    if (sp == nullptr) {
+      continue;
+    }
+    // get its lock
+    const juce::SpinLock::ScopedLockType lock (sp->playerMutex);
+    // compute left and right bounds
+    trackLeftBound = sp->getEditingPosition();
+    trackRightBound = trackRightBound + sp->getLength();
+    // if it's in bound
+    if (trackRightBound>viewPosition && trackLeftBound<viewRightBound) {
+      // draw it
+      drawSampleTrack(g, sp, trackLeftBound);
+    }
+  }
+}
+
+void ArrangementArea::drawSampleTrack(juce::Graphics& g, SamplePlayer* sp, int64_t trackLeftBound) {
+
+  // for now, simply draw a rectangle
+  g.setColour(sp->getColor());
+  g.fillRoundedRectangle(
+    (trackLeftBound-sp->getEditingPosition())/viewScale,
+    0,
+    sp->getLength()/viewScale,
+    FREQTIME_VIEW_HEIGHT,
+    SAMPLEPLAYER_BORDER_RADIUS
+  );
 }
 
 void ArrangementArea::mouseDown(const juce::MouseEvent& jme) {

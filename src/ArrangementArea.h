@@ -59,7 +59,9 @@ class ArrangementArea : public juce::Component, public juce::FileDragAndDropTarg
   NotificationArea& notificationArea;
 
   //==============================================================================
-  void paintBars(juce::Graphics& s);
+  void paintBars(juce::Graphics&);
+  void paintSamples(juce::Graphics&);
+  void drawSampleTrack(juce::Graphics&, SamplePlayer*, int64_t);
 };
 
 #endif  // DEF_ARRANGEMENTAREA_HPP

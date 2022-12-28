@@ -46,6 +46,10 @@ class SampleManager : public juce::PositionableAudioSource,
   void startPlayback();
   void stopPlayback();
 
+  // access tracks from gui's MessageThread
+  size_t getNumTracks() const;
+  SamplePlayer* getTrack(int index) const;
+
  private:
   // TODO: add a readahead buffer
   // just like AudioTransportSource implementation

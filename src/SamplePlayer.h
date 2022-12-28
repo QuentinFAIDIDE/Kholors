@@ -52,8 +52,14 @@ public:
     // (returns new other half)
     SamplePlayer* split(juce::int64 positionLimit);
 
-    // a lock to switch buffers
+    // a lock to switch buffers and safely read in message thread (gui)
     juce::SpinLock playerMutex;
+    // helpers to read graphical properties
+    int64_t getEditingPosition() const;
+    juce::Colour& getColor();
+    void setColor(int colorId);
+
+    // TODO: getters for stereo low and high pass
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SamplePlayer)
@@ -67,6 +73,7 @@ private:
     std::atomic<float> highPassFreq;
     BufferPtr audioBufferRef;
     bool isSampleSet;
+    juce::Colour colour;
 };
 
 #endif // DEF_SAMPLEPLAYER_HPP

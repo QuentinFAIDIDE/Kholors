@@ -429,3 +429,14 @@ void SampleManager::pauseIfCursorNotInBound() {
   // TODO
 }
 
+size_t SampleManager::getNumTracks() const {
+  return tracks.size();
+}
+
+SamplePlayer* SampleManager::getTrack(int index) const {
+  // NOTE: We never delete SamplePlayers in the tracks array or insert mid-array
+  // to prevent using a lock when reading.
+
+  // get pointer to the value at index
+  return tracks.getUnchecked(index);
+}
