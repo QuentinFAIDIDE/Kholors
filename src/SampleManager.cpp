@@ -14,9 +14,6 @@ SampleManager::SampleManager(NotificationArea& na)
   // initialize format manager
   formatManager.registerBasicFormats();
 
-  // start the background thread that makes malloc/frees
-  startThread();
-
   // set master bus gain
   masterGain.setGainDecibels(0.0f);
   // make sure it's smoothing changes
@@ -36,19 +33,37 @@ SampleManager::SampleManager(NotificationArea& na)
 
   // set the nearby samplePlayer/tracks bitmask to 0
   for (size_t i = 0; i < SAMPLE_BITMASK_SIZE; i++) {
-    nearTracksBitmask[i] = 0;
-    backgroundNearTrackBitmask[i] = 0;
+    *(nearTracksBitmask+i) = 0;
+    *(backgroundNearTrackBitmask+i) = 0;
   }
+
+  // start the background thread that makes malloc/frees
+  startThread();
 }
 
 SampleManager::~SampleManager() {
   // stop thread with a 4sec timeout to kill it
   stopThread(4000);
+  delete nearTracksBitmask;
+  delete backgroundNearTrackBitmask;
 }
 
 bool SampleManager::filePathsValid(const juce::StringArray& files) {
   // TODO: implement this
   return true;
+}
+
+void SampleManager::startPlayback() {
+  if (!isPlaying) {
+    setNextReadPosition(playCursor);
+    isPlaying = true;
+  }
+}
+
+void SampleManager::stopPlayback() {
+  if (isPlaying) {
+    isPlaying = false;
+  }
 }
 
 int SampleManager::addSample(juce::String filePath, int64_t frameIndex) {
@@ -124,8 +139,8 @@ void SampleManager::getNextAudioBlock(
   // TODO: subset input tracks only to those that are
   // likely to play using the bitmask
 
-  // if there is more then one input track
-  if (tracks.size() > 0) {
+  // if there is more then one input track and we are playing
+  if (tracks.size() > 0 && isPlaying) {
     // get a pointer to a new processed input buffer from first source
     // we will append into this one to mix tracks together
     tracks.getUnchecked(0)->getNextAudioBlock(bufferToFill);
@@ -137,6 +152,7 @@ void SampleManager::getNextAudioBlock(
                                                 bufferToFill.numSamples);
 
     // for each input source
+    // TODO: filter based on mask
     for (size_t i = 1; i < tracks.size(); i++) {
       // get the next audio block in the buffer
       tracks.getUnchecked(i)->getNextAudioBlock(copyBufferDest);
@@ -165,7 +181,7 @@ void SampleManager::getNextAudioBlock(
     // we've sent.
     playCursor += bufferToFill.numSamples;
   } else {
-    // if there's no tracks, clear output
+    // if there's no tracks or we're not playing, clear output
     bufferToFill.clearActiveBufferRegion();
   }
 }
@@ -223,6 +239,7 @@ void SampleManager::checkForFileToImport() {
 
   // if the path is non empty (meaning we're awaiting importing)
   if (pathToOpen.isNotEmpty()) {
+    std::cout << "Preparing to load file at path: " << pathToOpen << std::endl;
     // create file object
     juce::File file(pathToOpen);
     // create reader object
@@ -230,8 +247,11 @@ void SampleManager::checkForFileToImport() {
         formatManager.createReaderFor(file));
     // if the reader can read our file
     if (reader.get() != nullptr) {
+
       // sample duration in seconds
       auto duration = (float)reader->lengthInSamples / reader->sampleRate;
+
+      std::cout << "The file has a length of " << duration << "secs" << std::endl;
 
       // only load it if below our global constant maximum sample duration
       if (duration < SAMPLE_MAX_DURATION_SEC) {
@@ -266,6 +286,8 @@ void SampleManager::checkForFileToImport() {
           buffers.add(newBuffer);
         }
 
+        std::cout << "Track and audio buffer were appended" << std::endl;
+
       } else {
         // notify user about sample being too long to be loaded
         notificationManager.notifyError(
@@ -297,9 +319,6 @@ void SampleManager::setNextReadPosition(juce::int64 nextReadPosition) {
   
   // update playing tracks bitmask
   updateNearbySamplesBitmask();
-
-  // tells the background thread to update position
-  notify();
 }
 
 juce::int64 SampleManager::getNextReadPosition() const {
@@ -332,7 +351,7 @@ void SampleManager::updateNearbySamplesBitmask() {
     if (i > 0 && ((i - 1) * 64) > tracks.size()) {
       break;
     }
-    backgroundNearTrackBitmask[i] = 0;
+    *(backgroundNearTrackBitmask+i) = 0;
   }
 
   // In the following algo the approach is O(n) but it
@@ -372,7 +391,7 @@ void SampleManager::updateNearbySamplesBitmask() {
       }
     }
     // write the bit range
-    backgroundNearTrackBitmask[i] = rangeBuffer;
+    *(backgroundNearTrackBitmask+i) = rangeBuffer;
 
     // abort if we're out of bounds
     if (baseRow + 63 >= tracks.size()) {

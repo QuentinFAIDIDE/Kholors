@@ -192,7 +192,9 @@ void NotificationArea::notifyError(const juce::String& msg) {
   std::cerr << "New error notification at " << timestamp << ": " << msg << std::endl;
 
   // we will let the repaint function starts the animation
-  // call a repaint to get the anim started
+  // call a repaint to get the anim started.
+  // As it's a component function, we need to get the message manager lock.
+  const juce::MessageManagerLock mmLock;
   repaint();
 }
 

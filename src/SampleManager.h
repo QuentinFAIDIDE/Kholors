@@ -42,6 +42,10 @@ class SampleManager : public juce::PositionableAudioSource,
   bool isLooping() const override;
   void setLooping(bool) override;
 
+  // start and stop playing
+  void startPlayback();
+  void stopPlayback();
+
  private:
   // TODO: add a readahead buffer
   // just like AudioTransportSource implementation
