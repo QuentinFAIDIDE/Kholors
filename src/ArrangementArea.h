@@ -34,6 +34,7 @@ class ArrangementArea : public juce::Component, public juce::FileDragAndDropTarg
   bool isInterestedInFileDrag(const juce::StringArray&) override;
   void filesDropped(const juce::StringArray&, int, int) override;
   bool keyPressed(const juce::KeyPress&);
+  bool keyStateChanged(bool);
 
  private:
   //==============================================================================
@@ -66,6 +67,10 @@ class ArrangementArea : public juce::Component, public juce::FileDragAndDropTarg
 
   // selected tracks
   std::set<size_t> selectedTracks;
+
+  // initial position when dragging selected samples.
+  // if -1, we are not dragging samples
+  int64_t trackMovingInitialPosition;
 
   //==============================================================================
   void paintBars(juce::Graphics&);

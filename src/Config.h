@@ -75,3 +75,5 @@
 
 #define PLAYCURSOR_WIDTH 6
 #define PLAYCURSOR_GRAB_WIDTH 10
+
+#define KEYMAP_DRAG_MODE "d"

@@ -22,6 +22,7 @@ ArrangementArea::ArrangementArea(SampleManager& sm, NotificationArea& na)
   isResizing = false;
   isMovingCursor = false;
   lastPlayCursorPosition = 0;
+  trackMovingInitialPosition = -1;
   // TODO: configure this in args or config file
   tempo = 120;
   // bars drawned in order, watch for overlaps (use smaller subdiv first)
@@ -156,16 +157,22 @@ void ArrangementArea::paintSamples(juce::Graphics& g) {
 }
 
 void ArrangementArea::drawSampleTrack(juce::Graphics& g, SamplePlayer* sp, size_t id) {
+  // the shift to apply on tracks currently dragged
+  int64_t dragShift = 0;
+  auto search = selectedTracks.find(id);
+  if(trackMovingInitialPosition!=-1 && search != selectedTracks.end()) {
+    dragShift = (lastMouseX - trackMovingInitialPosition);
+  }
   // for now, simply draw a rectangle
   g.setColour(sp->getColor());
-  g.fillRoundedRectangle((sp->getEditingPosition() - viewPosition) / viewScale,
+  g.fillRoundedRectangle(((sp->getEditingPosition() - viewPosition) / viewScale)+dragShift,
                          FREQTIME_VIEW_INNER_MARGINS>>1, sp->getLength() / viewScale,
                          FREQTIME_VIEW_HEIGHT-(FREQTIME_VIEW_INNER_MARGINS),
                          SAMPLEPLAYER_BORDER_RADIUS);
   // if the track is currently being selected, draw white borders
-  if(auto search = selectedTracks.find(id); search != selectedTracks.end()) {
+  if(search != selectedTracks.end()) {
     g.setColour(SAMPLEPLAYER_BORDER_COLOR);
-    g.drawRoundedRectangle((sp->getEditingPosition() - viewPosition) / viewScale,
+    g.drawRoundedRectangle(((sp->getEditingPosition() - viewPosition) / viewScale)+dragShift,
                          FREQTIME_VIEW_INNER_MARGINS>>1, sp->getLength() / viewScale,
                          FREQTIME_VIEW_HEIGHT-(FREQTIME_VIEW_INNER_MARGINS),
                          SAMPLEPLAYER_BORDER_RADIUS, SAMPLEPLAYER_BORDER_WIDTH);
@@ -214,7 +221,7 @@ void ArrangementArea::mouseDown(const juce::MouseEvent& jme) {
 
 void ArrangementArea::handleMiddleButterDown(const juce::MouseEvent& jme) {
   // handle resize/mode mode activation
-  if (!isMovingCursor && !isResizing) {
+  if (!isMovingCursor && !isResizing && trackMovingInitialPosition==-1) {
     isResizing = true;
   }
 }
@@ -228,7 +235,7 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent& jme) {
       // enter cursor moving mode
       isMovingCursor = true;
       // else, see if we're clicking tracks for selection
-    } else {
+    } else if (!isMovingCursor && trackMovingInitialPosition==-1) {
       clickedTrack = getTrackClicked(jme);
       if(clickedTrack!=-1) {
         // if ctrl is not pressed, we clear selection set
@@ -306,6 +313,7 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent& jme) {
   int64_t oldViewScale, oldViewPosition;
   oldViewPosition = viewPosition;
   oldViewScale = viewScale;
+  bool viewUpdated = false;
 
   // handle resize mode
   if (isResizing) {
@@ -348,7 +356,7 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent& jme) {
     }
     // save some repait by comparing viewScale and viewPosition
     if (oldViewPosition != viewPosition || oldViewScale != viewScale) {
-      repaint();
+      viewUpdated = true;
     }
   }
 
@@ -356,8 +364,8 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent& jme) {
   lastMouseX = newPosition.getX();
   lastMouseY = newPosition.getY();
 
-  // if in cursor moving mode, repaint
-  if(isMovingCursor) {
+  // if updated view or in cursor moving mode, repaint
+  if(viewUpdated || isMovingCursor) {
     repaint();
   }
 }
@@ -373,6 +381,11 @@ void ArrangementArea::mouseMove(const juce::MouseEvent& jme) {
   if (isResizing && !jme.mods.isMiddleButtonDown()) {
     // save that we are not in resize mode anymore
     isResizing = false;
+  }
+
+  // if in drag mode, repaint on movement
+  if (trackMovingInitialPosition!=-1) {
+    repaint();
   }
 }
 
@@ -410,7 +423,49 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key) {
     } else if (!isMovingCursor) {
       sampleManager.startPlayback();
     }
+  } else if (key==juce::KeyPress::createFromDescription(KEYMAP_DRAG_MODE)) {
+    // if pressing d and not in any mode, start dragging
+    if(!isResizing && trackMovingInitialPosition==-1 && !selectedTracks.empty()) {
+      trackMovingInitialPosition = lastMouseX;
+    }
   }
   // do not intercept the signal and pass it around
+  return false;
+}
+
+bool ArrangementArea::keyStateChanged(bool isKeyDown) {
+  // if in drag mode
+  if(trackMovingInitialPosition!=-1) {
+    // if the D key is not pressed anymore
+    if(!juce::KeyPress::isKeyCurrentlyDown(
+      juce::KeyPress::createFromDescription(KEYMAP_DRAG_MODE).getKeyCode()
+      )
+    ) {
+      // update tracks position, get out of drag mode, and repaint
+      size_t nTracks = sampleManager.getNumTracks();
+      SamplePlayer* sp;
+      int64_t trackPosition;
+      int64_t dragDistance = (lastMouseX - trackMovingInitialPosition)*viewScale; 
+      // for each track
+      for (size_t i = 0; i < nTracks; i++) {
+        if (auto search = selectedTracks.find(i); search != selectedTracks.end()) {
+            // get a reference to the sample
+            sp = sampleManager.getTrack(i);
+            // skip nullptr in tracks list (should not happen)
+            if (sp == nullptr) {
+              continue;
+            }
+            // get its lock
+            const juce::SpinLock::ScopedLockType lock(sp->playerMutex);
+            // get the old position
+            trackPosition = sp->getEditingPosition();
+            trackPosition += dragDistance;
+            sp->move(trackPosition);
+        }
+      }
+      trackMovingInitialPosition = -1;
+      repaint();
+    }
+  }
   return false;
 }
