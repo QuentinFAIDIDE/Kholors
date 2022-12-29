@@ -428,9 +428,28 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key) {
     if(!isResizing && trackMovingInitialPosition==-1 && !selectedTracks.empty()) {
       trackMovingInitialPosition = lastMouseX;
     }
+  } else if (key==juce::KeyPress::createFromDescription(KEYMAP_DELETE_SELECTION)) {
+    // if pressing x and not in any mode, delete selected tracks
+    if(!isResizing && trackMovingInitialPosition==-1 && !selectedTracks.empty()) {
+      deleteSelectedTracks();
+    }
   }
   // do not intercept the signal and pass it around
   return false;
+}
+
+void ArrangementArea::deleteSelectedTracks() {
+  // for each selected track
+  std::set<std::size_t>::iterator it = selectedTracks.begin();
+  while (it != selectedTracks.end()) {
+    // delete it
+    SamplePlayer * deletedSp = sampleManager.deleteTrack(*it);
+    delete deletedSp;
+    it++;
+  }
+  // clear selection and redraw
+  selectedTracks.clear();
+  repaint();
 }
 
 bool ArrangementArea::keyStateChanged(bool isKeyDown) {

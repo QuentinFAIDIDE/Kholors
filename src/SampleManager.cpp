@@ -50,7 +50,9 @@ SampleManager::~SampleManager() {
   // delete all tracks
   for(size_t i=0; i<tracks.size(); i++) {
     auto track = tracks.getUnchecked(i);
-    delete track;
+    if (track != nullptr) {
+      delete track;
+    }
   }
 
   // delete all buffers
@@ -108,10 +110,12 @@ void SampleManager::prepareToPlay(int samplesPerBlockExpected,
                                   double sampleRate) {
   // prepare all inputs
   for (size_t i = 0; i < tracks.size(); i++) {
-    tracks.getUnchecked(i)->prepareToPlay(
-      samplesPerBlockExpected,
-      sampleRate
-    );
+    if (tracks.getUnchecked(i)!=nullptr) {
+      tracks.getUnchecked(i)->prepareToPlay(
+        samplesPerBlockExpected,
+        sampleRate
+      );
+    }
   }
 
   // prepare all master bus effects if necessary
@@ -138,7 +142,9 @@ void SampleManager::releaseResources() {
 
   // call all inputs releaseResources
   for (size_t i = 0; i < tracks.size(); i++) {
-    tracks.getUnchecked(i)->releaseResources();
+    if (tracks.getUnchecked(i)!=nullptr) {
+      tracks.getUnchecked(i)->releaseResources();
+    }
   }
 
   // reset the limiter internal states
@@ -163,7 +169,11 @@ void SampleManager::getNextAudioBlock(
   if (tracks.size() > 0 && isPlaying) {
     // get a pointer to a new processed input buffer from first source
     // we will append into this one to mix tracks together
-    tracks.getUnchecked(0)->getNextAudioBlock(bufferToFill);
+    if(tracks.getUnchecked(0)!=nullptr) {
+      tracks.getUnchecked(0)->getNextAudioBlock(bufferToFill);
+    } else {
+      bufferToFill.clearActiveBufferRegion();
+    }
 
     if (tracks.size() > 1) {
 
@@ -180,6 +190,9 @@ void SampleManager::getNextAudioBlock(
       // for each input source
       // TODO: filter based on mask
       for (size_t i = 1; i < tracks.size(); i++) {
+        if(tracks.getUnchecked(i)==nullptr) {
+          continue;
+        }
         // get the next audio block in the buffer
         tracks.getUnchecked(i)->getNextAudioBlock(copyBufferDest);
         // abort whenever the buffer is empty
@@ -359,8 +372,10 @@ void SampleManager::setNextReadPosition(juce::int64 nextReadPosition) {
 
   // tell all samplePlayers to update positions
   for (size_t i = 0; i < tracks.size(); i++) {
-    // tell the track to reconsider its position
-    tracks.getUnchecked(i)->setNextReadPosition(nextReadPosition);
+    if(tracks.getUnchecked(i)!=nullptr) {
+      // tell the track to reconsider its position
+      tracks.getUnchecked(i)->setNextReadPosition(nextReadPosition);
+    }
   }
   
   // update playing tracks bitmask
@@ -429,6 +444,10 @@ void SampleManager::updateNearbySamplesBitmask() {
 
     // for each bit representing an individual track in the range
     for (size_t j = 0; j < 64 && baseRow + j < tracks.size(); j++) {
+      // ignore track if it's nullptr
+      if(tracks.getUnchecked(baseRow + j)==nullptr) {
+        continue;
+      }
       // if the corresponding track is SAMPLE_MASKING_DISTANCE audio
       // frames close to the playing cursor
       if (tracks.getUnchecked(baseRow + j)->getNextReadPosition() >
@@ -480,4 +499,20 @@ SamplePlayer* SampleManager::getTrack(int index) const {
 
 void SampleManager::setTrackRepaintCallback(std::function<void()> f) {
   trackRepaintCallback = f;
+}
+
+// delete track from list by setting it to nullptr and return point to track.
+// ArrangementArea is in charge of deleting the SamplePlayer instance or
+// putting it back with restoreDeletedTrack if usert hit ctrl+Z.
+SamplePlayer* SampleManager::deleteTrack(int index) {
+  SamplePlayer *deletedSp = tracks.getUnchecked(index);
+  tracks.set(index, nullptr);
+}
+
+void SampleManager::restoreDeletedTrack(SamplePlayer* sp, int index) {
+  // only do it if no track at that index exists
+  if (tracks.getUnchecked(index)!=nullptr) {
+    std::cout << "Warning: ArrangementArea is trying to restore an existing track" << std::endl;
+  }
+  tracks.set(index, nullptr);
 }
