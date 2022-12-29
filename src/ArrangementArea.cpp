@@ -20,6 +20,8 @@ ArrangementArea::ArrangementArea(SampleManager& sm, NotificationArea& na)
   lastMouseX = 0;
   lastMouseY = 0;
   isResizing = false;
+  isMovingCursor = false;
+  lastPlayCursorPosition = 0;
   // TODO: configure this in args or config file
   tempo = 120;
   // bars drawned in order, watch for overlaps (use smaller subdiv first)
@@ -148,13 +150,12 @@ void ArrangementArea::paintSamples(juce::Graphics& g) {
     // if it's in bound
     if (trackRightBound > viewPosition && trackLeftBound < viewRightBound) {
       // draw it
-      drawSampleTrack(g, sp, trackLeftBound);
+      drawSampleTrack(g, sp);
     }
   }
 }
 
-void ArrangementArea::drawSampleTrack(juce::Graphics& g, SamplePlayer* sp,
-                                      int64_t trackLeftBound) {
+void ArrangementArea::drawSampleTrack(juce::Graphics& g, SamplePlayer* sp) {
   // for now, simply draw a rectangle
   g.setColour(sp->getColor());
   g.fillRoundedRectangle((sp->getEditingPosition() - viewPosition) / viewScale,
@@ -164,27 +165,47 @@ void ArrangementArea::drawSampleTrack(juce::Graphics& g, SamplePlayer* sp,
 
 void ArrangementArea::paintPlayCursor(juce::Graphics& g) {
   g.setColour(cursorColor);
-  g.fillRect(
-    ((sampleManager.getNextReadPosition()-viewPosition)/viewScale)-(PLAYCURSOR_WIDTH>>1),
-    0,
-    PLAYCURSOR_WIDTH,
-    FREQTIME_VIEW_HEIGHT
-  );
+  // in the cursor moving phase, we avoid waiting tracks locks
+  // by using the mouse value
+  if (!isMovingCursor) {
+    lastPlayCursorPosition = ((sampleManager.getNextReadPosition()-viewPosition)/viewScale);
+    g.fillRect(
+      lastPlayCursorPosition-(PLAYCURSOR_WIDTH>>1),
+      0,
+      PLAYCURSOR_WIDTH,
+      FREQTIME_VIEW_HEIGHT
+    );
+  } else {
+    lastPlayCursorPosition = lastMouseX;
+    g.fillRect(
+      lastPlayCursorPosition-(PLAYCURSOR_WIDTH>>1),
+      0,
+      PLAYCURSOR_WIDTH,
+      FREQTIME_VIEW_HEIGHT
+    );
+  }
 }
 
 void ArrangementArea::mouseDown(const juce::MouseEvent& jme) {
-  // if the mouse was clicked
-  if (jme.mouseWasClicked()) {
-    // if the button click was a middle mouse
-    if (jme.mods.isMiddleButtonDown()) {
-      // save that we are in resize mode
-      isResizing = true;
-    }
-  }
   // saving last mouse position
   juce::Point<int> position = jme.getPosition();
   lastMouseX = position.getX();
   lastMouseY = position.getY();
+
+  // if the mouse was clicked
+  if (jme.mouseWasClicked()) {
+    // if the button click was a middle mouse
+    if (jme.mods.isMiddleButtonDown() && !isMovingCursor) {
+      // save that we are in resize mode
+      isResizing = true;
+    // also handles the playCursor moving if grabbing it
+    } else if (jme.mods.isLeftButtonDown() && !isMovingCursor && !isResizing) {
+      // test pixel distance thresold
+      if(abs(lastMouseX-lastPlayCursorPosition)<PLAYCURSOR_GRAB_WIDTH) {
+        isMovingCursor = true;
+      }
+    }
+  }
 }
 
 void ArrangementArea::mouseUp(const juce::MouseEvent& jme) {
@@ -192,6 +213,12 @@ void ArrangementArea::mouseUp(const juce::MouseEvent& jme) {
   juce::Point<int> position = jme.getPosition();
   lastMouseX = position.getX();
   lastMouseY = position.getY();
+
+  // also cancel the cursor moving mode if not pressing mouse anymore
+  if (isMovingCursor && jme.mods.isLeftButtonDown()) {
+    isMovingCursor = false;
+    sampleManager.setNextReadPosition(viewPosition + position.getX()*viewScale);
+  }
 }
 
 void ArrangementArea::mouseDrag(const juce::MouseEvent& jme) {
@@ -203,9 +230,8 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent& jme) {
   oldViewPosition = viewPosition;
   oldViewScale = viewScale;
 
-  // if in resize mode
+  // handle resize mode
   if (isResizing) {
-    // TODO: smarter movement with time implied ?
 
     // ratio from horizontal to vertical movement
     float movementRatio = ((float)abs(lastMouseX - newPosition.getX())) /
@@ -252,19 +278,25 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent& jme) {
   // saving last mouse position
   lastMouseX = newPosition.getX();
   lastMouseY = newPosition.getY();
+
+  // if in cursor moving mode, repaint
+  if(isMovingCursor) {
+    repaint();
+  }
 }
 
 void ArrangementArea::mouseMove(const juce::MouseEvent& jme) {
-  // if we are in resize mode and middle mouse button is pressed
-  if (isResizing && !jme.mods.isMiddleButtonDown()) {
-    // save that we are not in resize mode anymore
-    isResizing = false;
-  }
 
   // saving last mouse position
   juce::Point<int> newPosition = jme.getPosition();
   lastMouseX = newPosition.getX();
   lastMouseY = newPosition.getY();
+  
+  // if we are in resize mode and middle mouse button is not pressed
+  if (isResizing && !jme.mods.isMiddleButtonDown()) {
+    // save that we are not in resize mode anymore
+    isResizing = false;
+  }
 }
 
 bool ArrangementArea::isInterestedInFileDrag(const juce::StringArray& files) {
@@ -298,7 +330,7 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key) {
   if(key==juce::KeyPress::spaceKey) {
     if(sampleManager.isCursorPlaying()) {
       sampleManager.stopPlayback();
-    } else {
+    } else if (!isMovingCursor) {
       sampleManager.startPlayback();
     }
   }

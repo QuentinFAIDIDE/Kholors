@@ -365,6 +365,9 @@ void SampleManager::setNextReadPosition(juce::int64 nextReadPosition) {
   
   // update playing tracks bitmask
   updateNearbySamplesBitmask();
+
+  // we need to repaint the track view ! 
+  trackRepaintCallback();
 }
 
 juce::int64 SampleManager::getNextReadPosition() const {

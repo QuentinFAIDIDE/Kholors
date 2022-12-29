@@ -55,16 +55,19 @@ class ArrangementArea : public juce::Component, public juce::FileDragAndDropTarg
   std::vector<GridLevel> gridSubdivisions;
   // are we in resize mode ? (middle mouse button pressed)
   bool isResizing;
+  // are we moving the play cursor around ?
+  bool isMovingCursor;
   // reference to the sample manager in use
   SampleManager& sampleManager;
   NotificationArea& notificationArea;
   // color of the play cursor
   juce::Colour cursorColor;
+  int64_t lastPlayCursorPosition;
 
   //==============================================================================
   void paintBars(juce::Graphics&);
   void paintSamples(juce::Graphics&);
-  void drawSampleTrack(juce::Graphics&, SamplePlayer*, int64_t);
+  void drawSampleTrack(juce::Graphics&, SamplePlayer*);
   void paintPlayCursor(juce::Graphics& g);
 };
 
