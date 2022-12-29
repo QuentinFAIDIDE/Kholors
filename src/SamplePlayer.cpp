@@ -145,6 +145,8 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferT
     if (retainedCurrentBuffer == nullptr)
     {
         bufferToFill.clearActiveBufferRegion();
+        bufferPosition += bufferToFill.numSamples;
+        position += bufferToFill.numSamples;
         return;
     }
 
@@ -164,6 +166,8 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferT
     // play nothing if sample is not playing
     if ((bufferPosition+outputSamplesRemaining) < 0 || bufferPosition > (bufferEnd-bufferStart)) {
         bufferToFill.clearActiveBufferRegion();
+        bufferPosition += bufferToFill.numSamples;
+        position += bufferToFill.numSamples;
         return;
     }
 
@@ -187,9 +191,10 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferT
 
         outputSamplesRemaining -= samplesThisTime;
         outputSamplesOffset += samplesThisTime;
-        bufferPosition += samplesThisTime;
-        position += samplesThisTime;
     }
+
+    bufferPosition += bufferToFill.numSamples;
+    position += bufferToFill.numSamples;
 }
 
 int64_t SamplePlayer::getEditingPosition() const {

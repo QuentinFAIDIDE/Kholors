@@ -104,6 +104,9 @@ class SampleManager : public juce::PositionableAudioSource,
   juce::Array<SamplePlayer*> tracks;
   // callback to repaint when tracks were updated
   std::function<void()> trackRepaintCallback;
+  // helps deciding on notifying ArrangementArea for redraw
+  int64_t lastDrawnCursor;
+  void checkForCursorRedraw();
 
   // list of ReferenceCountedBuffer that are holding sample data 
   juce::ReferenceCountedArray<ReferenceCountedBuffer> buffers;

@@ -37,6 +37,8 @@ SampleManager::SampleManager(NotificationArea& na)
     *(backgroundNearTrackBitmask+i) = 0;
   }
 
+  lastDrawnCursor = 0;
+
   // start the background thread that makes malloc/frees
   startThread();
 }
@@ -163,21 +165,31 @@ void SampleManager::getNextAudioBlock(
     // we will append into this one to mix tracks together
     tracks.getUnchecked(0)->getNextAudioBlock(bufferToFill);
 
-    // create a new getNextAudioBlock request that
-    // will use our SampleManager buffer to pull
-    // block to append to the previous buffer
-    juce::AudioSourceChannelInfo copyBufferDest(&audioThreadBuffer, 0,
-                                                bufferToFill.numSamples);
+    if (tracks.size() > 1) {
 
-    // for each input source
-    // TODO: filter based on mask
-    for (size_t i = 1; i < tracks.size(); i++) {
-      // get the next audio block in the buffer
-      tracks.getUnchecked(i)->getNextAudioBlock(copyBufferDest);
-      // append it to the initial one
-      for (int chan = 0; chan < bufferToFill.buffer->getNumChannels(); chan++) {
-        bufferToFill.buffer->addFrom(chan, bufferToFill.startSample, audioThreadBuffer,
-                             chan, 0, bufferToFill.numSamples);
+      // initialize buffer
+      audioThreadBuffer.setSize (juce::jmax (1, bufferToFill.buffer->getNumChannels()),
+                      bufferToFill.buffer->getNumSamples());
+
+      // create a new getNextAudioBlock request that
+      // will use our SampleManager buffer to pull
+      // block to append to the previous buffer
+      juce::AudioSourceChannelInfo copyBufferDest(&audioThreadBuffer, 0,
+                                                  bufferToFill.numSamples);
+
+      // for each input source
+      // TODO: filter based on mask
+      for (size_t i = 1; i < tracks.size(); i++) {
+        // get the next audio block in the buffer
+        tracks.getUnchecked(i)->getNextAudioBlock(copyBufferDest);
+        // abort whenever the buffer is empty
+        if(audioThreadBuffer.getNumSamples()!=0) {
+          // append it to the initial one
+          for (int chan = 0; chan < bufferToFill.buffer->getNumChannels(); chan++) {
+            bufferToFill.buffer->addFrom(chan, bufferToFill.startSample, audioThreadBuffer,
+                                chan, 0, bufferToFill.numSamples);
+          }
+        }
       }
     }
 
@@ -195,12 +207,19 @@ void SampleManager::getNextAudioBlock(
     // apply limiter
     masterLimiter.process(context);
 
-    // we need to update the read cursor position with the samples
-    // we've sent.
-    playCursor += bufferToFill.numSamples;
+
   } else {
     // if there's no tracks or we're not playing, clear output
     bufferToFill.clearActiveBufferRegion();
+  }
+
+  // if we have been playing, update cursor
+  if(isPlaying) {
+    playCursor += bufferToFill.numSamples;
+    // wake up the background thread if we need to do any redrawing
+    if(abs(playCursor-lastDrawnCursor)>FREQVIEW_MIN_REDRAW_DISTANCE_FRAMES) {
+      notify();
+    }
   }
 }
 
@@ -208,6 +227,8 @@ void SampleManager::getNextAudioBlock(
 void SampleManager::run() {
   // wait 500ms in a loop unless notify is called
   while (!threadShouldExit()) {
+    // check if we need to ask for a redraw to move cursor
+    checkForCursorRedraw();
     // check for files to import
     checkForFileToImport();
     // check for buffers to free
@@ -218,6 +239,14 @@ void SampleManager::run() {
     updateNearbySamplesBitmask();
     // wait untill next thread iteration
     wait(500);
+  }
+}
+
+void SampleManager::checkForCursorRedraw() {
+  // if we were notified to redraw, do it
+  if(abs(lastDrawnCursor-playCursor)>FREQVIEW_MIN_REDRAW_DISTANCE_FRAMES) {
+    lastDrawnCursor = playCursor; 
+    trackRepaintCallback();
   }
 }
 
@@ -304,7 +333,6 @@ void SampleManager::checkForFileToImport() {
           buffers.add(newBuffer);
         }
 
-        std::cout << "Track and audio buffer were appended" << std::endl;
         trackRepaintCallback();
 
       } else {
