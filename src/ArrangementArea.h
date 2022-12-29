@@ -64,15 +64,19 @@ class ArrangementArea : public juce::Component, public juce::FileDragAndDropTarg
   juce::Colour cursorColor;
   int64_t lastPlayCursorPosition;
 
+  // selected tracks
+  std::set<size_t> selectedTracks;
+
   //==============================================================================
   void paintBars(juce::Graphics&);
   void paintSamples(juce::Graphics&);
-  void drawSampleTrack(juce::Graphics&, SamplePlayer*);
+  void drawSampleTrack(juce::Graphics&, SamplePlayer*, size_t);
   void paintPlayCursor(juce::Graphics& g);
 
   void handleMiddleButterDown(const juce::MouseEvent&);
   void handleLeftButtonDown(const juce::MouseEvent&);
   void handleLeftButtonUp(const juce::MouseEvent&);
+  size_t getTrackClicked(const juce::MouseEvent&);
 };
 
 #endif  // DEF_ARRANGEMENTAREA_HPP

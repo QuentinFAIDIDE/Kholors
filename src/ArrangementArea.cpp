@@ -150,18 +150,26 @@ void ArrangementArea::paintSamples(juce::Graphics& g) {
     // if it's in bound
     if (trackRightBound > viewPosition && trackLeftBound < viewRightBound) {
       // draw it
-      drawSampleTrack(g, sp);
+      drawSampleTrack(g, sp, i);
     }
   }
 }
 
-void ArrangementArea::drawSampleTrack(juce::Graphics& g, SamplePlayer* sp) {
+void ArrangementArea::drawSampleTrack(juce::Graphics& g, SamplePlayer* sp, size_t id) {
   // for now, simply draw a rectangle
   g.setColour(sp->getColor());
   g.fillRoundedRectangle((sp->getEditingPosition() - viewPosition) / viewScale,
                          FREQTIME_VIEW_INNER_MARGINS>>1, sp->getLength() / viewScale,
                          FREQTIME_VIEW_HEIGHT-(FREQTIME_VIEW_INNER_MARGINS),
                          SAMPLEPLAYER_BORDER_RADIUS);
+  // if the track is currently being selected, draw white borders
+  if(auto search = selectedTracks.find(id); search != selectedTracks.end()) {
+    g.setColour(SAMPLEPLAYER_BORDER_COLOR);
+    g.drawRoundedRectangle((sp->getEditingPosition() - viewPosition) / viewScale,
+                         FREQTIME_VIEW_INNER_MARGINS>>1, sp->getLength() / viewScale,
+                         FREQTIME_VIEW_HEIGHT-(FREQTIME_VIEW_INNER_MARGINS),
+                         SAMPLEPLAYER_BORDER_RADIUS, SAMPLEPLAYER_BORDER_WIDTH);
+  }
 }
 
 void ArrangementArea::paintPlayCursor(juce::Graphics& g) {
@@ -212,15 +220,62 @@ void ArrangementArea::handleMiddleButterDown(const juce::MouseEvent& jme) {
 }
 
 void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent& jme) {
+  size_t clickedTrack;
   // handle click when in default mode
   if(!isMovingCursor && !isResizing) {
     // if we're clicking around a cursor
     if(abs(lastMouseX-lastPlayCursorPosition)<PLAYCURSOR_GRAB_WIDTH) {
       // enter cursor moving mode
       isMovingCursor = true;
+      // else, see if we're clicking tracks for selection
+    } else {
+      clickedTrack = getTrackClicked(jme);
+      if(clickedTrack!=-1) {
+        // if ctrl is not pressed, we clear selection set
+        if (!jme.mods.isCtrlDown()) {
+          selectedTracks.clear();
+        }
+        selectedTracks.insert(clickedTrack);
+        repaint();
+      // if clicking in the void, unselected everything
+      } else {
+        if(!selectedTracks.empty()) {
+          selectedTracks.clear();
+          repaint();
+        }
+      }
     }
-    // TODO: else, see if we're clicking tracks for selection
   }
+}
+
+size_t ArrangementArea::getTrackClicked(const juce::MouseEvent& jme) {
+  size_t nTracks = sampleManager.getNumTracks();
+
+  // reference to the samplePlayer we are drawing in the loop
+  SamplePlayer* sp;
+
+  int64_t trackPosition;
+
+  // for each track
+  for (size_t i = 0; i < nTracks; i++) {
+    // get a reference to the sample
+    sp = sampleManager.getTrack(i);
+    // skip nullptr in tracks list (should not happen)
+    if (sp == nullptr) {
+      continue;
+    }
+    // get its lock
+    const juce::SpinLock::ScopedLockType lock(sp->playerMutex);
+    
+    trackPosition = (sp->getEditingPosition() - viewPosition) / viewScale;
+
+    // if it's inbound, return the index
+    if(lastMouseX > trackPosition && lastMouseX < trackPosition+(sp->getLength()/viewScale)) {
+      return i;
+    } 
+  }
+
+  return -1;
 }
 
 void ArrangementArea::mouseUp(const juce::MouseEvent& jme) {
