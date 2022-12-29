@@ -69,6 +69,10 @@ class ArrangementArea : public juce::Component, public juce::FileDragAndDropTarg
   void paintSamples(juce::Graphics&);
   void drawSampleTrack(juce::Graphics&, SamplePlayer*);
   void paintPlayCursor(juce::Graphics& g);
+
+  void handleMiddleButterDown(const juce::MouseEvent&);
+  void handleLeftButtonDown(const juce::MouseEvent&);
+  void handleLeftButtonUp(const juce::MouseEvent&);
 };
 
 #endif  // DEF_ARRANGEMENTAREA_HPP

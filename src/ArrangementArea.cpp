@@ -195,17 +195,31 @@ void ArrangementArea::mouseDown(const juce::MouseEvent& jme) {
 
   // if the mouse was clicked
   if (jme.mouseWasClicked()) {
-    // if the button click was a middle mouse
-    if (jme.mods.isMiddleButtonDown() && !isMovingCursor) {
-      // save that we are in resize mode
-      isResizing = true;
-    // also handles the playCursor moving if grabbing it
-    } else if (jme.mods.isLeftButtonDown() && !isMovingCursor && !isResizing) {
-      // test pixel distance thresold
-      if(abs(lastMouseX-lastPlayCursorPosition)<PLAYCURSOR_GRAB_WIDTH) {
-        isMovingCursor = true;
-      }
+    if (jme.mods.isMiddleButtonDown()) {
+      handleMiddleButterDown(jme);
     }
+    if (jme.mods.isLeftButtonDown()) {
+      handleLeftButtonDown(jme);
+    }
+  }
+}
+
+void ArrangementArea::handleMiddleButterDown(const juce::MouseEvent& jme) {
+  // handle resize/mode mode activation
+  if (!isMovingCursor && !isResizing) {
+    isResizing = true;
+  }
+}
+
+void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent& jme) {
+  // handle click when in default mode
+  if(!isMovingCursor && !isResizing) {
+    // if we're clicking around a cursor
+    if(abs(lastMouseX-lastPlayCursorPosition)<PLAYCURSOR_GRAB_WIDTH) {
+      // enter cursor moving mode
+      isMovingCursor = true;
+    }
+    // TODO: else, see if we're clicking tracks for selection
   }
 }
 
@@ -215,10 +229,17 @@ void ArrangementArea::mouseUp(const juce::MouseEvent& jme) {
   lastMouseX = position.getX();
   lastMouseY = position.getY();
 
-  // also cancel the cursor moving mode if not pressing mouse anymore
-  if (isMovingCursor && jme.mods.isLeftButtonDown()) {
+  // pass event to handlers
+  if (jme.mods.isLeftButtonDown()) {
+    handleLeftButtonUp(jme);
+  }
+}
+
+void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent& jme) {
+  // handle cursor mode relieving
+  if(isMovingCursor) {
     isMovingCursor = false;
-    sampleManager.setNextReadPosition(viewPosition + position.getX()*viewScale);
+    sampleManager.setNextReadPosition(viewPosition + lastMouseX*viewScale);
   }
 }
 
