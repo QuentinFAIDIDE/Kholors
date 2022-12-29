@@ -36,7 +36,7 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer) {
     audioBufferRef = targetBuffer;
     // reset sample length
     bufferStart = 0;
-    bufferEnd = targetBuffer->getAudioSampleBuffer()->getNumSamples();
+    bufferEnd = targetBuffer->getAudioSampleBuffer()->getNumSamples()-1;
     isSampleSet = true;
 }
 
@@ -68,7 +68,7 @@ void SamplePlayer::move(juce::int64 newPosition) {
 void SamplePlayer::setLength(juce::int64 length) {
     const juce::SpinLock::ScopedLockType lock (playerMutex);
     if (bufferStart+length < audioBufferRef->getAudioSampleBuffer()->getNumSamples()) {
-        bufferEnd = bufferStart+length;
+        bufferEnd = bufferStart+length-1;
     } else {
         bufferEnd = audioBufferRef->getAudioSampleBuffer()->getNumSamples();
     }
@@ -155,7 +155,7 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferT
     auto numInputChannels = currentAudioSampleBuffer->getNumChannels();
     auto numOutputChannels = bufferToFill.buffer->getNumChannels();
     int64_t outputSamplesRemaining = bufferToFill.numSamples;
-    auto outputSamplesOffset = 0;
+    int64_t outputSamplesOffset = 0;
 
     // NOTE: for now, let's consider bufferStart will always be zero.
     // We start simple for now, and will only introduce bugs later :D 
@@ -171,12 +171,22 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferT
         return;
     }
 
+    // pad beginning to start copying after the buffers starts
+    if(bufferPosition<0) {
+        outputSamplesOffset = -bufferPosition;
+        outputSamplesRemaining -= -bufferPosition;
+    }
+
     // send audio buffer data
     while (outputSamplesRemaining > 0)
     {
         // decide on how many samples to copy
-        auto bufferSamplesRemaining = (bufferEnd-bufferStart) - bufferPosition;
+        auto bufferSamplesRemaining = (bufferEnd-bufferStart) - bufferPosition - outputSamplesOffset;
         auto samplesThisTime = juce::jmin (outputSamplesRemaining, bufferSamplesRemaining);
+
+        if(samplesThisTime==0) {
+            break;
+        }
 
         // copy audio for each channel
         for (auto channel = 0; channel < numOutputChannels; ++channel)
@@ -185,7 +195,7 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferT
                                             bufferToFill.startSample + outputSamplesOffset,
                                             *currentAudioSampleBuffer,
                                             channel % numInputChannels,
-                                            bufferPosition,
+                                            bufferPosition + outputSamplesOffset,
                                             samplesThisTime);
         }
 

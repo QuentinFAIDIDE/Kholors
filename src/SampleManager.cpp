@@ -194,7 +194,6 @@ void SampleManager::getNextAudioBlock(
     }
 
     // create context to apply dsp effects
-
     juce::dsp::AudioBlock<float> audioBlockRef(
       *bufferToFill.buffer,
       bufferToFill.startSample
