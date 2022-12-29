@@ -12,6 +12,8 @@
 // Max number of elements per pixel (used to preallocate cache)
 #define FREQTIME_VIEW_MAX_SINGLEPOINT_ELEMEMENTS 8
 #define FREQTIME_VIEW_HEIGHT 450
+// pixel vertical width of the space better top and bottom of samples
+#define FREQTIME_VIEW_INNER_MARGINS 2
 // TODO: RENAME THESE ! I START USING FREQVIEW IN THE MIDDLE
 // IT SHOULD BE PREFIXED WITH ARRANGEMENT_AREA
 // scaling factors for mouse actions

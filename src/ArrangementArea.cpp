@@ -159,7 +159,8 @@ void ArrangementArea::drawSampleTrack(juce::Graphics& g, SamplePlayer* sp) {
   // for now, simply draw a rectangle
   g.setColour(sp->getColor());
   g.fillRoundedRectangle((sp->getEditingPosition() - viewPosition) / viewScale,
-                         0, sp->getLength() / viewScale, FREQTIME_VIEW_HEIGHT,
+                         FREQTIME_VIEW_INNER_MARGINS>>1, sp->getLength() / viewScale,
+                         FREQTIME_VIEW_HEIGHT-(FREQTIME_VIEW_INNER_MARGINS),
                          SAMPLEPLAYER_BORDER_RADIUS);
 }
 
