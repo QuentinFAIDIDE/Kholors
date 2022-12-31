@@ -10,7 +10,8 @@ SampleManager::SampleManager(NotificationArea& na)
       Thread("Background Thread"),
       totalFrameLength(0),
       numChannels(2),
-      isPlaying(false) {
+      isPlaying(false),
+      forwardFFT(FREQVIEW_SAMPLE_FFT_ORDER) {
   // initialize format manager
   formatManager.registerBasicFormats();
 
@@ -329,13 +330,22 @@ void SampleManager::checkForFileToImport() {
 
         // create a new sample player
         SamplePlayer* newSample = new SamplePlayer(desiredPosition);
+        try {
+          // assign buffer to the new SamplePlayer
+          newSample->setBuffer(newBuffer, forwardFFT);
+        // if the memory allocation fail, abort with error
+        } catch(std::bad_alloc& ba) {
+          std::cout << "Unable to allocate memory to perform FFT" << std::endl;
+          notificationManager.notifyError(
+            juce::String("Unable to allocate memory to load: ") + pathToOpen
+          );
+          delete newSample;
+          return;
+        }
 
         // get a scoped lock for the buffer array
         {
           const juce::SpinLock::ScopedLockType lock(mutex);
-
-          // assign buffer to the new SamplePlayer
-          newSample->setBuffer(newBuffer);
 
           // add new SamplePlayer to the tracks list (positionable audio
           // sources)

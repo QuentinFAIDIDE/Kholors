@@ -19,7 +19,7 @@ public:
     SamplePlayer(int64_t position);
     ~SamplePlayer();
     // this tells the SamplePlayer which audio buffer to use
-    void setBuffer(BufferPtr targetBuffer);
+    void setBuffer(BufferPtr, juce::dsp::FFT &);
 
     // inherited from PositionableAudioSource
     juce::int64 getNextReadPosition() const override;
@@ -74,6 +74,9 @@ private:
     BufferPtr audioBufferRef;
     bool isSampleSet;
     juce::Colour colour;
+
+    // used to store the results of the fft of the buffer
+    std::vector<float> audioBufferFrequencies;
 
     // index of the last used color from colorPalette
     static int lastUsedColor;

@@ -135,6 +135,9 @@ class SampleManager : public juce::PositionableAudioSource,
   // a buffer value to hold Processing specs for dsp prepare functions
   juce::dsp::ProcessSpec currentAudioSpec;
 
+  // used for fast fourier transforms of buffers
+  juce::dsp::FFT forwardFFT;
+
   // Notes on exporting:
   /**
     When you want to write this data to a file, you should create a

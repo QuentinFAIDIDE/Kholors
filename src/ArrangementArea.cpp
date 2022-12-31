@@ -12,7 +12,8 @@
 
 //==============================================================================
 ArrangementArea::ArrangementArea(SampleManager& sm, NotificationArea& na)
-    : sampleManager(sm), notificationArea(na) {
+    : sampleManager(sm),
+      notificationArea(na) {
   // save reference to the sample manager
   // initialize grid and position
   viewPosition = 0;
