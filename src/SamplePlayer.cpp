@@ -14,7 +14,8 @@ SamplePlayer::SamplePlayer(int64_t position):
     position(0),
     lowPassFreq(44100),
     highPassFreq(0),
-    isSampleSet(false)
+    isSampleSet(false),
+    numFft(0)
 {
     // pick a random color
     colour = colourPalette[lastUsedColor];
@@ -40,7 +41,7 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft) {
 
     int numChannels = targetBuffer->getAudioSampleBuffer()->getNumChannels();
     int numSamples = targetBuffer->getAudioSampleBuffer()->getNumSamples();
-    int numFft = numSamples / FREQVIEW_SAMPLE_FFT_SIZE;
+    numFft = numSamples / (FREQVIEW_SAMPLE_FFT_SIZE*FREQVIEW_SAMPLE_FFT_KEEP_ODDS);
 
     // reset sample length
     bufferStart = 0;
@@ -49,15 +50,12 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft) {
 
     // allocate the buffer where the fft result will be stored
     audioBufferFrequencies.clear();
-    audioBufferFrequencies.reserve(numChannels*(numFft*FREQVIEW_SAMPLE_FFT_SIZE));
+    audioBufferFrequencies.reserve(numChannels*(numFft*FREQVIEW_SAMPLE_FFT_SIZE/FREQVIEW_SAMPLE_FFT_KEEP_ODDS));
 
     // allocate a buffer to perform a fft (double size of fft)
     std::vector<float> inputOutputData((FREQVIEW_SAMPLE_FFT_SIZE)<<1, 0.0f);
 
     float const * audioBufferPosition;
-
-    // TODO: skip fft for one in something samples blocks.
-    // We should trade some perf/memory for a lower time resolution.
 
     // TODO: we currently ignore the remaining samples after all
     // 1024 (FREQVIEW_SAMPLE_FFT_SIZE) blocks are processed.
@@ -79,9 +77,18 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft) {
                 audioBufferPosition,
                 FREQVIEW_SAMPLE_FFT_SIZE*sizeof(float)
             );
-            audioBufferPosition += FREQVIEW_SAMPLE_FFT_SIZE;
+            audioBufferPosition += FREQVIEW_SAMPLE_FFT_SIZE*FREQVIEW_SAMPLE_FFT_KEEP_ODDS;
             // do the actual fft processing
             fft.performFrequencyOnlyForwardTransform(&inputOutputData[0]);
+            // convert the result into decibels
+            for(size_t k=0; k<FREQVIEW_SAMPLE_FFT_SIZE; k++) {
+                inputOutputData[k] = juce::jlimit(
+                    MIN_DB,
+                    MAX_DB,
+                    juce::Decibels::gainToDecibels(inputOutputData[k]) - 
+                        juce::Decibels::gainToDecibels((float) FREQVIEW_SAMPLE_FFT_SIZE)
+                );
+            }
             // copy back the results
             audioBufferFrequencies.insert(
                 audioBufferFrequencies.end(),
@@ -90,6 +97,21 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft) {
             );
         }
     }
+}
+
+int SamplePlayer::getNumFft() const {
+    return numFft;
+}
+
+int SamplePlayer::getBufferNumChannels() const {
+    // note: WE DO NOT CHECK THAT AUDIOBUFFERREF IS SET !
+    // beware of segfaults if you play with SamplePlayer
+    // outside of the tracks SampleManager list!
+    return audioBufferRef->getAudioSampleBuffer()->getNumChannels();
+}
+
+std::vector<float>& SamplePlayer::getFftData() {
+    return audioBufferFrequencies;
 }
 
 // inherited from PositionableAudioSource

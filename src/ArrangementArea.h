@@ -72,10 +72,15 @@ class ArrangementArea : public juce::Component, public juce::FileDragAndDropTarg
   // if -1, we are not dragging samples
   int64_t trackMovingInitialPosition;
 
+  // size of fft blocks
+  float fftBlockWidth, fftBlockHeight;
+
   //==============================================================================
   void paintBars(juce::Graphics&);
   void paintSamples(juce::Graphics&);
   void drawSampleTrack(juce::Graphics&, SamplePlayer*, size_t);
+  void drawSampleChannelFft(juce::Graphics& g, SamplePlayer *sp, int64_t positionX,
+    int64_t positionY, int channel, bool flipped);
   void paintPlayCursor(juce::Graphics& g);
 
   void handleMiddleButterDown(const juce::MouseEvent&);

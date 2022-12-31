@@ -24,6 +24,8 @@ ArrangementArea::ArrangementArea(SampleManager& sm, NotificationArea& na)
   isMovingCursor = false;
   lastPlayCursorPosition = 0;
   trackMovingInitialPosition = -1;
+  // TODO: make fft block height dynamic for zooming on y axis
+  fftBlockHeight = float(FREQTIME_VIEW_HEIGHT-FREQTIME_VIEW_INNER_MARGINS)/float(FREQVIEW_SAMPLE_FFT_SIZE<<1);
   // TODO: configure this in args or config file
   tempo = 120;
   // bars drawned in order, watch for overlaps (use smaller subdiv first)
@@ -136,6 +138,9 @@ void ArrangementArea::paintSamples(juce::Graphics& g) {
   // the leftmost on-screen position in audio samples
   int64_t viewRightBound = viewPosition + (viewScale * bounds.getWidth());
 
+  // width of a fft block in pixels
+  fftBlockWidth = (float(FREQVIEW_SAMPLE_FFT_SIZE)/float(viewScale))*float(FREQVIEW_SAMPLE_FFT_KEEP_ODDS);
+
   // for each track
   for (size_t i = 0; i < nTracks; i++) {
     // get a reference to the sample
@@ -164,19 +169,67 @@ void ArrangementArea::drawSampleTrack(juce::Graphics& g, SamplePlayer* sp, size_
   if(trackMovingInitialPosition!=-1 && search != selectedTracks.end()) {
     dragShift = (lastMouseX - trackMovingInitialPosition);
   }
-  // for now, simply draw a rectangle
-  g.setColour(sp->getColor());
-  g.fillRoundedRectangle(((sp->getEditingPosition() - viewPosition) / viewScale)+dragShift,
-                         FREQTIME_VIEW_INNER_MARGINS>>1, sp->getLength() / viewScale,
-                         FREQTIME_VIEW_HEIGHT-(FREQTIME_VIEW_INNER_MARGINS),
-                         SAMPLEPLAYER_BORDER_RADIUS);
-  // if the track is currently being selected, draw white borders
+  float radius;
+  // if the track is currently being selected, draw thicker borders
   if(search != selectedTracks.end()) {
-    g.setColour(SAMPLEPLAYER_BORDER_COLOR);
-    g.drawRoundedRectangle(((sp->getEditingPosition() - viewPosition) / viewScale)+dragShift,
-                         FREQTIME_VIEW_INNER_MARGINS>>1, sp->getLength() / viewScale,
+    radius = SAMPLEPLAYER_BORDER_WIDTH;
+  } else {
+    radius = SAMPLEPLAYER_BORDER_WIDTH/2;
+  }
+  // draw a rectangle around the sample
+  g.setColour(SAMPLEPLAYER_BORDER_COLOR);
+  auto positionX = ((sp->getEditingPosition() - viewPosition) / viewScale)+dragShift;
+  auto positionY = FREQTIME_VIEW_INNER_MARGINS>>1;
+  g.drawRoundedRectangle(positionX, positionY, sp->getLength() / viewScale,
                          FREQTIME_VIEW_HEIGHT-(FREQTIME_VIEW_INNER_MARGINS),
-                         SAMPLEPLAYER_BORDER_RADIUS, SAMPLEPLAYER_BORDER_WIDTH);
+                         SAMPLEPLAYER_BORDER_RADIUS, radius);
+  // if there are two channels
+  if(sp->getBufferNumChannels()==2) {
+    // draw left (upper on the chart) channel
+    drawSampleChannelFft(g, sp, positionX, FREQTIME_VIEW_INNER_MARGINS>>1, 0, false);
+    // draw right (lower on the chart) channel
+    drawSampleChannelFft(g, sp, positionX, FREQTIME_VIEW_HEIGHT>>1, 1, true);
+  // if buffer has anything other than two channels only display first
+  } else {
+    // duplicate the first channel (most likely it's mono)
+    drawSampleChannelFft(g, sp, positionX, FREQTIME_VIEW_INNER_MARGINS>>1, 0, false);
+    drawSampleChannelFft(g, sp, positionX, FREQTIME_VIEW_HEIGHT>>1, 0, true);
+  }
+}
+
+// drawSampleChannelFft draw the result of the fft of the sample for this channel
+// at this position. It will display lower freq to bottom if flipped is false.
+void ArrangementArea::drawSampleChannelFft(juce::Graphics& g, SamplePlayer *sp,
+  int64_t positionX, int64_t positionY, int channel, bool flipped) {
+
+  float width, height, intensity;
+
+  width = juce::jmax(1.0f, fftBlockWidth);
+  height = juce::jmax(1.0f, fftBlockHeight);
+
+  // for each time bin to draw
+  for(size_t i=0; i<sp->getNumFft(); i++) {
+    // for each frequency bin to draw
+    for(size_t j=0; j<FREQVIEW_SAMPLE_FFT_SIZE; j++) {
+
+      // get the intensity
+      intensity = sp->getFftData()[
+        (channel * sp->getNumFft()*FREQVIEW_SAMPLE_FFT_SIZE) +
+        (i*FREQVIEW_SAMPLE_FFT_SIZE) + j
+      ];
+
+      // scale intensity to fit between 0 and 1
+      intensity = juce::jmap(intensity, MIN_DB, MAX_DB, 0.0f, 1.0f);
+
+      g.setColour(sp->getColor().withAlpha(intensity));
+
+      g.fillRect(
+        positionX + int(float(i)*fftBlockWidth),
+        positionY + int(float(j)*fftBlockHeight),
+        int(width)+1,
+        int(height)+1
+      );
+    }
   }
 }
 

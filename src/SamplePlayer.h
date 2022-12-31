@@ -27,7 +27,6 @@ public:
     juce::int64 getTotalLength() const override;
     bool isLooping() const override;
 
-
     // AudioSource inherited functions
     void prepareToPlay(int, double) override;
     void releaseResources() override;
@@ -43,6 +42,8 @@ public:
     void setBufferShift(juce::int64);
     // get the shift of the buffer shift
     juce::int64 getBufferShift() const;
+    // how many channels does the buffer has ?
+    int getBufferNumChannels() const;
     // create and move a duplicate (uses same underlying audio buffer)
     SamplePlayer* createDuplicate(juce::int64);
     // will split the sample in two at a frquency provided
@@ -51,6 +52,11 @@ public:
     // will split the sample in two at the time provided
     // (returns new other half)
     SamplePlayer* split(juce::int64 positionLimit);
+
+
+    // get number of fft blocks we use to cover the buffer
+    int getNumFft() const;
+    std::vector<float>& getFftData();
 
     // a lock to switch buffers and safely read in message thread (gui)
     juce::SpinLock playerMutex;
@@ -77,6 +83,9 @@ private:
 
     // used to store the results of the fft of the buffer
     std::vector<float> audioBufferFrequencies;
+    // how many blocks of FREQVIEW_SAMPLE_FFT_SIZE samples
+    // for this buffer
+    int numFft;
 
     // index of the last used color from colorPalette
     static int lastUsedColor;
