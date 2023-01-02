@@ -138,8 +138,7 @@ void ArrangementArea::paintSamples(juce::Graphics& g) {
   // the leftmost on-screen position in audio samples
   int64_t viewRightBound = viewPosition + (viewScale * bounds.getWidth());
 
-  // width of a fft block in pixels
-  fftBlockWidth = (float(FREQVIEW_SAMPLE_FFT_SIZE)/float(viewScale))*float(FREQVIEW_SAMPLE_FFT_KEEP_ODDS);
+  noVerticalSquaresFft = (FREQTIME_VIEW_HEIGHT-FREQTIME_VIEW_INNER_MARGINS)/FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS;
 
   // for each track
   for (size_t i = 0; i < nTracks; i++) {
@@ -202,32 +201,45 @@ void ArrangementArea::drawSampleTrack(juce::Graphics& g, SamplePlayer* sp, size_
 void ArrangementArea::drawSampleChannelFft(juce::Graphics& g, SamplePlayer *sp,
   int64_t positionX, int64_t positionY, int channel, bool flipped) {
 
-  float width, height, intensity;
+  float intensity;
 
-  width = juce::jmax(1.0f, fftBlockWidth);
-  height = juce::jmax(1.0f, fftBlockHeight);
+  int noHorizontalSquares = int((float(sp->getLength()) / float(viewScale)) / float(FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS));
 
-  // for each time bin to draw
-  for(size_t i=0; i<sp->getNumFft(); i++) {
-    // for each frequency bin to draw
-    for(size_t j=0; j<FREQVIEW_SAMPLE_FFT_SIZE; j++) {
+  int posX, posY;
 
-      // get the intensity
+  // TODO: precast values like float(FREQVIEW_SAMPLE_FFT_SIZE) and float(noHorizontalSquares)
+
+  // for each horizontal line
+  for(size_t i=0; i<noHorizontalSquares; i++) {
+    // compute the square horizontal center
+    posX = int(
+      std::round(
+        (
+          ((float(i)+0.5f)/float(noHorizontalSquares))*
+          float(sp->getNumFft())
+        )
+      )
+    );
+    // for each vertical line
+    for(size_t j=0; j<noVerticalSquaresFft; j++) {
+      posY = int(std::round(
+        ((float(j)+0.5f)/float(noVerticalSquaresFft))*
+        float(FREQVIEW_SAMPLE_FFT_SIZE)
+      ));
+      // get the intensity at this frequency/time
       intensity = sp->getFftData()[
         (channel * sp->getNumFft()*FREQVIEW_SAMPLE_FFT_SIZE) +
-        (i*FREQVIEW_SAMPLE_FFT_SIZE) + j
+        (posX*FREQVIEW_SAMPLE_FFT_SIZE) + posY
       ];
-
       // scale intensity to fit between 0 and 1
       intensity = juce::jmap(intensity, MIN_DB, MAX_DB, 0.0f, 1.0f);
-
+      // draw the rectangle
       g.setColour(sp->getColor().withAlpha(intensity));
-
       g.fillRect(
-        positionX + int(float(i)*fftBlockWidth),
-        positionY + int(float(j)*fftBlockHeight),
-        int(width)+1,
-        int(height)+1
+        positionX + FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS*i, // TODO: precompute out of loop
+        positionY + FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS*j,
+        FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS,
+        FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS
       );
     }
   }

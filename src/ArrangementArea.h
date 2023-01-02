@@ -75,6 +75,9 @@ class ArrangementArea : public juce::Component, public juce::FileDragAndDropTarg
   // size of fft blocks
   float fftBlockWidth, fftBlockHeight;
 
+  // numbers of squares we can fit on horizontal axis with fft
+  int noVerticalSquaresFft;
+
   //==============================================================================
   void paintBars(juce::Graphics&);
   void paintSamples(juce::Graphics&);
