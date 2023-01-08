@@ -138,7 +138,7 @@ void ArrangementArea::paintSamples(juce::Graphics& g) {
   // the leftmost on-screen position in audio samples
   int64_t viewRightBound = viewPosition + (viewScale * bounds.getWidth());
 
-  noVerticalSquaresFft = (FREQTIME_VIEW_HEIGHT-FREQTIME_VIEW_INNER_MARGINS)/FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS;
+  noVerticalSquaresFft = (FREQTIME_VIEW_HEIGHT-FREQTIME_VIEW_INNER_MARGINS)/(FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS*2);
 
   // for each track
   for (size_t i = 0; i < nTracks; i++) {
@@ -203,7 +203,7 @@ void ArrangementArea::drawSampleChannelFft(juce::Graphics& g, SamplePlayer *sp,
 
   float intensity;
 
-  int noHorizontalSquares = int((float(sp->getLength()) / float(viewScale)) / float(FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS));
+  int noHorizontalSquares = int((sp->getLength() / viewScale) / (FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS));
 
   int posX, posY;
 
@@ -211,28 +211,27 @@ void ArrangementArea::drawSampleChannelFft(juce::Graphics& g, SamplePlayer *sp,
 
   // for each horizontal line
   for(size_t i=0; i<noHorizontalSquares; i++) {
-    // compute the square horizontal center
-    posX = int(
-      std::round(
-        (
-          ((float(i)+0.5f)/float(noHorizontalSquares))*
-          float(sp->getNumFft())
-        )
-      )
-    );
+    // compute index of the fft to read
+    posX = int((float(i)/float(noHorizontalSquares))*float(sp->getNumFft()));
     // for each vertical line
     for(size_t j=0; j<noVerticalSquaresFft; j++) {
       posY = int(std::round(
-        ((float(j)+0.5f)/float(noVerticalSquaresFft))*
-        float(FREQVIEW_SAMPLE_FFT_SIZE)
+        ((float(j))/float(noVerticalSquaresFft))*
+        float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)
       ));
+      // flip when asked to
+      if(!flipped) {
+        posY = FREQVIEW_SAMPLE_FFT_SCOPE_SIZE-posY;
+      }
       // get the intensity at this frequency/time
       intensity = sp->getFftData()[
-        (channel * sp->getNumFft()*FREQVIEW_SAMPLE_FFT_SIZE) +
-        (posX*FREQVIEW_SAMPLE_FFT_SIZE) + posY
+        (channel * sp->getNumFft() * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) +
+        (posX*FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + (posY)
       ];
       // scale intensity to fit between 0 and 1
       intensity = juce::jmap(intensity, MIN_DB, MAX_DB, 0.0f, 1.0f);
+      intensity = sigmoid((intensity*12.0)-6.0);
+      intensity = juce::jlimit(0.0f, 1.0f, intensity);
       // draw the rectangle
       g.setColour(sp->getColor().withAlpha(intensity));
       g.fillRect(
@@ -553,4 +552,9 @@ bool ArrangementArea::keyStateChanged(bool isKeyDown) {
     }
   }
   return false;
+}
+
+// Sigmoid activation function to try to increase contract in fft
+float ArrangementArea::sigmoid (float val) {
+    return 1 / (1 + exp(-val));
 }

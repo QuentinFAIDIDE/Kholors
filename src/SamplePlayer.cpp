@@ -41,7 +41,7 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft) {
 
     int numChannels = targetBuffer->getAudioSampleBuffer()->getNumChannels();
     int numSamples = targetBuffer->getAudioSampleBuffer()->getNumSamples();
-    numFft = numSamples / (FREQVIEW_SAMPLE_FFT_SIZE*FREQVIEW_SAMPLE_FFT_KEEP_ODDS);
+    numFft = numSamples / (FREQVIEW_SAMPLE_FFT_SIZE);
 
     // reset sample length
     bufferStart = 0;
@@ -50,12 +50,20 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft) {
 
     // allocate the buffer where the fft result will be stored
     audioBufferFrequencies.clear();
-    audioBufferFrequencies.reserve(numChannels*(numFft*FREQVIEW_SAMPLE_FFT_SIZE/FREQVIEW_SAMPLE_FFT_KEEP_ODDS));
+    audioBufferFrequencies.resize(numChannels*numFft*FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
+    std::fill(audioBufferFrequencies.begin(), audioBufferFrequencies.end(), 0.0f);
 
     // allocate a buffer to perform a fft (double size of fft)
     std::vector<float> inputOutputData((FREQVIEW_SAMPLE_FFT_SIZE)<<1, 0.0f);
 
-    float const * audioBufferPosition;
+    float const * audioBufferRef;
+    int audioBufferPosition;
+
+    // magic windowing function to reduce spectral leakage in fft
+    juce::dsp::WindowingFunction<float> window(
+        FREQVIEW_SAMPLE_FFT_SIZE,
+        juce::dsp::WindowingFunction<float>::hann
+    ); 
 
     // TODO: we currently ignore the remaining samples after all
     // 1024 (FREQVIEW_SAMPLE_FFT_SIZE) blocks are processed.
@@ -64,7 +72,8 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft) {
 
     // for each channel
     for(size_t i=0; i<numChannels; i++) {
-        audioBufferPosition = targetBuffer->getAudioSampleBuffer()->getReadPointer(i);
+        audioBufferRef = targetBuffer->getAudioSampleBuffer()->getReadPointer(i);
+        audioBufferPosition = 0;
         // iterate over buffers of 1024 samples
         for(size_t j=0; j<numFft; j++) {
             // fill the input buffer with zeros.
@@ -74,14 +83,15 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft) {
             // NOTE: I apologize for using C inside C++, please forgive my ignorance
             memcpy(
                 &inputOutputData[0],
-                audioBufferPosition,
+                &audioBufferRef[audioBufferPosition],
                 FREQVIEW_SAMPLE_FFT_SIZE*sizeof(float)
             );
-            audioBufferPosition += FREQVIEW_SAMPLE_FFT_SIZE*FREQVIEW_SAMPLE_FFT_KEEP_ODDS;
+            audioBufferPosition += FREQVIEW_SAMPLE_FFT_SIZE;
             // do the actual fft processing
-            fft.performFrequencyOnlyForwardTransform(&inputOutputData[0]);
+            window.multiplyWithWindowingTable(&inputOutputData[0], FREQVIEW_SAMPLE_FFT_SIZE);
+            fft.performFrequencyOnlyForwardTransform(&inputOutputData[0], true);
             // convert the result into decibels
-            for(size_t k=0; k<FREQVIEW_SAMPLE_FFT_SIZE; k++) {
+            for(size_t k=0; k<(FREQVIEW_SAMPLE_FFT_SIZE>>1); k++) {
                 inputOutputData[k] = juce::jlimit(
                     MIN_DB,
                     MAX_DB,
@@ -90,13 +100,17 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft) {
                 );
             }
             // copy back the results
-            audioBufferFrequencies.insert(
-                audioBufferFrequencies.end(),
-                inputOutputData.begin(),
-                inputOutputData.begin()+FREQVIEW_SAMPLE_FFT_SIZE
-            );
+            for(size_t k=0; k<FREQVIEW_SAMPLE_FFT_SCOPE_SIZE; k++) {
+                // NOTE: The relevant frequency amplitude data is half the fft size, so a quarter of our inputdata array
+                // example used by my lazy brain: https://docs.juce.com/master/tutorial_spectrum_analyser.html
+                auto logIndex = 1.0f - std::exp( std::log(1.0f - float(k)/float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)) * 0.2f );
+                auto logIndex2 = 0.009545485 * std::exp(4.651687*(float(k)/float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)));
+                auto logIndexFft = juce::jlimit (0, FREQVIEW_SAMPLE_FFT_SIZE / 2, (int) (logIndex2 * (float) FREQVIEW_SAMPLE_FFT_SIZE * 0.5f));
+                audioBufferFrequencies[(((i*numFft)+j)*FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)+k] = inputOutputData[logIndexFft];
+            }
         }
     }
+
 }
 
 int SamplePlayer::getNumFft() const {

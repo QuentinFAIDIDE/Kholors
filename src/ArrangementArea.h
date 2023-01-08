@@ -91,6 +91,7 @@ class ArrangementArea : public juce::Component, public juce::FileDragAndDropTarg
   void handleLeftButtonUp(const juce::MouseEvent&);
   size_t getTrackClicked(const juce::MouseEvent&);
   void deleteSelectedTracks();
+  float sigmoid (float);
 };
 
 #endif  // DEF_ARRANGEMENTAREA_HPP
