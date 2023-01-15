@@ -102,8 +102,14 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft) {
             // copy back the results
             for(size_t k=0; k<FREQVIEW_SAMPLE_FFT_SCOPE_SIZE; k++) {
                 // NOTE: The relevant frequency amplitude data is half the fft size, so a quarter of our inputdata array
-                // example used by my lazy brain: https://docs.juce.com/master/tutorial_spectrum_analyser.html
+                // example idea https://docs.juce.com/master/tutorial_spectrum_analyser.html
+
+                // compute base 10 log and correct amounts so they fit in 0 - 1 range
                 auto log10Index = 0.00009990793 * std::pow(10, 4.0004*(float(k)/float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)));
+                // scale it to be a little more convenient for human eyes
+                log10Index = std::pow(log10Index, 0.88f);
+
+                // pick and save frequency intensity
                 auto logIndexFft = juce::jlimit (0, FREQVIEW_SAMPLE_FFT_SIZE / 2, (int) (log10Index * (float) FREQVIEW_SAMPLE_FFT_SIZE * 0.5f));
                 audioBufferFrequencies[(((i*numFft)+j)*FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)+k] = inputOutputData[logIndexFft];
             }

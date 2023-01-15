@@ -82,7 +82,7 @@
 // warning: if the fft size goes below freqview height, nothing will display
 #define FREQVIEW_SAMPLE_FFT_ORDER 11
 #define FREQVIEW_SAMPLE_FFT_SIZE (1<<FREQVIEW_SAMPLE_FFT_ORDER)
-#define FREQVIEW_SAMPLE_FFT_SCOPE_SIZE 1024
+#define FREQVIEW_SAMPLE_FFT_SCOPE_SIZE 4096
 #define FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS 3
 
 #define MIN_DB -100.0f

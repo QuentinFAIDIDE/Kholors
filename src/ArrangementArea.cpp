@@ -215,18 +215,23 @@ void ArrangementArea::drawSampleChannelFft(juce::Graphics& g, SamplePlayer *sp,
     posX = int((float(i)/float(noHorizontalSquares))*float(sp->getNumFft()));
     // for each vertical line
     for(size_t j=0; j<noVerticalSquaresFft; j++) {
-      posY = int(std::round(
-        ((float(j))/float(noVerticalSquaresFft))*
-        float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)
-      ));
-      // flip when asked to
-      if(!flipped) {
-        posY = FREQVIEW_SAMPLE_FFT_SCOPE_SIZE-posY;
+      if(flipped) {
+        posY = int(std::round(
+          polylens((float(j))/float(noVerticalSquaresFft))*
+          float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)
+        ));
+      } else {
+        posY = int(std::round(
+          polylens(1.0f-((float(j))/float(noVerticalSquaresFft)))*
+          float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)
+        ));
       }
       // get the intensity at this frequency/time
       intensity = sp->getFftData()[
+        
         (channel * sp->getNumFft() * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) +
-        (posX*FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + (posY)
+        (posX*FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + posY
+
       ];
       // scale intensity to fit between 0 and 1
       intensity = juce::jmap(intensity, MIN_DB, MAX_DB, 0.0f, 1.0f);
@@ -241,6 +246,14 @@ void ArrangementArea::drawSampleChannelFft(juce::Graphics& g, SamplePlayer *sp,
         FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS
       );
     }
+  }
+}
+
+float ArrangementArea::polylens(float v) {
+  if(v<0.5) {
+    return std::pow(v, 0.3f)*(0.5/(std::pow(0.5, 0.3)));
+  } else {
+    return 0.5+std::pow(v-0.5, 2.0f)*(0.5/(std::pow(0.5, 2.0f)));
   }
 }
 
