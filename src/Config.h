@@ -87,3 +87,17 @@
 
 #define MIN_DB -100.0f
 #define MAX_DB 0.0f
+
+#ifndef DEF_CONFIG_HPP
+#define DEF_CONFIG_HPP
+
+#include <juce_core/juce_core.h>
+#include "yaml-cpp/yaml.h"
+
+class Config {
+public:
+  Config(juce::String);
+  juce::String getProfile();
+};
+
+#endif // DEF_CONFIG_HPP

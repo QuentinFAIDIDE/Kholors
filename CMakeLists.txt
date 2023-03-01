@@ -32,6 +32,11 @@ project(GUI_APP_EXAMPLE VERSION 0.0.1)
 # or
 add_subdirectory(JUCE)                    # If you've put JUCE in a subdirectory called JUCE
 
+
+# Include tests and Ctest utility
+include(CTest)
+add_test(NAME TestConfig COMMAND TestConfig)
+
 # If your app depends the VST2 SDK, perhaps to host VST2 plugins, CMake needs to be told where
 # to find the SDK on your system. This setup should be done before calling `juce_add_gui_app`.
 
@@ -50,6 +55,8 @@ juce_add_gui_app(GuiAppExample
     # COMPANY_NAME ...                  # Specify the name of the app's author
     PRODUCT_NAME "Gui App Example")     # The name of the final executable, which can differ from the target name
 
+juce_add_gui_app(TestConfig PRODUCT_NAME "TestConfig")
+
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
 # into your build tree. This should be included with `#include <JuceHeader.h>`. The include path for
 # this header will be automatically added to the target. The main function of the JuceHeader is to
@@ -66,12 +73,18 @@ juce_add_gui_app(GuiAppExample
 target_sources(GuiAppExample
     PRIVATE
         src/Main.cpp
+        src/Config.cpp
         src/UserInterface/MainComponent.cpp
         src/UserInterface/ArrangementArea.cpp
         src/UserInterface/NotificationArea.cpp
         src/UserInterface/RobotoFont.cpp
         src/Audio/SampleManager.cpp
         src/Audio/SamplePlayer.cpp)
+
+target_sources(TestConfig
+    PRIVATE
+        src/Config.cpp
+        test/TestConfig.cpp)
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
 # project, these might be passed in the 'Preprocessor Definitions' field. JUCE modules also make use
@@ -81,6 +94,15 @@ target_sources(GuiAppExample
 # definitions, pick unique names that are unlikely to collide! This is a standard CMake command.
 
 target_compile_definitions(GuiAppExample
+    PRIVATE
+        # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
+        JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_gui_app` call
+        JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_gui_app` call
+        JUCE_DISPLAY_SPLASH_SCREEN=0 # added to remove splash screen as we're using gpl
+        JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:GuiAppExample,JUCE_PRODUCT_NAME>"
+        JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:GuiAppExample,JUCE_VERSION>")
+
+target_compile_definitions(TestConfig
     PRIVATE
         # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_gui_app` call
@@ -103,6 +125,18 @@ target_compile_definitions(GuiAppExample
 # dependencies are resolved automatically, so `juce_core`, `juce_events` and so on will also be
 # linked automatically. If we'd generated a binary data target above, we would need to link to it
 # here too. This is a standard CMake command.
+
+target_link_libraries(TestConfig
+    PRIVATE
+        # GuiAppData            # If we'd created a binary data target, we'd link to it here
+        juce::juce_gui_extra
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_audio_basics
+    PUBLIC
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_lto_flags
+        juce::juce_recommended_warning_flags)
 
 target_link_libraries(GuiAppExample
     PRIVATE
