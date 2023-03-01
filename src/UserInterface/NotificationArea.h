@@ -11,7 +11,7 @@
 #include <thread>
 #include <mutex>
 
-#include "Config.h"
+#include "../Config.h"
 
 typedef struct {
   uint32_t timestamp;

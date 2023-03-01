@@ -17,7 +17,7 @@
 #include <functional>
 
 #include "ReferenceCountedBuffer.h"
-#include "NotificationArea.h"
+#include "../UserInterface/NotificationArea.h"
 #include "SamplePlayer.h"
 
 //==============================================================================

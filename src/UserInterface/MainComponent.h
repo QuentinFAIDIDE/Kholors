@@ -10,7 +10,7 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 
 #include "ArrangementArea.h"
-#include "SampleManager.h"
+#include "../Audio/SampleManager.h"
 #include "NotificationArea.h"
 
 //==============================================================================

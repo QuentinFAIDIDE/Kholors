@@ -8,10 +8,10 @@
 // your module headers visible.
 #include <juce_gui_extra/juce_gui_extra.h>
 
-#include "Config.h"
+#include "../Config.h"
 #include "GridLevel.h"
 #include "NotificationArea.h"
-#include "SampleManager.h"
+#include "../Audio/SampleManager.h"
 
 //==============================================================================
 /*

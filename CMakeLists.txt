@@ -66,12 +66,12 @@ juce_add_gui_app(GuiAppExample
 target_sources(GuiAppExample
     PRIVATE
         src/Main.cpp
-        src/MainComponent.cpp
-        src/ArrangementArea.cpp
-        src/SampleManager.cpp
-        src/SamplePlayer.cpp
-        src/NotificationArea.cpp
-        src/RobotoFont.cpp)
+        src/UserInterface/MainComponent.cpp
+        src/UserInterface/ArrangementArea.cpp
+        src/UserInterface/NotificationArea.cpp
+        src/UserInterface/RobotoFont.cpp
+        src/Audio/SampleManager.cpp
+        src/Audio/SamplePlayer.cpp)
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
 # project, these might be passed in the 'Preprocessor Definitions' field. JUCE modules also make use

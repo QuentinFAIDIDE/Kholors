@@ -1,7 +1,7 @@
 #include "SamplePlayer.h"
-#include "ColorPalette.h"
+#include "../ColorPalette.h"
 
-#include "Config.h"
+#include "../Config.h"
 #include <iterator>
 
 int SamplePlayer::lastUsedColor = 0;
