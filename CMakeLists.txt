@@ -102,15 +102,6 @@ target_compile_definitions(GuiAppExample
         JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:GuiAppExample,JUCE_PRODUCT_NAME>"
         JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:GuiAppExample,JUCE_VERSION>")
 
-target_compile_definitions(TestConfig
-    PRIVATE
-        # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
-        JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_gui_app` call
-        JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_gui_app` call
-        JUCE_DISPLAY_SPLASH_SCREEN=0 # added to remove splash screen as we're using gpl
-        JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:GuiAppExample,JUCE_PRODUCT_NAME>"
-        JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:GuiAppExample,JUCE_VERSION>")
-
 # If your target needs extra binary assets, you can add them here. The first argument is the name of
 # a new static library target that will include all the binary resources. There is an optional
 # `NAMESPACE` argument that can specify the namespace of the generated binary data class. Finally,
@@ -126,17 +117,7 @@ target_compile_definitions(TestConfig
 # linked automatically. If we'd generated a binary data target above, we would need to link to it
 # here too. This is a standard CMake command.
 
-target_link_libraries(TestConfig
-    PRIVATE
-        # GuiAppData            # If we'd created a binary data target, we'd link to it here
-        juce::juce_gui_extra
-        juce::juce_audio_utils
-        juce::juce_dsp
-        juce::juce_audio_basics
-    PUBLIC
-        juce::juce_recommended_config_flags
-        juce::juce_recommended_lto_flags
-        juce::juce_recommended_warning_flags)
+target_link_libraries(TestConfig PRIVATE yaml-cpp)
 
 target_link_libraries(GuiAppExample
     PRIVATE
@@ -145,6 +126,7 @@ target_link_libraries(GuiAppExample
         juce::juce_audio_utils
         juce::juce_dsp
         juce::juce_audio_basics
+        yaml-cpp
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

@@ -1,0 +1,4 @@
+apiVersion: v0
+AudioLibraryLocations:
+- name: Samples
+  path: /home/folder/samples

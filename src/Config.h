@@ -1,4 +1,5 @@
-// sample rate (that we call framrate to not confuse with file based sound samples)
+// sample rate (that we call framrate to not confuse with file based sound
+// samples)
 #define AUDIO_FRAMERATE 44100
 
 // How many frequency bins we use on vertical axis
@@ -64,10 +65,11 @@
 // the maximum number of elements a song can have
 #define SAMPLE_MAX_PLAYERS_USED 16383
 // how many 64bits blocks the bitmask has
-#define SAMPLE_BITMASK_SIZE int(SAMPLE_MAX_PLAYERS_USED>>6)+1
+#define SAMPLE_BITMASK_SIZE int(SAMPLE_MAX_PLAYERS_USED >> 6) + 1
 
-#define SAMPLE_MASKING_DISTANCE_SEC 2*SAMPLE_MAX_DURATION_SEC
-#define SAMPLE_MASKING_DISTANCE_FRAMES AUDIO_FRAMERATE*SAMPLE_MASKING_DISTANCE_SEC
+#define SAMPLE_MASKING_DISTANCE_SEC 2 * SAMPLE_MAX_DURATION_SEC
+#define SAMPLE_MASKING_DISTANCE_FRAMES \
+  AUDIO_FRAMERATE* SAMPLE_MASKING_DISTANCE_SEC
 
 #define SAMPLEPLAYER_BORDER_RADIUS 4.0
 #define SAMPLEPLAYER_BORDER_COLOR juce::Colour(230, 230, 230)
@@ -81,7 +83,7 @@
 
 // warning: if the fft size goes below freqview height, nothing will display
 #define FREQVIEW_SAMPLE_FFT_ORDER 11
-#define FREQVIEW_SAMPLE_FFT_SIZE (1<<FREQVIEW_SAMPLE_FFT_ORDER)
+#define FREQVIEW_SAMPLE_FFT_SIZE (1 << FREQVIEW_SAMPLE_FFT_ORDER)
 #define FREQVIEW_SAMPLE_FFT_SCOPE_SIZE 4096
 #define FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS 3
 
@@ -91,13 +93,41 @@
 #ifndef DEF_CONFIG_HPP
 #define DEF_CONFIG_HPP
 
-#include <juce_core/juce_core.h>
-#include "yaml-cpp/yaml.h"
+#include <yaml-cpp/yaml.h>
+
+#include <string>
+#include <vector>
 
 class Config {
-public:
-  Config(juce::String);
-  juce::String getProfile();
+ public:
+  Config(std::string);
+
+  bool isInvalid() const;
+  std::string getProfileName() const;
+  int getNumAudioLibs() const;
+  std::string getAudioLibName(unsigned long) const;
+  std::string getAudioLibPath(unsigned long) const;
+  bool audioLibIgnoreCount(unsigned long) const;
+  std::string getErrMessage() const;
+
+ private:
+  bool _invalid;
+  std::string _errMsg;
+  std::string _profile;
+  std::vector<std::string> _audioLibNames;
+  std::vector<std::string> _audioLibPaths;
+  std::vector<bool> _audioLibIgnoreCounts;
+
+  void _checkMandatoryParameters(YAML::Node&);
+  void _checkApiVersion(YAML::Node&);
+  void _checkIfFieldScalarAndExists(YAML::Node&, std::string);
+  void _parseAudioLibraryLocations(YAML::Node&);
+  void _parseAudioLibLocationPath(YAML::Node&);
+  void _parseAudioLibLocationName(YAML::Node&);
+  void _parseAudioLibLocationIgnoreCount(YAML::Node&);
+  void _parseProfileName(YAML::Node&);
+
+  static std::vector<std::string> mandatoryParameters;
 };
 
-#endif // DEF_CONFIG_HPP
+#endif  // DEF_CONFIG_HPP
