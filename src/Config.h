@@ -117,6 +117,8 @@ class Config {
   std::vector<std::string> _audioLibNames;
   std::vector<std::string> _audioLibPaths;
   std::vector<bool> _audioLibIgnoreCounts;
+  std::string _configDirectoryPath;
+  std::string _dataLibraryPath;
 
   void _checkMandatoryParameters(YAML::Node&);
   void _checkApiVersion(YAML::Node&);
@@ -126,6 +128,12 @@ class Config {
   void _parseAudioLibLocationName(YAML::Node&);
   void _parseAudioLibLocationIgnoreCount(YAML::Node&);
   void _parseProfileName(YAML::Node&);
+
+  void _getConfigDirectory(YAML::Node&);
+  void _getDataDirectory(YAML::Node&);
+  std::string _getProvidedOrDefaultPath(YAML::Node&, std::string, std::string);
+
+  void _createFolderIfNotExists(std::string);
 
   static std::vector<std::string> mandatoryParameters;
 };

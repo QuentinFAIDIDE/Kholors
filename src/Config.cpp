@@ -1,10 +1,17 @@
 #include "Config.h"
 
+#include <asm-generic/errno-base.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <yaml-cpp/node/node.h>
 
+#include <cerrno>
 #include <exception>
 #include <iostream>
+#include <numeric>
 #include <stdexcept>
+#include <string>
 
 std::vector<std::string> Config::mandatoryParameters = {
     "profile", "apiVersion", "AudioLibraryLocations"};
@@ -21,6 +28,10 @@ Config::Config(std::string configFilePath) {
     _parseAudioLibraryLocations(config);
 
     _parseProfileName(config);
+
+    _getConfigDirectory(config);
+
+    _getDataDirectory(config);
 
     _invalid = false;
 
@@ -164,3 +175,83 @@ bool Config::audioLibIgnoreCount(unsigned long i) const {
 }
 
 std::string Config::getErrMessage() const { return _errMsg; }
+
+void Config::_getConfigDirectory(YAML::Node& config) {
+  std::string path =
+      _getProvidedOrDefaultPath(config, "configDirectory", ".kholors");
+  _createFolderIfNotExists(path);
+  _configDirectoryPath = path;
+}
+
+void Config::_getDataDirectory(YAML::Node& config) {
+  std::string path =
+      _getProvidedOrDefaultPath(config, "dataDirectory", "Kholors");
+  _createFolderIfNotExists(path);
+  _dataLibraryPath = path;
+}
+
+// defaultPathFromHome must not begin with a slash or dot, use raw folder
+// name eg. "Data" or ".datadir"
+std::string Config::_getProvidedOrDefaultPath(YAML::Node& config,
+                                              std::string paramName,
+                                              std::string defaultPathFromHome) {
+  // if the directory path config is set, use this dir
+  if (config[paramName]) {
+    // abort if not in the right format or empty
+    if (!config[paramName].IsScalar() ||
+        config[paramName].as<std::string>() == "") {
+      throw std::runtime_error(paramName + std::string("is in invalid format"));
+    }
+    // return it
+    return config[paramName].as<std::string>();
+  }
+
+  // use default location
+  // if home envar is set, use it
+  if (const char* homeDirEnv = std::getenv("HOME")) {
+    // make sure it ends with a slash
+    std::string homeDir = homeDirEnv;
+    if (homeDir.back() != '/') {
+      homeDir.push_back('/');
+    }
+    // append the default folder name
+    return homeDir + defaultPathFromHome;
+  }
+
+  // if we reach here, HOME or config was not set so we error out
+  throw std::runtime_error(
+      std::string("Unable to get path for config ") + paramName +
+      std::string(" or to find HOME envar to use default location"));
+}
+
+void Config::_createFolderIfNotExists(std::string path) {
+  struct stat st;
+  if (stat(path.c_str(), &st) == -1) {
+    // if the folder does not exists, create it
+    if (errno == ENOENT) {
+      // use perimissions of parent dir and abort on error
+      if (mkdir(path.c_str(), 0755) == -1) {
+        throw std::runtime_error(
+            std::string("Unable to create directory at path: ") + path +
+            std::string(": mkdir failed with error: ") +
+            std::string(strerror(errno)));
+      }
+      return;
+    }
+    throw std::runtime_error(std::string("OS stat call failed with error: ") +
+                             strerror(errno));
+  }
+  // if we reach here, something was found, we check it's a dir and writable
+  // before returning
+  bool isDirectory = S_ISDIR(st.st_mode);
+  if (!isDirectory) {
+    throw std::runtime_error(std::string("Expected a folder for path: ") +
+                             path);
+  }
+  // BUG: this tests if the folder is writeable by real UID and not effective
+  // UID
+  if (access(path.c_str(), W_OK) != 0) {
+    throw std::runtime_error(
+        std::string("Folder path is not writable by real UID: ") + path);
+  }
+}
