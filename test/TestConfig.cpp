@@ -3,7 +3,7 @@
 #include "../src/Config.h"
 
 int testConfig1() {
-  Config cfg1("../test/test01.yaml");
+  Config cfg1("./test/test01.yaml");
 
   if (cfg1.isInvalid() == true) {
     std::cout << "First test config was invalid: " << cfg1.getErrMessage()
@@ -66,21 +66,21 @@ int testConfig1() {
 
 int testConfig2() {
   // second config is invalid (garbage)
-  Config cfg2("../test/test02.yaml");
+  Config cfg2("./test/test02.yaml");
   if (cfg2.isInvalid() == false) {
     std::cout << "Second test config valid" << std::endl;
     return 1;
   }
 
   // this one has invalid empty library
-  Config cfg3("../test/test03.yaml");
+  Config cfg3("./test/test03.yaml");
   if (cfg3.isInvalid() == false) {
     std::cout << "Third test config valid" << std::endl;
     return 1;
   }
 
   // this one has missing required key "profile"
-  Config cfg4("../test/test04.yaml");
+  Config cfg4("./test/test04.yaml");
   if (cfg3.isInvalid() == false) {
     std::cout << "Fourth test config valid" << std::endl;
     return 1;
