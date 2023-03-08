@@ -36,6 +36,7 @@ add_subdirectory(JUCE)                    # If you've put JUCE in a subdirectory
 # Include tests and Ctest utility
 include(CTest)
 add_test(NAME TestConfig COMMAND TestConfig)
+add_test(NAME TestAudioLib COMMAND TestAudioLib)
 
 # If your app depends the VST2 SDK, perhaps to host VST2 plugins, CMake needs to be told where
 # to find the SDK on your system. This setup should be done before calling `juce_add_gui_app`.
@@ -56,6 +57,7 @@ juce_add_gui_app(GuiAppExample
     PRODUCT_NAME "Gui App Example")     # The name of the final executable, which can differ from the target name
 
 juce_add_gui_app(TestConfig PRODUCT_NAME "TestConfig")
+juce_add_gui_app(TestAudioLib PRODUCT_NAME "TestAudioLib")
 
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
 # into your build tree. This should be included with `#include <JuceHeader.h>`. The include path for
@@ -86,6 +88,10 @@ target_sources(TestConfig
         src/Config.cpp
         test/TestConfig.cpp)
 
+target_sources(TestAudioLib
+    PRIVATE
+        src/Library/AudioLibraryManager.cpp
+        test/TestAudioLibrary.cpp)
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
 # project, these might be passed in the 'Preprocessor Definitions' field. JUCE modules also make use
 # of compile definitions to switch certain features on/off, so if there's a particular feature you
@@ -94,6 +100,16 @@ target_sources(TestConfig
 # definitions, pick unique names that are unlikely to collide! This is a standard CMake command.
 
 target_compile_definitions(GuiAppExample
+    PRIVATE
+        # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
+        JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_gui_app` call
+        JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_gui_app` call
+        JUCE_DISPLAY_SPLASH_SCREEN=0 # added to remove splash screen as we're using gpl
+        JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:GuiAppExample,JUCE_PRODUCT_NAME>"
+        JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:GuiAppExample,JUCE_VERSION>")
+
+# TODO: may remove this if cherry picking TestAudioLib linked libs
+target_compile_definitions(TestAudioLib
     PRIVATE
         # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_gui_app` call
@@ -127,6 +143,19 @@ target_link_libraries(GuiAppExample
         juce::juce_dsp
         juce::juce_audio_basics
         yaml-cpp
+    PUBLIC
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_lto_flags
+        juce::juce_recommended_warning_flags)
+
+# TODO: cherry pick TestAudioLib linked libs to remove unnecessary bloat
+target_link_libraries(TestAudioLib
+    PRIVATE
+        # GuiAppData            # If we'd created a binary data target, we'd link to it here
+        juce::juce_gui_extra
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_audio_basics
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
