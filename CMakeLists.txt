@@ -80,6 +80,7 @@ target_sources(GuiAppExample
         src/UserInterface/ArrangementArea.cpp
         src/UserInterface/NotificationArea.cpp
         src/UserInterface/RobotoFont.cpp
+        src/UserInterface/LogoDarkPng.cpp
         src/Audio/SampleManager.cpp
         src/Audio/SamplePlayer.cpp)
 

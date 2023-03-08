@@ -51,8 +51,10 @@
 
 // various colors
 #define COLOR_NOTIF_BACKGROUND juce::Colour(20, 20, 20)
-#define COLOR_APP_BACKGROUND juce::Colour(32, 29, 29)
+#define COLOR_APP_BACKGROUND juce::Colour(27, 26, 26)
 #define COLOR_NOTIF_TEXT juce::Colour(230, 230, 230)
+#define COLOR_NOTIF_BAR_TOP juce::Colour(62, 49, 49)
+#define COLOR_NOTIF_BAR_BOTTOM juce::Colour(10, 10, 10)
 
 // the gain smoothing when the value is changed
 #define DSP_GAIN_SMOOTHING_RAMP_SEC 0.03f
@@ -75,7 +77,7 @@
 #define SAMPLEPLAYER_BORDER_COLOR juce::Colour(230, 230, 230)
 #define SAMPLEPLAYER_BORDER_WIDTH 2.5
 
-#define PLAYCURSOR_WIDTH 6
+#define PLAYCURSOR_WIDTH 3
 #define PLAYCURSOR_GRAB_WIDTH 10
 
 #define KEYMAP_DRAG_MODE "d"

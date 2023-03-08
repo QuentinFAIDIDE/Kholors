@@ -8,10 +8,11 @@
 // your module headers visible.
 #include <juce_gui_extra/juce_gui_extra.h>
 
-#include <thread>
 #include <mutex>
+#include <thread>
 
 #include "../Config.h"
+#include "LogoDarkPng.h"
 
 typedef struct {
   uint32_t timestamp;
@@ -48,29 +49,33 @@ class NotificationArea : public juce::AnimatedAppComponent {
   bool isHidden, isAnimationRunning;
   std::queue<NotificationMessage> notifQueue;
   NotificationMessage lastNotification;
-  // the base position of the notif box, base position does not include outermargins.
-  // as we're right aligned it's the widget width minus notif box width. 
+  // the base position of the notif box, base position does not include
+  // outermargins. as we're right aligned it's the widget width minus notif box
+  // width.
   int baseX, baseY;
   // the animation destination relative to base position
   int destinationX, destinationY;
-  // Position of the popup including animation movements relative to base position.
+  // Position of the popup including animation movements relative to base
+  // position.
   int popupX, popupY;
 
   // part in brackets is the actual drawn card when it's not animated:
 
-  //   left outer margin  baseX + OUTER_MARGINS                            right outer margins
-  //               |      |                                                     |
-  //     baseX     |      |          baseX + OUTER_MARGINS + INNER_MARGINS      |
-  //     |         |      |          |                                          |
-  //     |                [----------| My notfication text here |----------]        )   
-  //                           |                                      |             |
-  //                    left inner margin                    right inner margin     |
+  //   left outer margin  baseX + OUTER_MARGINS                            right
+  //   outer margins
+  //               |      | |
+  //     baseX     |      |          baseX + OUTER_MARGINS + INNER_MARGINS | |
+  //     |      |          |                                          | |
+  //     [----------| My notfication text here |----------]        )
+  //                           |                                      | |
+  //                    left inner margin                    right inner margin
+  //                    |
   //                                                                                screen end
 
   // buffer value used in the drawing function
   int maxWidth;
 
-  // the current notif box positiooutput_addresses_ids[addr] 
+  // the current notif box positiooutput_addresses_ids[addr]
   // timers for animations
   int now, timeSinceAnimStart, animStartTime;
   // size and position of main content widget
@@ -81,6 +86,8 @@ class NotificationArea : public juce::AnimatedAppComponent {
   juce::ReadWriteLock queueRwMutex;
   // a value that store total width the animation have to move in
   float animationNormalisingFactor;
+
+  juce::Image _logo;
 
   //==============================================================================
   void trimNotifications();

@@ -8,13 +8,15 @@ NotificationArea::NotificationArea() {
   popupY = NOTIF_OUTTER_MARGINS;
   popupX = NOTIF_WIDTH + (2 * NOTIF_OUTTER_MARGINS);
   setFramesPerSecond(NOTIF_ANIM_FPS);
-  animationNormalisingFactor = float(NOTIF_WIDTH+(2.0*NOTIF_OUTTER_MARGINS));
+  animationNormalisingFactor =
+      float(NOTIF_WIDTH + (2.0 * NOTIF_OUTTER_MARGINS));
+  _logo = juce::ImageFileFormat::loadFrom(LogoDarkPng::logo_dark_png,
+                                          LogoDarkPng::logo_dark_pngSize);
 }
 
 NotificationArea::~NotificationArea() {}
 
 void NotificationArea::paint(juce::Graphics& g) {
-
   // make sure the notification are filetered to remove old ones
   trimNotifications();
 
@@ -28,12 +30,21 @@ void NotificationArea::paint(juce::Graphics& g) {
 
   // get the window width
   bounds = g.getClipBounds();
-  baseX = bounds.getWidth() - 2*NOTIF_OUTTER_MARGINS - NOTIF_WIDTH;
+  baseX = bounds.getWidth() - 2 * NOTIF_OUTTER_MARGINS - NOTIF_WIDTH;
+
+  g.setColour(COLOR_APP_BACKGROUND);
+  g.fillAll();
 
   // draw background over bounds
   // paint the background of the area
-  g.setColour(COLOR_APP_BACKGROUND);
-  g.fillRect(bounds);
+  g.setColour(juce::Colour(20, 20, 20));
+  juce::Rectangle<float> innerArea(6, 6, bounds.getWidth() - 12,
+                                   bounds.getHeight() - 12);
+  g.fillRoundedRectangle(innerArea, 4);
+  g.setColour(juce::Colour(200, 200, 200));
+  g.drawRoundedRectangle(innerArea, 4, 0.4);
+
+  g.drawImageAt(_logo, 14, 14);
 
   // get time of now to reuse it in the animation drawings parts
   now = juce::Time::getMillisecondCounter();
@@ -46,11 +57,11 @@ void NotificationArea::paint(juce::Graphics& g) {
 
     // the distance shift from the beginning of the anim
     int distanceDiff = int(
-      // make it over 1 to use the ease in function
-      easeIn( (NOTIF_ANIMATION_SPEED_PIXEL_MS * float(timeSinceAnimStart)) /
-        animationNormalisingFactor )
+        // make it over 1 to use the ease in function
+        easeIn((NOTIF_ANIMATION_SPEED_PIXEL_MS * float(timeSinceAnimStart)) /
+               animationNormalisingFactor)
         // scale it back up after applying ease in function
-        * animationNormalisingFactor );
+        * animationNormalisingFactor);
 
     // if it's going out go left
     if (isHidden == true) {
@@ -63,9 +74,10 @@ void NotificationArea::paint(juce::Graphics& g) {
 
       // if it's going in go right
     } else {
-      // new position is the screen limit minus the notif movement toward center.
-      // we make the fade in faster than fade out for aesthetic reasons
-      popupX = NOTIF_WIDTH + (2*NOTIF_OUTTER_MARGINS) - int(float(distanceDiff)*4.0);
+      // new position is the screen limit minus the notif movement toward
+      // center. we make the fade in faster than fade out for aesthetic reasons
+      popupX = NOTIF_WIDTH + (2 * NOTIF_OUTTER_MARGINS) -
+               int(float(distanceDiff) * 4.0);
       // if it reached destination, stop it
       if (popupX <= destinationX) {
         popupX = destinationX;
@@ -75,12 +87,11 @@ void NotificationArea::paint(juce::Graphics& g) {
 
     // if we are not performing an animation
   } else {
-
     // if we need to fade out (queue empty and notif not hidden)
     if (notifQueue.size() == 0 && !isHidden) {
       // trigger the animation to the notif place.
       // destination is out if the screen
-      destinationX = NOTIF_WIDTH + (2*NOTIF_OUTTER_MARGINS);
+      destinationX = NOTIF_WIDTH + (2 * NOTIF_OUTTER_MARGINS);
       isAnimationRunning = true;
       isHidden = true;
       animStartTime = now;
@@ -97,30 +108,22 @@ void NotificationArea::paint(juce::Graphics& g) {
   }
 
   // if the box is in bound, draw it
-  if(baseX + popupX < bounds.getWidth()) {
+  if (baseX + popupX < bounds.getWidth()) {
     g.setColour(COLOR_NOTIF_BACKGROUND);
 
     // draw background box
-    // font size: 
-    g.setFont(17); // TODO: Make it an app wide param
-    g.fillRoundedRectangle(
-      baseX + popupX,
-      baseY + popupY,
-      NOTIF_WIDTH,
-      NOTIF_HEIGHT,
-      NOTIF_BORDER_RADIUS
-    );
+    // font size:
+    g.setFont(17);  // TODO: Make it an app wide param
+    g.fillRoundedRectangle(baseX + popupX, baseY + popupY, NOTIF_WIDTH,
+                           NOTIF_HEIGHT, NOTIF_BORDER_RADIUS);
     // draw text
     // TODO: change font
 
     g.setColour(COLOR_NOTIF_TEXT);
-    g.drawMultiLineText	(lastNotification.message,
-        baseX + popupX + NOTIF_INNER_MARGINS,
+    g.drawMultiLineText(
+        lastNotification.message, baseX + popupX + NOTIF_INNER_MARGINS,
         baseY + popupY + NOTIF_INNER_MARGINS,
-        NOTIF_WIDTH - NOTIF_INNER_MARGINS*2,
-        juce::Justification::left,
-        0.0f 
-    );
+        NOTIF_WIDTH - NOTIF_INNER_MARGINS * 2, juce::Justification::left, 0.0f);
   }
 
   // free the lock
@@ -133,7 +136,7 @@ void NotificationArea::trimNotifications() {
   // get the lock for reading the queue
   queueRwMutex.enterRead();
   // iterate over queue elements if they exists
-  while (notifQueue.size()>0) {
+  while (notifQueue.size() > 0) {
     // if it's outdated, remove it and continue
     if (notifQueue.front().timestamp + NOTIF_TIMEOUT < timestamp) {
       // switch from a read to a write lock
@@ -145,7 +148,7 @@ void NotificationArea::trimNotifications() {
       queueRwMutex.exitWrite();
       queueRwMutex.enterRead();
       continue;
-    // this branch is traversed if the oldest elem has not timed out
+      // this branch is traversed if the oldest elem has not timed out
     } else {
       // this means other elemnts won't too so we break out of loop
       break;
@@ -155,7 +158,7 @@ void NotificationArea::trimNotifications() {
   queueRwMutex.exitRead();
 }
 
-void NotificationArea::resized() {};
+void NotificationArea::resized(){};
 
 void NotificationArea::mouseDown(const juce::MouseEvent& me) {}
 
@@ -166,18 +169,18 @@ void NotificationArea::mouseDrag(const juce::MouseEvent& me) {}
 void NotificationArea::mouseMove(const juce::MouseEvent& me) {}
 
 void NotificationArea::notifyError(const juce::String& msg) {
-  
   // get a read lock
   queueRwMutex.enterRead();
   // if the queue is full ignore the notification
-  if(notifQueue.size()>NOTIF_MAX_QUEUE_SIZE) {
+  if (notifQueue.size() > NOTIF_MAX_QUEUE_SIZE) {
     return;
   }
   // free read lock
   queueRwMutex.exitRead();
 
   // get current timestamp
-  uint32_t timestamp = juce::Time::getMillisecondCounter();;
+  uint32_t timestamp = juce::Time::getMillisecondCounter();
+  ;
   // create the new notification
   lastNotification.timestamp = timestamp;
   lastNotification.message = msg;
@@ -189,7 +192,8 @@ void NotificationArea::notifyError(const juce::String& msg) {
   // exit the writing lock
   queueRwMutex.exitWrite();
 
-  std::cerr << "New error notification at " << timestamp << ": " << msg << std::endl;
+  std::cerr << "New error notification at " << timestamp << ": " << msg
+            << std::endl;
 
   // we will let the repaint function starts the animation
   // call a repaint to get the anim started.
@@ -198,19 +202,17 @@ void NotificationArea::notifyError(const juce::String& msg) {
   repaint();
 }
 
-// stolen from here: 
+// stolen from here:
 // https://stackoverflow.com/questions/13462001/ease-in-and-ease-out-animation-formula
 // Implements an ease in speed modulation between 0 and 1
-float NotificationArea::easeIn(float t)
-{
-    if(t <= 0.5f)
-        return 2.0f * t * t;
-    if(t <= 1.0f) {
-      t -= 0.5f;
-      return 2.0f * t * (1.0f - t) + 0.5f;
-    } else {
-      return 1.0;
-    }
+float NotificationArea::easeIn(float t) {
+  if (t <= 0.5f) return 2.0f * t * t;
+  if (t <= 1.0f) {
+    t -= 0.5f;
+    return 2.0f * t * (1.0f - t) + 0.5f;
+  } else {
+    return 1.0;
+  }
 }
 
 void NotificationArea::update() {}

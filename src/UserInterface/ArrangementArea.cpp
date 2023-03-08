@@ -12,8 +12,7 @@
 
 //==============================================================================
 ArrangementArea::ArrangementArea(SampleManager& sm, NotificationArea& na)
-    : sampleManager(sm),
-      notificationArea(na) {
+    : sampleManager(sm), notificationArea(na) {
   // save reference to the sample manager
   // initialize grid and position
   viewPosition = 0;
@@ -25,7 +24,8 @@ ArrangementArea::ArrangementArea(SampleManager& sm, NotificationArea& na)
   lastPlayCursorPosition = 0;
   trackMovingInitialPosition = -1;
   // TODO: make fft block height dynamic for zooming on y axis
-  fftBlockHeight = float(FREQTIME_VIEW_HEIGHT-FREQTIME_VIEW_INNER_MARGINS)/float(FREQVIEW_SAMPLE_FFT_SIZE<<1);
+  fftBlockHeight = float(FREQTIME_VIEW_HEIGHT - FREQTIME_VIEW_INNER_MARGINS) /
+                   float(FREQVIEW_SAMPLE_FFT_SIZE << 1);
   // TODO: configure this in args or config file
   tempo = 120;
   // bars drawned in order, watch for overlaps (use smaller subdiv first)
@@ -78,6 +78,14 @@ void ArrangementArea::paintBars(juce::Graphics& g) {
   // paint the background of the area
   g.setColour(juce::Colour(20, 20, 20));
   g.fillRect(background);
+
+  g.setColour(juce::Colour(200, 200, 200));
+  g.drawLine(0, background.getHeight(), background.getWidth(),
+             background.getHeight());
+  g.drawLine(0, 0, background.getWidth(), 0);
+  g.setColour(juce::Colour(50, 50, 50));
+  g.drawLine(0, background.getHeight() >> 1, background.getWidth(),
+             background.getHeight() >> 1);
 
   // width of the bar grid
   int barGridPixelWidth =
@@ -138,7 +146,8 @@ void ArrangementArea::paintSamples(juce::Graphics& g) {
   // the leftmost on-screen position in audio samples
   int64_t viewRightBound = viewPosition + (viewScale * bounds.getWidth());
 
-  noVerticalSquaresFft = (FREQTIME_VIEW_HEIGHT-FREQTIME_VIEW_INNER_MARGINS)/(FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS*2);
+  noVerticalSquaresFft = (FREQTIME_VIEW_HEIGHT - FREQTIME_VIEW_INNER_MARGINS) /
+                         (FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS * 2);
 
   // for each track
   for (size_t i = 0; i < nTracks; i++) {
@@ -161,99 +170,104 @@ void ArrangementArea::paintSamples(juce::Graphics& g) {
   }
 }
 
-void ArrangementArea::drawSampleTrack(juce::Graphics& g, SamplePlayer* sp, size_t id) {
+void ArrangementArea::drawSampleTrack(juce::Graphics& g, SamplePlayer* sp,
+                                      size_t id) {
   // the shift to apply on tracks currently dragged
   int64_t dragShift = 0;
   auto search = selectedTracks.find(id);
-  if(trackMovingInitialPosition!=-1 && search != selectedTracks.end()) {
+  if (trackMovingInitialPosition != -1 && search != selectedTracks.end()) {
     dragShift = (lastMouseX - trackMovingInitialPosition);
   }
   float radius;
   // if the track is currently being selected, draw thicker borders
-  if(search != selectedTracks.end()) {
+  if (search != selectedTracks.end()) {
     radius = SAMPLEPLAYER_BORDER_WIDTH;
   } else {
-    radius = SAMPLEPLAYER_BORDER_WIDTH/2;
+    radius = SAMPLEPLAYER_BORDER_WIDTH / 2;
   }
   // draw a rectangle around the sample
   g.setColour(SAMPLEPLAYER_BORDER_COLOR);
-  auto positionX = ((sp->getEditingPosition() - viewPosition) / viewScale)+dragShift;
-  auto positionY = FREQTIME_VIEW_INNER_MARGINS>>1;
+  auto positionX =
+      ((sp->getEditingPosition() - viewPosition) / viewScale) + dragShift;
+  auto positionY = FREQTIME_VIEW_INNER_MARGINS >> 1;
   g.drawRoundedRectangle(positionX, positionY, sp->getLength() / viewScale,
-                         FREQTIME_VIEW_HEIGHT-(FREQTIME_VIEW_INNER_MARGINS),
+                         FREQTIME_VIEW_HEIGHT - (FREQTIME_VIEW_INNER_MARGINS),
                          SAMPLEPLAYER_BORDER_RADIUS, radius);
   // if there are two channels
-  if(sp->getBufferNumChannels()==2) {
+  if (sp->getBufferNumChannels() == 2) {
     // draw left (upper on the chart) channel
-    drawSampleChannelFft(g, sp, positionX, FREQTIME_VIEW_INNER_MARGINS>>1, 0, false);
+    drawSampleChannelFft(g, sp, positionX, FREQTIME_VIEW_INNER_MARGINS >> 1, 0,
+                         false);
     // draw right (lower on the chart) channel
-    drawSampleChannelFft(g, sp, positionX, FREQTIME_VIEW_HEIGHT>>1, 1, true);
-  // if buffer has anything other than two channels only display first
+    drawSampleChannelFft(g, sp, positionX, FREQTIME_VIEW_HEIGHT >> 1, 1, true);
+    // if buffer has anything other than two channels only display first
   } else {
     // duplicate the first channel (most likely it's mono)
-    drawSampleChannelFft(g, sp, positionX, FREQTIME_VIEW_INNER_MARGINS>>1, 0, false);
-    drawSampleChannelFft(g, sp, positionX, FREQTIME_VIEW_HEIGHT>>1, 0, true);
+    drawSampleChannelFft(g, sp, positionX, FREQTIME_VIEW_INNER_MARGINS >> 1, 0,
+                         false);
+    drawSampleChannelFft(g, sp, positionX, FREQTIME_VIEW_HEIGHT >> 1, 0, true);
   }
 }
 
-// drawSampleChannelFft draw the result of the fft of the sample for this channel
-// at this position. It will display lower freq to bottom if flipped is false.
-void ArrangementArea::drawSampleChannelFft(juce::Graphics& g, SamplePlayer *sp,
-  int64_t positionX, int64_t positionY, int channel, bool flipped) {
-
+// drawSampleChannelFft draw the result of the fft of the sample for this
+// channel at this position. It will display lower freq to bottom if flipped is
+// false.
+void ArrangementArea::drawSampleChannelFft(juce::Graphics& g, SamplePlayer* sp,
+                                           int64_t positionX, int64_t positionY,
+                                           int channel, bool flipped) {
   float intensity;
 
-  int noHorizontalSquares = int((sp->getLength() / viewScale) / (FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS));
+  int noHorizontalSquares = int((sp->getLength() / viewScale) /
+                                (FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS));
 
   int posX, posY;
 
-  // TODO: precast values like float(FREQVIEW_SAMPLE_FFT_SIZE) and float(noHorizontalSquares)
+  // TODO: precast values like float(FREQVIEW_SAMPLE_FFT_SIZE) and
+  // float(noHorizontalSquares)
 
   // for each horizontal line
-  for(size_t i=0; i<noHorizontalSquares; i++) {
+  for (size_t i = 0; i < noHorizontalSquares; i++) {
     // compute index of the fft to read
-    posX = int((float(i)/float(noHorizontalSquares))*float(sp->getNumFft()));
+    posX =
+        int((float(i) / float(noHorizontalSquares)) * float(sp->getNumFft()));
     // for each vertical line
-    for(size_t j=0; j<noVerticalSquaresFft; j++) {
-      if(flipped) {
-        posY = int(std::round(
-          polylens((float(j))/float(noVerticalSquaresFft))*
-          float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)
-        ));
+    for (size_t j = 0; j < noVerticalSquaresFft; j++) {
+      if (flipped) {
+        posY =
+            int(std::round(polylens((float(j)) / float(noVerticalSquaresFft)) *
+                           float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)));
       } else {
         posY = int(std::round(
-          polylens(1.0f-((float(j))/float(noVerticalSquaresFft)))*
-          float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)
-        ));
+            polylens(1.0f - ((float(j)) / float(noVerticalSquaresFft))) *
+            float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)));
       }
       // get the intensity at this frequency/time
       intensity = sp->getFftData()[
-        
-        (channel * sp->getNumFft() * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) +
-        (posX*FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + posY
+
+          (channel * sp->getNumFft() * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) +
+          (posX * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + posY
 
       ];
       // scale intensity to fit between 0 and 1
       intensity = juce::jmap(intensity, MIN_DB, MAX_DB, 0.0f, 1.0f);
-      intensity = sigmoid((intensity*12.0)-6.0);
+      intensity = sigmoid((intensity * 12.0) - 6.0);
       intensity = juce::jlimit(0.0f, 1.0f, intensity);
       // draw the rectangle
       g.setColour(sp->getColor().withAlpha(intensity));
-      g.fillRect(
-        positionX + FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS*i, // TODO: precompute out of loop
-        positionY + FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS*j,
-        FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS,
-        FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS
-      );
+      g.fillRect(positionX + FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS *
+                                 i,  // TODO: precompute out of loop
+                 positionY + FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS * j,
+                 FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS,
+                 FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS);
     }
   }
 }
 
 float ArrangementArea::polylens(float v) {
-  if(v<0.5) {
-    return std::pow(v, 0.3f)*(0.5/(std::pow(0.5, 0.3)));
+  if (v < 0.5) {
+    return std::pow(v, 0.3f) * (0.5 / (std::pow(0.5, 0.3)));
   } else {
-    return 0.5+std::pow(v-0.5, 2.0f)*(0.5/(std::pow(0.5, 2.0f)));
+    return 0.5 + std::pow(v - 0.5, 2.0f) * (0.5 / (std::pow(0.5, 2.0f)));
   }
 }
 
@@ -262,21 +276,14 @@ void ArrangementArea::paintPlayCursor(juce::Graphics& g) {
   // in the cursor moving phase, we avoid waiting tracks locks
   // by using the mouse value
   if (!isMovingCursor) {
-    lastPlayCursorPosition = ((sampleManager.getNextReadPosition()-viewPosition)/viewScale);
-    g.fillRect(
-      lastPlayCursorPosition-(PLAYCURSOR_WIDTH>>1),
-      0,
-      PLAYCURSOR_WIDTH,
-      FREQTIME_VIEW_HEIGHT
-    );
+    lastPlayCursorPosition =
+        ((sampleManager.getNextReadPosition() - viewPosition) / viewScale);
+    g.fillRect(lastPlayCursorPosition - (PLAYCURSOR_WIDTH >> 1), 0,
+               PLAYCURSOR_WIDTH, FREQTIME_VIEW_HEIGHT);
   } else {
     lastPlayCursorPosition = lastMouseX;
-    g.fillRect(
-      lastPlayCursorPosition-(PLAYCURSOR_WIDTH>>1),
-      0,
-      PLAYCURSOR_WIDTH,
-      FREQTIME_VIEW_HEIGHT
-    );
+    g.fillRect(lastPlayCursorPosition - (PLAYCURSOR_WIDTH >> 1), 0,
+               PLAYCURSOR_WIDTH, FREQTIME_VIEW_HEIGHT);
   }
 }
 
@@ -299,7 +306,7 @@ void ArrangementArea::mouseDown(const juce::MouseEvent& jme) {
 
 void ArrangementArea::handleMiddleButterDown(const juce::MouseEvent& jme) {
   // handle resize/mode mode activation
-  if (!isMovingCursor && !isResizing && trackMovingInitialPosition==-1) {
+  if (!isMovingCursor && !isResizing && trackMovingInitialPosition == -1) {
     isResizing = true;
   }
 }
@@ -307,24 +314,24 @@ void ArrangementArea::handleMiddleButterDown(const juce::MouseEvent& jme) {
 void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent& jme) {
   size_t clickedTrack;
   // handle click when in default mode
-  if(!isMovingCursor && !isResizing) {
+  if (!isMovingCursor && !isResizing) {
     // if we're clicking around a cursor
-    if(abs(lastMouseX-lastPlayCursorPosition)<PLAYCURSOR_GRAB_WIDTH) {
+    if (abs(lastMouseX - lastPlayCursorPosition) < PLAYCURSOR_GRAB_WIDTH) {
       // enter cursor moving mode
       isMovingCursor = true;
       // else, see if we're clicking tracks for selection
-    } else if (!isMovingCursor && trackMovingInitialPosition==-1) {
+    } else if (!isMovingCursor && trackMovingInitialPosition == -1) {
       clickedTrack = getTrackClicked(jme);
-      if(clickedTrack!=-1) {
+      if (clickedTrack != -1) {
         // if ctrl is not pressed, we clear selection set
         if (!jme.mods.isCtrlDown()) {
           selectedTracks.clear();
         }
         selectedTracks.insert(clickedTrack);
         repaint();
-      // if clicking in the void, unselected everything
+        // if clicking in the void, unselected everything
       } else {
-        if(!selectedTracks.empty()) {
+        if (!selectedTracks.empty()) {
           selectedTracks.clear();
           repaint();
         }
@@ -351,13 +358,14 @@ size_t ArrangementArea::getTrackClicked(const juce::MouseEvent& jme) {
     }
     // get its lock
     const juce::SpinLock::ScopedLockType lock(sp->playerMutex);
-    
+
     trackPosition = (sp->getEditingPosition() - viewPosition) / viewScale;
 
     // if it's inbound, return the index
-    if(lastMouseX > trackPosition && lastMouseX < trackPosition+(sp->getLength()/viewScale)) {
+    if (lastMouseX > trackPosition &&
+        lastMouseX < trackPosition + (sp->getLength() / viewScale)) {
       return i;
-    } 
+    }
   }
 
   return -1;
@@ -377,9 +385,9 @@ void ArrangementArea::mouseUp(const juce::MouseEvent& jme) {
 
 void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent& jme) {
   // handle cursor mode relieving
-  if(isMovingCursor) {
+  if (isMovingCursor) {
     isMovingCursor = false;
-    sampleManager.setNextReadPosition(viewPosition + lastMouseX*viewScale);
+    sampleManager.setNextReadPosition(viewPosition + lastMouseX * viewScale);
   }
 }
 
@@ -395,7 +403,6 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent& jme) {
 
   // handle resize mode
   if (isResizing) {
-
     // ratio from horizontal to vertical movement
     float movementRatio = ((float)abs(lastMouseX - newPosition.getX())) /
                           ((float)abs(lastMouseY - newPosition.getY()));
@@ -443,18 +450,17 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent& jme) {
   lastMouseY = newPosition.getY();
 
   // if updated view or in cursor moving mode, repaint
-  if(viewUpdated || isMovingCursor) {
+  if (viewUpdated || isMovingCursor) {
     repaint();
   }
 }
 
 void ArrangementArea::mouseMove(const juce::MouseEvent& jme) {
-
   // saving last mouse position
   juce::Point<int> newPosition = jme.getPosition();
   lastMouseX = newPosition.getX();
   lastMouseY = newPosition.getY();
-  
+
   // if we are in resize mode and middle mouse button is not pressed
   if (isResizing && !jme.mods.isMiddleButtonDown()) {
     // save that we are not in resize mode anymore
@@ -462,7 +468,7 @@ void ArrangementArea::mouseMove(const juce::MouseEvent& jme) {
   }
 
   // if in drag mode, repaint on movement
-  if (trackMovingInitialPosition!=-1) {
+  if (trackMovingInitialPosition != -1) {
     repaint();
   }
 }
@@ -493,22 +499,25 @@ void ArrangementArea::filesDropped(const juce::StringArray& files, int x,
   }
 }
 
-bool ArrangementArea::keyPressed(const juce::KeyPress &key) {
+bool ArrangementArea::keyPressed(const juce::KeyPress& key) {
   // if the space key is pressed, play or pause
-  if(key==juce::KeyPress::spaceKey) {
-    if(sampleManager.isCursorPlaying()) {
+  if (key == juce::KeyPress::spaceKey) {
+    if (sampleManager.isCursorPlaying()) {
       sampleManager.stopPlayback();
     } else if (!isMovingCursor) {
       sampleManager.startPlayback();
     }
-  } else if (key==juce::KeyPress::createFromDescription(KEYMAP_DRAG_MODE)) {
+  } else if (key == juce::KeyPress::createFromDescription(KEYMAP_DRAG_MODE)) {
     // if pressing d and not in any mode, start dragging
-    if(!isResizing && trackMovingInitialPosition==-1 && !selectedTracks.empty()) {
+    if (!isResizing && trackMovingInitialPosition == -1 &&
+        !selectedTracks.empty()) {
       trackMovingInitialPosition = lastMouseX;
     }
-  } else if (key==juce::KeyPress::createFromDescription(KEYMAP_DELETE_SELECTION)) {
+  } else if (key ==
+             juce::KeyPress::createFromDescription(KEYMAP_DELETE_SELECTION)) {
     // if pressing x and not in any mode, delete selected tracks
-    if(!isResizing && trackMovingInitialPosition==-1 && !selectedTracks.empty()) {
+    if (!isResizing && trackMovingInitialPosition == -1 &&
+        !selectedTracks.empty()) {
       deleteSelectedTracks();
     }
   }
@@ -521,7 +530,7 @@ void ArrangementArea::deleteSelectedTracks() {
   std::set<std::size_t>::iterator it = selectedTracks.begin();
   while (it != selectedTracks.end()) {
     // delete it
-    SamplePlayer * deletedSp = sampleManager.deleteTrack(*it);
+    SamplePlayer* deletedSp = sampleManager.deleteTrack(*it);
     delete deletedSp;
     it++;
   }
@@ -532,32 +541,33 @@ void ArrangementArea::deleteSelectedTracks() {
 
 bool ArrangementArea::keyStateChanged(bool isKeyDown) {
   // if in drag mode
-  if(trackMovingInitialPosition!=-1) {
+  if (trackMovingInitialPosition != -1) {
     // if the D key is not pressed anymore
-    if(!juce::KeyPress::isKeyCurrentlyDown(
-      juce::KeyPress::createFromDescription(KEYMAP_DRAG_MODE).getKeyCode()
-      )
-    ) {
+    if (!juce::KeyPress::isKeyCurrentlyDown(
+            juce::KeyPress::createFromDescription(KEYMAP_DRAG_MODE)
+                .getKeyCode())) {
       // update tracks position, get out of drag mode, and repaint
       size_t nTracks = sampleManager.getNumTracks();
       SamplePlayer* sp;
       int64_t trackPosition;
-      int64_t dragDistance = (lastMouseX - trackMovingInitialPosition)*viewScale; 
+      int64_t dragDistance =
+          (lastMouseX - trackMovingInitialPosition) * viewScale;
       // for each track
       for (size_t i = 0; i < nTracks; i++) {
-        if (auto search = selectedTracks.find(i); search != selectedTracks.end()) {
-            // get a reference to the sample
-            sp = sampleManager.getTrack(i);
-            // skip nullptr in tracks list (should not happen)
-            if (sp == nullptr) {
-              continue;
-            }
-            // get its lock
-            const juce::SpinLock::ScopedLockType lock(sp->playerMutex);
-            // get the old position
-            trackPosition = sp->getEditingPosition();
-            trackPosition += dragDistance;
-            sp->move(trackPosition);
+        if (auto search = selectedTracks.find(i);
+            search != selectedTracks.end()) {
+          // get a reference to the sample
+          sp = sampleManager.getTrack(i);
+          // skip nullptr in tracks list (should not happen)
+          if (sp == nullptr) {
+            continue;
+          }
+          // get its lock
+          const juce::SpinLock::ScopedLockType lock(sp->playerMutex);
+          // get the old position
+          trackPosition = sp->getEditingPosition();
+          trackPosition += dragDistance;
+          sp->move(trackPosition);
         }
       }
       trackMovingInitialPosition = -1;
@@ -568,6 +578,4 @@ bool ArrangementArea::keyStateChanged(bool isKeyDown) {
 }
 
 // Sigmoid activation function to try to increase contract in fft
-float ArrangementArea::sigmoid (float val) {
-    return 1 / (1 + exp(-val));
-}
+float ArrangementArea::sigmoid(float val) { return 1 / (1 + exp(-val)); }
