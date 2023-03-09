@@ -71,22 +71,10 @@ juce_add_gui_app(TestAudioLib PRODUCT_NAME "TestAudioLib")
 # first argument, then a visibility parameter for the sources which should normally be PRIVATE.
 # Finally, we supply a list of source files that will be built into the target. This is a standard
 # CMake command.
+file(GLOB_RECURSE ROOT_SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cpp")
+file(GLOB_RECURSE SUBDIR_SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*/*.cpp")
 
-target_sources(Kholors
-    PRIVATE
-        src/Main.cpp
-        src/Config.cpp
-        src/DefaultConfigPath.cpp
-        src/UserInterface/MainComponent.cpp
-        src/UserInterface/ArrangementArea.cpp
-        src/UserInterface/NotificationArea.cpp
-        src/UserInterface/RobotoFont.cpp
-        src/UserInterface/LogoDarkPng.cpp
-        src/UserInterface/ActionTabs.cpp
-        src/UserInterface/EmptyTab.cpp
-        src/UserInterface/KholorsLookAndFeel.cpp
-        src/Audio/SampleManager.cpp
-        src/Audio/SamplePlayer.cpp)
+target_sources(Kholors PRIVATE ${ROOT_SOURCES} ${SUBDIR_SOURCES})
 
 target_sources(TestConfig
     PRIVATE

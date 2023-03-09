@@ -10,8 +10,8 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 
 #include "../Audio/SampleManager.h"
-#include "ActionTabs.h"
 #include "ArrangementArea.h"
+#include "AudioLibraryTab.h"
 #include "EmptyTab.h"
 #include "KholorsLookAndFeel.h"
 #include "NotificationArea.h"
@@ -46,9 +46,9 @@ class MainComponent : public juce::AudioAppComponent,
   SampleManager sampleManager;
   ArrangementArea arrangementArea;
   NotificationArea notificationArea;
-  ActionTabs actionTabs;
+  juce::TabbedComponent actionTabs;
 
-  EmptyTab audioLibraryTab;
+  AudioLibraryTab audioLibraryTab;
   EmptyTab sampleProcessingTab;
   EmptyTab masteringTab;
 

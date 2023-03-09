@@ -3,7 +3,6 @@
 #include <cstdlib>
 #include <memory>
 
-#include "ActionTabs.h"
 #include "EmptyTab.h"
 #include "RobotoFont.h"
 
