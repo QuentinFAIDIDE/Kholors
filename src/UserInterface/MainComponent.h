@@ -13,6 +13,7 @@
 #include "ActionTabs.h"
 #include "ArrangementArea.h"
 #include "EmptyTab.h"
+#include "KholorsLookAndFeel.h"
 #include "NotificationArea.h"
 
 //==============================================================================
@@ -50,6 +51,9 @@ class MainComponent : public juce::AudioAppComponent,
   EmptyTab audioLibraryTab;
   EmptyTab sampleProcessingTab;
   EmptyTab masteringTab;
+
+  KholorsLookAndFeel appLookAndFeel;
+  void configureLookAndFeel();
 };
 
 #endif  // DEF_MAINCOMPONENT_HPP

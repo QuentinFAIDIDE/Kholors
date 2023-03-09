@@ -84,6 +84,7 @@ target_sources(Kholors
         src/UserInterface/LogoDarkPng.cpp
         src/UserInterface/ActionTabs.cpp
         src/UserInterface/EmptyTab.cpp
+        src/UserInterface/KholorsLookAndFeel.cpp
         src/Audio/SampleManager.cpp
         src/Audio/SamplePlayer.cpp)
 

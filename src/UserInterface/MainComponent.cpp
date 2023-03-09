@@ -12,11 +12,7 @@ MainComponent::MainComponent()
     : sampleManager(notificationArea),
       arrangementArea(sampleManager, notificationArea),
       actionTabs(juce::TabbedButtonBar::Orientation::TabsAtTop) {
-  // create Roboto font
-  juce::Typeface::Ptr tface = juce::Typeface::createSystemTypefaceFor(
-      RobotoFont::RobotoRegular_ttf, RobotoFont::RobotoRegular_ttfSize);
-  // set roboto as default font
-  juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypeface(tface);
+  configureLookAndFeel();
 
   // initialize audio app with two outputs
   setAudioChannels(0, 2);
@@ -44,8 +40,18 @@ MainComponent::MainComponent()
 }
 
 MainComponent::~MainComponent() {
+  setLookAndFeel(nullptr);
   // shutdown the audio
   shutdownAudio();
+}
+
+void MainComponent::configureLookAndFeel() {
+  // create Roboto font
+  juce::Typeface::Ptr tface = juce::Typeface::createSystemTypefaceFor(
+      RobotoFont::RobotoRegular_ttf, RobotoFont::RobotoRegular_ttfSize);
+  // set roboto as default font
+  appLookAndFeel.setDefaultSansSerifTypeface(tface);
+  setLookAndFeel(&appLookAndFeel);
 }
 
 //==============================================================================
