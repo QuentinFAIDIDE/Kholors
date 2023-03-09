@@ -1,4 +1,5 @@
 #include "Config.h"
+#include "DefaultConfigPath.h"
 #include "UserInterface/MainComponent.h"
 
 //==============================================================================
@@ -17,7 +18,7 @@ class GuiAppApplication : public juce::JUCEApplication {
   const juce::String getApplicationVersion() override {
     return JUCE_APPLICATION_VERSION_STRING;
   }
-  bool moreThanOneInstanceAllowed() override { return true; }
+  bool moreThanOneInstanceAllowed() override { return false; }
 
   //==============================================================================
   void initialise(const juce::String& commandLine) override {
@@ -25,7 +26,18 @@ class GuiAppApplication : public juce::JUCEApplication {
     // code..
     juce::ignoreUnused(commandLine);
 
+    std::string configpath = parseConfigPath(commandLine);
+    std::cerr << "Config file location used: " << configpath << std::endl;
+
     mainWindow.reset(new MainWindow(getApplicationName()));
+
+    std::string err = "";
+    try {
+      Config kholorsConfig(configpath);
+    } catch (std::runtime_error& e) {
+      std::cerr << e.what() << std::endl;
+      quit();
+    }
   }
 
   void shutdown() override {
@@ -63,7 +75,8 @@ class GuiAppApplication : public juce::JUCEApplication {
                   ResizableWindow::backgroundColourId),
               DocumentWindow::allButtons) {
       setUsingNativeTitleBar(true);
-      setContentOwned(new MainComponent(), true);
+      mainComponent = new MainComponent();
+      setContentOwned(mainComponent, true);
 
 #if JUCE_IOS || JUCE_ANDROID
       setFullScreen(true);
@@ -90,6 +103,8 @@ class GuiAppApplication : public juce::JUCEApplication {
     */
 
    private:
+    MainComponent* mainComponent;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainWindow)
   };
 

@@ -1,11 +1,17 @@
 #include "MainComponent.h"
 
+#include <cstdlib>
+#include <memory>
+
+#include "ActionTabs.h"
+#include "EmptyTab.h"
 #include "RobotoFont.h"
 
 //==============================================================================
 MainComponent::MainComponent()
     : sampleManager(notificationArea),
-      arrangementArea(sampleManager, notificationArea) {
+      arrangementArea(sampleManager, notificationArea),
+      actionTabs(juce::TabbedButtonBar::Orientation::TabsAtTop) {
   // create Roboto font
   juce::Typeface::Ptr tface = juce::Typeface::createSystemTypefaceFor(
       RobotoFont::RobotoRegular_ttf, RobotoFont::RobotoRegular_ttfSize);
@@ -13,15 +19,22 @@ MainComponent::MainComponent()
   juce::LookAndFeel::getDefaultLookAndFeel().setDefaultSansSerifTypeface(tface);
 
   // initialize audio app with two outputs
-  // TODO: make this a cli arg
   setAudioChannels(0, 2);
 
   // set size of the component
-  setSize(800, 1422);
+  setSize(1400, 800);
+
+  actionTabs.addTab("Audio Library", juce::Colour(20, 20, 20), &audioLibraryTab,
+                    false);
+  actionTabs.addTab("Sample Processing", juce::Colour(20, 20, 20),
+                    &sampleProcessingTab, false);
+  actionTabs.addTab("Mastering", juce::Colour(20, 20, 20), &masteringTab,
+                    false);
 
   // make subwidgets visible
   addAndMakeVisible(arrangementArea);
   addAndMakeVisible(notificationArea);
+  addAndMakeVisible(actionTabs);
 
   // set the sampleManager callback to repaint arrangement area
   sampleManager.setTrackRepaintCallback([this] {
@@ -58,6 +71,13 @@ void MainComponent::resized() {
   localBounds.setY(NOTIF_HEIGHT + NOTIF_OUTTER_MARGINS + NOTIF_OUTTER_MARGINS);
   localBounds.setHeight(FREQTIME_VIEW_HEIGHT);
   arrangementArea.setBounds(localBounds);
+
+  int y = NOTIF_HEIGHT + NOTIF_OUTTER_MARGINS + NOTIF_OUTTER_MARGINS +
+          FREQTIME_VIEW_HEIGHT + 6;
+  localBounds = getLocalBounds();
+  localBounds.setY(y);
+  localBounds.setHeight(localBounds.getHeight() - y - 6);
+  actionTabs.setBounds(localBounds);
 }
 
 void MainComponent::prepareToPlay(int samplesPerBlockExpected,

@@ -7,6 +7,7 @@
 #include <yaml-cpp/node/node.h>
 
 #include <cerrno>
+#include <cstdlib>
 #include <exception>
 #include <iostream>
 #include <numeric>
@@ -19,6 +20,20 @@ std::vector<std::string> Config::mandatoryParameters = {
 Config::Config(std::string configFilePath) {
   // parsing yaml file in the try, setting as invalid in the catch
   try {
+    // if the first two characters are ~/
+    // remove tilde and try to get HOME envar
+    if (configFilePath.find("~/") == 0) {
+      // try to get HOME envar
+      std::string homeFolder;
+      if (const char* env_p = std::getenv("HOME")) {
+        homeFolder = env_p;
+      } else {
+        throw std::runtime_error("No HOME environement variable set");
+      }
+
+      configFilePath.replace(0, 1, homeFolder);
+    }
+
     YAML::Node config = YAML::LoadFile(configFilePath);
 
     _checkMandatoryParameters(config);
@@ -39,6 +54,7 @@ Config::Config(std::string configFilePath) {
     std::cerr << "Error while parsing file: " << err.what() << std::endl;
     _errMsg = err.what();
     _invalid = true;
+    throw err;
   }
 }
 

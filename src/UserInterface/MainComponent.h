@@ -6,11 +6,13 @@
 // builds, and have called `juce_generate_juce_header(<thisTarget>)` in your
 // CMakeLists.txt, you could `#include <JuceHeader.h>` here instead, to make all
 // your module headers visible.
-#include <juce_gui_extra/juce_gui_extra.h>
 #include <juce_audio_utils/juce_audio_utils.h>
+#include <juce_gui_extra/juce_gui_extra.h>
 
-#include "ArrangementArea.h"
 #include "../Audio/SampleManager.h"
+#include "ActionTabs.h"
+#include "ArrangementArea.h"
+#include "EmptyTab.h"
 #include "NotificationArea.h"
 
 //==============================================================================
@@ -18,7 +20,8 @@
     This component lives inside our window, and this is where you should put all
     your controls and content.
 */
-class MainComponent : public juce::AudioAppComponent, public juce::DragAndDropContainer {
+class MainComponent : public juce::AudioAppComponent,
+                      public juce::DragAndDropContainer {
  public:
   //==============================================================================
   MainComponent();
@@ -38,11 +41,15 @@ class MainComponent : public juce::AudioAppComponent, public juce::DragAndDropCo
   //==============================================================================
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
   // widgets
-  ArrangementArea arrangementArea;
-  NotificationArea notificationArea;
-
   // the object responsible for managing the various samples imported
   SampleManager sampleManager;
+  ArrangementArea arrangementArea;
+  NotificationArea notificationArea;
+  ActionTabs actionTabs;
+
+  EmptyTab audioLibraryTab;
+  EmptyTab sampleProcessingTab;
+  EmptyTab masteringTab;
 };
 
 #endif  // DEF_MAINCOMPONENT_HPP

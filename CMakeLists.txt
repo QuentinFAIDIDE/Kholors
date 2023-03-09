@@ -21,7 +21,7 @@ set(CMAKE_BUILD_TYPE Debug)
 # `project()` command. `project()` sets up some helpful variables that describe source/binary
 # directories, and the current project version. This is a standard CMake command.
 
-project(GUI_APP_EXAMPLE VERSION 0.0.1)
+project(Kholors VERSION 0.0.1)
 
 # If you've installed JUCE somehow (via a package manager, or directly using the CMake install
 # target), you'll need to tell this project that it depends on the installed copy of JUCE. If you've
@@ -48,13 +48,13 @@ add_test(NAME TestAudioLib COMMAND TestAudioLib)
 # up by default. This function accepts many optional arguments. Check the readme at
 # `docs/CMake API.md` in the JUCE repo for the full list.
 
-juce_add_gui_app(GuiAppExample
+juce_add_gui_app(Kholors
     # VERSION ...                       # Set this if the app version is different to the project version
     # ICON_BIG ...                      # ICON_* arguments specify a path to an image file to use as an icon
     # ICON_SMALL ...
     # DOCUMENT_EXTENSIONS ...           # Specify file extensions that should be associated with this app
     # COMPANY_NAME ...                  # Specify the name of the app's author
-    PRODUCT_NAME "Gui App Example")     # The name of the final executable, which can differ from the target name
+    PRODUCT_NAME "Kholors")     # The name of the final executable, which can differ from the target name
 
 juce_add_gui_app(TestConfig PRODUCT_NAME "TestConfig")
 juce_add_gui_app(TestAudioLib PRODUCT_NAME "TestAudioLib")
@@ -72,15 +72,18 @@ juce_add_gui_app(TestAudioLib PRODUCT_NAME "TestAudioLib")
 # Finally, we supply a list of source files that will be built into the target. This is a standard
 # CMake command.
 
-target_sources(GuiAppExample
+target_sources(Kholors
     PRIVATE
         src/Main.cpp
         src/Config.cpp
+        src/DefaultConfigPath.cpp
         src/UserInterface/MainComponent.cpp
         src/UserInterface/ArrangementArea.cpp
         src/UserInterface/NotificationArea.cpp
         src/UserInterface/RobotoFont.cpp
         src/UserInterface/LogoDarkPng.cpp
+        src/UserInterface/ActionTabs.cpp
+        src/UserInterface/EmptyTab.cpp
         src/Audio/SampleManager.cpp
         src/Audio/SamplePlayer.cpp)
 
@@ -100,14 +103,14 @@ target_sources(TestAudioLib
 # definitions will be visible both to your code, and also the JUCE module code, so for new
 # definitions, pick unique names that are unlikely to collide! This is a standard CMake command.
 
-target_compile_definitions(GuiAppExample
+target_compile_definitions(Kholors
     PRIVATE
         # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_gui_app` call
         JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_gui_app` call
         JUCE_DISPLAY_SPLASH_SCREEN=0 # added to remove splash screen as we're using gpl
-        JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:GuiAppExample,JUCE_PRODUCT_NAME>"
-        JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:GuiAppExample,JUCE_VERSION>")
+        JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:Kholors,JUCE_PRODUCT_NAME>"
+        JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:Kholors,JUCE_VERSION>")
 
 # TODO: may remove this if cherry picking TestAudioLib linked libs
 target_compile_definitions(TestAudioLib
@@ -116,8 +119,8 @@ target_compile_definitions(TestAudioLib
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_gui_app` call
         JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_gui_app` call
         JUCE_DISPLAY_SPLASH_SCREEN=0 # added to remove splash screen as we're using gpl
-        JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:GuiAppExample,JUCE_PRODUCT_NAME>"
-        JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:GuiAppExample,JUCE_VERSION>")
+        JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:Kholors,JUCE_PRODUCT_NAME>"
+        JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:Kholors,JUCE_VERSION>")
 
 # If your target needs extra binary assets, you can add them here. The first argument is the name of
 # a new static library target that will include all the binary resources. There is an optional
@@ -136,7 +139,7 @@ target_compile_definitions(TestAudioLib
 
 target_link_libraries(TestConfig PRIVATE yaml-cpp)
 
-target_link_libraries(GuiAppExample
+target_link_libraries(Kholors
     PRIVATE
         # GuiAppData            # If we'd created a binary data target, we'd link to it here
         juce::juce_gui_extra
