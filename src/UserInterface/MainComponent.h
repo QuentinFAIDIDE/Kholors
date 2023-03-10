@@ -30,13 +30,14 @@ class MainComponent : public juce::AudioAppComponent,
 
   //==============================================================================
   // inherited from Component from AudioAppComponent
-  void paint(juce::Graphics&) override;
+  void paint(juce::Graphics &) override;
   void resized() override;
 
   // inherited from AudioSource from AudioAppComponent
   void prepareToPlay(int, double) override;
   void releaseResources() override;
-  void getNextAudioBlock(const juce::AudioSourceChannelInfo&) override;
+  void getNextAudioBlock(const juce::AudioSourceChannelInfo &) override;
+  void configureApp(Config &conf);
 
  private:
   //==============================================================================

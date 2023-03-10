@@ -34,6 +34,7 @@ class GuiAppApplication : public juce::JUCEApplication {
     std::string err = "";
     try {
       Config kholorsConfig(configpath);
+      mainWindow->getMainComponent()->configureApp(kholorsConfig);
     } catch (std::runtime_error& e) {
       std::cerr << e.what() << std::endl;
       quit();
@@ -87,6 +88,8 @@ class GuiAppApplication : public juce::JUCEApplication {
 
       setVisible(true);
     }
+
+    MainComponent* getMainComponent() { return mainComponent; }
 
     void closeButtonPressed() override {
       // This is called when the user tries to close this window. Here, we'll

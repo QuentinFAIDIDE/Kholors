@@ -37,5 +37,15 @@ void Section::paint(juce::Graphics &g) {
   g.drawText(_title, textArea, juce::Justification::topLeft, false);
 }
 
-void Section::resized() {}
-void Section::setContent(juce::Component *) {}
+void Section::resized() {
+  juce::Rectangle<int> bounds = getBounds();
+  bounds.reduce(4, 4);
+  if (_content != nullptr) {
+    _content->setBounds(bounds);
+  }
+}
+
+void Section::setContent(juce::Component *c) {
+  _content = c;
+  addAndMakeVisible(_content);
+}

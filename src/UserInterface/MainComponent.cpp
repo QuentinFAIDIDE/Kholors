@@ -101,3 +101,9 @@ void MainComponent::getNextAudioBlock(
   // pass that callback down to the sample mananger
   sampleManager.getNextAudioBlock(bufferToFill);
 }
+
+void MainComponent::configureApp(Config& conf) {
+  for (int i = 0; i < conf.getNumAudioLibs(); i++) {
+    audioLibraryTab.addAudioLibrary(conf.getAudioLibPath(i));
+  }
+}
