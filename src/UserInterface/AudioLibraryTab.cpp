@@ -6,17 +6,22 @@ AudioLibraryTab::AudioLibraryTab()
     : _searchSection("Search"),
       _topUsedSection("Most Used"),
       _locationsSection("Samples Locations") {
-  _audioLibTreeRoot = new AudioLibTreeRoot();
-  _treeView.setRootItem(_audioLibTreeRoot);
-  _treeView.setRootItemVisible(true);
-  _locationsSection.setContent(&_treeView);
-
   addAndMakeVisible(_searchSection);
   addAndMakeVisible(_topUsedSection);
-  addAndMakeVisible(_locationsSection);
+  // addAndMakeVisible(_locationsSection);
+
+  _audioLibTreeRoot = new AudioLibTreeRoot();
+  _treeView.setRootItem(_audioLibTreeRoot);
+  _treeView.setRootItemVisible(false);
+  addAndMakeVisible(_treeView);
 }
 
-AudioLibraryTab::~AudioLibraryTab() { delete _audioLibTreeRoot; }
+AudioLibraryTab::~AudioLibraryTab() {
+  delete _audioLibTreeRoot;
+  if (_audioLibraries != nullptr) {
+    delete _audioLibraries;
+  }
+}
 
 void AudioLibraryTab::initAudioLibrary(Config& conf) {
   _audioLibraries =
@@ -56,5 +61,5 @@ void AudioLibraryTab::resized() {
   _topUsedSection.setBounds(localBounds);
 
   localBounds.setX(localBounds.getX() + widthThird);
-  _locationsSection.setBounds(localBounds);
+  _treeView.setBounds(localBounds);
 }

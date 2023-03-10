@@ -1,10 +1,9 @@
 #include "AudioLibTreeItem.h"
 
+AudioLibTreeRoot::AudioLibTreeRoot() {}
+
 AudioLibTreeRoot::~AudioLibTreeRoot() {
-  // remove chlidren nodes
-  for (int i = 0; i < getNumSubItems(); i++) {
-    delete getSubItem(i);
-  }
+  // NOTE: Juce already remove the tree items
 }
 
 bool AudioLibTreeRoot::mightContainSubItems() {
@@ -29,10 +28,7 @@ AudioLibFile::AudioLibFile(std::string path) : _file(path) {
 }
 
 AudioLibFile::~AudioLibFile() {
-  // remove chlidren nodes
-  for (int i = 0; i < getNumSubItems(); i++) {
-    delete getSubItem(i);
-  }
+  // NOTE: Juce already remove the tree items
 }
 
 bool AudioLibFile::mightContainSubItems() { return _isFolder; }
@@ -53,4 +49,11 @@ void AudioLibFile::itemOpennessChanged(bool isNowOpen) {
     }
     _hasLoadedChildren = true;
   }
+}
+
+void AudioLibFile::paintItem(juce::Graphics& g, int width, int height) {
+  g.setColour(juce::Colour(20, 20, 20));
+  g.fillAll();
+  g.setColour(juce::Colour(220, 220, 220));
+  g.drawText(_name, 0, 0, width, height, juce::Justification::left);
 }

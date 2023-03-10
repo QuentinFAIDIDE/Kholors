@@ -10,7 +10,15 @@ Section::Section(std::string title) : _title(title) { _content = nullptr; }
 Section::~Section() {}
 
 void Section::paint(juce::Graphics &g) {
+  g.setColour(juce::Colour(20, 20, 20));
+  g.fillAll();
+
   juce::Rectangle<int> bounds = g.getClipBounds();
+
+  if (bounds.getHeight() < 40 || bounds.getWidth() < 40) {
+    return;
+  }
+
   bounds.reduce(4, 4);
 
   // make space to draw title
@@ -38,14 +46,12 @@ void Section::paint(juce::Graphics &g) {
 }
 
 void Section::resized() {
-  juce::Rectangle<int> bounds = getBounds();
-  bounds.reduce(4, 4);
   if (_content != nullptr) {
-    _content->setBounds(bounds);
+    _content->setBounds(30, 30, getWidth() - 30, getHeight() - 30);
   }
 }
 
 void Section::setContent(juce::Component *c) {
   _content = c;
-  addAndMakeVisible(_content);
+  addAndMakeVisible(*_content);
 }

@@ -15,6 +15,9 @@ class Section : public juce::Component {
  private:
   juce::Component *_content;
   std::string _title;
+
+  //==============================================================================
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Section)
 };
 
 #endif  // DEF_SECTION_HPP

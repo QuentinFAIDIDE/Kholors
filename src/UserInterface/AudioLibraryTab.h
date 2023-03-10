@@ -25,6 +25,9 @@ class AudioLibraryTab : public juce::Component {
   AudioLibTreeRoot *_audioLibTreeRoot;
 
   void _addAudioLibrary(std::string path);
+
+  //==============================================================================
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioLibraryTab)
 };
 
 #endif  // DEF_AUDIO_LIBRARY_TAB
