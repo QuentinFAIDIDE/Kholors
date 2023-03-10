@@ -111,6 +111,7 @@ class Config {
   std::string getAudioLibPath(unsigned long) const;
   bool audioLibIgnoreCount(unsigned long) const;
   std::string getErrMessage() const;
+  std::string getDataFolderPath() const;
 
  private:
   bool _invalid;

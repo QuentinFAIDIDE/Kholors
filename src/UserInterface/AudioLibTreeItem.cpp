@@ -16,6 +16,7 @@ bool AudioLibTreeRoot::canBeSelected() const { return false; }
 
 void AudioLibTreeRoot::addAudioLibrary(std::string path) {
   addSubItem((juce::TreeViewItem*)new AudioLibFile(path));
+  std::cout << "addded new library to widget: " << path << std::endl;
 }
 
 // ============ Audio Lib File =====================

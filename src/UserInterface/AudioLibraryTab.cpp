@@ -6,21 +6,27 @@ AudioLibraryTab::AudioLibraryTab()
     : _searchSection("Search"),
       _topUsedSection("Most Used"),
       _locationsSection("Samples Locations") {
-  _audioLibTreeRoot = new AudioLibTreeRoot;
+  _audioLibTreeRoot = new AudioLibTreeRoot();
   _treeView.setRootItem(_audioLibTreeRoot);
-
+  _treeView.setRootItemVisible(true);
   _locationsSection.setContent(&_treeView);
 
   addAndMakeVisible(_searchSection);
   addAndMakeVisible(_topUsedSection);
   addAndMakeVisible(_locationsSection);
-
-  _locationsSection.setContent(&_treeView);
 }
 
 AudioLibraryTab::~AudioLibraryTab() { delete _audioLibTreeRoot; }
 
-void AudioLibraryTab::addAudioLibrary(std::string path) {
+void AudioLibraryTab::initAudioLibrary(Config& conf) {
+  _audioLibraries =
+      new AudioLibraryManager(conf.getDataFolderPath(), conf.getProfileName());
+  for (int i = 0; i < conf.getNumAudioLibs(); i++) {
+    _addAudioLibrary(conf.getAudioLibPath(i));
+  }
+}
+
+void AudioLibraryTab::_addAudioLibrary(std::string path) {
   if (_audioLibraries != nullptr) {
     try {
       _audioLibraries->addAudioLibrary(path);

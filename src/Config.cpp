@@ -271,3 +271,5 @@ void Config::_createFolderIfNotExists(std::string path) {
         std::string("Folder path is not writable by real UID: ") + path);
   }
 }
+
+std::string Config::getDataFolderPath() const { return _dataLibraryPath; };

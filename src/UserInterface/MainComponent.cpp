@@ -103,7 +103,5 @@ void MainComponent::getNextAudioBlock(
 }
 
 void MainComponent::configureApp(Config& conf) {
-  for (int i = 0; i < conf.getNumAudioLibs(); i++) {
-    audioLibraryTab.addAudioLibrary(conf.getAudioLibPath(i));
-  }
+  audioLibraryTab.initAudioLibrary(conf);
 }
