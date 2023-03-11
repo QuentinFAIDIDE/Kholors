@@ -1,5 +1,7 @@
 #include "AudioLibTreeItem.h"
 
+#include <algorithm>
+
 AudioLibTreeRoot::AudioLibTreeRoot() {}
 
 AudioLibTreeRoot::~AudioLibTreeRoot() {
@@ -43,9 +45,21 @@ void AudioLibFile::itemOpennessChanged(bool isNowOpen) {
         juce::File::TypesOfFileToFind::findFilesAndDirectories, false, "*",
         juce::File::FollowSymlinks::no);
 
+    std::sort(children.begin(), children.end(),
+              [](const juce::File &a, const juce::File &b) {
+                if (a.isDirectory() != b.isDirectory()) {
+                  return a.isDirectory();
+                }
+                return a.getFileName() < b.getFileName();
+              });
+
     for (int i = 0; i < children.size(); i++) {
-      addSubItem((juce::TreeViewItem *)new AudioLibFile(
-          children[i].getFullPathName().toStdString()));
+      if (children[i].isDirectory() ||
+          children[i].getFileExtension() == ".wav" ||
+          children[i].getFileExtension() == ".mp3") {
+        addSubItem((juce::TreeViewItem *)new AudioLibFile(
+            children[i].getFullPathName().toStdString()));
+      }
     }
     _hasLoadedChildren = true;
   }
@@ -53,7 +67,7 @@ void AudioLibFile::itemOpennessChanged(bool isNowOpen) {
 
 void AudioLibFile::paintItem(juce::Graphics &g, int width, int height) {
   if (isSelected()) {
-    g.setColour(juce::Colour::fromFloatRGBA(1.0, 0.8, 0.8, 0.2));
+    g.setColour(juce::Colour::fromFloatRGBA(0.87, 0.8, 0.8, 0.12));
     g.fillAll();
   }
   g.setColour(juce::Colour(220, 220, 220));

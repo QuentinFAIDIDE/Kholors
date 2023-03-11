@@ -42,7 +42,6 @@ void AudioLibraryTab::_addAudioLibrary(std::string path) {
 void AudioLibraryTab::paint(juce::Graphics& g) {
   juce::Colour bgColor(30, 29, 29);
 
-  drawSection(g, _searchSectionLocation, "Search", bgColor);
   drawSection(g, _mostUsedSectionLocation, "Most Used", bgColor);
   drawSection(g, _librariesSectionLocation, "Libraries", bgColor);
 }
@@ -52,14 +51,12 @@ void AudioLibraryTab::resized() {
   juce::Rectangle<int> localBounds = getLocalBounds();
   localBounds.reduce(6, 6);
 
-  int widthThird = localBounds.getWidth() / 3;
-  localBounds.setWidth(widthThird);
-  _searchSectionLocation = localBounds.reduced(5, 5);
+  int widthHalf = localBounds.getWidth() >> 1;
+  localBounds.setWidth(widthHalf);
 
-  localBounds.setX(localBounds.getX() + widthThird);
   _mostUsedSectionLocation = localBounds.reduced(5, 5);
 
-  localBounds.setX(localBounds.getX() + widthThird);
+  localBounds.setX(localBounds.getX() + widthHalf);
   _librariesSectionLocation = localBounds.reduced(5, 5);
 
   localBounds.reduce(5, 5);
