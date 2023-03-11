@@ -48,6 +48,8 @@ Config::Config(std::string configFilePath) {
 
     _getDataDirectory(config);
 
+    _parseBufferSize(config);
+
     _invalid = false;
 
   } catch (std::runtime_error err) {
@@ -273,3 +275,21 @@ void Config::_createFolderIfNotExists(std::string path) {
 }
 
 std::string Config::getDataFolderPath() const { return _dataLibraryPath; };
+
+void Config::_parseBufferSize(YAML::Node& n) {
+  _bufferSize = 0;
+
+  if (n["AudioSettings"] && n["AudioSettings"].IsMap()) {
+    YAML::Node audioParams = n["AudioSettings"];
+    if (audioParams["bufferSize"] && audioParams["bufferSize"].IsScalar()) {
+      _bufferSize = audioParams["bufferSize"].as<int>();
+
+      // abort if buffer size is invalid
+      if (_bufferSize <= 0) {
+        throw std::runtime_error("invalid buffer size");
+      }
+    }
+  }
+}
+
+int Config::getBufferSize() const { return _bufferSize; }

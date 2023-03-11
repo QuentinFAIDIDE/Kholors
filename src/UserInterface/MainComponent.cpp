@@ -16,6 +16,8 @@ MainComponent::MainComponent()
   // initialize audio app with two outputs
   setAudioChannels(0, 2);
 
+  _printAudioDeviceSettings();
+
   // set size of the component
   setSize(1400, 800);
 
@@ -36,6 +38,19 @@ MainComponent::MainComponent()
     const juce::MessageManagerLock mmLock;
     arrangementArea.repaint();
   });
+}
+
+void MainComponent::_printAudioDeviceSettings() {
+  // print audio device settings
+  std::cerr << "Input Device: "
+            << deviceManager.getAudioDeviceSetup().inputDeviceName << std::endl;
+  std::cerr << "Output Device: "
+            << deviceManager.getAudioDeviceSetup().outputDeviceName
+            << std::endl;
+  std::cerr << "Buffer size: " << deviceManager.getAudioDeviceSetup().bufferSize
+            << std::endl;
+  std::cerr << "Sample Rate: " << deviceManager.getAudioDeviceSetup().sampleRate
+            << std::endl;
 }
 
 MainComponent::~MainComponent() {
@@ -104,4 +119,14 @@ void MainComponent::getNextAudioBlock(
 
 void MainComponent::configureApp(Config& conf) {
   audioLibraryTab.initAudioLibrary(conf);
+
+  if (conf.getBufferSize() != 0) {
+    auto oldSetup = deviceManager.getAudioDeviceSetup();
+    oldSetup.bufferSize = conf.getBufferSize();
+
+    deviceManager.setAudioDeviceSetup(oldSetup, true);
+
+    std::cerr << "Audio Device Settings updated" << std::endl;
+    _printAudioDeviceSettings();
+  }
 }

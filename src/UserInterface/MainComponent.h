@@ -55,6 +55,8 @@ class MainComponent : public juce::AudioAppComponent,
 
   KholorsLookAndFeel appLookAndFeel;
   void configureLookAndFeel();
+
+  void _printAudioDeviceSettings();
 };
 
 #endif  // DEF_MAINCOMPONENT_HPP

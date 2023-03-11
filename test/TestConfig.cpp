@@ -61,6 +61,11 @@ int testConfig1() {
     return 1;
   }
 
+  if (cfg1.getBufferSize() != 1024) {
+    std::cout << "unable to parse buffer size" << std::endl;
+    return 1;
+  }
+
   return 0;
 }
 

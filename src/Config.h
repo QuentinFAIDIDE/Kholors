@@ -112,6 +112,7 @@ class Config {
   bool audioLibIgnoreCount(unsigned long) const;
   std::string getErrMessage() const;
   std::string getDataFolderPath() const;
+  int getBufferSize() const;
 
  private:
   bool _invalid;
@@ -122,6 +123,7 @@ class Config {
   std::vector<bool> _audioLibIgnoreCounts;
   std::string _configDirectoryPath;
   std::string _dataLibraryPath;
+  int _bufferSize;
 
   void _checkMandatoryParameters(YAML::Node&);
   void _checkApiVersion(YAML::Node&);
@@ -131,6 +133,7 @@ class Config {
   void _parseAudioLibLocationName(YAML::Node&);
   void _parseAudioLibLocationIgnoreCount(YAML::Node&);
   void _parseProfileName(YAML::Node&);
+  void _parseBufferSize(YAML::Node&);
 
   void _getConfigDirectory(YAML::Node&);
   void _getDataDirectory(YAML::Node&);

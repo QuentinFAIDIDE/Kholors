@@ -16,8 +16,8 @@
 #include <atomic>
 #include <functional>
 
-#include "ReferenceCountedBuffer.h"
 #include "../UserInterface/NotificationArea.h"
+#include "ReferenceCountedBuffer.h"
 #include "SamplePlayer.h"
 
 //==============================================================================
@@ -54,7 +54,7 @@ class SampleManager : public juce::PositionableAudioSource,
   SamplePlayer* deleteTrack(int index);
   void restoreDeletedTrack(SamplePlayer* sp, int index);
 
-  // set callback to safely access gui's 
+  // set callback to safely access gui's
   // MessageThread to repaint tracks
   void setTrackRepaintCallback(std::function<void()>);
 
@@ -67,13 +67,13 @@ class SampleManager : public juce::PositionableAudioSource,
   // file formats manager
   juce::AudioFormatManager formatManager;
   // play cursom position in audio frames, as well as furthest frame
-  std::atomic_int64_t playCursor, totalFrameLength;
+  int playCursor, totalFrameLength;
 
   // number of channels
   juce::int64 numChannels;
 
   // is the track currently playing ?
-  std::atomic<bool> isPlaying;
+  bool isPlaying;
 
   /** NOTES FROM JUCE FORUM ON MIXING Audio Sources:
   You can connect your AudioTransportSources to a MixerAudioSource 10, and call
@@ -103,7 +103,7 @@ class SampleManager : public juce::PositionableAudioSource,
   juce::AudioBuffer<float> audioThreadBuffer;
 
   // A list of SamplePlayer objects that inherits PositionableAudioSource
-  // and are objects that play buffers at some position 
+  // and are objects that play buffers at some position
   juce::Array<SamplePlayer*> tracks;
   // callback to repaint when tracks were updated
   std::function<void()> trackRepaintCallback;
@@ -111,13 +111,13 @@ class SampleManager : public juce::PositionableAudioSource,
   int64_t lastDrawnCursor;
   void checkForCursorRedraw();
 
-  // list of ReferenceCountedBuffer that are holding sample data 
+  // list of ReferenceCountedBuffer that are holding sample data
   juce::ReferenceCountedArray<ReferenceCountedBuffer> buffers;
 
   // here is bitmask to identify which tracks are nearby the play cursor
-  int64_t *nearTracksBitmask;
+  int64_t* nearTracksBitmask;
   // the one we fill before swapping pointers
-  int64_t *backgroundNearTrackBitmask;
+  int64_t* backgroundNearTrackBitmask;
 
   // mutex to swap the path and access tracks
   juce::CriticalSection pathMutex, mixbusMutex;
@@ -163,7 +163,6 @@ class SampleManager : public juce::PositionableAudioSource,
   // used to manage background thread allocations
   void checkForFileToImport();
   void checkForBuffersToFree();
-
 };
 //==============================================================================
 

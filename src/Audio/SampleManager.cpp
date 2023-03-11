@@ -34,8 +34,8 @@ SampleManager::SampleManager(NotificationArea& na)
 
   // set the nearby samplePlayer/tracks bitmask to 0
   for (size_t i = 0; i < SAMPLE_BITMASK_SIZE; i++) {
-    *(nearTracksBitmask+i) = 0;
-    *(backgroundNearTrackBitmask+i) = 0;
+    *(nearTracksBitmask + i) = 0;
+    *(backgroundNearTrackBitmask + i) = 0;
   }
 
   lastDrawnCursor = 0;
@@ -47,9 +47,9 @@ SampleManager::SampleManager(NotificationArea& na)
 SampleManager::~SampleManager() {
   // stop thread with a 4sec timeout to kill it
   stopThread(4000);
-  
+
   // delete all tracks
-  for(size_t i=0; i<tracks.size(); i++) {
+  for (size_t i = 0; i < tracks.size(); i++) {
     auto track = tracks.getUnchecked(i);
     if (track != nullptr) {
       delete track;
@@ -58,11 +58,10 @@ SampleManager::~SampleManager() {
 
   // delete all buffers
   checkForBuffersToFree();
-  
+
   // free manually allocated arrays
   delete nearTracksBitmask;
   delete backgroundNearTrackBitmask;
-
 }
 
 bool SampleManager::filePathsValid(const juce::StringArray& files) {
@@ -85,9 +84,7 @@ void SampleManager::stopPlayback() {
   }
 }
 
-bool SampleManager::isCursorPlaying() const {
-  return isPlaying;
-}
+bool SampleManager::isCursorPlaying() const { return isPlaying; }
 
 int SampleManager::addSample(juce::String filePath, int64_t frameIndex) {
   // swap a file to load variable to avoid blocking audio thread for disk i/o
@@ -111,11 +108,9 @@ void SampleManager::prepareToPlay(int samplesPerBlockExpected,
                                   double sampleRate) {
   // prepare all inputs
   for (size_t i = 0; i < tracks.size(); i++) {
-    if (tracks.getUnchecked(i)!=nullptr) {
-      tracks.getUnchecked(i)->prepareToPlay(
-        samplesPerBlockExpected,
-        sampleRate
-      );
+    if (tracks.getUnchecked(i) != nullptr) {
+      tracks.getUnchecked(i)->prepareToPlay(samplesPerBlockExpected,
+                                            sampleRate);
     }
   }
 
@@ -143,7 +138,7 @@ void SampleManager::releaseResources() {
 
   // call all inputs releaseResources
   for (size_t i = 0; i < tracks.size(); i++) {
-    if (tracks.getUnchecked(i)!=nullptr) {
+    if (tracks.getUnchecked(i) != nullptr) {
       tracks.getUnchecked(i)->releaseResources();
     }
   }
@@ -163,24 +158,21 @@ void SampleManager::getNextAudioBlock(
   // get scoped lock of the reentering mutex
   const juce::ScopedLock sl(mixbusMutex);
 
-  // TODO: subset input tracks only to those that are
-  // likely to play using the bitmask
-
   // if there is more then one input track and we are playing
   if (tracks.size() > 0 && isPlaying) {
     // get a pointer to a new processed input buffer from first source
     // we will append into this one to mix tracks together
-    if(tracks.getUnchecked(0)!=nullptr) {
+    if (tracks.getUnchecked(0) != nullptr) {
       tracks.getUnchecked(0)->getNextAudioBlock(bufferToFill);
     } else {
       bufferToFill.clearActiveBufferRegion();
     }
 
     if (tracks.size() > 1) {
-
       // initialize buffer
-      audioThreadBuffer.setSize (juce::jmax (1, bufferToFill.buffer->getNumChannels()),
-                      bufferToFill.buffer->getNumSamples());
+      audioThreadBuffer.setSize(
+          juce::jmax(1, bufferToFill.buffer->getNumChannels()),
+          bufferToFill.buffer->getNumSamples());
 
       // create a new getNextAudioBlock request that
       // will use our SampleManager buffer to pull
@@ -191,35 +183,34 @@ void SampleManager::getNextAudioBlock(
       // for each input source
       // TODO: filter based on mask
       for (size_t i = 1; i < tracks.size(); i++) {
-        if(tracks.getUnchecked(i)==nullptr) {
+        if (tracks.getUnchecked(i) == nullptr) {
           continue;
         }
         // get the next audio block in the buffer
         tracks.getUnchecked(i)->getNextAudioBlock(copyBufferDest);
         // abort whenever the buffer is empty
-        if(audioThreadBuffer.getNumSamples()!=0) {
+        if (audioThreadBuffer.getNumSamples() != 0) {
           // append it to the initial one
-          for (int chan = 0; chan < bufferToFill.buffer->getNumChannels(); chan++) {
-            bufferToFill.buffer->addFrom(chan, bufferToFill.startSample, audioThreadBuffer,
-                                chan, 0, bufferToFill.numSamples);
+          for (int chan = 0; chan < bufferToFill.buffer->getNumChannels();
+               chan++) {
+            bufferToFill.buffer->addFrom(chan, bufferToFill.startSample,
+                                         audioThreadBuffer, chan, 0,
+                                         bufferToFill.numSamples);
           }
         }
       }
     }
 
     // create context to apply dsp effects
-    juce::dsp::AudioBlock<float> audioBlockRef(
-      *bufferToFill.buffer,
-      bufferToFill.startSample
-    );
+    juce::dsp::AudioBlock<float> audioBlockRef(*bufferToFill.buffer,
+                                               bufferToFill.startSample);
     juce::dsp::ProcessContextReplacing<float> context(audioBlockRef);
-    
+
     // apply master gain
     masterGain.process(context);
 
     // apply limiter
     masterLimiter.process(context);
-
 
   } else {
     // if there's no tracks or we're not playing, clear output
@@ -227,10 +218,11 @@ void SampleManager::getNextAudioBlock(
   }
 
   // if we have been playing, update cursor
-  if(isPlaying) {
+  if (isPlaying) {
     playCursor += bufferToFill.numSamples;
     // wake up the background thread if we need to do any redrawing
-    if(abs(playCursor-lastDrawnCursor)>FREQVIEW_MIN_REDRAW_DISTANCE_FRAMES) {
+    if (abs(playCursor - lastDrawnCursor) >
+        FREQVIEW_MIN_REDRAW_DISTANCE_FRAMES) {
       notify();
     }
   }
@@ -257,8 +249,8 @@ void SampleManager::run() {
 
 void SampleManager::checkForCursorRedraw() {
   // if we were notified to redraw, do it
-  if(abs(lastDrawnCursor-playCursor)>FREQVIEW_MIN_REDRAW_DISTANCE_FRAMES) {
-    lastDrawnCursor = playCursor; 
+  if (abs(lastDrawnCursor - playCursor) > FREQVIEW_MIN_REDRAW_DISTANCE_FRAMES) {
+    lastDrawnCursor = playCursor;
     trackRepaintCallback();
   }
 }
@@ -307,11 +299,11 @@ void SampleManager::checkForFileToImport() {
         formatManager.createReaderFor(file));
     // if the reader can read our file
     if (reader.get() != nullptr) {
-
       // sample duration in seconds
       auto duration = (float)reader->lengthInSamples / reader->sampleRate;
 
-      std::cout << "The file has a length of " << duration << "secs" << std::endl;
+      std::cout << "The file has a length of " << duration << "secs"
+                << std::endl;
 
       // only load it if below our global constant maximum sample duration
       if (duration < SAMPLE_MAX_DURATION_SEC) {
@@ -333,12 +325,11 @@ void SampleManager::checkForFileToImport() {
         try {
           // assign buffer to the new SamplePlayer
           newSample->setBuffer(newBuffer, forwardFFT);
-        // if the memory allocation fail, abort with error
-        } catch(std::bad_alloc& ba) {
+          // if the memory allocation fail, abort with error
+        } catch (std::bad_alloc& ba) {
           std::cout << "Unable to allocate memory to perform FFT" << std::endl;
           notificationManager.notifyError(
-            juce::String("Unable to allocate memory to load: ") + pathToOpen
-          );
+              juce::String("Unable to allocate memory to load: ") + pathToOpen);
           delete newSample;
           return;
         }
@@ -367,7 +358,8 @@ void SampleManager::checkForFileToImport() {
       }
     } else {
       // if the file reader doesn't want to read, notify an error
-      notificationManager.notifyError(juce::String("Unable to read: ") + pathToOpen);
+      notificationManager.notifyError(juce::String("Unable to read: ") +
+                                      pathToOpen);
     }
   }
 }
@@ -382,16 +374,16 @@ void SampleManager::setNextReadPosition(juce::int64 nextReadPosition) {
 
   // tell all samplePlayers to update positions
   for (size_t i = 0; i < tracks.size(); i++) {
-    if(tracks.getUnchecked(i)!=nullptr) {
+    if (tracks.getUnchecked(i) != nullptr) {
       // tell the track to reconsider its position
       tracks.getUnchecked(i)->setNextReadPosition(nextReadPosition);
     }
   }
-  
+
   // update playing tracks bitmask
   updateNearbySamplesBitmask();
 
-  // we need to repaint the track view ! 
+  // we need to repaint the track view !
   trackRepaintCallback();
 }
 
@@ -425,7 +417,7 @@ void SampleManager::updateNearbySamplesBitmask() {
     if (i > 0 && ((i - 1) * 64) > tracks.size()) {
       break;
     }
-    *(backgroundNearTrackBitmask+i) = 0;
+    *(backgroundNearTrackBitmask + i) = 0;
   }
 
   // In the following algo the approach is O(n) but it
@@ -455,7 +447,7 @@ void SampleManager::updateNearbySamplesBitmask() {
     // for each bit representing an individual track in the range
     for (size_t j = 0; j < 64 && baseRow + j < tracks.size(); j++) {
       // ignore track if it's nullptr
-      if(tracks.getUnchecked(baseRow + j)==nullptr) {
+      if (tracks.getUnchecked(baseRow + j) == nullptr) {
         continue;
       }
       // if the corresponding track is SAMPLE_MASKING_DISTANCE audio
@@ -469,7 +461,7 @@ void SampleManager::updateNearbySamplesBitmask() {
       }
     }
     // write the bit range
-    *(backgroundNearTrackBitmask+i) = rangeBuffer;
+    *(backgroundNearTrackBitmask + i) = rangeBuffer;
 
     // abort if we're out of bounds
     if (baseRow + 63 >= tracks.size()) {
@@ -495,9 +487,7 @@ void SampleManager::pauseIfCursorNotInBound() {
   // TODO
 }
 
-size_t SampleManager::getNumTracks() const {
-  return tracks.size();
-}
+size_t SampleManager::getNumTracks() const { return tracks.size(); }
 
 SamplePlayer* SampleManager::getTrack(int index) const {
   // NOTE: We never delete SamplePlayers in the tracks array or insert mid-array
@@ -515,14 +505,16 @@ void SampleManager::setTrackRepaintCallback(std::function<void()> f) {
 // ArrangementArea is in charge of deleting the SamplePlayer instance or
 // putting it back with restoreDeletedTrack if usert hit ctrl+Z.
 SamplePlayer* SampleManager::deleteTrack(int index) {
-  SamplePlayer *deletedSp = tracks.getUnchecked(index);
+  SamplePlayer* deletedSp = tracks.getUnchecked(index);
   tracks.set(index, nullptr);
 }
 
 void SampleManager::restoreDeletedTrack(SamplePlayer* sp, int index) {
   // only do it if no track at that index exists
-  if (tracks.getUnchecked(index)!=nullptr) {
-    std::cout << "Warning: ArrangementArea is trying to restore an existing track" << std::endl;
+  if (tracks.getUnchecked(index) != nullptr) {
+    std::cout
+        << "Warning: ArrangementArea is trying to restore an existing track"
+        << std::endl;
   }
   tracks.set(index, nullptr);
 }

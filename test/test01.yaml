@@ -8,3 +8,5 @@ AudioLibraryLocations:
     path: /path/to/my/dingo/
     ignoreUseCount: true
   - path: /my/unnamed/folder
+AudioSettings:
+  bufferSize: 1024
