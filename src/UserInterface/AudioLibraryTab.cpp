@@ -2,12 +2,9 @@
 
 #include <stdexcept>
 
-AudioLibraryTab::AudioLibraryTab()
-    : _searchSection("Search"),
-      _topUsedSection("Most Used"),
-      _locationsSection("Samples Locations") {
-  addAndMakeVisible(_searchSection);
-  addAndMakeVisible(_topUsedSection);
+#include "Section.h"
+
+AudioLibraryTab::AudioLibraryTab() {
   // addAndMakeVisible(_locationsSection);
 
   _audioLibTreeRoot = new AudioLibTreeRoot();
@@ -43,8 +40,11 @@ void AudioLibraryTab::_addAudioLibrary(std::string path) {
 }
 
 void AudioLibraryTab::paint(juce::Graphics& g) {
-  g.setColour(juce::Colour(20, 20, 20));
-  g.fillAll();
+  juce::Colour bgColor(30, 29, 29);
+
+  drawSection(g, _searchSectionLocation, "Search", bgColor);
+  drawSection(g, _mostUsedSectionLocation, "Most Used", bgColor);
+  drawSection(g, _librariesSectionLocation, "Libraries", bgColor);
 }
 
 void AudioLibraryTab::resized() {
@@ -54,12 +54,16 @@ void AudioLibraryTab::resized() {
 
   int widthThird = localBounds.getWidth() / 3;
   localBounds.setWidth(widthThird);
-
-  _searchSection.setBounds(localBounds);
-
-  localBounds.setX(localBounds.getX() + widthThird);
-  _topUsedSection.setBounds(localBounds);
+  _searchSectionLocation = localBounds.reduced(5, 5);
 
   localBounds.setX(localBounds.getX() + widthThird);
-  _treeView.setBounds(localBounds);
+  _mostUsedSectionLocation = localBounds.reduced(5, 5);
+
+  localBounds.setX(localBounds.getX() + widthThird);
+  _librariesSectionLocation = localBounds.reduced(5, 5);
+
+  localBounds.reduce(5, 5);
+  localBounds.setY(localBounds.getY() + 22);
+  localBounds.setHeight(localBounds.getHeight() - 25);
+  _treeView.setBounds(localBounds.reduced(2));
 }

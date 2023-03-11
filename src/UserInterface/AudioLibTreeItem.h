@@ -24,7 +24,11 @@ class AudioLibFile : public juce::TreeViewItem {
   bool canBeSelected() const override;
   juce::String getUniqueName() const override;
   void itemOpennessChanged(bool) override;
-  void paintItem(juce::Graphics& g, int width, int height) override;
+  void paintItem(juce::Graphics &g, int width, int height) override;
+  void paintOpenCloseButton(juce::Graphics &,
+                            const juce::Rectangle<float> &area,
+                            juce::Colour backgroundColour,
+                            bool isMouseOver) override;
 
  private:
   juce::File _file;

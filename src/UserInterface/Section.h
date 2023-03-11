@@ -3,21 +3,7 @@
 
 #include <juce_gui_extra/juce_gui_extra.h>
 
-class Section : public juce::Component {
- public:
-  Section();
-  Section(std::string title);
-  ~Section();
-  void paint(juce::Graphics &) override;
-  void resized() override;
-  void setContent(juce::Component *);
-
- private:
-  juce::Component *_content;
-  std::string _title;
-
-  //==============================================================================
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Section)
-};
+void drawSection(juce::Graphics &g, juce::Rectangle<int> &bounds,
+                 juce::String title, juce::Colour &background);
 
 #endif  // DEF_SECTION_HPP

@@ -19,11 +19,11 @@ MainComponent::MainComponent()
   // set size of the component
   setSize(1400, 800);
 
-  actionTabs.addTab("Audio Library", juce::Colour(20, 20, 20), &audioLibraryTab,
+  actionTabs.addTab("Audio Library", juce::Colour(25, 24, 24), &audioLibraryTab,
                     false);
-  actionTabs.addTab("Sample Processing", juce::Colour(20, 20, 20),
+  actionTabs.addTab("Sample Processing", juce::Colour(25, 24, 24),
                     &sampleProcessingTab, false);
-  actionTabs.addTab("Mastering", juce::Colour(20, 20, 20), &masteringTab,
+  actionTabs.addTab("Mastering", juce::Colour(25, 24, 24), &masteringTab,
                     false);
 
   // make subwidgets visible

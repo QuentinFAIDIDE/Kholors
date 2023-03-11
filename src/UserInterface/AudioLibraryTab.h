@@ -4,6 +4,7 @@
 #include "../Config.h"
 #include "../Library/AudioLibraryManager.h"
 #include "AudioLibTreeItem.h"
+#include "ColouredTreeView.h"
 #include "Section.h"
 
 class AudioLibraryTab : public juce::Component {
@@ -17,12 +18,13 @@ class AudioLibraryTab : public juce::Component {
   void resized() override;
 
  private:
-  Section _searchSection;
-  Section _topUsedSection;
-  Section _locationsSection;
   AudioLibraryManager *_audioLibraries;
-  juce::TreeView _treeView;
+  ColouredTreeView _treeView;
   AudioLibTreeRoot *_audioLibTreeRoot;
+
+  juce::Rectangle<int> _searchSectionLocation;
+  juce::Rectangle<int> _mostUsedSectionLocation;
+  juce::Rectangle<int> _librariesSectionLocation;
 
   void _addAudioLibrary(std::string path);
 
