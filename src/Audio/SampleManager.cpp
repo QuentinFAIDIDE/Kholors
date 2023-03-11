@@ -181,7 +181,6 @@ void SampleManager::getNextAudioBlock(
                                                   bufferToFill.numSamples);
 
       // for each input source
-      // TODO: filter based on mask
       for (size_t i = 1; i < tracks.size(); i++) {
         if (tracks.getUnchecked(i) == nullptr) {
           continue;
