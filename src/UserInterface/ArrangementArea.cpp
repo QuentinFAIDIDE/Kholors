@@ -579,3 +579,33 @@ bool ArrangementArea::keyStateChanged(bool isKeyDown) {
 
 // Sigmoid activation function to try to increase contract in fft
 float ArrangementArea::sigmoid(float val) { return 1 / (1 + exp(-val)); }
+
+bool ArrangementArea::isInterestedInDragSource(
+    const SourceDetails& dragSourceDetails) {
+  juce::String filename = dragSourceDetails.description.toString();
+  if (filename.startsWith("file:")) {
+    if (filename.endsWith(".mp3") || filename.endsWith(".wav")) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void ArrangementArea::itemDropped(const SourceDetails& dragSourceDetails) {
+  int x = dragSourceDetails.localPosition.getX();
+  // converts x to an valid position in audio frame
+  int64_t framePos = viewPosition + (x * viewScale);
+  // we try to load the sample
+  juce::String filename =
+      dragSourceDetails.description.toString().replaceFirstOccurrenceOf("file:",
+                                                                        "");
+  int id = sampleManager.addSample(filename, framePos);
+  // on failures, abort
+  if (id == -1) {
+    // notify error
+    notificationArea.notifyError("unable to load " + filename);
+    return;
+  }
+
+  repaint();
+}

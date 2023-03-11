@@ -20,6 +20,10 @@ void AudioLibTreeRoot::addAudioLibrary(std::string path) {
   std::cout << "addded new library to widget: " << path << std::endl;
 }
 
+bool AudioLibTreeRoot::customComponentUsesTreeViewMouseHandler() const {
+  return true;
+}
+
 // ============ Audio Lib File =====================
 AudioLibFile::AudioLibFile(std::string path) : _file(path) {
   _isFolder = _file.isDirectory();
@@ -84,4 +88,13 @@ void AudioLibFile::paintOpenCloseButton(juce::Graphics &g,
   } else {
     g.fillEllipse(area.reduced(7));
   }
+}
+
+juce::var AudioLibFile::getDragSourceDescription() {
+  return juce::var("file:" +
+                   std::string(_file.getFullPathName().toStdString()));
+}
+
+bool AudioLibFile::customComponentUsesTreeViewMouseHandler() const {
+  return true;
 }

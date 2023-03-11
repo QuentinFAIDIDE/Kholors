@@ -8,17 +8,19 @@
 // your module headers visible.
 #include <juce_gui_extra/juce_gui_extra.h>
 
+#include "../Audio/SampleManager.h"
 #include "../Config.h"
 #include "GridLevel.h"
 #include "NotificationArea.h"
-#include "../Audio/SampleManager.h"
 
 //==============================================================================
 /*
     This component lives inside our window, and this is where you should put all
     your controls and content.
 */
-class ArrangementArea : public juce::Component, public juce::FileDragAndDropTarget {
+class ArrangementArea : public juce::Component,
+                        public juce::FileDragAndDropTarget,
+                        public juce::DragAndDropTarget {
  public:
   //==============================================================================
   ArrangementArea(SampleManager& sm, NotificationArea& na);
@@ -33,8 +35,12 @@ class ArrangementArea : public juce::Component, public juce::FileDragAndDropTarg
   void mouseMove(const juce::MouseEvent&) override;
   bool isInterestedInFileDrag(const juce::StringArray&) override;
   void filesDropped(const juce::StringArray&, int, int) override;
-  bool keyPressed(const juce::KeyPress&);
-  bool keyStateChanged(bool);
+  bool keyPressed(const juce::KeyPress&) override;
+  bool keyStateChanged(bool) override;
+
+  bool isInterestedInDragSource(
+      const SourceDetails& dragSourceDetails) override;
+  void itemDropped(const SourceDetails& dragSourceDetails) override;
 
  private:
   //==============================================================================
@@ -82,8 +88,9 @@ class ArrangementArea : public juce::Component, public juce::FileDragAndDropTarg
   void paintBars(juce::Graphics&);
   void paintSamples(juce::Graphics&);
   void drawSampleTrack(juce::Graphics&, SamplePlayer*, size_t);
-  void drawSampleChannelFft(juce::Graphics& g, SamplePlayer *sp, int64_t positionX,
-    int64_t positionY, int channel, bool flipped);
+  void drawSampleChannelFft(juce::Graphics& g, SamplePlayer* sp,
+                            int64_t positionX, int64_t positionY, int channel,
+                            bool flipped);
   void paintPlayCursor(juce::Graphics& g);
 
   void handleMiddleButterDown(const juce::MouseEvent&);
