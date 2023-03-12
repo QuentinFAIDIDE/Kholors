@@ -178,21 +178,21 @@ void ArrangementArea::drawSampleTrack(juce::Graphics& g, SamplePlayer* sp,
   if (trackMovingInitialPosition != -1 && search != selectedTracks.end()) {
     dragShift = (lastMouseX - trackMovingInitialPosition);
   }
-  float radius;
-  // if the track is currently being selected, draw thicker borders
-  if (search != selectedTracks.end()) {
-    radius = SAMPLEPLAYER_BORDER_WIDTH;
-  } else {
-    radius = SAMPLEPLAYER_BORDER_WIDTH / 2;
-  }
-  // draw a rectangle around the sample
-  g.setColour(SAMPLEPLAYER_BORDER_COLOR);
+
   auto positionX =
       ((sp->getEditingPosition() - viewPosition) / viewScale) + dragShift;
   auto positionY = FREQTIME_VIEW_INNER_MARGINS >> 1;
-  g.drawRoundedRectangle(positionX, positionY, sp->getLength() / viewScale,
-                         FREQTIME_VIEW_HEIGHT - (FREQTIME_VIEW_INNER_MARGINS),
-                         SAMPLEPLAYER_BORDER_RADIUS, radius);
+
+  // if the track is currently being selected, draw thicker borders
+  if (search != selectedTracks.end()) {
+    // draw a rectangle around the sample
+    g.setColour(SAMPLEPLAYER_BORDER_COLOR);
+    g.drawRoundedRectangle(positionX, positionY, sp->getLength() / viewScale,
+                           FREQTIME_VIEW_HEIGHT - (FREQTIME_VIEW_INNER_MARGINS),
+                           SAMPLEPLAYER_BORDER_RADIUS,
+                           SAMPLEPLAYER_BORDER_WIDTH);
+  }
+
   // if there are two channels
   if (sp->getBufferNumChannels() == 2) {
     // draw left (upper on the chart) channel

@@ -23,7 +23,7 @@
 #define FREQVIEW_MIN_SCALE_FRAME_PER_PIXEL 10
 #define FREQVIEW_MAX_SCALE_FRAME_PER_PIXEL 1024
 // how many audio frames movement we need to redraw after
-#define FREQVIEW_MIN_REDRAW_DISTANCE_FRAMES 128
+#define FREQVIEW_MIN_REDRAW_DISTANCE_FRAMES 64
 // the ratio of horizontal to vertical movement needed to trigger actions (min
 // and max)
 #define FREQVIEW_MIN_HORIZONTAL_MOVE_RATIO 2.0

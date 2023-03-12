@@ -9,7 +9,7 @@ int SamplePlayer::lastUsedColor = 0;
 
 SamplePlayer::SamplePlayer(int64_t position)
     : editingPosition(position),
-      bufferPosition(0),
+      bufferInitialPosition(0),
       bufferStart(0),
       bufferEnd(0),
       position(0),
@@ -164,7 +164,9 @@ void SamplePlayer::setLength(juce::int64 length) {
 }
 
 // get the length up to which the buffer is readead
-juce::int64 SamplePlayer::getLength() const { return bufferEnd - bufferStart; }
+juce::int64 SamplePlayer::getLength() const {
+  return (bufferEnd - bufferStart) + 1;
+}
 
 // set the shift for the buffer reading start position.
 // Shift parameter is the shift from audio buffer beginning.
@@ -213,43 +215,38 @@ void SamplePlayer::releaseResources() {
 
 void SamplePlayer::getNextAudioBlock(
     const juce::AudioSourceChannelInfo& bufferToFill) {
-  // return buffer data like in:
+  // NOTE: I was initally applying the pattern with a lock taken from this
+  // software. Turned out it was creating massive slowdown and xruns.
   // https://docs.juce.com/master/tutorial_looping_audio_sample_buffer_advanced.html
+  // I disabled the lock but in the future I need to handle race conditions
+  // of when the buffer is swapped or something.
 
-  // safely get the current buffer
-  auto retainedCurrentBuffer = [&]() -> BufferPtr {
-    // get scoped lock
-    const juce::SpinLock::ScopedTryLockType lock(playerMutex);
-
-    if (lock.isLocked()) return audioBufferRef;
-
-    return nullptr;
-  }();
-
-  // return empty buffer if no buffer is set
+  auto retainedCurrentBuffer = audioBufferRef;
+  // return cleared buffer if no buffer is set or if lock failed to be locked.
   if (retainedCurrentBuffer == nullptr) {
     bufferToFill.clearActiveBufferRegion();
     position += bufferToFill.numSamples;
     return;
   }
 
-  // fetch audio buffer data
+  // samplePlayer audio buffer data
   auto* currentAudioSampleBuffer =
       retainedCurrentBuffer->getAudioSampleBuffer();
   auto numInputChannels = currentAudioSampleBuffer->getNumChannels();
   auto numOutputChannels = bufferToFill.buffer->getNumChannels();
-  int64_t outputSamplesRemaining = bufferToFill.numSamples;
+  auto outputSamplesRemaining = bufferToFill.numSamples;
+  // how many samples have we already read ?
   int64_t outputSamplesOffset = 0;
 
   // NOTE: for now, let's consider bufferStart will always be zero.
   // We start simple for now, and will only introduce bugs later :D
 
-  // update audio buffer position
-  bufferPosition = position - editingPosition;
+  // set position relative to audio buffer beginning
+  bufferInitialPosition = position - editingPosition;
 
   // play nothing if sample is not playing
-  if ((bufferPosition + outputSamplesRemaining) < 0 ||
-      bufferPosition > (bufferEnd - bufferStart)) {
+  if ((bufferInitialPosition + outputSamplesRemaining) < 0 ||
+      bufferInitialPosition > getLength()) {
     bufferToFill.clearActiveBufferRegion();
     position += bufferToFill.numSamples;
     return;
@@ -257,36 +254,47 @@ void SamplePlayer::getNextAudioBlock(
 
   int64_t skippedSamples = 0;
   // pad beginning to start copying after the buffers starts
-  if (bufferPosition < 0) {
-    outputSamplesRemaining += bufferPosition;
-    skippedSamples = -bufferPosition;
+  if (bufferInitialPosition < 0) {
+    skippedSamples = -bufferInitialPosition;
+    // clear region untill the sample plays
+    bufferToFill.buffer->clear(bufferToFill.startSample, skippedSamples);
+    // move output cursors to the beginning of the sample
+    outputSamplesOffset += skippedSamples;
+    outputSamplesRemaining += bufferInitialPosition;
   }
 
   // send audio buffer data
   while (outputSamplesRemaining > 0) {
     // decide on how many samples to copy
-    auto bufferSamplesRemaining =
-        (bufferEnd - bufferStart) + 1 - bufferPosition - outputSamplesOffset;
-    auto samplesThisTime =
+    int bufferSamplesRemaining =
+        getLength() - bufferInitialPosition - outputSamplesOffset;
+    int samplesThisTime =
         juce::jmin(outputSamplesRemaining, bufferSamplesRemaining);
 
-    if (samplesThisTime == 0) {
+    if (samplesThisTime <= 0) {
       break;
     }
 
     // copy audio for each channel
     for (auto channel = 0; channel < numOutputChannels; ++channel) {
       bufferToFill.buffer->copyFrom(
-          channel,
-          bufferToFill.startSample + outputSamplesOffset + skippedSamples,
+          channel, bufferToFill.startSample + outputSamplesOffset,
           *currentAudioSampleBuffer, channel % numInputChannels,
-          bufferPosition + outputSamplesOffset, samplesThisTime);
+          bufferInitialPosition + outputSamplesOffset, samplesThisTime);
     }
 
     outputSamplesRemaining -= samplesThisTime;
     outputSamplesOffset += samplesThisTime;
   }
 
+  // if we broke out of loop because sample buffer was exhausted, clear the
+  // remaining part
+  if (outputSamplesRemaining > 0) {
+    bufferToFill.buffer->clear(bufferToFill.startSample + outputSamplesOffset,
+                               outputSamplesRemaining);
+  }
+
+  // update the global track position stored in the samplePlayer
   position += bufferToFill.numSamples;
 }
 

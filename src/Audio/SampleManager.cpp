@@ -73,14 +73,12 @@ void SampleManager::startPlayback() {
   if (!isPlaying) {
     setNextReadPosition(playCursor);
     isPlaying = true;
-    std::cout << "Starting playback" << std::endl;
   }
 }
 
 void SampleManager::stopPlayback() {
   if (isPlaying) {
     isPlaying = false;
-    std::cout << "Stopping playback" << std::endl;
   }
 }
 
@@ -306,7 +304,7 @@ void SampleManager::checkForFileToImport() {
 
       // only load it if below our global constant maximum sample duration
       if (duration < SAMPLE_MAX_DURATION_SEC) {
-        // the new buffer reference
+        // allocate a buffer
         BufferPtr newBuffer = new ReferenceCountedBuffer(
             file.getFileName(), (int)reader->numChannels,
             (int)reader->lengthInSamples);
@@ -318,6 +316,7 @@ void SampleManager::checkForFileToImport() {
         // TODO: compute hash of sample, and do not save those
         // which already exists. Use a function like getBufferFromHash
         // to set the new samplePlayer to the already existing sample.
+        // HINT: File class can give us a hash already ! :)
 
         // create a new sample player
         SamplePlayer* newSample = new SamplePlayer(desiredPosition);
@@ -364,10 +363,6 @@ void SampleManager::checkForFileToImport() {
 }
 
 void SampleManager::setNextReadPosition(juce::int64 nextReadPosition) {
-  // here we update the nearby sample bitmask and update their position
-
-  // TODO: look at and fix eventual audio glitches
-
   // update play cursor
   playCursor = nextReadPosition;
 

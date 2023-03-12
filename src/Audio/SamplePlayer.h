@@ -68,7 +68,7 @@ class SamplePlayer : public juce::PositionableAudioSource {
  private:
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SamplePlayer)
   int editingPosition;
-  int bufferPosition;
+  int bufferInitialPosition;
   int bufferStart;
   int bufferEnd;
   // this position is the one shared with all tracks (cursor pos)

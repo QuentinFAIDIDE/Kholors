@@ -33,7 +33,6 @@ void NotificationArea::paint(juce::Graphics& g) {
   baseX = bounds.getWidth() - 2 * NOTIF_OUTTER_MARGINS - NOTIF_WIDTH;
 
   g.setColour(COLOR_APP_BACKGROUND);
-  g.fillAll();
 
   // draw background over bounds
   // paint the background of the area
@@ -117,9 +116,11 @@ void NotificationArea::paint(juce::Graphics& g) {
     g.fillRoundedRectangle(baseX + popupX, baseY + popupY, NOTIF_WIDTH,
                            NOTIF_HEIGHT, NOTIF_BORDER_RADIUS);
     // draw text
-    // TODO: change font
 
     g.setColour(COLOR_NOTIF_TEXT);
+    g.drawRoundedRectangle(baseX + popupX, baseY + popupY, NOTIF_WIDTH,
+                           NOTIF_HEIGHT, NOTIF_BORDER_RADIUS, 1.0);
+
     g.drawMultiLineText(
         lastNotification.message, baseX + popupX + NOTIF_INNER_MARGINS,
         baseY + popupY + NOTIF_INNER_MARGINS,
