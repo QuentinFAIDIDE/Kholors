@@ -28,6 +28,9 @@ MainComponent::MainComponent()
   actionTabs.addTab("Mastering", juce::Colour(25, 24, 24), &masteringTab,
                     false);
 
+  // tells the sample player where to report file import for count
+  sampleManager.setFileImportedCallback(audioLibraryTab.fileWasImported);
+
   // make subwidgets visible
   addAndMakeVisible(arrangementArea);
   addAndMakeVisible(notificationArea);

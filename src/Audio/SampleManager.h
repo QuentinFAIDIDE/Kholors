@@ -57,6 +57,7 @@ class SampleManager : public juce::PositionableAudioSource,
   // set callback to safely access gui's
   // MessageThread to repaint tracks
   void setTrackRepaintCallback(std::function<void()>);
+  void setFileImportedCallback(std::function<void(std::string)>);
 
  private:
   // TODO: add a readahead buffer
@@ -107,6 +108,8 @@ class SampleManager : public juce::PositionableAudioSource,
   juce::Array<SamplePlayer*> tracks;
   // callback to repaint when tracks were updated
   std::function<void()> trackRepaintCallback;
+  // callback to report the file was imported to audio library
+  std::function<void(std::string)> fileImportedCallback;
   // helps deciding on notifying ArrangementArea for redraw
   int64_t lastDrawnCursor;
   void checkForCursorRedraw();
@@ -152,9 +155,6 @@ class SampleManager : public juce::PositionableAudioSource,
 
   // inherited from thread, this is where we will malloc and free stuff
   void run() override;
-
-  // update the bitmask of nearby SamplePlayers
-  void updateNearbySamplesBitmask();
 
   // this stop the cursor from moving forward an cuts audio when nothing is
   // playing anymore

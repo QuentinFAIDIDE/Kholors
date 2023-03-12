@@ -92,6 +92,9 @@
 #define MIN_DB -100.0f
 #define MAX_DB 0.0f
 
+#define COLOR_OPAQUE_BICOLOR_LIST_1 juce::Colour(25, 25, 25)
+#define COLOR_OPAQUE_BICOLOR_LIST_2 juce::Colour(23, 23, 23)
+
 #ifndef DEF_CONFIG_HPP
 #define DEF_CONFIG_HPP
 

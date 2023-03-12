@@ -237,8 +237,6 @@ void SampleManager::run() {
     checkForBuffersToFree();
     // do we need to stop playback because the cursor is not in bounds ?
     pauseIfCursorNotInBound();
-    // update the playing SamplePlayer/tracks bitmask
-    updateNearbySamplesBitmask();
     // wait untill next thread iteration
     wait(500);
   }
@@ -345,6 +343,7 @@ void SampleManager::checkForFileToImport() {
         }
 
         trackRepaintCallback();
+        fileImportedCallback(pathToOpen.toStdString());
 
       } else {
         // notify user about sample being too long to be loaded
@@ -374,9 +373,6 @@ void SampleManager::setNextReadPosition(juce::int64 nextReadPosition) {
     }
   }
 
-  // update playing tracks bitmask
-  updateNearbySamplesBitmask();
-
   // we need to repaint the track view !
   trackRepaintCallback();
 }
@@ -403,80 +399,6 @@ void SampleManager::setLooping(bool) {
   // TODO
 }
 
-void SampleManager::updateNearbySamplesBitmask() {
-  // clear the upcoming bitmask we will swap with the one audio
-  // thread uses
-  for (size_t i = 0; i < SAMPLE_BITMASK_SIZE; i++) {
-    // no need to clear above the last track
-    if (i > 0 && ((i - 1) * 64) > tracks.size()) {
-      break;
-    }
-    *(backgroundNearTrackBitmask + i) = 0;
-  }
-
-  // In the following algo the approach is O(n) but it
-  // could be O(log(n)) or less.
-
-  // TODO: use an ordered list of SamplePlayer list ids to speed up
-  // the nearby track masking process.
-  // We can leverage the fact that we have a maximum SamplePlayer/buffer length
-  // to set the bits at all the ids after first than interpolates
-  // playCursor with BASE_POSITION + MAX_SAMPLE_SIZE and the first one that
-  // doesn't after that.
-  // such an ordered list can be search in log(n) time by looking at sucessive
-  // halvings from the middle track.
-
-  // less effective but simpler implementation:
-
-  int64_t rangeBuffer, baseRow;
-
-  // for each block of 64 bits of the nearby tracks bitmask
-  for (size_t i = 0; i < SAMPLE_BITMASK_SIZE; i++) {
-    // a buffer for the range of bits
-    rangeBuffer = 0;
-
-    // avoid repeating the multiplication
-    baseRow = i * 64;
-
-    // for each bit representing an individual track in the range
-    for (size_t j = 0; j < 64 && baseRow + j < tracks.size(); j++) {
-      // ignore track if it's nullptr
-      if (tracks.getUnchecked(baseRow + j) == nullptr) {
-        continue;
-      }
-      // if the corresponding track is SAMPLE_MASKING_DISTANCE audio
-      // frames close to the playing cursor
-      if (tracks.getUnchecked(baseRow + j)->getNextReadPosition() >
-              playCursor - SAMPLE_MASKING_DISTANCE_FRAMES &&
-          tracks.getUnchecked(baseRow + j)->getNextReadPosition() <
-              playCursor + SAMPLE_MASKING_DISTANCE_FRAMES) {
-        // set the bit
-        rangeBuffer = rangeBuffer | (1 << (j - 63));
-      }
-    }
-    // write the bit range
-    *(backgroundNearTrackBitmask + i) = rangeBuffer;
-
-    // abort if we're out of bounds
-    if (baseRow + 63 >= tracks.size()) {
-      break;
-    }
-  }
-
-  // pointer to swap arrays
-  int64_t* swapBuffer;
-
-  // get lock and swap the bitmasks
-  {
-    const juce::SpinLock::ScopedLockType lock(mutex);
-
-    // add the buffer the array of audio buffers
-    swapBuffer = nearTracksBitmask;
-    nearTracksBitmask = backgroundNearTrackBitmask;
-    backgroundNearTrackBitmask = swapBuffer;
-  }
-}
-
 void SampleManager::pauseIfCursorNotInBound() {
   // TODO
 }
@@ -493,6 +415,11 @@ SamplePlayer* SampleManager::getTrack(int index) const {
 
 void SampleManager::setTrackRepaintCallback(std::function<void()> f) {
   trackRepaintCallback = f;
+}
+
+void SampleManager::setFileImportedCallback(
+    std::function<void(std::string)> c) {
+  fileImportedCallback = c;
 }
 
 // delete track from list by setting it to nullptr and return point to track.
