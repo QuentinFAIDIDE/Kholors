@@ -11,6 +11,7 @@ class AudioLibTreeRoot : public juce::TreeViewItem {
   bool canBeSelected() const override;
   void addAudioLibrary(std::string);
   bool customComponentUsesTreeViewMouseHandler() const override;
+  void focusAtPath(std::string);
 
  private:
   //==============================================================================
@@ -32,6 +33,8 @@ class AudioLibFile : public juce::TreeViewItem {
                             bool isMouseOver) override;
   juce::var getDragSourceDescription() override;
   bool customComponentUsesTreeViewMouseHandler() const override;
+  juce::File &getJuceFile();
+  void focusAtPath(std::string);
 
  private:
   juce::File _file;

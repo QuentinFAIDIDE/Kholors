@@ -24,6 +24,24 @@ bool AudioLibTreeRoot::customComponentUsesTreeViewMouseHandler() const {
   return true;
 }
 
+void AudioLibTreeRoot::focusAtPath(std::string path) {
+  // destination file
+  juce::File destFile(path);
+  // iterate over childs
+  for (int i = 0; i < getNumSubItems(); i++) {
+    AudioLibFile *f = dynamic_cast<AudioLibFile *>(getSubItem(i));
+    if (f != nullptr) {
+      // is the file a child or the file we are looking for ?
+      if (destFile.isAChildOf(f->getJuceFile()) ||
+          destFile.getFullPathName() == f->getJuceFile().getFullPathName()) {
+        // if so, call the file's focusAtPath method
+        f->focusAtPath(path);
+        return;
+      }
+    }
+  }
+}
+
 // ============ Audio Lib File =====================
 AudioLibFile::AudioLibFile(std::string path) : _file(path) {
   _isFolder = _file.isDirectory();
@@ -39,7 +57,7 @@ AudioLibFile::~AudioLibFile() {
 
 bool AudioLibFile::mightContainSubItems() { return _isFolder; }
 
-bool AudioLibFile::canBeSelected() const { return !_isFolder; }
+bool AudioLibFile::canBeSelected() const { return true; }
 
 juce::String AudioLibFile::getUniqueName() const { return _name; }
 
@@ -97,4 +115,44 @@ juce::var AudioLibFile::getDragSourceDescription() {
 
 bool AudioLibFile::customComponentUsesTreeViewMouseHandler() const {
   return true;
+}
+
+juce::File &AudioLibFile::getJuceFile() { return _file; }
+
+void AudioLibFile::focusAtPath(std::string path) {
+  // destination file
+  juce::File destFile(path);
+
+  // if we are the file, stop and select ourselves
+  if (destFile.getFullPathName() == _file.getFullPathName()) {
+    setSelected(true, true);
+    if (_file.isDirectory()) {
+      setOpen(true);
+    }
+    getOwnerView()->scrollToKeepItemVisible((juce::TreeViewItem *)this);
+    return;
+  }
+
+  // buggy situation where we are not the file and we're not
+  // a directory.
+  if (!_file.isDirectory()) {
+    return;
+  }
+
+  // open ourselves as we're on the path
+  setOpen(true);
+
+  // iterate over childs
+  for (int i = 0; i < getNumSubItems(); i++) {
+    AudioLibFile *f = dynamic_cast<AudioLibFile *>(getSubItem(i));
+    if (f != nullptr) {
+      // is the file a child or the file we are looking for ?
+      if (destFile.isAChildOf(f->getJuceFile()) ||
+          destFile.getFullPathName() == f->getJuceFile().getFullPathName()) {
+        // if so, call the file's focusAtPath method
+        f->focusAtPath(path);
+        return;
+      }
+    }
+  }
 }

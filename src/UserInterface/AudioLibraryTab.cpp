@@ -6,8 +6,6 @@
 
 AudioLibraryTab::AudioLibraryTab()
     : _resultList("Results", &_resultListContent) {
-  // addAndMakeVisible(_locationsSection);
-
   _searchBar.setCaretVisible(true);
   _searchBar.setScrollbarsShown(false);
   _searchBar.setJustification(juce::Justification::left);
@@ -36,6 +34,10 @@ AudioLibraryTab::AudioLibraryTab()
 
   // callback to pass to sampleManager to report file import
   fileWasImported = [this](std::string s) {
+    // this can be called from the SampleManager worker thread, so
+    // we need to lock the message/gui thread
+    const juce::MessageManagerLock mmLock;
+
     juce::File f(s);
     while (!_isLibraryPath(f.getFullPathName().toStdString()) &&
            f != juce::File("/home") && f != juce::File("/")) {
@@ -47,6 +49,11 @@ AudioLibraryTab::AudioLibraryTab()
       _audioLibraries->countAccess(f);
     }
     _updateBestEntries();
+  };
+
+  // tell the result list where where to call for element focus
+  _resultListContent.focusElementCallback = [this](std::string path) {
+    _audioLibTreeRoot->focusAtPath(path);
   };
 }
 
@@ -122,13 +129,15 @@ void AudioLibraryTab::resized() {
   localBounds.reduce(6, 6);
 
   // set position of the Find section
-  int widthQuarter = localBounds.getWidth() >> 2;
-  localBounds.setWidth(widthQuarter);
+  int idealProportion =
+      LIBRARY_IDEAL_SEARCH_SIZE_PROPORTION * localBounds.getWidth();
+  localBounds.setWidth(juce::jmax(idealProportion, LIBRARY_MIN_SEARCH_SIZE));
   _findLocation = localBounds.reduced(5, 5);
 
   // set the position of the library files section
-  localBounds.setX(localBounds.getX() + widthQuarter);
-  localBounds.setWidth(localBounds.getWidth() + (2 * widthQuarter));
+  localBounds.setX(localBounds.getX() + localBounds.getWidth());
+  localBounds.setWidth(getLocalBounds().reduced(6, 6).getWidth() -
+                       localBounds.getWidth());
   _librariesSectionLocation = localBounds.reduced(5, 5);
 
   // set the position of the file browser
