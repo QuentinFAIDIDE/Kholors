@@ -8,7 +8,13 @@
 // Standard name is "audio samples" but this can be
 // confused with the audio samples we are supposed to edit
 // with this software.
-// So when
+
+// OpenGL examples:
+// https://learnopengl.com/Getting-started/Hello-Triangle
+// https://learnopengl.com/Getting-started/Shaders
+// https://learnopengl.com/Getting-started/Textures
+// https://medium.com/@Im_Jimmi/using-opengl-for-2d-graphics-in-a-juce-plug-in-24aa82f634ff
+//
 
 //==============================================================================
 ArrangementArea::ArrangementArea(SampleManager& sm, NotificationArea& na)
@@ -157,7 +163,8 @@ void ArrangementArea::paintSamples(juce::Graphics& g) {
     if (sp == nullptr) {
       continue;
     }
-    // get its lock
+    // get its lock (note this line used to create audio glitches before
+    // we removed the damn lock taking in the sample getNextAudioBlock)
     const juce::SpinLock::ScopedLockType lock(sp->playerMutex);
     // compute left and right bounds
     trackLeftBound = sp->getEditingPosition();
@@ -222,24 +229,24 @@ void ArrangementArea::drawSampleChannelFft(juce::Graphics& g, SamplePlayer* sp,
 
   int posX, posY;
 
-  // TODO: precast values like float(FREQVIEW_SAMPLE_FFT_SIZE) and
-  // float(noHorizontalSquares)
+  // precast values to float
+  float fNoVerticalFftSq = float(noVerticalSquaresFft);
+  float fNoHorizonFftSq = float(noHorizontalSquares);
+  float fNumFft = float(sp->getNumFft());
+  float fScopeSize = float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
 
   // for each horizontal line
   for (size_t i = 0; i < noHorizontalSquares; i++) {
     // compute index of the fft to read
-    posX =
-        int((float(i) / float(noHorizontalSquares)) * float(sp->getNumFft()));
+    posX = int((float(i) / fNoHorizonFftSq) * fNumFft);
     // for each vertical line
     for (size_t j = 0; j < noVerticalSquaresFft; j++) {
       if (flipped) {
-        posY =
-            int(std::round(polylens((float(j)) / float(noVerticalSquaresFft)) *
-                           float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)));
+        posY = int(
+            std::round(polylens((float(j)) / fNoVerticalFftSq) * fScopeSize));
       } else {
-        posY = int(std::round(
-            polylens(1.0f - ((float(j)) / float(noVerticalSquaresFft))) *
-            float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)));
+        posY = int(std::round(polylens(1.0f - ((float(j)) / fNoVerticalFftSq)) *
+                              fScopeSize));
       }
       // get the intensity at this frequency/time
       intensity = sp->getFftData()[
