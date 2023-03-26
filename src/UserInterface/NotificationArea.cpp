@@ -33,6 +33,7 @@ void NotificationArea::paint(juce::Graphics& g) {
   baseX = bounds.getWidth() - 2 * NOTIF_OUTTER_MARGINS - NOTIF_WIDTH;
 
   g.setColour(COLOR_APP_BACKGROUND);
+  g.fillAll();
 
   // draw background over bounds
   // paint the background of the area

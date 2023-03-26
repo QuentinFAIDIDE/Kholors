@@ -63,6 +63,8 @@ class SamplePlayer : public juce::PositionableAudioSource {
   juce::Colour& getColor();
   void setColor(int colorId);
 
+  bool hasBeenInitialized() const;
+
   // TODO: getters for stereo low and high pass
 
  private:
@@ -79,7 +81,10 @@ class SamplePlayer : public juce::PositionableAudioSource {
   bool isSampleSet;
   juce::Colour colour;
 
-  // used to store the results of the fft of the buffer
+  // Store the results of the fft of the buffered audio.
+  // LAYOUT: for each channel, for each fft over time, for each intensity at
+  // freq. fft is size FREQVIEW_SAMPLE_FFT_SCOPE_SIZE and there are numFft. an
+  // fft covers FREQVIEW_SAMPLE_FFT_SIZE audio samples.
   std::vector<float> audioBufferFrequencies;
   // how many blocks of FREQVIEW_SAMPLE_FFT_SIZE samples
   // for this buffer

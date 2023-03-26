@@ -153,6 +153,7 @@ target_link_libraries(Kholors
         juce::juce_audio_utils
         juce::juce_dsp
         juce::juce_audio_basics
+        juce::juce_opengl
         yaml-cpp
     PUBLIC
         juce::juce_recommended_config_flags

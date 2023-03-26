@@ -59,6 +59,11 @@ class SampleManager : public juce::PositionableAudioSource,
   void setTrackRepaintCallback(std::function<void()>);
   void setFileImportedCallback(std::function<void(std::string)>);
 
+  // callback to add new samples to the user interface
+  std::function<void(SamplePlayer*)> addUiSampleCallback;
+  // callback to add new samples to the user interface
+  std::function<void(int)> disableUiSampleCallback;
+
  private:
   // TODO: add a readahead buffer
   // just like AudioTransportSource implementation
@@ -110,6 +115,7 @@ class SampleManager : public juce::PositionableAudioSource,
   std::function<void()> trackRepaintCallback;
   // callback to report the file was imported to audio library
   std::function<void(std::string)> fileImportedCallback;
+
   // helps deciding on notifying ArrangementArea for redraw
   int64_t lastDrawnCursor;
   void checkForCursorRedraw();

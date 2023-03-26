@@ -26,6 +26,8 @@ SamplePlayer::~SamplePlayer() {
   // TODO
 }
 
+bool SamplePlayer::hasBeenInitialized() const { return isSampleSet; }
+
 juce::Colour& SamplePlayer::getColor() { return colour; }
 
 void SamplePlayer::setColor(int colorId) {
@@ -215,13 +217,19 @@ void SamplePlayer::releaseResources() {
 
 void SamplePlayer::getNextAudioBlock(
     const juce::AudioSourceChannelInfo& bufferToFill) {
-  // NOTE: I was initally applying the pattern with a lock taken from this
-  // software. Turned out it was creating massive slowdown and xruns.
+  // return buffer data like in:
   // https://docs.juce.com/master/tutorial_looping_audio_sample_buffer_advanced.html
-  // I disabled the lock but in the future I need to handle race conditions
-  // of when the buffer is swapped or something.
 
-  auto retainedCurrentBuffer = audioBufferRef;
+  // safely get the current buffer
+  auto retainedCurrentBuffer = [&]() -> BufferPtr {
+    // get scoped lock
+    const juce::SpinLock::ScopedTryLockType lock(playerMutex);
+
+    if (lock.isLocked()) return audioBufferRef;
+
+    return nullptr;
+  }();
+
   // return cleared buffer if no buffer is set or if lock failed to be locked.
   if (retainedCurrentBuffer == nullptr) {
     bufferToFill.clearActiveBufferRegion();

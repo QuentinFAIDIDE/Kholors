@@ -76,7 +76,7 @@ void MainComponent::paint(juce::Graphics& g) {
   // draw background over bounds
   // paint the background of the area
   g.setColour(COLOR_APP_BACKGROUND);
-  g.fillRect(g.getClipBounds());
+  g.fillAll();
 }
 
 void MainComponent::resized() {

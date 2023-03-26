@@ -2,12 +2,16 @@
 
 #include <cmath>
 #include <iostream>
+#include <stdexcept>
 
-//======== COMMENT =========
-// We often mention "audio frames" in the code.
+#include "../OpenGL/FreqviewShaders.h"
+#include "juce_opengl/opengl/juce_gl.h"
+
+// NOTE:
+// We often mention "audio frames" in the code for a float of signal intensity.
 // Standard name is "audio samples" but this can be
 // confused with the audio samples we are supposed to edit
-// with this software.
+// with this software so we say "frames" sometimes.
 
 // OpenGL examples:
 // https://learnopengl.com/Getting-started/Hello-Triangle
@@ -42,9 +46,24 @@ ArrangementArea::ArrangementArea(SampleManager& sm, NotificationArea& na)
   cursorColor = juce::Colour(240, 240, 240);
   // enable keyboard events
   setWantsKeyboardFocus(true);
+
+  // Indicates that no part of this Component is transparent.
+  setOpaque(true);
+
+  openGLContext.setRenderer(this);
+  openGLContext.setContinuousRepainting(false);
+  openGLContext.attachTo(*this);
+
+  // register the callback to register newly created samples
+  sampleManager.addUiSampleCallback = [this](SamplePlayer* sp) {
+    addNewSample(sp);
+  };
+  sampleManager.disableUiSampleCallback = [this](int index) {
+    _samples[index].disable();
+  };
 }
 
-ArrangementArea::~ArrangementArea() {}
+ArrangementArea::~ArrangementArea() { openGLContext.detach(); }
 
 void ArrangementArea::paint(juce::Graphics& g) {
   // get the window width
@@ -57,11 +76,7 @@ void ArrangementArea::paint(juce::Graphics& g) {
     return;
   }
 
-  // draw the background and grid
-  paintBars(g);
-
-  // draw samples
-  paintSamples(g);
+  // paintBars and paintSamples are currently being ported to opengl
 
   // paint the play cursor
   paintPlayCursor(g);
@@ -71,6 +86,82 @@ void ArrangementArea::resized() {
   // This is called when the MainComponent is resized.
   // If you add any child components, this is where you should
   // update their positions.
+}
+
+void ArrangementArea::newOpenGLContextCreated() {
+  // shader loading stolen from openGL jimi example referenced at top of file.
+  // Create an instance of OpenGLShaderProgram
+  _shaderProgram.reset(new juce::OpenGLShaderProgram(openGLContext));
+  // Compile and link the shader.
+  // Each of these methods will return false if something goes wrong so we'll
+  // wrap them in an if statement
+  if (_shaderProgram->addVertexShader(freqviewVertexShader) &&
+      _shaderProgram->addFragmentShader(freqviewFragmentShader) &&
+      _shaderProgram->link()) {
+    // No compilation errors - set the shader program to be active
+    _shaderProgram->use();
+
+    // log info about the context
+    openGLContext.executeOnGLThread(
+        [this](juce::OpenGLContext& c) { this->logOpenGLInfoCallback(c); },
+        true);
+
+  } else {
+    throw std::runtime_error("Unable to compile shaders");
+  }
+}
+
+void ArrangementArea::renderOpenGL() {
+  juce::gl::glClearColor(0.078f, 0.078f, 0.078f, 1.0f);
+  juce::gl::glClear(juce::gl::GL_COLOR_BUFFER_BIT);
+
+  _shaderProgram->use();
+  for (int i = 0; i < _samples.size(); i++) {
+    _samples[i].drawGlObjects();
+  }
+}
+
+void ArrangementArea::openGLContextClosing() {}
+
+void ArrangementArea::addNewSample(SamplePlayer* sp) {
+  // create graphic objects from the sample
+  _samples.push_back(SampleGraphicModel(sp));
+  // send the data to the GPUs from the OpenGL thread
+  openGLContext.executeOnGLThread(
+      [this](juce::OpenGLContext& c) {
+        _samples[_samples.size() - 1].registerGlObjects();
+      },
+      true);
+}
+
+void ArrangementArea::updateSamplePosition(int index, juce::int64 position) {
+  // TODO
+}
+
+// helper from this kind sir:
+// https://forum.juce.com/t/just-a-quick-gl-info-logger-func-for-any-of-you/32082/2
+void ArrangementArea::logOpenGLInfoCallback(juce::OpenGLContext&) {
+  int major = 0, minor = 0;
+  juce::gl::glGetIntegerv(juce::gl::GL_MAJOR_VERSION, &major);
+  juce::gl::glGetIntegerv(juce::gl::GL_MINOR_VERSION, &minor);
+
+  juce::String stats;
+  stats
+      << "---------------------------" << juce::newLine
+      << "=== OpenGL/GPU Information ===" << juce::newLine << "Vendor: "
+      << juce::String((const char*)juce::gl::glGetString(juce::gl::GL_VENDOR))
+      << juce::newLine << "Renderer: "
+      << juce::String((const char*)juce::gl::glGetString(juce::gl::GL_RENDERER))
+      << juce::newLine << "OpenGL Version: "
+      << juce::String((const char*)juce::gl::glGetString(juce::gl::GL_VERSION))
+      << juce::newLine << "OpenGL Major: " << juce::String(major)
+      << juce::newLine << "OpenGL Minor: " << juce::String(minor)
+      << juce::newLine << "OpenGL Shading Language Version: "
+      << juce::String((const char*)juce::gl::glGetString(
+             juce::gl::GL_SHADING_LANGUAGE_VERSION))
+      << juce::newLine << "---------------------------" << juce::newLine;
+
+  std::cerr << stats << std::endl;
 }
 
 // warning buggy with bars over 4 subdivisions due to << operator
@@ -163,8 +254,8 @@ void ArrangementArea::paintSamples(juce::Graphics& g) {
     if (sp == nullptr) {
       continue;
     }
-    // get its lock (note this line used to create audio glitches before
-    // we removed the damn lock taking in the sample getNextAudioBlock)
+    // get its lock (note this line creates audio glitches cause it takes it way
+    // too often and for too long)
     const juce::SpinLock::ScopedLockType lock(sp->playerMutex);
     // compute left and right bounds
     trackLeftBound = sp->getEditingPosition();
@@ -255,10 +346,10 @@ void ArrangementArea::drawSampleChannelFft(juce::Graphics& g, SamplePlayer* sp,
           (posX * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + posY
 
       ];
-      // scale intensity to fit between 0 and 1
-      intensity = juce::jmap(intensity, MIN_DB, MAX_DB, 0.0f, 1.0f);
-      intensity = sigmoid((intensity * 12.0) - 6.0);
-      intensity = juce::jlimit(0.0f, 1.0f, intensity);
+      // used to apply sigmoid and scale intensity here, but
+      // moved that to opengl while keeping this code for
+      // reference on what previous implementation was about.
+
       // draw the rectangle
       g.setColour(sp->getColor().withAlpha(intensity));
       g.fillRect(positionX + FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS *
@@ -458,6 +549,14 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent& jme) {
 
   // if updated view or in cursor moving mode, repaint
   if (viewUpdated || isMovingCursor) {
+    // send the new view positions to opengl thread
+    openGLContext.executeOnGLThread(
+        [this](juce::OpenGLContext&) {
+          _shaderProgram->setUniform("viewPosition", (GLfloat)viewPosition);
+          _shaderProgram->setUniform("viewWidth",
+                                     (GLfloat)(bounds.getWidth() * viewScale));
+        },
+        true);
     repaint();
   }
 }
@@ -583,9 +682,6 @@ bool ArrangementArea::keyStateChanged(bool isKeyDown) {
   }
   return false;
 }
-
-// Sigmoid activation function to try to increase contract in fft
-float ArrangementArea::sigmoid(float val) { return 1 / (1 + exp(-val)); }
 
 bool ArrangementArea::isInterestedInDragSource(
     const SourceDetails& dragSourceDetails) {

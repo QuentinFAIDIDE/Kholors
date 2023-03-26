@@ -342,8 +342,9 @@ void SampleManager::checkForFileToImport() {
           buffers.add(newBuffer);
         }
 
-        trackRepaintCallback();
+        addUiSampleCallback(newSample);
         fileImportedCallback(pathToOpen.toStdString());
+        trackRepaintCallback();
 
       } else {
         // notify user about sample being too long to be loaded
@@ -426,8 +427,8 @@ void SampleManager::setFileImportedCallback(
 // ArrangementArea is in charge of deleting the SamplePlayer instance or
 // putting it back with restoreDeletedTrack if usert hit ctrl+Z.
 SamplePlayer* SampleManager::deleteTrack(int index) {
-  SamplePlayer* deletedSp = tracks.getUnchecked(index);
   tracks.set(index, nullptr);
+  disableUiSampleCallback(index);
 }
 
 void SampleManager::restoreDeletedTrack(SamplePlayer* sp, int index) {

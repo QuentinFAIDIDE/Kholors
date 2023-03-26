@@ -7,11 +7,16 @@
 // CMakeLists.txt, you could `#include <JuceHeader.h>` here instead, to make all
 // your module headers visible.
 #include <juce_gui_extra/juce_gui_extra.h>
+#include <juce_opengl/juce_opengl.h>
+
+#include <vector>
 
 #include "../Audio/SampleManager.h"
 #include "../Config.h"
+#include "../OpenGL/SampleGraphicModel.h"
 #include "GridLevel.h"
 #include "NotificationArea.h"
+#include "juce_opengl/opengl/juce_gl.h"
 
 //==============================================================================
 /*
@@ -20,7 +25,8 @@
 */
 class ArrangementArea : public juce::Component,
                         public juce::FileDragAndDropTarget,
-                        public juce::DragAndDropTarget {
+                        public juce::DragAndDropTarget,
+                        public juce::OpenGLRenderer {
  public:
   //==============================================================================
   ArrangementArea(SampleManager& sm, NotificationArea& na);
@@ -42,9 +48,20 @@ class ArrangementArea : public juce::Component,
       const SourceDetails& dragSourceDetails) override;
   void itemDropped(const SourceDetails& dragSourceDetails) override;
 
+  void newOpenGLContextCreated() override;
+  void renderOpenGL() override;
+  void openGLContextClosing() override;
+
  private:
   //==============================================================================
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArrangementArea)
+
+  juce::OpenGLContext openGLContext;
+
+  // NOTE: we will draw each sample fft in OpenGL
+  // with a square on which we map a texture.
+  std::vector<SampleGraphicModel> _samples;
+  std::unique_ptr<juce::OpenGLShaderProgram> _shaderProgram;
 
   // the index in audio frame of the view (relation to seconds depends on
   // framerate)
@@ -98,8 +115,12 @@ class ArrangementArea : public juce::Component,
   void handleLeftButtonUp(const juce::MouseEvent&);
   size_t getTrackClicked(const juce::MouseEvent&);
   void deleteSelectedTracks();
-  float sigmoid(float);
   float polylens(float);
+
+  void addNewSample(SamplePlayer*);
+  void updateSamplePosition(int index, juce::int64 position);
+
+  void logOpenGLInfoCallback(juce::OpenGLContext&);
 };
 
 #endif  // DEF_ARRANGEMENTAREA_HPP
