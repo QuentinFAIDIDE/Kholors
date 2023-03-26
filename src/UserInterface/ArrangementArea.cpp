@@ -91,7 +91,6 @@ void ArrangementArea::resized() {
 
 void ArrangementArea::newOpenGLContextCreated() {
   std::cerr << "Initializing OpenGL context..." << std::endl;
-  enableOpenGLErrorLogging();
   // shader loading stolen from openGL jimi example referenced at top of file.
   // Create an instance of OpenGLShaderProgram
   _shaderProgram.reset(new juce::OpenGLShaderProgram(openGLContext));
@@ -108,7 +107,14 @@ void ArrangementArea::newOpenGLContextCreated() {
     _shaderProgram->setUniform("viewWidth", (GLfloat)(44100 * 5));
     _shaderProgram->setUniform("ourTexture", 0);
 
+    // enable the damn blending
+    juce::gl::glEnable(juce::gl::GL_BLEND);
+    juce::gl::glBlendFunc(juce::gl::GL_SRC_ALPHA,
+                          juce::gl::GL_ONE_MINUS_SRC_ALPHA);
+    // log some info about openGL version and all
     logOpenGLInfoCallback(openGLContext);
+    // enable the error logging
+    enableOpenGLErrorLogging();
 
   } else {
     std::cerr << "FATAL: Unable to compile OpenGL Shaders" << std::endl;

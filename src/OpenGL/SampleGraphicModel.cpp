@@ -84,57 +84,28 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer *sp) {
   int texturePos = 0;
 
   // for each fourier transform over time
-  for (int i = 0; i < numFfts; i++) {
-    // for each intensity in the fft scope
-    for (int j = 0; j < FREQVIEW_SAMPLE_FFT_SCOPE_SIZE; j++) {
-      intensity = ffts[(i * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + j];
-      // scale intensity to be prettier and in bound
+  for (int ffti = 0; ffti < numFfts; ffti++) {
+    for (int freqi = 0; freqi < FREQVIEW_SAMPLE_FFT_SCOPE_SIZE; freqi++) {
+      // with this texture position, freqi goes from top to bottom
+      // and ffti goes from left to right onscreen.
+      texturePos = ((freqi * numFfts) + ffti) * 4;
+      // as the frequencies in the ffts goes from low to high, we have
+      // to flip the freqi to fetch the frequency and it's all good !
+      intensity = ffts[(ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) +
+                       (FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - (freqi + 1))];
+      // we need to normalize the frequency by mapping the range
       intensity = juce::jmap(intensity, MIN_DB, MAX_DB, 0.0f, 1.0f);
+      // then we make it a little prettier with a sigmoid function
+      // (increase contrasts)
       intensity = sigmoid((intensity * 12.0) - 6.0);
+      // and finally we make sure it falls in range
       intensity = juce::jlimit(0.0f, 1.0f, intensity);
-      // find coordinate inside the damn texture
-      texturePos = ((numFfts * j) + i) * 4;
-      _texture[texturePos] = 1.0f;           // R
-      _texture[texturePos + 1] = 1.0f;       // G
-      _texture[texturePos + 2] = 1.0f;       // B
-      _texture[texturePos + 3] = intensity;  // A
-
-      // for the other channel
-      texturePos =
-          channelSize +
-          ((numFfts * (FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - (j + 1))) + i) * 4;
-
-      // if there's only one channel, mirror the data
-      if (numChannels == 1) {
-        _texture[texturePos] = 1.0f;           // R
-        _texture[texturePos + 1] = 1.0f;       // G
-        _texture[texturePos + 2] = 1.0f;       // B
-        _texture[texturePos + 3] = intensity;  // A
-      } else {
-        // else, numchannels must be two, we pick the other channel
-        // data and assign it
-        intensity =
-            ffts[channelSize + (i * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + j];
-        // scale intensity to be prettier and in bound
-        intensity = juce::jmap(intensity, MIN_DB, MAX_DB, 0.0f, 1.0f);
-        intensity = sigmoid((intensity * 12.0) - 6.0);
-        intensity = juce::jlimit(0.0f, 1.0f, intensity);
-        // assign the values
-        _texture[texturePos] = 1.0f;           // R
-        _texture[texturePos + 1] = 1.0f;       // G
-        _texture[texturePos + 2] = 1.0f;       // B
-        _texture[texturePos + 3] = intensity;  // A
-      }
+      // now we write the intensity into the texture
+      _texture[texturePos] = 0.5f;
+      _texture[texturePos + 1] = 0.5f;
+      _texture[texturePos + 2] = 0.5f;
+      _texture[texturePos + 3] = intensity;
     }
-  }
-
-  _textureBytes.reserve(_textureHeight * _textureWidth * 4);
-  for (int i = 0; i < (_textureHeight * _textureWidth); i++) {
-    int basepos = i * 4;
-    _textureBytes[basepos] = 255;
-    _textureBytes[basepos + 1] = 0;
-    _textureBytes[basepos + 2] = 0;
-    _textureBytes[basepos + 3] = 255;
   }
 }
 
@@ -194,8 +165,8 @@ void SampleGraphicModel::registerGlObjects() {
                   GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   // send the texture to the gpu
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, _textureWidth, _textureHeight, 0,
-               GL_UNSIGNED_BYTE, GL_RGBA, _texture.data());
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, _textureWidth, _textureHeight, 0,
+               GL_RGBA, GL_FLOAT, _texture.data());
   glGenerateMipmap(GL_TEXTURE_2D);
 
   _loaded = true;
