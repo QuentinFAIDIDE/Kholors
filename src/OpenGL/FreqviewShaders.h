@@ -18,7 +18,7 @@ uniform float viewWidth;
 
 void main()
 {
-    gl_Position = vec4((aPos.x-viewPosition)/viewWidth, aPos.y, 0.0, 0.0);
+    gl_Position = vec4((aPos.x-viewPosition)/viewWidth, aPos.y, aPos.z, aPos.w);
     ourColor = aColor;
     TexCoord = aTexCoord;
 }
@@ -40,4 +40,4 @@ void main()
 }
 )";
 
-#endif / DEF_FREQVIEW_SHADERS_HPP
+#endif  // DEF_FREQVIEW_SHADERS_HPP

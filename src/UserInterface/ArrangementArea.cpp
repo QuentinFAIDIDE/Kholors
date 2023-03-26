@@ -105,15 +105,15 @@ void ArrangementArea::newOpenGLContextCreated() {
     _shaderProgram->use();
     _shaderProgram->setUniform("viewPosition", (GLfloat)0);
     _shaderProgram->setUniform("viewWidth", (GLfloat)(44100 * 5));
+    _shaderProgram->setUniform("ourTexture", 0);
 
     std::cerr << "Started using the shader program" << std::endl;
 
     logOpenGLInfoCallback(openGLContext);
 
   } else {
-    // TODO: make this much more verbose
     std::cerr << "FATAL: Unable to compile OpenGL Shaders" << std::endl;
-    throw std::runtime_error("Unable to compile shaders");
+    juce::JUCEApplicationBase::quit();
   }
 }
 
@@ -122,6 +122,7 @@ void ArrangementArea::renderOpenGL() {
   juce::gl::glClear(juce::gl::GL_COLOR_BUFFER_BIT);
 
   _shaderProgram->use();
+
   for (int i = 0; i < _samples.size(); i++) {
     _samples[i].drawGlObjects();
   }
@@ -138,6 +139,7 @@ void ArrangementArea::addNewSample(SamplePlayer* sp) {
         _samples[_samples.size() - 1].registerGlObjects();
       },
       true);
+  std::cerr << "Added new sample to OpenGL view" << std::endl;
 }
 
 void ArrangementArea::updateSamplePosition(int index, juce::int64 position) {
@@ -532,6 +534,7 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent& jme) {
     // send the new view positions to opengl thread
     openGLContext.executeOnGLThread(
         [this](juce::OpenGLContext&) {
+          _shaderProgram->use();
           _shaderProgram->setUniform("viewPosition", (GLfloat)viewPosition);
           _shaderProgram->setUniform("viewWidth",
                                      (GLfloat)(bounds.getWidth() * viewScale));

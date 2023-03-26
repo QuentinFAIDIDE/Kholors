@@ -23,25 +23,25 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer *sp) {
 
   // upper left corner 0
   _vertices.push_back(
-      {{(float)sp->getEditingPosition(), -1.0f},
+      {{float(sp->getEditingPosition()), -1.0f},
        {col.getFloatRed(), col.getFloatGreen(), col.getFloatBlue(), 1.0f},
        {0.0f, 1.0f}});
 
   // upper right corner 1
   _vertices.push_back(
-      {{(float)sp->getEditingPosition() + (float)sp->getLength(), -1.0f},
+      {{float(sp->getEditingPosition() + sp->getLength()), -1.0f},
        {col.getFloatRed(), col.getFloatGreen(), col.getFloatBlue(), 1.0f},
        {1.0f, 1.0f}});
 
   // lower right corner 2
   _vertices.push_back(
-      {{(float)sp->getEditingPosition() + (float)sp->getLength(), 1.0f},
+      {{float(sp->getEditingPosition() + sp->getLength()), 1.0f},
        {col.getFloatRed(), col.getFloatGreen(), col.getFloatBlue(), 1.0f},
        {1.0f, 0.0f}});
 
   // lower left corner 3
   _vertices.push_back(
-      {{(float)sp->getEditingPosition(), 1.0f},
+      {{float(sp->getEditingPosition()), 1.0f},
        {col.getFloatRed(), col.getFloatGreen(), col.getFloatBlue(), 1.0f},
        {0.0f, 0.0f}});
 
@@ -143,16 +143,18 @@ SampleGraphicModel::~SampleGraphicModel() {
 // Warning, call it from the openGL thread using the juce opengl context
 // utility for that !
 void SampleGraphicModel::registerGlObjects() {
-  // register the vertex array
+  // generate objects
   glGenVertexArrays(1, &_vao);
-  glBindVertexArray(_vao);
-  // register and upload the vertices data
   glGenBuffers(1, &_vbo);
+  glGenBuffers(1, &_ebo);
+
+  glBindVertexArray(_vao);
+
+  // register and upload the vertices data
   glBindBuffer(GL_ARRAY_BUFFER, _vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * _vertices.size(),
                _vertices.data(), GL_STATIC_DRAW);
   // register and upload indices of the vertices to form the triangles
-  glGenBuffers(1, &_ebo);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                sizeof(unsigned int) * _triangleIds.size(), _triangleIds.data(),
@@ -170,7 +172,7 @@ void SampleGraphicModel::registerGlObjects() {
   // texture
   glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
                         (void *)(6 * sizeof(float)));
-  glEnableVertexAttribArray(1);
+  glEnableVertexAttribArray(2);
 
   // register the texture
   glGenTextures(1, &_tbo);
@@ -201,7 +203,9 @@ void SampleGraphicModel::drawGlObjects() {
   glActiveTexture(GL_TEXTURE0);  // <- might only be necessary on some GPUs
   glBindTexture(GL_TEXTURE_2D, _tbo);
   glBindVertexArray(_vao);
+  // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
   glDrawElements(GL_TRIANGLES, _triangleIds.size(), GL_UNSIGNED_INT, 0);
+  glBindVertexArray(0);
 }
 
 void SampleGraphicModel::disable() {
@@ -210,7 +214,7 @@ void SampleGraphicModel::disable() {
     glDeleteVertexArrays(1, &_vao);
     glDeleteBuffers(1, &_vbo);
     glDeleteBuffers(1, &_ebo);
-    glDeleteTextures(1, &_tbo);
+    // glDeleteTextures(1, &_tbo);
   }
 }
 
