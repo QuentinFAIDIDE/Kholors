@@ -91,6 +91,7 @@ void ArrangementArea::resized() {
 
 void ArrangementArea::newOpenGLContextCreated() {
   std::cerr << "Initializing OpenGL context..." << std::endl;
+  enableOpenGLErrorLogging();
   // shader loading stolen from openGL jimi example referenced at top of file.
   // Create an instance of OpenGLShaderProgram
   _shaderProgram.reset(new juce::OpenGLShaderProgram(openGLContext));
