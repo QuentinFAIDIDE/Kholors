@@ -21,6 +21,7 @@ class SampleGraphicModel {
   int _textureWidth;
   int _textureHeight;
   std::vector<float> _texture;
+  std::vector<unsigned char> _textureBytes;
   // vertex buffer object identifier
   GLuint _vbo;
   // index buffer object identifier (ids of vertices for triangles to draw)

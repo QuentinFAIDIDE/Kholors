@@ -18,9 +18,6 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer *sp) {
   // on which we map the fft texture.
 
   juce::Colour col = sp->getColor();
-  std::cout << col.getFloatRed() << std::endl;
-  std::cout << col.getFloatBlue() << std::endl;
-  std::cout << col.getFloatGreen() << std::endl;
 
   _vertices.reserve(4);
 
@@ -130,6 +127,15 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer *sp) {
       }
     }
   }
+
+  _textureBytes.reserve(_textureHeight * _textureWidth * 4);
+  for (int i = 0; i < (_textureHeight * _textureWidth); i++) {
+    int basepos = i * 4;
+    _textureBytes[basepos] = 255;
+    _textureBytes[basepos + 1] = 0;
+    _textureBytes[basepos + 2] = 0;
+    _textureBytes[basepos + 3] = 255;
+  }
 }
 
 SampleGraphicModel::~SampleGraphicModel() {
@@ -188,8 +194,8 @@ void SampleGraphicModel::registerGlObjects() {
                   GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   // send the texture to the gpu
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _textureWidth, _textureHeight, 0,
-               GL_FLOAT, GL_RGBA, _texture.data());
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, _textureWidth, _textureHeight, 0,
+               GL_UNSIGNED_BYTE, GL_RGBA, _texture.data());
   glGenerateMipmap(GL_TEXTURE_2D);
 
   _loaded = true;
@@ -206,9 +212,12 @@ void SampleGraphicModel::drawGlObjects() {
   glActiveTexture(GL_TEXTURE0);  // <- might only be necessary on some GPUs
   glBindTexture(GL_TEXTURE_2D, _tbo);
   glBindVertexArray(_vao);
+
   // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
   glDrawElements(GL_TRIANGLES, _triangleIds.size(), GL_UNSIGNED_INT, 0);
+
   glBindVertexArray(0);
+  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void SampleGraphicModel::disable() {
