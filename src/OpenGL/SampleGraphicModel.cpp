@@ -18,13 +18,16 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer *sp) {
   // on which we map the fft texture.
 
   juce::Colour col = sp->getColor();
+  std::cout << col.getFloatRed() << std::endl;
+  std::cout << col.getFloatBlue() << std::endl;
+  std::cout << col.getFloatGreen() << std::endl;
 
   _vertices.reserve(4);
 
   // upper left corner 0
   _vertices.push_back(
       {{float(sp->getEditingPosition()), -1.0f},
-       {col.getFloatRed(), col.getFloatGreen(), col.getFloatBlue(), 1.0f},
+       {col.getFloatRed(), col.getFloatGreen(), col.getFloatBlue(), 0.0f},
        {0.0f, 1.0f}});
 
   // upper right corner 1
