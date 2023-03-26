@@ -137,7 +137,6 @@ void ArrangementArea::addNewSample(SamplePlayer* sp) {
         _samples[_samples.size() - 1].registerGlObjects();
       },
       true);
-  std::cerr << "Added new sample to OpenGL view" << std::endl;
 }
 
 void ArrangementArea::updateSamplePosition(int index, juce::int64 position) {
