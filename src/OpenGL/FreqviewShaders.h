@@ -18,7 +18,7 @@ uniform float viewWidth;
 
 void main()
 {
-    gl_Position = vec4((aPos.x-viewPosition)/viewWidth, aPos.y, aPos.z, aPos.w);
+    gl_Position = vec4( (2.0*((aPos.x-viewPosition)/viewWidth))-1.0, aPos.y, aPos.z, aPos.w);
     ourColor = aColor;
     TexCoord = aTexCoord;
 }

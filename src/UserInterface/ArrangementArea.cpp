@@ -107,8 +107,6 @@ void ArrangementArea::newOpenGLContextCreated() {
     _shaderProgram->setUniform("viewWidth", (GLfloat)(44100 * 5));
     _shaderProgram->setUniform("ourTexture", 0);
 
-    std::cerr << "Started using the shader program" << std::endl;
-
     logOpenGLInfoCallback(openGLContext);
 
   } else {
