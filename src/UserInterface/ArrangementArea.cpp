@@ -5,6 +5,7 @@
 #include <stdexcept>
 
 #include "../OpenGL/FreqviewShaders.h"
+#include "../OpenGL/GLInfoLogger.h"
 #include "juce_opengl/opengl/juce_gl.h"
 
 // NOTE:
@@ -89,6 +90,7 @@ void ArrangementArea::resized() {
 }
 
 void ArrangementArea::newOpenGLContextCreated() {
+  std::cerr << "Initializing OpenGL context..." << std::endl;
   // shader loading stolen from openGL jimi example referenced at top of file.
   // Create an instance of OpenGLShaderProgram
   _shaderProgram.reset(new juce::OpenGLShaderProgram(openGLContext));
@@ -98,15 +100,19 @@ void ArrangementArea::newOpenGLContextCreated() {
   if (_shaderProgram->addVertexShader(freqviewVertexShader) &&
       _shaderProgram->addFragmentShader(freqviewFragmentShader) &&
       _shaderProgram->link()) {
+    std::cerr << "Sucessfully compiled OpenGL shaders" << std::endl;
     // No compilation errors - set the shader program to be active
     _shaderProgram->use();
+    _shaderProgram->setUniform("viewPosition", (GLfloat)0);
+    _shaderProgram->setUniform("viewWidth", (GLfloat)(44100 * 5));
 
-    // log info about the context
-    openGLContext.executeOnGLThread(
-        [this](juce::OpenGLContext& c) { this->logOpenGLInfoCallback(c); },
-        true);
+    std::cerr << "Started using the shader program" << std::endl;
+
+    logOpenGLInfoCallback(openGLContext);
 
   } else {
+    // TODO: make this much more verbose
+    std::cerr << "FATAL: Unable to compile OpenGL Shaders" << std::endl;
     throw std::runtime_error("Unable to compile shaders");
   }
 }
@@ -136,32 +142,6 @@ void ArrangementArea::addNewSample(SamplePlayer* sp) {
 
 void ArrangementArea::updateSamplePosition(int index, juce::int64 position) {
   // TODO
-}
-
-// helper from this kind sir:
-// https://forum.juce.com/t/just-a-quick-gl-info-logger-func-for-any-of-you/32082/2
-void ArrangementArea::logOpenGLInfoCallback(juce::OpenGLContext&) {
-  int major = 0, minor = 0;
-  juce::gl::glGetIntegerv(juce::gl::GL_MAJOR_VERSION, &major);
-  juce::gl::glGetIntegerv(juce::gl::GL_MINOR_VERSION, &minor);
-
-  juce::String stats;
-  stats
-      << "---------------------------" << juce::newLine
-      << "=== OpenGL/GPU Information ===" << juce::newLine << "Vendor: "
-      << juce::String((const char*)juce::gl::glGetString(juce::gl::GL_VENDOR))
-      << juce::newLine << "Renderer: "
-      << juce::String((const char*)juce::gl::glGetString(juce::gl::GL_RENDERER))
-      << juce::newLine << "OpenGL Version: "
-      << juce::String((const char*)juce::gl::glGetString(juce::gl::GL_VERSION))
-      << juce::newLine << "OpenGL Major: " << juce::String(major)
-      << juce::newLine << "OpenGL Minor: " << juce::String(minor)
-      << juce::newLine << "OpenGL Shading Language Version: "
-      << juce::String((const char*)juce::gl::glGetString(
-             juce::gl::GL_SHADING_LANGUAGE_VERSION))
-      << juce::newLine << "---------------------------" << juce::newLine;
-
-  std::cerr << stats << std::endl;
 }
 
 // warning buggy with bars over 4 subdivisions due to << operator

@@ -119,8 +119,6 @@ class ArrangementArea : public juce::Component,
 
   void addNewSample(SamplePlayer*);
   void updateSamplePosition(int index, juce::int64 position);
-
-  void logOpenGLInfoCallback(juce::OpenGLContext&);
 };
 
 #endif  // DEF_ARRANGEMENTAREA_HPP
