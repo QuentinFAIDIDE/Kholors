@@ -40,4 +40,36 @@ void main()
 }
 )";
 
+std::string gridBackgroundVertexShader =
+    R"(
+#version 330 core
+layout (location = 0) in vec4 aPos;
+layout (location = 1) in vec4 aColor;
+
+out vec4 outColor;
+
+void main()
+{
+    gl_Position = vec4(aPos.x, aPos.y, aPos.z, aPos.w);
+    outColor = aColor;
+}
+)";
+
+std::string gridBackgroundFragmentShader =
+    R"(
+#version 330 core
+out vec4 FragColor;
+  
+in vec4 outColor;
+
+uniform float viewPosition;
+uniform float viewWidth;
+uniform float barWidth;
+
+void main()
+{
+    FragColor = outColor;
+}
+)";
+
 #endif  // DEF_FREQVIEW_SHADERS_HPP

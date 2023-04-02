@@ -9,6 +9,7 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 #include <juce_opengl/juce_opengl.h>
 
+#include <memory>
 #include <vector>
 
 #include "../Audio/SampleManager.h"
@@ -61,7 +62,9 @@ class ArrangementArea : public juce::Component,
   // NOTE: we will draw each sample fft in OpenGL
   // with a square on which we map a texture.
   std::vector<SampleGraphicModel> _samples;
-  std::unique_ptr<juce::OpenGLShaderProgram> _shaderProgram;
+  std::unique_ptr<juce::OpenGLShaderProgram> _texturedPositionedShader;
+  std::unique_ptr<juce::OpenGLShaderProgram> _backgroundGridShader;
+  bool shadersCompiled;
 
   // the index in audio frame of the view (relation to seconds depends on
   // framerate)
@@ -102,12 +105,6 @@ class ArrangementArea : public juce::Component,
   int noVerticalSquaresFft;
 
   //==============================================================================
-  void paintBars(juce::Graphics&);
-  void paintSamples(juce::Graphics&);
-  void drawSampleTrack(juce::Graphics&, SamplePlayer*, size_t);
-  void drawSampleChannelFft(juce::Graphics& g, SamplePlayer* sp,
-                            int64_t positionX, int64_t positionY, int channel,
-                            bool flipped);
   void paintPlayCursor(juce::Graphics& g);
 
   void handleMiddleButterDown(const juce::MouseEvent&);
@@ -119,6 +116,12 @@ class ArrangementArea : public juce::Component,
 
   void addNewSample(SamplePlayer*);
   void updateSamplePosition(int index, juce::int64 position);
+
+  bool buildShaders();
+  bool buildShader(std::unique_ptr<juce::OpenGLShaderProgram>&, std::string,
+                   std::string);
+  void updateShadersPositionUniforms(bool fromGlThread = false);
+  void alterShadersPositions();
 };
 
 #endif  // DEF_ARRANGEMENTAREA_HPP

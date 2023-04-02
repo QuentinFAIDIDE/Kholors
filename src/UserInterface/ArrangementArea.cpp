@@ -48,6 +48,8 @@ ArrangementArea::ArrangementArea(SampleManager& sm, NotificationArea& na)
   // enable keyboard events
   setWantsKeyboardFocus(true);
 
+  shadersCompiled = false;
+
   // Indicates that no part of this Component is transparent.
   setOpaque(true);
 
@@ -70,6 +72,8 @@ void ArrangementArea::paint(juce::Graphics& g) {
   // get the window width
   bounds = g.getClipBounds();
 
+  // NOTE: this function draws on top of openGL
+
   // draw nothing if the windows is too small
   if (bounds.getWidth() < FREQVIEW_MIN_WIDTH ||
       bounds.getHeight() < FREQVIEW_MIN_HEIGHT) {
@@ -77,34 +81,34 @@ void ArrangementArea::paint(juce::Graphics& g) {
     return;
   }
 
-  // paintBars and paintSamples are currently being ported to opengl
-
   // paint the play cursor
   paintPlayCursor(g);
 }
 
 void ArrangementArea::resized() {
   // This is called when the MainComponent is resized.
-  // If you add any child components, this is where you should
-  // update their positions.
+  bounds = getBounds();
+  if (shadersCompiled) {
+    updateShadersPositionUniforms();
+  }
 }
 
 void ArrangementArea::newOpenGLContextCreated() {
   std::cerr << "Initializing OpenGL context..." << std::endl;
   // Instanciate an instance of OpenGLShaderProgram
-  _shaderProgram.reset(new juce::OpenGLShaderProgram(openGLContext));
-  // Compile and link the shader.
-  // Each of these methods will return false if something goes wrong so we'll
-  // wrap them in an if statement
-  if (_shaderProgram->addVertexShader(sampleVertexShader) &&
-      _shaderProgram->addFragmentShader(sampleFragmentShader) &&
-      _shaderProgram->link()) {
+  _texturedPositionedShader.reset(new juce::OpenGLShaderProgram(openGLContext));
+  _backgroundGridShader.reset(new juce::OpenGLShaderProgram(openGLContext));
+  // Compile and link the shader
+  if (!buildShaders()) {
+    shadersCompiled = true;
+
     std::cerr << "Sucessfully compiled OpenGL shaders" << std::endl;
-    // No compilation errors - set the shader program to be active
-    _shaderProgram->use();
-    _shaderProgram->setUniform("viewPosition", (GLfloat)0);
-    _shaderProgram->setUniform("viewWidth", (GLfloat)(44100 * 5));
-    _shaderProgram->setUniform("ourTexture", 0);
+
+    // we push dummy values because the bounds may not have been set yet
+    _texturedPositionedShader->use();
+    _texturedPositionedShader->setUniform("ourTexture", 0);
+
+    updateShadersPositionUniforms(true);
 
     // enable the damn blending
     juce::gl::glEnable(juce::gl::GL_BLEND);
@@ -121,11 +125,62 @@ void ArrangementArea::newOpenGLContextCreated() {
   }
 }
 
+bool ArrangementArea::buildShaders() {
+  bool builtTexturedShader = buildShader(
+      _texturedPositionedShader, sampleVertexShader, sampleFragmentShader);
+  if (!builtTexturedShader) {
+    std::cerr << "Failed to build textured positioned shaders" << std::endl;
+    return false;
+  }
+  bool builtColoredShader =
+      buildShader(_backgroundGridShader, gridBackgroundVertexShader,
+                  gridBackgroundFragmentShader);
+  if (!builtColoredShader) {
+    std::cerr << "Failed to build coloured positioned shaders" << std::endl;
+    return false;
+  }
+  return true;
+}
+
+bool ArrangementArea::buildShader(
+    std::unique_ptr<juce::OpenGLShaderProgram>& sh, std::string vertexShader,
+    std::string fragmentShader) {
+  return sh->addVertexShader(vertexShader) &&
+         sh->addFragmentShader(fragmentShader) && sh->link();
+}
+
+void ArrangementArea::updateShadersPositionUniforms(bool fromGlThread) {
+  // send the new view positions to opengl thread
+  if (!fromGlThread) {
+    openGLContext.executeOnGLThread(
+        [this](juce::OpenGLContext&) { alterShadersPositions(); }, true);
+  } else {
+    alterShadersPositions();
+  }
+}
+
+void ArrangementArea::alterShadersPositions() {
+  _texturedPositionedShader->use();
+  _texturedPositionedShader->setUniform("viewPosition", (GLfloat)viewPosition);
+  _texturedPositionedShader->setUniform(
+      "viewWidth", (GLfloat)(bounds.getWidth() * viewScale));
+
+  _backgroundGridShader->use();
+  _backgroundGridShader->setUniform("viewPosition", (GLfloat)viewPosition);
+  _backgroundGridShader->setUniform("viewWidth",
+                                    (GLfloat)(bounds.getWidth() * viewScale));
+  _backgroundGridShader->setUniform(
+      "barWidth", (GLfloat)((AUDIO_FRAMERATE * 60.0) / ((float)tempo)));
+}
+
 void ArrangementArea::renderOpenGL() {
   juce::gl::glClearColor(0.078f, 0.078f, 0.078f, 1.0f);
   juce::gl::glClear(juce::gl::GL_COLOR_BUFFER_BIT);
 
-  _shaderProgram->use();
+  _backgroundGridShader->use();
+  _backgroundGrid.drawGlObjects();
+
+  _texturedPositionedShader->use();
 
   for (int i = 0; i < _samples.size(); i++) {
     _samples[i].drawGlObjects();
@@ -147,211 +202,6 @@ void ArrangementArea::addNewSample(SamplePlayer* sp) {
 
 void ArrangementArea::updateSamplePosition(int index, juce::int64 position) {
   // TODO
-}
-
-// warning buggy with bars over 4 subdivisions due to << operator
-void ArrangementArea::paintBars(juce::Graphics& g) {
-  // TODO: this algorithm is highly sub optimal and accumulates small errors in
-  // grid positions. It needs to be reimplemented.
-
-  // set the arrangement area size to 600 pixels at the middle of the screen
-  juce::Rectangle<int> background(0, 0, bounds.getWidth(),
-                                  FREQTIME_VIEW_HEIGHT);
-  // paint the background of the area
-  g.setColour(juce::Colour(20, 20, 20));
-  g.fillRect(background);
-
-  g.setColour(juce::Colour(200, 200, 200));
-  g.drawLine(0, background.getHeight(), background.getWidth(),
-             background.getHeight());
-  g.drawLine(0, 0, background.getWidth(), 0);
-  g.setColour(juce::Colour(50, 50, 50));
-  g.drawLine(0, background.getHeight() >> 1, background.getWidth(),
-             background.getHeight() >> 1);
-
-  // width of the bar grid
-  int barGridPixelWidth =
-      floor((float(AUDIO_FRAMERATE * 60) / float(tempo)) / float(viewScale));
-  // two buffer values for the next for loop
-  float subdivisionWidth, subdivisionShift, subdivisionWidthFrames;
-
-  // for each subdivision in the reversed order
-  for (int i = 0; i < gridSubdivisions.size(); i++) {
-    // subdivided bar length (0.5f addedd to round instead of truncate)
-    subdivisionWidth =
-        ((float(barGridPixelWidth) / gridSubdivisions[i].subdivisions));
-    subdivisionWidthFrames = subdivisionWidth * float(viewScale);
-
-    // pixel shifting required by view position.
-    subdivisionShift = (subdivisionWidthFrames -
-                        float(viewPosition % int(subdivisionWidthFrames))) /
-                       float(viewScale);
-
-    if (subdivisionWidth > 25) {
-      // set the bar color
-      g.setColour(juce::Colour((int)gridSubdivisions[i].shade,
-                               (int)gridSubdivisions[i].shade,
-                               (int)gridSubdivisions[i].shade));
-
-      // we won't use subdivisionWidth to add it as it has a small
-      // error that will accumulate over bars and create
-      // displacements.
-
-      // subdivision ratio
-      float subdivisionRatio = 1.0 / gridSubdivisions[i].subdivisions;
-
-      // iterate while it's possible to draw the successive bars
-      int barPositionX = 0;
-      for (int j = 0; barPositionX < bounds.getWidth(); j++) {
-        barPositionX = int(0.5 + subdivisionShift +
-                           (j * barGridPixelWidth * subdivisionRatio));
-        // draw the bar
-        g.drawLine(barPositionX, 0, barPositionX, FREQTIME_VIEW_HEIGHT);
-      }
-    }
-  }
-}
-
-void ArrangementArea::paintSamples(juce::Graphics& g) {
-  // NOTE: We never delete SamplePlayers in the tracks array or insert mid-array
-  // to prevent using a lock when reading.
-
-  size_t nTracks = sampleManager.getNumTracks();
-
-  // reference to the samplePlayer we are drawing in the loop
-  SamplePlayer* sp;
-
-  // buffer values for each track
-  int64_t trackLeftBound;
-  int64_t trackRightBound;
-
-  // the leftmost on-screen position in audio samples
-  int64_t viewRightBound = viewPosition + (viewScale * bounds.getWidth());
-
-  noVerticalSquaresFft = (FREQTIME_VIEW_HEIGHT - FREQTIME_VIEW_INNER_MARGINS) /
-                         (FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS * 2);
-
-  // for each track
-  for (size_t i = 0; i < nTracks; i++) {
-    // get a reference to the sample
-    sp = sampleManager.getTrack(i);
-    // skip nullptr in tracks list (should not happen)
-    if (sp == nullptr) {
-      continue;
-    }
-    // get its lock (note this line creates audio glitches cause it takes it way
-    // too often and for too long)
-    const juce::SpinLock::ScopedLockType lock(sp->playerMutex);
-    // compute left and right bounds
-    trackLeftBound = sp->getEditingPosition();
-    trackRightBound = trackRightBound + sp->getLength();
-    // if it's in bound
-    if (trackRightBound > viewPosition && trackLeftBound < viewRightBound) {
-      // draw it
-      drawSampleTrack(g, sp, i);
-    }
-  }
-}
-
-void ArrangementArea::drawSampleTrack(juce::Graphics& g, SamplePlayer* sp,
-                                      size_t id) {
-  // the shift to apply on tracks currently dragged
-  int64_t dragShift = 0;
-  auto search = selectedTracks.find(id);
-  if (trackMovingInitialPosition != -1 && search != selectedTracks.end()) {
-    dragShift = (lastMouseX - trackMovingInitialPosition);
-  }
-
-  auto positionX =
-      ((sp->getEditingPosition() - viewPosition) / viewScale) + dragShift;
-  auto positionY = FREQTIME_VIEW_INNER_MARGINS >> 1;
-
-  // if the track is currently being selected, draw thicker borders
-  if (search != selectedTracks.end()) {
-    // draw a rectangle around the sample
-    g.setColour(SAMPLEPLAYER_BORDER_COLOR);
-    g.drawRoundedRectangle(positionX, positionY, sp->getLength() / viewScale,
-                           FREQTIME_VIEW_HEIGHT - (FREQTIME_VIEW_INNER_MARGINS),
-                           SAMPLEPLAYER_BORDER_RADIUS,
-                           SAMPLEPLAYER_BORDER_WIDTH);
-  }
-
-  // if there are two channels
-  if (sp->getBufferNumChannels() == 2) {
-    // draw left (upper on the chart) channel
-    drawSampleChannelFft(g, sp, positionX, FREQTIME_VIEW_INNER_MARGINS >> 1, 0,
-                         false);
-    // draw right (lower on the chart) channel
-    drawSampleChannelFft(g, sp, positionX, FREQTIME_VIEW_HEIGHT >> 1, 1, true);
-    // if buffer has anything other than two channels only display first
-  } else {
-    // duplicate the first channel (most likely it's mono)
-    drawSampleChannelFft(g, sp, positionX, FREQTIME_VIEW_INNER_MARGINS >> 1, 0,
-                         false);
-    drawSampleChannelFft(g, sp, positionX, FREQTIME_VIEW_HEIGHT >> 1, 0, true);
-  }
-}
-
-// drawSampleChannelFft draw the result of the fft of the sample for this
-// channel at this position. It will display lower freq to bottom if flipped is
-// false.
-void ArrangementArea::drawSampleChannelFft(juce::Graphics& g, SamplePlayer* sp,
-                                           int64_t positionX, int64_t positionY,
-                                           int channel, bool flipped) {
-  float intensity;
-
-  int noHorizontalSquares = int((sp->getLength() / viewScale) /
-                                (FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS));
-
-  int posX, posY;
-
-  // precast values to float
-  float fNoVerticalFftSq = float(noVerticalSquaresFft);
-  float fNoHorizonFftSq = float(noHorizontalSquares);
-  float fNumFft = float(sp->getNumFft());
-  float fScopeSize = float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
-
-  // for each horizontal line
-  for (size_t i = 0; i < noHorizontalSquares; i++) {
-    // compute index of the fft to read
-    posX = int((float(i) / fNoHorizonFftSq) * fNumFft);
-    // for each vertical line
-    for (size_t j = 0; j < noVerticalSquaresFft; j++) {
-      if (flipped) {
-        posY = int(
-            std::round(polylens((float(j)) / fNoVerticalFftSq) * fScopeSize));
-      } else {
-        posY = int(std::round(polylens(1.0f - ((float(j)) / fNoVerticalFftSq)) *
-                              fScopeSize));
-      }
-      // get the intensity at this frequency/time
-      intensity = sp->getFftData()[
-
-          (channel * sp->getNumFft() * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) +
-          (posX * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + posY
-
-      ];
-      // used to apply sigmoid and scale intensity here, but
-      // moved that to opengl while keeping this code for
-      // reference on what previous implementation was about.
-
-      // draw the rectangle
-      g.setColour(sp->getColor().withAlpha(intensity));
-      g.fillRect(positionX + FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS *
-                                 i,  // TODO: precompute out of loop
-                 positionY + FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS * j,
-                 FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS,
-                 FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS);
-    }
-  }
-}
-
-float ArrangementArea::polylens(float v) {
-  if (v < 0.5) {
-    return std::pow(v, 0.3f) * (0.5 / (std::pow(0.5, 0.3)));
-  } else {
-    return 0.5 + std::pow(v - 0.5, 2.0f) * (0.5 / (std::pow(0.5, 2.0f)));
-  }
 }
 
 void ArrangementArea::paintPlayCursor(juce::Graphics& g) {
@@ -534,15 +384,7 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent& jme) {
 
   // if updated view or in cursor moving mode, repaint
   if (viewUpdated || isMovingCursor) {
-    // send the new view positions to opengl thread
-    openGLContext.executeOnGLThread(
-        [this](juce::OpenGLContext&) {
-          _shaderProgram->use();
-          _shaderProgram->setUniform("viewPosition", (GLfloat)viewPosition);
-          _shaderProgram->setUniform("viewWidth",
-                                     (GLfloat)(bounds.getWidth() * viewScale));
-        },
-        true);
+    updateShadersPositionUniforms();
     repaint();
   }
 }
