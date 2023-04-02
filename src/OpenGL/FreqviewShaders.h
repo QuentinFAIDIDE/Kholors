@@ -3,7 +3,7 @@
 
 #include <string>
 
-std::string freqviewVertexShader =
+std::string sampleVertexShader =
     R"(
 #version 330 core
 layout (location = 0) in vec4 aPos;
@@ -24,19 +24,19 @@ void main()
 }
 )";
 
-std::string freqviewFragmentShader =
+std::string sampleFragmentShader =
     R"(
 #version 330 core
 out vec4 FragColor;
   
-in vec4 ourColor;
+in vec4 ourColor; // unused for now
 in vec2 TexCoord;
 
 uniform sampler2D ourTexture;
 
 void main()
 {
-    FragColor = texture(ourTexture, TexCoord)*ourColor;
+    FragColor = texture(ourTexture, TexCoord);
 }
 )";
 

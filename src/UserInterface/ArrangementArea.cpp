@@ -91,14 +91,13 @@ void ArrangementArea::resized() {
 
 void ArrangementArea::newOpenGLContextCreated() {
   std::cerr << "Initializing OpenGL context..." << std::endl;
-  // shader loading stolen from openGL jimi example referenced at top of file.
-  // Create an instance of OpenGLShaderProgram
+  // Instanciate an instance of OpenGLShaderProgram
   _shaderProgram.reset(new juce::OpenGLShaderProgram(openGLContext));
   // Compile and link the shader.
   // Each of these methods will return false if something goes wrong so we'll
   // wrap them in an if statement
-  if (_shaderProgram->addVertexShader(freqviewVertexShader) &&
-      _shaderProgram->addFragmentShader(freqviewFragmentShader) &&
+  if (_shaderProgram->addVertexShader(sampleVertexShader) &&
+      _shaderProgram->addFragmentShader(sampleFragmentShader) &&
       _shaderProgram->link()) {
     std::cerr << "Sucessfully compiled OpenGL shaders" << std::endl;
     // No compilation errors - set the shader program to be active

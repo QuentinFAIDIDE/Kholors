@@ -36,7 +36,8 @@ inline void logOpenGLErrorCallback(GLenum source, GLenum type, GLuint id,
                                    const GLchar* message,
                                    const void* userParam) {
   // as instructed in: https://www.khronos.org/opengl/wiki/OpenGL_Error
-  // NOTE: it shouldn't disturb the legacy openGL error stack!
+  // NOTE: errors are defined in juce_gl.h.
+  // NOTE: it shouldn't disturb the legacy openGL error stack
   fprintf(stderr,
           "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
           (type == juce::gl::GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type,
