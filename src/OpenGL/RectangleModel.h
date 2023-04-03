@@ -5,10 +5,11 @@
 
 class RectangleModel : public GraphicModel {
  public:
-  virtual ~RectangleModel();
-  virtual void registerGlObjects() override;
-  virtual void drawGlObjects() override;
-  virtual void disable() override;
+  RectangleModel(juce::Colour, float, float, float, float);
+  ~RectangleModel();
+  void registerGlObjects() override;
+  void drawGlObjects() override;
+  void disable() override;
 };
 
 #endif  // DEF_RECTANGLE_MODEL
