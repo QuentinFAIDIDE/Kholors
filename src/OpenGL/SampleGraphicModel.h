@@ -11,6 +11,10 @@
 class SampleGraphicModel : public TexturedModel {
  public:
   SampleGraphicModel(SamplePlayer*);
+
+ private:
+  void _transformIntensity(float&);
+  int _transformFrequencyLocation(int);
 };
 
 #endif  // DEF_SAMPLE_GRAPHIC_MODEL

@@ -1,4 +1,5 @@
 #include "TexturedModel.h"
+
 #include "juce_opengl/opengl/juce_gl.h"
 
 using namespace juce::gl;
@@ -92,6 +93,5 @@ TexturedModel::~TexturedModel() {
     glDeleteVertexArrays(1, &_vao);
     glDeleteBuffers(1, &_vbo);
     glDeleteBuffers(1, &_ebo);
-    glDeleteTextures(1, &_tbo);
   }
 }

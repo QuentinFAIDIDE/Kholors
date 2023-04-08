@@ -99,7 +99,7 @@ void ArrangementArea::newOpenGLContextCreated() {
   _texturedPositionedShader.reset(new juce::OpenGLShaderProgram(openGLContext));
   _backgroundGridShader.reset(new juce::OpenGLShaderProgram(openGLContext));
   // Compile and link the shader
-  if (!buildShaders()) {
+  if (buildShaders()) {
     shadersCompiled = true;
 
     std::cerr << "Sucessfully compiled OpenGL shaders" << std::endl;
@@ -110,14 +110,13 @@ void ArrangementArea::newOpenGLContextCreated() {
 
     updateShadersPositionUniforms(true);
 
-    // enable the damn blending
-    juce::gl::glEnable(juce::gl::GL_BLEND);
-    juce::gl::glBlendFunc(juce::gl::GL_SRC_ALPHA,
-                          juce::gl::GL_ONE_MINUS_SRC_ALPHA);
     // log some info about openGL version and all
     logOpenGLInfoCallback(openGLContext);
     // enable the error logging
     enableOpenGLErrorLogging();
+
+    // initialize background openGL objects
+    _backgroundGrid.registerGlObjects();
 
   } else {
     std::cerr << "FATAL: Unable to compile OpenGL Shaders" << std::endl;
@@ -174,6 +173,11 @@ void ArrangementArea::alterShadersPositions() {
 }
 
 void ArrangementArea::renderOpenGL() {
+  // enable the damn blending
+  juce::gl::glEnable(juce::gl::GL_BLEND);
+  juce::gl::glBlendFunc(juce::gl::GL_SRC_ALPHA,
+                        juce::gl::GL_ONE_MINUS_SRC_ALPHA);
+
   juce::gl::glClearColor(0.078f, 0.078f, 0.078f, 1.0f);
   juce::gl::glClear(juce::gl::GL_COLOR_BUFFER_BIT);
 

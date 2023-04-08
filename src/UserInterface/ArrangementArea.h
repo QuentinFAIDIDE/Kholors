@@ -14,6 +14,7 @@
 
 #include "../Audio/SampleManager.h"
 #include "../Config.h"
+#include "../OpenGL/BackgroundModel.h"
 #include "../OpenGL/SampleGraphicModel.h"
 #include "GridLevel.h"
 #include "NotificationArea.h"
@@ -62,6 +63,7 @@ class ArrangementArea : public juce::Component,
   // NOTE: we will draw each sample fft in OpenGL
   // with a square on which we map a texture.
   std::vector<SampleGraphicModel> _samples;
+  BackgroundModel _backgroundGrid;
   std::unique_ptr<juce::OpenGLShaderProgram> _texturedPositionedShader;
   std::unique_ptr<juce::OpenGLShaderProgram> _backgroundGridShader;
   bool shadersCompiled;
