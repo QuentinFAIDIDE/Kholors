@@ -58,7 +58,6 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
   std::vector<float> ffts = sp->getFftData();
   int numFfts = sp->getNumFft();
   int numChannels = sp->getBufferNumChannels();
-  int channelSize = numFfts * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE;
 
   // NOTE: we store the texture colors (fft intensity) as RGBA.
   // This implies some harsh data duplication, but openGL
@@ -83,6 +82,9 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
   int texturePos = 0;
   int freqiZoomed = 0;
 
+  int channelTextureShift = _textureWidth * (_textureHeight >> 1) * 4;
+  int channelFftsShift = numFfts * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE;
+
   // for each fourier transform over time
   for (int ffti = 0; ffti < numFfts; ffti++) {
     // for each frequency of the current fourrier transform
@@ -99,6 +101,24 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
       // increase contrast and map between 0 and 1
       _transformIntensity(intensity);
       // now we write the intensity into the texture
+      _texture[texturePos] = col.getFloatRed();
+      _texture[texturePos + 1] = col.getFloatGreen();
+      _texture[texturePos + 2] = col.getFloatBlue();
+      _texture[texturePos + 3] = intensity;
+
+      // now we write the other channel on bottom part (if not exists, write
+      // first channel instead)
+      texturePos = channelTextureShift + ((freqi * numFfts) + ffti) * 4;
+      // pick freq index in the fft
+      freqiZoomed = _transformFrequencyLocation(freqi);
+      // get the value depending on if we got a second channel or not
+      if (numChannels == 2) {
+        intensity = ffts[channelFftsShift +
+                         (ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + freqi];
+      } else {
+        intensity = ffts[(ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + freqi];
+      }
+      _transformIntensity(intensity);
       _texture[texturePos] = col.getFloatRed();
       _texture[texturePos + 1] = col.getFloatGreen();
       _texture[texturePos + 2] = col.getFloatBlue();
