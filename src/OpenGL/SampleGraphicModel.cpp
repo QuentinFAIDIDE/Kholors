@@ -97,7 +97,7 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
       // as the frequencies in the ffts goes from low to high, we have
       // to flip the freqi to fetch the frequency and it's all good !
       intensity = ffts[(ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) +
-                       (FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - (freqi + 1))];
+                       (FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - (freqiZoomed + 1))];
       // increase contrast and map between 0 and 1
       _transformIntensity(intensity);
       // now we write the intensity into the texture
@@ -114,9 +114,9 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
       // get the value depending on if we got a second channel or not
       if (numChannels == 2) {
         intensity = ffts[channelFftsShift +
-                         (ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + freqi];
+                         (ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + freqiZoomed];
       } else {
-        intensity = ffts[(ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + freqi];
+        intensity = ffts[(ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + freqiZoomed];
       }
       _transformIntensity(intensity);
       _texture[texturePos] = col.getFloatRed();
