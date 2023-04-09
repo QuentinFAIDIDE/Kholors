@@ -120,6 +120,7 @@ class ArrangementArea : public juce::Component,
 
   //==============================================================================
   void paintPlayCursor(juce::Graphics& g);
+  void paintSelection(juce::Graphics& g);
 
   void handleMiddleButterDown(const juce::MouseEvent&);
   void handleLeftButtonDown(const juce::MouseEvent&);

@@ -81,8 +81,34 @@ void ArrangementArea::paint(juce::Graphics& g) {
     return;
   }
 
-  // paint the play cursor
+  paintSelection(g);
   paintPlayCursor(g);
+}
+
+void ArrangementArea::paintSelection(juce::Graphics& g) {
+  // iterate over tracks and draw borders around them
+  std::set<size_t>::iterator itr;
+  juce::Rectangle<float> currentSampleBorders;
+  g.setColour(COLOR_NOTIF_TEXT);
+  for (itr = selectedTracks.begin(); itr != selectedTracks.end(); itr++) {
+    // ignore deleted selected tracks
+    if (sampleManager.getTrack(*itr) != nullptr) {
+      SamplePlayer* sp = sampleManager.getTrack(*itr);
+
+      currentSampleBorders.setX((sp->getEditingPosition() - viewPosition) /
+                                viewScale);
+      currentSampleBorders.setWidth(sp->getLength() / viewScale);
+      // NOTE: these 2 instructions will be replaced when filtering is
+      // implemented
+      currentSampleBorders.setY(1);
+      currentSampleBorders.setHeight(bounds.getHeight() - 1);
+
+      if ((currentSampleBorders.getX() + currentSampleBorders.getWidth()) > 0 &&
+          currentSampleBorders.getX() < bounds.getWidth()) {
+        g.drawRoundedRectangle(currentSampleBorders, 4, 2);
+      }
+    }
+  }
 }
 
 void ArrangementArea::resized() {
