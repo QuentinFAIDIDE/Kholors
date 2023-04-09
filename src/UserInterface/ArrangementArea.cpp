@@ -62,7 +62,7 @@ ArrangementArea::ArrangementArea(SampleManager& sm, NotificationArea& na)
     addNewSample(sp);
   };
   sampleManager.disableUiSampleCallback = [this](int index) {
-    _samples[index].disable();
+    samples[index].disable();
   };
 }
 
@@ -96,8 +96,8 @@ void ArrangementArea::resized() {
 void ArrangementArea::newOpenGLContextCreated() {
   std::cerr << "Initializing OpenGL context..." << std::endl;
   // Instanciate an instance of OpenGLShaderProgram
-  _texturedPositionedShader.reset(new juce::OpenGLShaderProgram(openGLContext));
-  _backgroundGridShader.reset(new juce::OpenGLShaderProgram(openGLContext));
+  texturedPositionedShader.reset(new juce::OpenGLShaderProgram(openGLContext));
+  backgroundGridShader.reset(new juce::OpenGLShaderProgram(openGLContext));
   // Compile and link the shader
   if (buildShaders()) {
     shadersCompiled = true;
@@ -105,8 +105,8 @@ void ArrangementArea::newOpenGLContextCreated() {
     std::cerr << "Sucessfully compiled OpenGL shaders" << std::endl;
 
     // we push dummy values because the bounds may not have been set yet
-    _texturedPositionedShader->use();
-    _texturedPositionedShader->setUniform("ourTexture", 0);
+    texturedPositionedShader->use();
+    texturedPositionedShader->setUniform("ourTexture", 0);
 
     updateShadersPositionUniforms(true);
 
@@ -116,7 +116,7 @@ void ArrangementArea::newOpenGLContextCreated() {
     enableOpenGLErrorLogging();
 
     // initialize background openGL objects
-    _backgroundGrid.registerGlObjects();
+    backgroundGrid.registerGlObjects();
 
   } else {
     std::cerr << "FATAL: Unable to compile OpenGL Shaders" << std::endl;
@@ -126,13 +126,13 @@ void ArrangementArea::newOpenGLContextCreated() {
 
 bool ArrangementArea::buildShaders() {
   bool builtTexturedShader = buildShader(
-      _texturedPositionedShader, sampleVertexShader, sampleFragmentShader);
+      texturedPositionedShader, sampleVertexShader, sampleFragmentShader);
   if (!builtTexturedShader) {
     std::cerr << "Failed to build textured positioned shaders" << std::endl;
     return false;
   }
   bool builtColoredShader =
-      buildShader(_backgroundGridShader, gridBackgroundVertexShader,
+      buildShader(backgroundGridShader, gridBackgroundVertexShader,
                   gridBackgroundFragmentShader);
   if (!builtColoredShader) {
     std::cerr << "Failed to build coloured positioned shaders" << std::endl;
@@ -152,24 +152,33 @@ void ArrangementArea::updateShadersPositionUniforms(bool fromGlThread) {
   // send the new view positions to opengl thread
   if (!fromGlThread) {
     openGLContext.executeOnGLThread(
-        [this](juce::OpenGLContext&) { alterShadersPositions(); }, true);
+        [this](juce::OpenGLContext&) { alterShadersPositions(); }, false);
   } else {
     alterShadersPositions();
   }
 }
 
 void ArrangementArea::alterShadersPositions() {
-  _texturedPositionedShader->use();
-  _texturedPositionedShader->setUniform("viewPosition", (GLfloat)viewPosition);
-  _texturedPositionedShader->setUniform(
+  texturedPositionedShader->use();
+  texturedPositionedShader->setUniform("viewPosition", (GLfloat)viewPosition);
+  texturedPositionedShader->setUniform(
       "viewWidth", (GLfloat)(bounds.getWidth() * viewScale));
 
-  _backgroundGridShader->use();
-  _backgroundGridShader->setUniform("viewPosition", (GLfloat)viewPosition);
-  _backgroundGridShader->setUniform("viewWidth",
-                                    (GLfloat)(bounds.getWidth() * viewScale));
-  _backgroundGridShader->setUniform(
-      "barWidth", (GLfloat)((AUDIO_FRAMERATE * 60.0) / ((float)tempo)));
+  updateGridPixelValues();
+
+  backgroundGridShader->use();
+  backgroundGridShader->setUniform("grid0PixelShift", (GLint)grid0PixelShift);
+  backgroundGridShader->setUniform("grid0PixelWidth", (GLint)grid0PixelWidth);
+
+  backgroundGridShader->setUniform("viewHeightPixels",
+                                   (GLfloat)(bounds.getHeight()));
+}
+
+void ArrangementArea::updateGridPixelValues() {
+  grid0FrameWidth = ((60 * 44100) / tempo);
+  grid0PixelWidth = grid0FrameWidth / viewScale;
+  grid0PixelShift =
+      (grid0FrameWidth - (viewPosition % grid0FrameWidth)) / viewScale;
 }
 
 void ArrangementArea::renderOpenGL() {
@@ -181,13 +190,13 @@ void ArrangementArea::renderOpenGL() {
   juce::gl::glClearColor(0.078f, 0.078f, 0.078f, 1.0f);
   juce::gl::glClear(juce::gl::GL_COLOR_BUFFER_BIT);
 
-  _backgroundGridShader->use();
-  _backgroundGrid.drawGlObjects();
+  backgroundGridShader->use();
+  backgroundGrid.drawGlObjects();
 
-  _texturedPositionedShader->use();
+  texturedPositionedShader->use();
 
-  for (int i = 0; i < _samples.size(); i++) {
-    _samples[i].drawGlObjects();
+  for (int i = 0; i < samples.size(); i++) {
+    samples[i].drawGlObjects();
   }
 }
 
@@ -195,11 +204,11 @@ void ArrangementArea::openGLContextClosing() {}
 
 void ArrangementArea::addNewSample(SamplePlayer* sp) {
   // create graphic objects from the sample
-  _samples.push_back(SampleGraphicModel(sp));
+  samples.push_back(SampleGraphicModel(sp));
   // send the data to the GPUs from the OpenGL thread
   openGLContext.executeOnGLThread(
       [this](juce::OpenGLContext& c) {
-        _samples[_samples.size() - 1].registerGlObjects();
+        samples[samples.size() - 1].registerGlObjects();
       },
       true);
 }

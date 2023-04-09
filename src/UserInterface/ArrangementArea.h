@@ -62,11 +62,15 @@ class ArrangementArea : public juce::Component,
 
   // NOTE: we will draw each sample fft in OpenGL
   // with a square on which we map a texture.
-  std::vector<SampleGraphicModel> _samples;
-  BackgroundModel _backgroundGrid;
-  std::unique_ptr<juce::OpenGLShaderProgram> _texturedPositionedShader;
-  std::unique_ptr<juce::OpenGLShaderProgram> _backgroundGridShader;
+  std::vector<SampleGraphicModel> samples;
+  BackgroundModel backgroundGrid;
+  std::unique_ptr<juce::OpenGLShaderProgram> texturedPositionedShader;
+  std::unique_ptr<juce::OpenGLShaderProgram> backgroundGridShader;
   bool shadersCompiled;
+
+  int grid0PixelWidth;
+  int grid0PixelShift;
+  int grid0FrameWidth;
 
   // the index in audio frame of the view (relation to seconds depends on
   // framerate)
@@ -124,6 +128,7 @@ class ArrangementArea : public juce::Component,
                    std::string);
   void updateShadersPositionUniforms(bool fromGlThread = false);
   void alterShadersPositions();
+  void updateGridPixelValues();
 };
 
 #endif  // DEF_ARRANGEMENTAREA_HPP

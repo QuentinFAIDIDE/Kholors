@@ -63,13 +63,23 @@ out vec4 FragColor;
   
 in vec4 outColor;
 
-uniform float viewPosition;
-uniform float viewWidth;
-uniform float barWidth;
+uniform float viewHeightPixels;
+uniform int grid0PixelWidth;
+uniform int grid0PixelShift;
 
 void main()
 {
-    FragColor = outColor;
+    if ( abs( (int(gl_FragCoord.x) % grid0PixelWidth) - grid0PixelShift ) < 0.75 ) {
+        FragColor = vec4(0.6,0.6,0.6,1.0);
+    } else if (abs(gl_FragCoord.y - 0.5 - (viewHeightPixels/2)) < 0.5 ) {
+        FragColor = vec4(0.4,0.4,0.4,1.0);
+    } else if (gl_FragCoord.y < 0.75 ) {
+        FragColor = vec4(0.4,0.4,0.4,1.0);
+    } else if (gl_FragCoord.y > viewHeightPixels-0.75) {
+        FragColor = vec4(0.4,0.4,0.4,1.0);
+    } else {
+        FragColor = outColor;
+    }
 }
 )";
 
