@@ -168,17 +168,35 @@ void ArrangementArea::alterShadersPositions() {
 
   backgroundGridShader->use();
   backgroundGridShader->setUniform("grid0PixelShift", (GLint)grid0PixelShift);
-  backgroundGridShader->setUniform("grid0PixelWidth", (GLint)grid0PixelWidth);
+  backgroundGridShader->setUniform("grid0PixelWidth", (GLfloat)grid0PixelWidth);
+
+  backgroundGridShader->setUniform("grid1PixelShift", (GLint)grid1PixelShift);
+  backgroundGridShader->setUniform("grid1PixelWidth", (GLfloat)grid1PixelWidth);
+
+  backgroundGridShader->setUniform("grid2PixelShift", (GLint)grid2PixelShift);
+  backgroundGridShader->setUniform("grid2PixelWidth", (GLfloat)grid2PixelWidth);
 
   backgroundGridShader->setUniform("viewHeightPixels",
                                    (GLfloat)(bounds.getHeight()));
 }
 
 void ArrangementArea::updateGridPixelValues() {
-  grid0FrameWidth = ((60 * 44100) / tempo);
-  grid0PixelWidth = grid0FrameWidth / viewScale;
+  int framesPerMinutes = (60 * 44100);
+
+  grid0FrameWidth = (float(framesPerMinutes) / float(tempo));
+  grid0PixelWidth = grid0FrameWidth / float(viewScale);
   grid0PixelShift =
-      (grid0FrameWidth - (viewPosition % grid0FrameWidth)) / viewScale;
+      (grid0FrameWidth - (viewPosition % int(grid0FrameWidth))) / viewScale;
+
+  grid1FrameWidth = (float(framesPerMinutes) / float(tempo * 4));
+  grid1PixelWidth = grid1FrameWidth / float(viewScale);
+  grid1PixelShift =
+      (grid1FrameWidth - (viewPosition % int(grid1FrameWidth))) / viewScale;
+
+  grid2FrameWidth = (float(framesPerMinutes) / float(tempo * 16));
+  grid2PixelWidth = grid2FrameWidth / float(viewScale);
+  grid2PixelShift =
+      (grid2FrameWidth - (viewPosition % int(grid2FrameWidth))) / viewScale;
 }
 
 void ArrangementArea::renderOpenGL() {

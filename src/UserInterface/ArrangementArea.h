@@ -68,9 +68,17 @@ class ArrangementArea : public juce::Component,
   std::unique_ptr<juce::OpenGLShaderProgram> backgroundGridShader;
   bool shadersCompiled;
 
-  int grid0PixelWidth;
+  float grid0PixelWidth;
   int grid0PixelShift;
-  int grid0FrameWidth;
+  float grid0FrameWidth;
+
+  float grid1PixelWidth;
+  int grid1PixelShift;
+  float grid1FrameWidth;
+
+  float grid2PixelWidth;
+  int grid2PixelShift;
+  float grid2FrameWidth;
 
   // the index in audio frame of the view (relation to seconds depends on
   // framerate)
