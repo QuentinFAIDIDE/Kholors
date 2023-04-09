@@ -12,7 +12,7 @@ BackgroundModel::BackgroundModel() {
   _vertices.reserve(4);
 
   // TODO: move that into the config
-  juce::Colour col(10, 10, 10);
+  juce::Colour col(20, 20, 20);
 
   // NOTE: we use a unified vertex format that includes
   // texture coordinates because we can affort to send
@@ -21,7 +21,7 @@ BackgroundModel::BackgroundModel() {
   // upper left corner 0
   _vertices.push_back(
       {{-1.0f, -1.0f},
-       {col.getFloatRed(), col.getFloatGreen(), col.getFloatBlue(), 0.0f},
+       {col.getFloatRed(), col.getFloatGreen(), col.getFloatBlue(), 1.0f},
        {0.0f, 1.0f}});
 
   // upper right corner 1

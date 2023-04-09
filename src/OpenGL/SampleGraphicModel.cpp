@@ -59,6 +59,12 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
   int numFfts = sp->getNumFft();
   int numChannels = sp->getBufferNumChannels();
 
+  // the texture scaling in opengl use either manhatan distance or linear sum
+  // of neigbouring pixels. So as we have less pixel over time than pixel over
+  // frequencies, a glitch appear and the values leak to the sides.
+  // This multiplier should help reduce horizontal leakage of textures.
+  int horizontalScaleMultiplier = 16;
+
   // NOTE: we store the texture colors (fft intensity) as RGBA.
   // This implies some harsh data duplication, but openGL
   // requires texture lines to be 4bytes aligned and they
@@ -68,13 +74,13 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
 
   // NOTE: according to
   // https://gamedev.stackexchange.com/questions/133849/row-order-in-opengl-dxt-texture
-  // which seems to quote an outdated version of the OpenGL doc, texture data
-  // start from bottom left corner and fill the row left to right, then all the
-  // rows above up to the final top right corner.
+  // which seems to quote an outdated version of the OpenGL doc, texture
+  // data start from bottom left corner and fill the row left to right, then
+  // all the rows above up to the final top right corner.
 
   // reserve the size of the displayed texture
   _textureHeight = 2 * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE;
-  _textureWidth = numFfts;
+  _textureWidth = numFfts * horizontalScaleMultiplier;
   _texture.resize(_textureHeight * _textureWidth * 4);  // 4 is for rgba values
 
   float intensity = 0.0f;
@@ -89,9 +95,6 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
   for (int ffti = 0; ffti < numFfts; ffti++) {
     // for each frequency of the current fourrier transform
     for (int freqi = 0; freqi < FREQVIEW_SAMPLE_FFT_SCOPE_SIZE; freqi++) {
-      // with this texture position, freqi goes from top to bottom
-      // and ffti goes from left to right onscreen.
-      texturePos = ((freqi * numFfts) + ffti) * 4;
       // we apply our polynomial lens freqi transformation to zoom in a bit
       freqiZoomed = _transformFrequencyLocation(freqi);
       // as the frequencies in the ffts goes from low to high, we have
@@ -100,15 +103,24 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
                        (FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - (freqiZoomed + 1))];
       // increase contrast and map between 0 and 1
       _transformIntensity(intensity);
-      // now we write the intensity into the texture
-      _texture[texturePos] = col.getFloatRed();
-      _texture[texturePos + 1] = col.getFloatGreen();
-      _texture[texturePos + 2] = col.getFloatBlue();
-      _texture[texturePos + 3] = intensity;
+
+      for (int nDuplicate = 0; nDuplicate < horizontalScaleMultiplier;
+           nDuplicate++) {
+        // with this texture position, freqi goes from top to bottom
+        // and ffti goes from left to right onscreen.
+        texturePos = ((freqi * numFfts * horizontalScaleMultiplier) +
+                      (nDuplicate + (ffti * horizontalScaleMultiplier))) *
+                     4;
+        // now we write the intensity into the texture
+        _texture[texturePos] = col.getFloatRed();
+        _texture[texturePos + 1] = col.getFloatGreen();
+        _texture[texturePos + 2] = col.getFloatBlue();
+        _texture[texturePos + 3] = intensity;
+      }
 
       // now we write the other channel on bottom part (if not exists, write
       // first channel instead)
-      texturePos = channelTextureShift + ((freqi * numFfts) + ffti) * 4;
+
       // pick freq index in the fft
       freqiZoomed = _transformFrequencyLocation(freqi);
       // get the value depending on if we got a second channel or not
@@ -119,10 +131,18 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
         intensity = ffts[(ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + freqiZoomed];
       }
       _transformIntensity(intensity);
-      _texture[texturePos] = col.getFloatRed();
-      _texture[texturePos + 1] = col.getFloatGreen();
-      _texture[texturePos + 2] = col.getFloatBlue();
-      _texture[texturePos + 3] = intensity;
+
+      for (int nDuplicate = 0; nDuplicate < horizontalScaleMultiplier;
+           nDuplicate++) {
+        texturePos = channelTextureShift +
+                     ((freqi * numFfts * horizontalScaleMultiplier) +
+                      (nDuplicate + (ffti * horizontalScaleMultiplier))) *
+                         4;
+        _texture[texturePos] = col.getFloatRed();
+        _texture[texturePos + 1] = col.getFloatGreen();
+        _texture[texturePos + 2] = col.getFloatBlue();
+        _texture[texturePos + 3] = intensity;
+      }
     }
   }
 }
