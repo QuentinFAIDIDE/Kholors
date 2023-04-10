@@ -151,6 +151,19 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
   }
 }
 
+// To run on opengl thread, will move track to this absolute editing position in
+// audio frames.
+void SampleGraphicModel::move(int64_t position) {
+  int width = _vertices[1].position[0] - _vertices[0].position[0];
+
+  _vertices[0].position[0] = position;
+  _vertices[1].position[0] = position + width;
+  _vertices[2].position[0] = position + width;
+  _vertices[3].position[0] = position;
+
+  uploadVerticesToGpu();
+}
+
 void SampleGraphicModel::_transformIntensity(float& intensity) {
   // we need to normalize the frequency by mapping the range
   intensity = juce::jmap(intensity, MIN_DB, MAX_DB, 0.0f, 1.0f);
@@ -170,4 +183,35 @@ int SampleGraphicModel::_transformFrequencyLocation(int freqi) {
   freqiZoomed =
       juce::jlimit(0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1, freqiZoomed);
   return freqiZoomed;
+}
+
+// Save position and width when selection dragging begins.
+void SampleGraphicModel::initDrag() {
+  _dragStartPosition = _vertices[0].position[0];
+  _lastWidth = _vertices[1].position[0] - _vertices[0].position[0];
+}
+
+// To run on opengl thread, will update track position to account
+// for the new shift during selection dragging.
+void SampleGraphicModel::updateDrag(int frameMove) {
+  int position = _dragStartPosition + frameMove;
+  _vertices[0].position[0] = position;
+  _vertices[1].position[0] = position + _lastWidth;
+  _vertices[2].position[0] = position + _lastWidth;
+  _vertices[3].position[0] = position;
+  uploadVerticesToGpu();
+}
+
+void SampleGraphicModel::uploadVerticesToGpu() {
+  glBindVertexArray(_vao);
+
+  // register and upload the vertices data
+  glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * _vertices.size(),
+               _vertices.data(), GL_STATIC_DRAW);
+  // register and upload indices of the vertices to form the triangles
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+               sizeof(unsigned int) * _triangleIds.size(), _triangleIds.data(),
+               GL_STATIC_DRAW);
 }

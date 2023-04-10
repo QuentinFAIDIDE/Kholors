@@ -89,14 +89,19 @@ void ArrangementArea::paintSelection(juce::Graphics& g) {
   // iterate over tracks and draw borders around them
   std::set<size_t>::iterator itr;
   juce::Rectangle<float> currentSampleBorders;
+  int dragShift = 0;
+  if (trackMovingInitialPosition != -1) {
+    dragShift = lastMouseX - trackMovingInitialPosition;
+  }
+
   g.setColour(COLOR_NOTIF_TEXT);
   for (itr = selectedTracks.begin(); itr != selectedTracks.end(); itr++) {
     // ignore deleted selected tracks
     if (sampleManager.getTrack(*itr) != nullptr) {
       SamplePlayer* sp = sampleManager.getTrack(*itr);
 
-      currentSampleBorders.setX((sp->getEditingPosition() - viewPosition) /
-                                viewScale);
+      currentSampleBorders.setX(
+          dragShift + ((sp->getEditingPosition() - viewPosition) / viewScale));
       currentSampleBorders.setWidth(sp->getLength() / viewScale);
       // NOTE: these 2 instructions will be replaced when filtering is
       // implemented
@@ -258,7 +263,11 @@ void ArrangementArea::addNewSample(SamplePlayer* sp) {
 }
 
 void ArrangementArea::updateSamplePosition(int index, juce::int64 position) {
-  // TODO
+  openGLContext.executeOnGLThread(
+      [this, index, position](juce::OpenGLContext& c) {
+        samples[index].move(position);
+      },
+      true);
 }
 
 void ArrangementArea::paintPlayCursor(juce::Graphics& g) {
@@ -361,9 +370,27 @@ size_t ArrangementArea::getTrackClicked(const juce::MouseEvent& jme) {
   return -1;
 }
 
+void ArrangementArea::initSelectedTracksDrag() {
+  std::set<size_t>::iterator itr;
+  for (itr = selectedTracks.begin(); itr != selectedTracks.end(); itr++) {
+    samples[*itr].initDrag();
+  }
+}
+
+void ArrangementArea::updateSelectedTracksDrag(int pixelShift) {
+  std::set<size_t>::iterator itr;
+  for (itr = selectedTracks.begin(); itr != selectedTracks.end(); itr++) {
+    openGLContext.executeOnGLThread(
+        [this, itr, pixelShift](juce::OpenGLContext& c) {
+          samples[*itr].updateDrag(pixelShift * viewScale);
+        },
+        true);
+  }
+}
+
 void ArrangementArea::mouseUp(const juce::MouseEvent& jme) {
-  // saving last mouse position
   juce::Point<int> position = jme.getPosition();
+  // saving last mouse position
   lastMouseX = position.getX();
   lastMouseY = position.getY();
 
@@ -452,6 +479,11 @@ void ArrangementArea::mouseMove(const juce::MouseEvent& jme) {
   lastMouseX = newPosition.getX();
   lastMouseY = newPosition.getY();
 
+  // if we are in dragging mode and that mouse was moved, move the track as well
+  if (trackMovingInitialPosition != -1) {
+    updateSelectedTracksDrag(lastMouseX - trackMovingInitialPosition);
+  }
+
   // if we are in resize mode and middle mouse button is not pressed
   if (isResizing && !jme.mods.isMiddleButtonDown()) {
     // save that we are not in resize mode anymore
@@ -503,6 +535,7 @@ bool ArrangementArea::keyPressed(const juce::KeyPress& key) {
     if (!isResizing && trackMovingInitialPosition == -1 &&
         !selectedTracks.empty()) {
       trackMovingInitialPosition = lastMouseX;
+      initSelectedTracksDrag();
     }
   } else if (key ==
              juce::KeyPress::createFromDescription(KEYMAP_DELETE_SELECTION)) {
@@ -559,6 +592,7 @@ bool ArrangementArea::keyStateChanged(bool isKeyDown) {
           trackPosition = sp->getEditingPosition();
           trackPosition += dragDistance;
           sp->move(trackPosition);
+          updateSamplePosition(i, trackPosition);
         }
       }
       trackMovingInitialPosition = -1;

@@ -138,6 +138,9 @@ class ArrangementArea : public juce::Component,
   void updateShadersPositionUniforms(bool fromGlThread = false);
   void alterShadersPositions();
   void updateGridPixelValues();
+
+  void initSelectedTracksDrag();
+  void updateSelectedTracksDrag(int);
 };
 
 #endif  // DEF_ARRANGEMENTAREA_HPP
