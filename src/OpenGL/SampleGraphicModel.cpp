@@ -82,6 +82,7 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
   _textureHeight = 2 * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE;
   _textureWidth = numFfts * horizontalScaleMultiplier;
   _texture.resize(_textureHeight * _textureWidth * 4);  // 4 is for rgba values
+  std::fill(_texture.begin(), _texture.end(), 1.0f);
 
   float intensity = 0.0f;
 
@@ -122,7 +123,10 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
       // first channel instead)
 
       // pick freq index in the fft
-      freqiZoomed = _transformFrequencyLocation(freqi);
+      freqiZoomed = FREQVIEW_SAMPLE_FFT_SCOPE_SIZE -
+                    (_transformFrequencyLocation(
+                         (FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - (freqi + 1))) +
+                     1);
       // get the value depending on if we got a second channel or not
       if (numChannels == 2) {
         intensity = ffts[channelFftsShift +
