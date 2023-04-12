@@ -34,6 +34,8 @@ void SamplePlayer::setColor(int colorId) {
   colour = colourPalette[colorId % colourPalette.size()];
 }
 
+void SamplePlayer::setColor(juce::Colour& c) { colour = c; }
+
 void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT& fft) {
   // get lock and change buffer
   const juce::SpinLock::ScopedLockType lock(playerMutex);
@@ -190,6 +192,7 @@ SamplePlayer* SamplePlayer::createDuplicate(juce::int64 newPosition,
                                             juce::dsp::FFT& fft) {
   SamplePlayer* duplicate = new SamplePlayer(newPosition);
   duplicate->setBuffer(audioBufferRef, fft);
+  duplicate->setColor(getColor());
   return duplicate;
 }
 

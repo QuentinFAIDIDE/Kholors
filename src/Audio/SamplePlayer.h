@@ -62,6 +62,7 @@ class SamplePlayer : public juce::PositionableAudioSource {
   int64_t getEditingPosition() const;
   juce::Colour& getColor();
   void setColor(int colorId);
+  void setColor(juce::Colour& c);
 
   bool hasBeenInitialized() const;
 
