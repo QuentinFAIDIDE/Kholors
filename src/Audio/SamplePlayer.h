@@ -44,7 +44,7 @@ class SamplePlayer : public juce::PositionableAudioSource {
   // how many channels does the buffer has ?
   int getBufferNumChannels() const;
   // create and move a duplicate (uses same underlying audio buffer)
-  SamplePlayer* createDuplicate(juce::int64);
+  SamplePlayer* createDuplicate(juce::int64, juce::dsp::FFT&);
   // will split the sample in two at a frquency provided
   // (returns new other half)
   SamplePlayer* split(float frequencyLimitHz);

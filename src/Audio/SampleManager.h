@@ -54,6 +54,8 @@ class SampleManager : public juce::PositionableAudioSource,
   SamplePlayer* deleteTrack(int index);
   void restoreDeletedTrack(SamplePlayer* sp, int index);
 
+  int duplicateTrack(int index, int newPos);
+
   // set callback to safely access gui's
   // MessageThread to repaint tracks
   void setTrackRepaintCallback(std::function<void()>);

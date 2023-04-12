@@ -186,9 +186,11 @@ void SamplePlayer::setBufferShift(juce::int64 shift) {
 juce::int64 SamplePlayer::getBufferShift() const { return bufferStart; }
 
 // create and move a duplicate (uses same underlying audio buffer)
-SamplePlayer* SamplePlayer::createDuplicate(juce::int64 newPosition) {
-  // TODO
-  return nullptr;
+SamplePlayer* SamplePlayer::createDuplicate(juce::int64 newPosition,
+                                            juce::dsp::FFT& fft) {
+  SamplePlayer* duplicate = new SamplePlayer(newPosition);
+  duplicate->setBuffer(audioBufferRef, fft);
+  return duplicate;
 }
 
 // will split the sample in two at a frquency provided

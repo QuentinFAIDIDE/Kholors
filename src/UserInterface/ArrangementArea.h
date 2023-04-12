@@ -105,6 +105,8 @@ class ArrangementArea : public juce::Component,
   juce::Colour cursorColor;
   int64_t lastPlayCursorPosition;
 
+  bool recentlyDuplicated;
+
   // selected tracks
   std::set<size_t> selectedTracks;
 
@@ -141,6 +143,8 @@ class ArrangementArea : public juce::Component,
 
   void initSelectedTracksDrag();
   void updateSelectedTracksDrag(int);
+
+  int64_t lowestStartPosInSelection();
 };
 
 #endif  // DEF_ARRANGEMENTAREA_HPP

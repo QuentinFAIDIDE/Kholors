@@ -438,5 +438,23 @@ void SampleManager::restoreDeletedTrack(SamplePlayer* sp, int index) {
         << "Warning: ArrangementArea is trying to restore an existing track"
         << std::endl;
   }
-  tracks.set(index, nullptr);
+  tracks.set(index, sp);
+}
+
+int SampleManager::duplicateTrack(int index, int newPos) {
+  SamplePlayer* newSample = tracks[index]->createDuplicate(newPos, forwardFFT);
+  int newTrackIndex;
+  // get a scoped lock for the buffer array
+  {
+    const juce::SpinLock::ScopedLockType lock(mutex);
+
+    // add new SamplePlayer to the tracks list (positionable audio
+    // sources)
+    tracks.add(newSample);
+    newTrackIndex = tracks.size() - 1;
+  }
+
+  addUiSampleCallback(newSample);
+  trackRepaintCallback();
+  return newTrackIndex;
 }

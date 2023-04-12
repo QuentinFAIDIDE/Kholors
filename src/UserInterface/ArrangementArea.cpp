@@ -1,6 +1,8 @@
 #include "ArrangementArea.h"
 
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
 #include <stdexcept>
 
@@ -49,6 +51,7 @@ ArrangementArea::ArrangementArea(SampleManager& sm, NotificationArea& na)
   setWantsKeyboardFocus(true);
 
   shadersCompiled = false;
+  recentlyDuplicated = false;
 
   // Indicates that no part of this Component is transparent.
   setOpaque(true);
@@ -530,12 +533,44 @@ bool ArrangementArea::keyPressed(const juce::KeyPress& key) {
     } else if (!isMovingCursor) {
       sampleManager.startPlayback();
     }
-  } else if (key == juce::KeyPress::createFromDescription(KEYMAP_DRAG_MODE)) {
+  } else if (key == juce::KeyPress::createFromDescription(KEYMAP_DRAG_MODE) ||
+             key == juce::KeyPress::createFromDescription(
+                        std::string("ctrl + ") + KEYMAP_DRAG_MODE)) {
     // if pressing d and not in any mode, start dragging
     if (!isResizing && trackMovingInitialPosition == -1 &&
-        !selectedTracks.empty()) {
-      trackMovingInitialPosition = lastMouseX;
-      initSelectedTracksDrag();
+        !selectedTracks.empty() && recentlyDuplicated == false) {
+      // if ctrl is pressed, duplicate and add to selection
+      if (key.getModifiers().isCtrlDown()) {
+        // if nothing is selected, abort
+        if (selectedTracks.size() == 0) {
+          return false;
+        }
+
+        std::set<size_t> newlySelectedTracks;
+
+        // get lowest track position is selection
+        int64_t selectionBeginPos = lowestStartPosInSelection();
+
+        // iterate over selected tracks to duplicate everything
+        std::set<std::size_t>::iterator it = selectedTracks.begin();
+
+        while (it != selectedTracks.end()) {
+          newlySelectedTracks.insert(*it);
+          // insert selected tracks at the mouse cursor position
+          int pos = sampleManager.getTrack(*it)->getEditingPosition();
+          int newSample = sampleManager.duplicateTrack(
+              *it, (viewPosition + (lastMouseX * viewScale)) +
+                       (pos - selectionBeginPos));
+          newlySelectedTracks.insert(newSample);
+          it++;
+        }
+        selectedTracks.swap(newlySelectedTracks);
+        recentlyDuplicated = true;
+      } else {
+        // start dragging
+        trackMovingInitialPosition = lastMouseX;
+        initSelectedTracksDrag();
+      }
     }
   } else if (key ==
              juce::KeyPress::createFromDescription(KEYMAP_DELETE_SELECTION)) {
@@ -547,6 +582,24 @@ bool ArrangementArea::keyPressed(const juce::KeyPress& key) {
   }
   // do not intercept the signal and pass it around
   return false;
+}
+
+// lowestStartPosInSelection will get the lowest track
+// position in the selected tracks. It returns 0
+// if no track is selected.
+int64_t ArrangementArea::lowestStartPosInSelection() {
+  int lowestTrackPos = 0;
+  int initialized = false;
+  std::set<std::size_t>::iterator it = selectedTracks.begin();
+  while (it != selectedTracks.end()) {
+    int pos = sampleManager.getTrack(*it)->getEditingPosition();
+    if (initialized == false || pos < lowestTrackPos) {
+      initialized = true;
+      lowestTrackPos = pos;
+    }
+    it++;
+  }
+  return lowestTrackPos;
 }
 
 void ArrangementArea::deleteSelectedTracks() {
@@ -599,6 +652,17 @@ bool ArrangementArea::keyStateChanged(bool isKeyDown) {
       repaint();
     }
   }
+  if (recentlyDuplicated &&
+      !juce::KeyPress::isKeyCurrentlyDown(
+          juce::KeyPress::createFromDescription(KEYMAP_DRAG_MODE)
+              .getKeyCode()) &&
+      !juce::KeyPress::isKeyCurrentlyDown(
+          juce::KeyPress::createFromDescription(std::string("ctrl + ") +
+                                                KEYMAP_DRAG_MODE)
+              .getKeyCode())) {
+    recentlyDuplicated = false;
+  }
+
   return false;
 }
 
