@@ -342,35 +342,42 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent& jme) {
   }
 }
 
-size_t ArrangementArea::getTrackClicked(const juce::MouseEvent& jme) {
-  size_t nTracks = sampleManager.getNumTracks();
-
-  // reference to the samplePlayer we are drawing in the loop
-  SamplePlayer* sp;
-
+int ArrangementArea::getTrackClicked(const juce::MouseEvent& jme) {
+  size_t nTracks = samples.size();
   int64_t trackPosition;
+
+  int bestTrackIndex = -1;
+  float bestTrackIntensity = 0.0f;
+  float currentIntensity;
 
   // for each track
   for (size_t i = 0; i < nTracks; i++) {
-    // get a reference to the sample
-    sp = sampleManager.getTrack(i);
     // skip nullptr in tracks list (should not happen)
-    if (sp == nullptr) {
+    if (samples[i].isDisabled()) {
       continue;
     }
-    // get its lock
-    const juce::SpinLock::ScopedLockType lock(sp->playerMutex);
 
-    trackPosition = (sp->getEditingPosition() - viewPosition) / viewScale;
+    trackPosition = (samples[i].getFramePosition() - viewPosition) / viewScale;
 
     // if it's inbound, return the index
     if (lastMouseX > trackPosition &&
-        lastMouseX < trackPosition + (sp->getLength() / viewScale)) {
-      return i;
+        lastMouseX <
+            trackPosition + (samples[i].getFrameLength() / viewScale)) {
+      float x = float(lastMouseX - trackPosition) /
+                float(samples[i].getFrameLength() / viewScale);
+
+      float y = float(lastMouseY) / bounds.getHeight();
+
+      currentIntensity = samples[i].textureIntensity(x, y);
+
+      if (bestTrackIndex == -1 || currentIntensity > bestTrackIntensity) {
+        bestTrackIndex = i;
+        bestTrackIntensity = currentIntensity;
+      }
     }
   }
 
-  return -1;
+  return bestTrackIndex;
 }
 
 void ArrangementArea::initSelectedTracksDrag() {

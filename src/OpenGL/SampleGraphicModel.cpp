@@ -10,60 +10,60 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
     return;
   }
 
-  _loaded = false;
-  _disabled = false;
+  loaded = false;
+  disabled = false;
 
   // for now, all sample are simply rectangles (two triangles)
   // on which we map the fft texture.
 
   juce::Colour col = sp->getColor();
 
-  _vertices.reserve(4);
+  vertices.reserve(4);
 
   // upper left corner 0
-  _vertices.push_back(
+  vertices.push_back(
       {{float(sp->getEditingPosition()), -1.0f},
        {col.getFloatRed(), col.getFloatGreen(), col.getFloatBlue(), 0.0f},
        {0.0f, 1.0f}});
 
   // upper right corner 1
-  _vertices.push_back(
+  vertices.push_back(
       {{float(sp->getEditingPosition() + sp->getLength()), -1.0f},
        {col.getFloatRed(), col.getFloatGreen(), col.getFloatBlue(), 1.0f},
        {1.0f, 1.0f}});
 
   // lower right corner 2
-  _vertices.push_back(
+  vertices.push_back(
       {{float(sp->getEditingPosition() + sp->getLength()), 1.0f},
        {col.getFloatRed(), col.getFloatGreen(), col.getFloatBlue(), 1.0f},
        {1.0f, 0.0f}});
 
   // lower left corner 3
-  _vertices.push_back(
+  vertices.push_back(
       {{float(sp->getEditingPosition()), 1.0f},
        {col.getFloatRed(), col.getFloatGreen(), col.getFloatBlue(), 1.0f},
        {0.0f, 0.0f}});
 
   // lower left triangle
-  _triangleIds.push_back(0);
-  _triangleIds.push_back(2);
-  _triangleIds.push_back(3);
+  triangleIds.push_back(0);
+  triangleIds.push_back(2);
+  triangleIds.push_back(3);
 
   // upper right triangle
-  _triangleIds.push_back(0);
-  _triangleIds.push_back(1);
-  _triangleIds.push_back(2);
+  triangleIds.push_back(0);
+  triangleIds.push_back(1);
+  triangleIds.push_back(2);
 
   // generate texture from fft (layout described in SamplePlayer.h)
   std::vector<float> ffts = sp->getFftData();
-  int numFfts = sp->getNumFft();
-  int numChannels = sp->getBufferNumChannels();
+  numFfts = sp->getNumFft();
+  numChannels = sp->getBufferNumChannels();
 
   // the texture scaling in opengl use either manhatan distance or linear sum
   // of neigbouring pixels. So as we have less pixel over time than pixel over
   // frequencies, a glitch appear and the values leak to the sides.
   // This multiplier should help reduce horizontal leakage of textures.
-  int horizontalScaleMultiplier = 16;
+  horizontalScaleMultiplier = 16;
 
   // NOTE: we store the texture colors (fft intensity) as RGBA.
   // This implies some harsh data duplication, but openGL
@@ -79,17 +79,17 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
   // all the rows above up to the final top right corner.
 
   // reserve the size of the displayed texture
-  _textureHeight = 2 * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE;
-  _textureWidth = numFfts * horizontalScaleMultiplier;
-  _texture.resize(_textureHeight * _textureWidth * 4);  // 4 is for rgba values
-  std::fill(_texture.begin(), _texture.end(), 1.0f);
+  textureHeight = 2 * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE;
+  textureWidth = numFfts * horizontalScaleMultiplier;
+  texture.resize(textureHeight * textureWidth * 4);  // 4 is for rgba values
+  std::fill(texture.begin(), texture.end(), 1.0f);
 
   float intensity = 0.0f;
 
   int texturePos = 0;
   int freqiZoomed = 0;
 
-  int channelTextureShift = _textureWidth * (_textureHeight >> 1) * 4;
+  channelTextureShift = textureWidth * (textureHeight >> 1) * 4;
   int channelFftsShift = numFfts * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE;
 
   // for each fourier transform over time
@@ -97,26 +97,22 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
     // for each frequency of the current fourrier transform
     for (int freqi = 0; freqi < FREQVIEW_SAMPLE_FFT_SCOPE_SIZE; freqi++) {
       // we apply our polynomial lens freqi transformation to zoom in a bit
-      freqiZoomed = _transformFrequencyLocation(freqi);
+      freqiZoomed = transformFrequencyLocation(freqi);
       // as the frequencies in the ffts goes from low to high, we have
       // to flip the freqi to fetch the frequency and it's all good !
       intensity = ffts[(ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) +
                        (FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - (freqiZoomed + 1))];
       // increase contrast and map between 0 and 1
-      _transformIntensity(intensity);
+      transformIntensity(intensity);
 
       for (int nDuplicate = 0; nDuplicate < horizontalScaleMultiplier;
            nDuplicate++) {
-        // with this texture position, freqi goes from top to bottom
-        // and ffti goes from left to right onscreen.
-        texturePos = ((freqi * numFfts * horizontalScaleMultiplier) +
-                      (nDuplicate + (ffti * horizontalScaleMultiplier))) *
-                     4;
+        texturePos = getTextureIndex(freqi, ffti, nDuplicate, true);
         // now we write the intensity into the texture
-        _texture[texturePos] = col.getFloatRed();
-        _texture[texturePos + 1] = col.getFloatGreen();
-        _texture[texturePos + 2] = col.getFloatBlue();
-        _texture[texturePos + 3] = intensity;
+        texture[texturePos] = col.getFloatRed();
+        texture[texturePos + 1] = col.getFloatGreen();
+        texture[texturePos + 2] = col.getFloatBlue();
+        texture[texturePos + 3] = intensity;
       }
 
       // now we write the other channel on bottom part (if not exists, write
@@ -124,7 +120,7 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
 
       // pick freq index in the fft
       freqiZoomed = FREQVIEW_SAMPLE_FFT_SCOPE_SIZE -
-                    (_transformFrequencyLocation(
+                    (transformFrequencyLocation(
                          (FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - (freqi + 1))) +
                      1);
       // get the value depending on if we got a second channel or not
@@ -134,37 +130,49 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
       } else {
         intensity = ffts[(ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + freqiZoomed];
       }
-      _transformIntensity(intensity);
+      transformIntensity(intensity);
 
       for (int nDuplicate = 0; nDuplicate < horizontalScaleMultiplier;
            nDuplicate++) {
-        texturePos = channelTextureShift +
-                     ((freqi * numFfts * horizontalScaleMultiplier) +
-                      (nDuplicate + (ffti * horizontalScaleMultiplier))) *
-                         4;
-        _texture[texturePos] = col.getFloatRed();
-        _texture[texturePos + 1] = col.getFloatGreen();
-        _texture[texturePos + 2] = col.getFloatBlue();
-        _texture[texturePos + 3] = intensity;
+        texturePos = getTextureIndex(freqi, ffti, nDuplicate, false);
+        texture[texturePos] = col.getFloatRed();
+        texture[texturePos + 1] = col.getFloatGreen();
+        texture[texturePos + 2] = col.getFloatBlue();
+        texture[texturePos + 3] = intensity;
       }
     }
+  }
+}
+
+int SampleGraphicModel::getTextureIndex(int freqIndex, int timeIndex,
+                                        int freqDuplicateShift,
+                                        bool isLeftChannel) {
+  if (isLeftChannel) {
+    return ((freqIndex * numFfts * horizontalScaleMultiplier) +
+            (freqDuplicateShift + (timeIndex * horizontalScaleMultiplier))) *
+           4;
+  } else {
+    return channelTextureShift +
+           ((freqIndex * numFfts * horizontalScaleMultiplier) +
+            (freqDuplicateShift + (timeIndex * horizontalScaleMultiplier))) *
+               4;
   }
 }
 
 // To run on opengl thread, will move track to this absolute editing position in
 // audio frames.
 void SampleGraphicModel::move(int64_t position) {
-  int width = _vertices[1].position[0] - _vertices[0].position[0];
+  int width = vertices[1].position[0] - vertices[0].position[0];
 
-  _vertices[0].position[0] = position;
-  _vertices[1].position[0] = position + width;
-  _vertices[2].position[0] = position + width;
-  _vertices[3].position[0] = position;
+  vertices[0].position[0] = position;
+  vertices[1].position[0] = position + width;
+  vertices[2].position[0] = position + width;
+  vertices[3].position[0] = position;
 
   uploadVerticesToGpu();
 }
 
-void SampleGraphicModel::_transformIntensity(float& intensity) {
+void SampleGraphicModel::transformIntensity(float& intensity) {
   // we need to normalize the frequency by mapping the range
   intensity = juce::jmap(intensity, MIN_DB, MAX_DB, 0.0f, 1.0f);
   // then we make it a little prettier with a sigmoid function
@@ -174,7 +182,7 @@ void SampleGraphicModel::_transformIntensity(float& intensity) {
   intensity = juce::jlimit(0.0f, 1.0f, intensity);
 }
 
-int SampleGraphicModel::_transformFrequencyLocation(int freqi) {
+int SampleGraphicModel::transformFrequencyLocation(int freqi) {
   // we apply our polynomial lens freqi transformation to zoom in a bit
   int freqiZoomed =
       int(polylens(float(freqi) / float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)) *
@@ -187,31 +195,52 @@ int SampleGraphicModel::_transformFrequencyLocation(int freqi) {
 
 // Save position and width when selection dragging begins.
 void SampleGraphicModel::initDrag() {
-  _dragStartPosition = _vertices[0].position[0];
-  _lastWidth = _vertices[1].position[0] - _vertices[0].position[0];
+  dragStartPosition = vertices[0].position[0];
+  lastWidth = vertices[1].position[0] - vertices[0].position[0];
 }
 
 // To run on opengl thread, will update track position to account
 // for the new shift during selection dragging.
 void SampleGraphicModel::updateDrag(int frameMove) {
-  int position = _dragStartPosition + frameMove;
-  _vertices[0].position[0] = position;
-  _vertices[1].position[0] = position + _lastWidth;
-  _vertices[2].position[0] = position + _lastWidth;
-  _vertices[3].position[0] = position;
+  int position = dragStartPosition + frameMove;
+  vertices[0].position[0] = position;
+  vertices[1].position[0] = position + lastWidth;
+  vertices[2].position[0] = position + lastWidth;
+  vertices[3].position[0] = position;
   uploadVerticesToGpu();
 }
 
 void SampleGraphicModel::uploadVerticesToGpu() {
-  glBindVertexArray(_vao);
+  glBindVertexArray(vao);
 
   // register and upload the vertices data
-  glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * _vertices.size(),
-               _vertices.data(), GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertices.size(),
+               vertices.data(), GL_STATIC_DRAW);
   // register and upload indices of the vertices to form the triangles
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-               sizeof(unsigned int) * _triangleIds.size(), _triangleIds.data(),
+               sizeof(unsigned int) * triangleIds.size(), triangleIds.data(),
                GL_STATIC_DRAW);
+}
+
+float SampleGraphicModel::textureIntensity(float x, float y) {
+  int timeIndex = x * numFfts;
+  // index of zoomed frequencies, not linear to logarithm of frequencies
+  int freqIndexNormalised = 0;
+  if (y < 0.5) {
+    freqIndexNormalised = y * 2 * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE;
+  } else {
+    freqIndexNormalised = (y - 0.5) * 2 * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE;
+  }
+  return texture[getTextureIndex(freqIndexNormalised, timeIndex, 1, y < 0.5) +
+                 3];
+}
+
+juce::int64 SampleGraphicModel::getFramePosition() {
+  return juce::int64(vertices[0].position[0]);
+}
+
+juce::int64 SampleGraphicModel::getFrameLength() {
+  return juce::int64(vertices[1].position[0] - vertices[0].position[0]);
 }

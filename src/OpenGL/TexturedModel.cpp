@@ -9,20 +9,20 @@ using namespace juce::gl;
 // utility for that !
 void TexturedModel::registerGlObjects() {
   // generate objects
-  glGenVertexArrays(1, &_vao);
-  glGenBuffers(1, &_vbo);
-  glGenBuffers(1, &_ebo);
+  glGenVertexArrays(1, &vao);
+  glGenBuffers(1, &vbo);
+  glGenBuffers(1, &ebo);
 
-  glBindVertexArray(_vao);
+  glBindVertexArray(vao);
 
   // register and upload the vertices data
-  glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * _vertices.size(),
-               _vertices.data(), GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertices.size(),
+               vertices.data(), GL_STATIC_DRAW);
   // register and upload indices of the vertices to form the triangles
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-               sizeof(unsigned int) * _triangleIds.size(), _triangleIds.data(),
+               sizeof(unsigned int) * triangleIds.size(), triangleIds.data(),
                GL_STATIC_DRAW);
 
   // register the vertex attribute format
@@ -40,8 +40,8 @@ void TexturedModel::registerGlObjects() {
   glEnableVertexAttribArray(2);
 
   // register the texture
-  glGenTextures(1, &_tbo);
-  glBindTexture(GL_TEXTURE_2D, _tbo);
+  glGenTextures(1, &tbo);
+  glBindTexture(GL_TEXTURE_2D, tbo);
   // set the texture wrapping
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -50,11 +50,11 @@ void TexturedModel::registerGlObjects() {
                   GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   // send the texture to the gpu
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, _textureWidth, _textureHeight, 0,
-               GL_RGBA, GL_FLOAT, _texture.data());
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureWidth, textureHeight, 0,
+               GL_RGBA, GL_FLOAT, texture.data());
   glGenerateMipmap(GL_TEXTURE_2D);
 
-  _loaded = true;
+  loaded = true;
 }
 
 // drawGlObjects will draw the sample. Watch out, it needs to be called
@@ -62,36 +62,36 @@ void TexturedModel::registerGlObjects() {
 // to use/bind the right shader before calling this.
 void TexturedModel::drawGlObjects() {
   // abort if openGL object are not loaded
-  if (!_loaded || _disabled) {
+  if (!loaded || disabled) {
     return;
   }
 
   glActiveTexture(GL_TEXTURE0);  // <- might only be necessary on some GPUs
-  glBindTexture(GL_TEXTURE_2D, _tbo);
-  glBindVertexArray(_vao);
+  glBindTexture(GL_TEXTURE_2D, tbo);
+  glBindVertexArray(vao);
 
-  // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
-  glDrawElements(GL_TRIANGLES, _triangleIds.size(), GL_UNSIGNED_INT, 0);
+  // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+  glDrawElements(GL_TRIANGLES, triangleIds.size(), GL_UNSIGNED_INT, 0);
 
   glBindVertexArray(0);
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void TexturedModel::disable() {
-  if (!_disabled && _loaded) {
-    _disabled = true;
-    glDeleteVertexArrays(1, &_vao);
-    glDeleteBuffers(1, &_vbo);
-    glDeleteBuffers(1, &_ebo);
-    // glDeleteTextures(1, &_tbo);
+  if (!disabled && loaded) {
+    disabled = true;
+    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &ebo);
+    // glDeleteTextures(1, &tbo);
   }
 }
 
 TexturedModel::~TexturedModel() {
   // free resources if sample model is loaded and enabled
-  if (_loaded && !_disabled) {
-    glDeleteVertexArrays(1, &_vao);
-    glDeleteBuffers(1, &_vbo);
-    glDeleteBuffers(1, &_ebo);
+  if (loaded && !disabled) {
+    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &ebo);
   }
 }

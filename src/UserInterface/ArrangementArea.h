@@ -127,7 +127,7 @@ class ArrangementArea : public juce::Component,
   void handleMiddleButterDown(const juce::MouseEvent&);
   void handleLeftButtonDown(const juce::MouseEvent&);
   void handleLeftButtonUp(const juce::MouseEvent&);
-  size_t getTrackClicked(const juce::MouseEvent&);
+  int getTrackClicked(const juce::MouseEvent&);
   void deleteSelectedTracks();
   float polylens(float);
 

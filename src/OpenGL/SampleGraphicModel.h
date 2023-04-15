@@ -1,6 +1,7 @@
 #ifndef DEF_SAMPLE_GRAPHIC_MODEL
 #define DEF_SAMPLE_GRAPHIC_MODEL
 
+#include <cstdint>
 #include <vector>
 
 #include "../Audio/SamplePlayer.h"
@@ -14,14 +15,25 @@ class SampleGraphicModel : public TexturedModel {
   void move(int64_t position);
   void initDrag();
   void updateDrag(int);
+  float textureIntensity(float x, float y);
+  juce::int64 getFramePosition();
+  juce::int64 getFrameLength();
 
  private:
-  void _transformIntensity(float&);
-  int _transformFrequencyLocation(int);
-  int _dragStartPosition;
-  int _lastWidth;
+  void transformIntensity(float&);
+  int transformFrequencyLocation(int);
+  int dragStartPosition;
+  int lastWidth;
+  int getTextureIndex(int freqIndex, int timeIndex, int freqDuplicateShift,
+                      bool isLeftChannel);
+
+  int horizontalScaleMultiplier;
 
   void uploadVerticesToGpu();
+
+  int numFfts;
+  int numChannels;
+  int channelTextureShift;
 };
 
 #endif  // DEF_SAMPLE_GRAPHIC_MODEL

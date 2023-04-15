@@ -12,6 +12,7 @@ class GraphicModel {
   virtual void registerGlObjects() = 0;
   virtual void drawGlObjects() = 0;
   virtual void disable() = 0;
+  virtual bool isDisabled() { return disabled; };
 
  protected:
   // polynomial transformation to zoom in the middle of frequencies and make
@@ -28,17 +29,17 @@ class GraphicModel {
   // Works on floats between 0 and 1.
   float sigmoid(float val) { return 1 / (1 + exp(-val)); };
 
-  std::vector<Vertex> _vertices;
-  std::vector<unsigned int> _triangleIds;
+  std::vector<Vertex> vertices;
+  std::vector<unsigned int> triangleIds;
   // vertex buffer object identifier
-  GLuint _vbo;
+  GLuint vbo;
   // index buffer object identifier (ids of vertices for triangles to draw)
-  GLuint _ebo;
+  GLuint ebo;
   // vertex array object to draw with a oneliner
-  GLuint _vao;
+  GLuint vao;
 
-  bool _loaded;
-  bool _disabled;
+  bool loaded;
+  bool disabled;
 };
 
 #endif  // DEF_GRAPHIC_MODEL

@@ -11,12 +11,12 @@ class TexturedModel : public GraphicModel {
   virtual void disable() override;
 
  protected:
-  int _textureWidth;
-  int _textureHeight;
-  std::vector<float> _texture;
-  std::vector<unsigned char> _textureBytes;
+  int textureWidth;
+  int textureHeight;
+  std::vector<float> texture;
+  std::vector<unsigned char> textureBytes;
   // texture buffer object identifier
-  GLuint _tbo;
+  GLuint tbo;
 };
 
 #endif

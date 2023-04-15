@@ -6,10 +6,10 @@ using namespace juce::gl;
 
 BackgroundModel::BackgroundModel() {
   // init vertices
-  _loaded = false;
-  _disabled = false;
+  loaded = false;
+  disabled = false;
 
-  _vertices.reserve(4);
+  vertices.reserve(4);
 
   // TODO: move that into the config
   juce::Colour col(20, 20, 20);
@@ -19,38 +19,38 @@ BackgroundModel::BackgroundModel() {
   // it for the background even if we don't really use it
 
   // upper left corner 0
-  _vertices.push_back(
+  vertices.push_back(
       {{-1.0f, -1.0f},
        {col.getFloatRed(), col.getFloatGreen(), col.getFloatBlue(), 1.0f},
        {0.0f, 1.0f}});
 
   // upper right corner 1
-  _vertices.push_back(
+  vertices.push_back(
       {{1.0f, -1.0f},
        {col.getFloatRed(), col.getFloatGreen(), col.getFloatBlue(), 1.0f},
        {1.0f, 1.0f}});
 
   // lower right corner 2
-  _vertices.push_back(
+  vertices.push_back(
       {{1.0f, 1.0f},
        {col.getFloatRed(), col.getFloatGreen(), col.getFloatBlue(), 1.0f},
        {1.0f, 0.0f}});
 
   // lower left corner 3
-  _vertices.push_back(
+  vertices.push_back(
       {{-1.0f, 1.0f},
        {col.getFloatRed(), col.getFloatGreen(), col.getFloatBlue(), 1.0f},
        {0.0f, 0.0f}});
 
   // lower left triangle
-  _triangleIds.push_back(0);
-  _triangleIds.push_back(2);
-  _triangleIds.push_back(3);
+  triangleIds.push_back(0);
+  triangleIds.push_back(2);
+  triangleIds.push_back(3);
 
   // upper right triangle
-  _triangleIds.push_back(0);
-  _triangleIds.push_back(1);
-  _triangleIds.push_back(2);
+  triangleIds.push_back(0);
+  triangleIds.push_back(1);
+  triangleIds.push_back(2);
 }
 
 // registerGlObjects registers vertices, triangle indices and textures.
@@ -58,20 +58,20 @@ BackgroundModel::BackgroundModel() {
 // utility for that !
 void BackgroundModel::registerGlObjects() {
   // generate objects
-  glGenVertexArrays(1, &_vao);
-  glGenBuffers(1, &_vbo);
-  glGenBuffers(1, &_ebo);
+  glGenVertexArrays(1, &vao);
+  glGenBuffers(1, &vbo);
+  glGenBuffers(1, &ebo);
 
-  glBindVertexArray(_vao);
+  glBindVertexArray(vao);
 
   // register and upload the vertices data
-  glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * _vertices.size(),
-               _vertices.data(), GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertices.size(),
+               vertices.data(), GL_STATIC_DRAW);
   // register and upload indices of the vertices to form the triangles
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-               sizeof(unsigned int) * _triangleIds.size(), _triangleIds.data(),
+               sizeof(unsigned int) * triangleIds.size(), triangleIds.data(),
                GL_STATIC_DRAW);
 
   // register the vertex attribute format
@@ -88,7 +88,7 @@ void BackgroundModel::registerGlObjects() {
                         (void *)(6 * sizeof(float)));
   glEnableVertexAttribArray(2);
 
-  _loaded = true;
+  loaded = true;
 }
 
 // drawGlObjects will draw the sample. Watch out, it needs to be called
@@ -96,30 +96,30 @@ void BackgroundModel::registerGlObjects() {
 // to use/bind the right shader before calling this.
 void BackgroundModel::drawGlObjects() {
   // abort if openGL object are not loaded
-  if (!_loaded || _disabled) {
+  if (!loaded || disabled) {
     return;
   }
 
-  glBindVertexArray(_vao);
-  glDrawElements(GL_TRIANGLES, _triangleIds.size(), GL_UNSIGNED_INT, 0);
+  glBindVertexArray(vao);
+  glDrawElements(GL_TRIANGLES, triangleIds.size(), GL_UNSIGNED_INT, 0);
 
   glBindVertexArray(0);
 }
 
 void BackgroundModel::disable() {
-  if (!_disabled && _loaded) {
-    _disabled = true;
-    glDeleteVertexArrays(1, &_vao);
-    glDeleteBuffers(1, &_vbo);
-    glDeleteBuffers(1, &_ebo);
+  if (!disabled && loaded) {
+    disabled = true;
+    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &ebo);
   }
 }
 
 BackgroundModel::~BackgroundModel() {
   // free resources if sample model is loaded and enabled
-  if (_loaded && !_disabled) {
-    glDeleteVertexArrays(1, &_vao);
-    glDeleteBuffers(1, &_vbo);
-    glDeleteBuffers(1, &_ebo);
+  if (loaded && !disabled) {
+    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &ebo);
   }
 }
