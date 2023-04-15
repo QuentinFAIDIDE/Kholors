@@ -97,7 +97,7 @@ void ArrangementArea::paintSelection(juce::Graphics& g) {
     dragShift = lastMouseX - trackMovingInitialPosition;
   }
 
-  g.setColour(COLOR_NOTIF_TEXT);
+  g.setColour(COLOR_SAMPLE_BORDER);
   for (itr = selectedTracks.begin(); itr != selectedTracks.end(); itr++) {
     // ignore deleted selected tracks
     if (sampleManager.getTrack(*itr) != nullptr) {
@@ -113,7 +113,7 @@ void ArrangementArea::paintSelection(juce::Graphics& g) {
 
       if ((currentSampleBorders.getX() + currentSampleBorders.getWidth()) > 0 &&
           currentSampleBorders.getX() < bounds.getWidth()) {
-        g.drawRoundedRectangle(currentSampleBorders, 4, 2);
+        g.drawRoundedRectangle(currentSampleBorders, 4, 1.7);
       }
     }
   }

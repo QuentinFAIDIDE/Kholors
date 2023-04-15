@@ -52,6 +52,7 @@
 // various colors
 #define COLOR_NOTIF_BACKGROUND juce::Colour(20, 20, 20)
 #define COLOR_APP_BACKGROUND juce::Colour(27, 26, 26)
+#define COLOR_SAMPLE_BORDER juce::Colour(140, 140, 180)
 #define COLOR_NOTIF_TEXT juce::Colour(230, 230, 230)
 #define COLOR_NOTIF_BAR_TOP juce::Colour(62, 49, 49)
 #define COLOR_NOTIF_BAR_BOTTOM juce::Colour(10, 10, 10)
