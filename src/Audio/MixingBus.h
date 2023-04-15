@@ -1,10 +1,10 @@
-#ifndef DEF_SAMPLEMANAGER_HPP
-#define DEF_SAMPLEMANAGER_HPP
+#ifndef DEF_MIXING_BUS_HPP
+#define DEF_MIXING_BUS_HPP
 
 /**
   *
 
-  SampleManager will load, mix, process and play
+  MixingBus will load, mix, process and play
   the audio samples loaded with the interface.
 
   */
@@ -21,14 +21,13 @@
 #include "SamplePlayer.h"
 
 //==============================================================================
-class SampleManager : public juce::PositionableAudioSource,
-                      private juce::Thread {
+class MixingBus : public juce::PositionableAudioSource, private juce::Thread {
  public:
-  SampleManager(NotificationArea&);
-  ~SampleManager();
+  MixingBus(NotificationArea&);
+  ~MixingBus();
 
   // when called, add sample from file path with position
-  int addSample(juce::String, int64_t);
+  void addSample(juce::String, int64_t);
   bool filePathsValid(const juce::StringArray&);
 
   // inherited from audio source
@@ -174,4 +173,4 @@ class SampleManager : public juce::PositionableAudioSource,
 };
 //==============================================================================
 
-#endif  // DEF_SAMPLEMANAGER_HPP
+#endif  // DEF_MIXING_BUS_HPP

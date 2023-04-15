@@ -12,7 +12,8 @@
 #include <memory>
 #include <vector>
 
-#include "../Audio/SampleManager.h"
+#include "../Arrangement/TaxonomyManager.h"
+#include "../Audio/MixingBus.h"
 #include "../Config.h"
 #include "../OpenGL/BackgroundModel.h"
 #include "../OpenGL/SampleGraphicModel.h"
@@ -31,7 +32,7 @@ class ArrangementArea : public juce::Component,
                         public juce::OpenGLRenderer {
  public:
   //==============================================================================
-  ArrangementArea(SampleManager& sm, NotificationArea& na);
+  ArrangementArea(MixingBus&, NotificationArea&);
   ~ArrangementArea();
 
   //==============================================================================
@@ -59,6 +60,8 @@ class ArrangementArea : public juce::Component,
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArrangementArea)
 
   juce::OpenGLContext openGLContext;
+
+  TaxonomyManager taxonomyManager;
 
   // NOTE: we will draw each sample fft in OpenGL
   // with a square on which we map a texture.
@@ -99,7 +102,7 @@ class ArrangementArea : public juce::Component,
   // are we moving the play cursor around ?
   bool isMovingCursor;
   // reference to the sample manager in use
-  SampleManager& sampleManager;
+  MixingBus& mixingBus;
   NotificationArea& notificationArea;
   // color of the play cursor
   juce::Colour cursorColor;
@@ -133,6 +136,7 @@ class ArrangementArea : public juce::Component,
 
   void addNewSample(SamplePlayer*);
   void updateSamplePosition(int index, juce::int64 position);
+  void syncSampleColor(int sampleIndex);
 
   bool buildShaders();
   bool buildShader(std::unique_ptr<juce::OpenGLShaderProgram>&, std::string,

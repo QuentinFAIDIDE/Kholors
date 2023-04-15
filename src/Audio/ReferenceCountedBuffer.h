@@ -14,7 +14,6 @@
 // Taken from juce tutorial: LoopingAudioSampleBufferAdvancedTutorial.
 class ReferenceCountedBuffer : public juce::ReferenceCountedObject {
  public:
-
   ReferenceCountedBuffer(const juce::String& nameToUse, int numChannels,
                          int numSamples)
       : name(nameToUse), buffer(numChannels, numSamples) {}
@@ -22,6 +21,8 @@ class ReferenceCountedBuffer : public juce::ReferenceCountedObject {
   ~ReferenceCountedBuffer() {}
 
   juce::AudioSampleBuffer* getAudioSampleBuffer() { return &buffer; }
+
+  std::string getName() { return name.toStdString(); };
 
  private:
   juce::String name;
@@ -32,4 +33,4 @@ class ReferenceCountedBuffer : public juce::ReferenceCountedObject {
 typedef juce::ReferenceCountedObjectPtr<ReferenceCountedBuffer> BufferPtr;
 //==============================================================================
 
-#endif // DEF_REFERENCE_COUNTED_BUFFER_HPP
+#endif  // DEF_REFERENCE_COUNTED_BUFFER_HPP

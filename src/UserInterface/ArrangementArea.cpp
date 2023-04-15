@@ -24,8 +24,8 @@
 //
 
 //==============================================================================
-ArrangementArea::ArrangementArea(SampleManager& sm, NotificationArea& na)
-    : sampleManager(sm), notificationArea(na) {
+ArrangementArea::ArrangementArea(MixingBus& mb, NotificationArea& na)
+    : mixingBus(mb), notificationArea(na) {
   // save reference to the sample manager
   // initialize grid and position
   viewPosition = 0;
@@ -61,10 +61,10 @@ ArrangementArea::ArrangementArea(SampleManager& sm, NotificationArea& na)
   openGLContext.attachTo(*this);
 
   // register the callback to register newly created samples
-  sampleManager.addUiSampleCallback = [this](SamplePlayer* sp) {
+  mixingBus.addUiSampleCallback = [this](SamplePlayer* sp) {
     addNewSample(sp);
   };
-  sampleManager.disableUiSampleCallback = [this](int index) {
+  mixingBus.disableUiSampleCallback = [this](int index) {
     samples[index].disable();
   };
 }
@@ -100,8 +100,8 @@ void ArrangementArea::paintSelection(juce::Graphics& g) {
   g.setColour(COLOR_SAMPLE_BORDER);
   for (itr = selectedTracks.begin(); itr != selectedTracks.end(); itr++) {
     // ignore deleted selected tracks
-    if (sampleManager.getTrack(*itr) != nullptr) {
-      SamplePlayer* sp = sampleManager.getTrack(*itr);
+    if (mixingBus.getTrack(*itr) != nullptr) {
+      SamplePlayer* sp = mixingBus.getTrack(*itr);
 
       currentSampleBorders.setX(
           dragShift + ((sp->getEditingPosition() - viewPosition) / viewScale));
@@ -256,7 +256,10 @@ void ArrangementArea::openGLContextClosing() {}
 
 void ArrangementArea::addNewSample(SamplePlayer* sp) {
   // create graphic objects from the sample
-  samples.push_back(SampleGraphicModel(sp));
+  samples.push_back(SampleGraphicModel(
+      sp, taxonomyManager.getSampleColor(sp->getTrackIndex())));
+  // assign default name to sample
+  taxonomyManager.setSampleName(sp->getTrackIndex(), sp->getFileName());
   // send the data to the GPUs from the OpenGL thread
   openGLContext.executeOnGLThread(
       [this](juce::OpenGLContext& c) {
@@ -279,7 +282,7 @@ void ArrangementArea::paintPlayCursor(juce::Graphics& g) {
   // by using the mouse value
   if (!isMovingCursor) {
     lastPlayCursorPosition =
-        ((sampleManager.getNextReadPosition() - viewPosition) / viewScale);
+        ((mixingBus.getNextReadPosition() - viewPosition) / viewScale);
     g.fillRect(lastPlayCursorPosition - (PLAYCURSOR_WIDTH >> 1), 0,
                PLAYCURSOR_WIDTH, FREQTIME_VIEW_HEIGHT);
   } else {
@@ -414,7 +417,7 @@ void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent& jme) {
   // handle cursor mode relieving
   if (isMovingCursor) {
     isMovingCursor = false;
-    sampleManager.setNextReadPosition(viewPosition + lastMouseX * viewScale);
+    mixingBus.setNextReadPosition(viewPosition + lastMouseX * viewScale);
   }
 }
 
@@ -506,39 +509,13 @@ void ArrangementArea::mouseMove(const juce::MouseEvent& jme) {
   }
 }
 
-bool ArrangementArea::isInterestedInFileDrag(const juce::StringArray& files) {
-  // are the files sound files that are supported
-  return sampleManager.filePathsValid(files);
-}
-
-void ArrangementArea::filesDropped(const juce::StringArray& files, int x,
-                                   int y) {
-  // to know if one sample was imported and we need to update
-  bool refreshNeeded = false;
-  // converts x to an valid position in audio frame
-  int64_t framePos = viewPosition + (x * viewScale);
-  // we try to load the samples
-  for (int i = 0; i < files.size(); i++) {
-    int id = sampleManager.addSample(files[i], framePos);
-    // on failures, abort
-    if (id == -1) {
-      // notify error
-      notificationArea.notifyError("unable to load " + files[i]);
-      continue;
-    }
-  }
-  if (refreshNeeded) {
-    repaint();
-  }
-}
-
 bool ArrangementArea::keyPressed(const juce::KeyPress& key) {
   // if the space key is pressed, play or pause
   if (key == juce::KeyPress::spaceKey) {
-    if (sampleManager.isCursorPlaying()) {
-      sampleManager.stopPlayback();
+    if (mixingBus.isCursorPlaying()) {
+      mixingBus.stopPlayback();
     } else if (!isMovingCursor) {
-      sampleManager.startPlayback();
+      mixingBus.startPlayback();
     }
   } else if (key == juce::KeyPress::createFromDescription(KEYMAP_DRAG_MODE) ||
              key == juce::KeyPress::createFromDescription(
@@ -564,10 +541,12 @@ bool ArrangementArea::keyPressed(const juce::KeyPress& key) {
         while (it != selectedTracks.end()) {
           newlySelectedTracks.insert(*it);
           // insert selected tracks at the mouse cursor position
-          int pos = sampleManager.getTrack(*it)->getEditingPosition();
-          int newSample = sampleManager.duplicateTrack(
+          int pos = mixingBus.getTrack(*it)->getEditingPosition();
+          int newSample = mixingBus.duplicateTrack(
               *it, (viewPosition + (lastMouseX * viewScale)) +
                        (pos - selectionBeginPos));
+          taxonomyManager.copyTaxonomy(*it, newSample);
+          syncSampleColor(newSample);
           newlySelectedTracks.insert(newSample);
           it++;
         }
@@ -591,6 +570,15 @@ bool ArrangementArea::keyPressed(const juce::KeyPress& key) {
   return false;
 }
 
+void ArrangementArea::syncSampleColor(int sampleIndex) {
+  openGLContext.executeOnGLThread(
+      [this, sampleIndex](juce::OpenGLContext& c) {
+        samples[sampleIndex].setColor(
+            taxonomyManager.getSampleColor(sampleIndex));
+      },
+      true);
+}
+
 // lowestStartPosInSelection will get the lowest track
 // position in the selected tracks. It returns 0
 // if no track is selected.
@@ -599,7 +587,7 @@ int64_t ArrangementArea::lowestStartPosInSelection() {
   int initialized = false;
   std::set<std::size_t>::iterator it = selectedTracks.begin();
   while (it != selectedTracks.end()) {
-    int pos = sampleManager.getTrack(*it)->getEditingPosition();
+    int pos = mixingBus.getTrack(*it)->getEditingPosition();
     if (initialized == false || pos < lowestTrackPos) {
       initialized = true;
       lowestTrackPos = pos;
@@ -614,7 +602,7 @@ void ArrangementArea::deleteSelectedTracks() {
   std::set<std::size_t>::iterator it = selectedTracks.begin();
   while (it != selectedTracks.end()) {
     // delete it
-    SamplePlayer* deletedSp = sampleManager.deleteTrack(*it);
+    SamplePlayer* deletedSp = mixingBus.deleteTrack(*it);
     delete deletedSp;
     it++;
   }
@@ -631,7 +619,7 @@ bool ArrangementArea::keyStateChanged(bool isKeyDown) {
             juce::KeyPress::createFromDescription(KEYMAP_DRAG_MODE)
                 .getKeyCode())) {
       // update tracks position, get out of drag mode, and repaint
-      size_t nTracks = sampleManager.getNumTracks();
+      size_t nTracks = mixingBus.getNumTracks();
       SamplePlayer* sp;
       int64_t trackPosition;
       int64_t dragDistance =
@@ -641,7 +629,7 @@ bool ArrangementArea::keyStateChanged(bool isKeyDown) {
         if (auto search = selectedTracks.find(i);
             search != selectedTracks.end()) {
           // get a reference to the sample
-          sp = sampleManager.getTrack(i);
+          sp = mixingBus.getTrack(i);
           // skip nullptr in tracks list (should not happen)
           if (sp == nullptr) {
             continue;
@@ -684,6 +672,26 @@ bool ArrangementArea::isInterestedInDragSource(
   return false;
 }
 
+bool ArrangementArea::isInterestedInFileDrag(const juce::StringArray& files) {
+  // are the files sound files that are supported
+  return mixingBus.filePathsValid(files);
+}
+
+void ArrangementArea::filesDropped(const juce::StringArray& files, int x,
+                                   int y) {
+  // to know if one sample was imported and we need to update
+  bool refreshNeeded = false;
+  // converts x to an valid position in audio frame
+  int64_t framePos = viewPosition + (x * viewScale);
+  // we try to load the samples
+  for (int i = 0; i < files.size(); i++) {
+    mixingBus.addSample(files[i], framePos);
+  }
+  if (refreshNeeded) {
+    repaint();
+  }
+}
+
 void ArrangementArea::itemDropped(const SourceDetails& dragSourceDetails) {
   int x = dragSourceDetails.localPosition.getX();
   // converts x to an valid position in audio frame
@@ -692,13 +700,7 @@ void ArrangementArea::itemDropped(const SourceDetails& dragSourceDetails) {
   juce::String filename =
       dragSourceDetails.description.toString().replaceFirstOccurrenceOf("file:",
                                                                         "");
-  int id = sampleManager.addSample(filename, framePos);
-  // on failures, abort
-  if (id == -1) {
-    // notify error
-    notificationArea.notifyError("unable to load " + filename);
-    return;
-  }
+  mixingBus.addSample(filename, framePos);
 
   repaint();
 }

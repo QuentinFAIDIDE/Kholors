@@ -11,13 +11,14 @@
 
 class SampleGraphicModel : public TexturedModel {
  public:
-  SampleGraphicModel(SamplePlayer*);
+  SampleGraphicModel(SamplePlayer*, juce::Colour);
   void move(int64_t position);
   void initDrag();
   void updateDrag(int);
   float textureIntensity(float x, float y);
   juce::int64 getFramePosition();
   juce::int64 getFrameLength();
+  void setColor(juce::Colour&);
 
  private:
   void transformIntensity(float&);

@@ -1,10 +1,10 @@
-#include "SampleManager.h"
+#include "MixingBus.h"
 
 #include <iostream>
 
-// initialize the SampleManager, as well as Thread and audio inherited
+// initialize the MixingBus, as well as Thread and audio inherited
 // behaviours.
-SampleManager::SampleManager(NotificationArea& na)
+MixingBus::MixingBus(NotificationArea& na)
     : notificationManager(na),
       playCursor(0),
       Thread("Background Thread"),
@@ -44,7 +44,7 @@ SampleManager::SampleManager(NotificationArea& na)
   startThread();
 }
 
-SampleManager::~SampleManager() {
+MixingBus::~MixingBus() {
   // stop thread with a 4sec timeout to kill it
   stopThread(4000);
 
@@ -64,28 +64,28 @@ SampleManager::~SampleManager() {
   delete backgroundNearTrackBitmask;
 }
 
-bool SampleManager::filePathsValid(const juce::StringArray& files) {
+bool MixingBus::filePathsValid(const juce::StringArray& files) {
   // TODO: implement this
   return true;
 }
 
-void SampleManager::startPlayback() {
+void MixingBus::startPlayback() {
   if (!isPlaying) {
     setNextReadPosition(playCursor);
     isPlaying = true;
   }
 }
 
-void SampleManager::stopPlayback() {
+void MixingBus::stopPlayback() {
   if (isPlaying) {
     isPlaying = false;
   }
 }
 
-bool SampleManager::isCursorPlaying() const { return isPlaying; }
+bool MixingBus::isCursorPlaying() const { return isPlaying; }
 
-int SampleManager::addSample(juce::String filePath, int64_t frameIndex) {
-  // swap a file to load variable to avoid blocking audio thread for disk i/o
+void MixingBus::addSample(juce::String filePath, int64_t frameIndex) {
+  // swap a file to load variable to avoid blocking event thread for disk i/o
   {
     // get lock for scoped block
     const juce::ScopedLock lock(pathMutex);
@@ -96,14 +96,9 @@ int SampleManager::addSample(juce::String filePath, int64_t frameIndex) {
   }
   // notify the thread so it's triggered
   notify();
-  // design problem: this can't fail as it's async :D
-  // so this return value is useless.
-  // We will notify the notification service in the background thread.
-  return 0;
 }
 
-void SampleManager::prepareToPlay(int samplesPerBlockExpected,
-                                  double sampleRate) {
+void MixingBus::prepareToPlay(int samplesPerBlockExpected, double sampleRate) {
   // prepare all inputs
   for (size_t i = 0; i < tracks.size(); i++) {
     if (tracks.getUnchecked(i) != nullptr) {
@@ -131,7 +126,7 @@ void SampleManager::prepareToPlay(int samplesPerBlockExpected,
   // TODO: look at MixerAudioSource code to double check what is performed is ok
 }
 
-void SampleManager::releaseResources() {
+void MixingBus::releaseResources() {
   // TODO: look at MixerAudioSource code to double check what is performed is ok
 
   // call all inputs releaseResources
@@ -148,7 +143,7 @@ void SampleManager::releaseResources() {
   audioThreadBuffer.setSize(2, 0);
 }
 
-void SampleManager::getNextAudioBlock(
+void MixingBus::getNextAudioBlock(
     const juce::AudioSourceChannelInfo& bufferToFill) {
   // the mixing code here was initially based on the MixerAudioSource one from
   // Juce.
@@ -173,7 +168,7 @@ void SampleManager::getNextAudioBlock(
           bufferToFill.buffer->getNumSamples());
 
       // create a new getNextAudioBlock request that
-      // will use our SampleManager buffer to pull
+      // will use our MixingBus buffer to pull
       // block to append to the previous buffer
       juce::AudioSourceChannelInfo copyBufferDest(&audioThreadBuffer, 0,
                                                   bufferToFill.numSamples);
@@ -226,7 +221,7 @@ void SampleManager::getNextAudioBlock(
 }
 
 // background thread content for allocating stuff
-void SampleManager::run() {
+void MixingBus::run() {
   // wait 500ms in a loop unless notify is called
   while (!threadShouldExit()) {
     // check if we need to ask for a redraw to move cursor
@@ -242,7 +237,7 @@ void SampleManager::run() {
   }
 }
 
-void SampleManager::checkForCursorRedraw() {
+void MixingBus::checkForCursorRedraw() {
   // if we were notified to redraw, do it
   if (abs(lastDrawnCursor - playCursor) > FREQVIEW_MIN_REDRAW_DISTANCE_FRAMES) {
     lastDrawnCursor = playCursor;
@@ -250,7 +245,7 @@ void SampleManager::checkForCursorRedraw() {
   }
 }
 
-void SampleManager::checkForBuffersToFree() {
+void MixingBus::checkForBuffersToFree() {
   // inspired by LoopingAudioSampleBuffer juce tutorial
 
   // reminder: no need to lock for buffers reads here since no
@@ -269,7 +264,7 @@ void SampleManager::checkForBuffersToFree() {
   }
 }
 
-void SampleManager::checkForFileToImport() {
+void MixingBus::checkForFileToImport() {
   // inspired by LoopingAudioSampleBuffer juce tutorial
 
   // desired position for sample to import
@@ -337,6 +332,8 @@ void SampleManager::checkForFileToImport() {
           // add new SamplePlayer to the tracks list (positionable audio
           // sources)
           tracks.add(newSample);
+          int newTrackIndex = tracks.size() - 1;
+          tracks[newTrackIndex]->setTrackIndex(newTrackIndex);
 
           // add the buffer the array of audio buffers
           buffers.add(newBuffer);
@@ -362,7 +359,7 @@ void SampleManager::checkForFileToImport() {
   }
 }
 
-void SampleManager::setNextReadPosition(juce::int64 nextReadPosition) {
+void MixingBus::setNextReadPosition(juce::int64 nextReadPosition) {
   // update play cursor
   playCursor = nextReadPosition;
 
@@ -378,17 +375,17 @@ void SampleManager::setNextReadPosition(juce::int64 nextReadPosition) {
   trackRepaintCallback();
 }
 
-juce::int64 SampleManager::getNextReadPosition() const {
+juce::int64 MixingBus::getNextReadPosition() const {
   // TODO: simply returns total frame position
   return playCursor;
 }
 
-juce::int64 SampleManager::getTotalLength() const {
+juce::int64 MixingBus::getTotalLength() const {
   // TODO: simply returns total length of the entire track in frames
   return totalFrameLength;
 }
 
-bool SampleManager::isLooping() const {
+bool MixingBus::isLooping() const {
   // TODO: always return false, we don't allow looping the whole track
   //       maybe this can be a feature for later. We could also loop only
   //       between some loop marks in the future, even though it look like
@@ -396,17 +393,17 @@ bool SampleManager::isLooping() const {
   return false;
 }
 
-void SampleManager::setLooping(bool) {
+void MixingBus::setLooping(bool) {
   // TODO
 }
 
-void SampleManager::pauseIfCursorNotInBound() {
+void MixingBus::pauseIfCursorNotInBound() {
   // TODO
 }
 
-size_t SampleManager::getNumTracks() const { return tracks.size(); }
+size_t MixingBus::getNumTracks() const { return tracks.size(); }
 
-SamplePlayer* SampleManager::getTrack(int index) const {
+SamplePlayer* MixingBus::getTrack(int index) const {
   // NOTE: We never delete SamplePlayers in the tracks array or insert mid-array
   // to prevent using a lock when reading.
 
@@ -414,34 +411,34 @@ SamplePlayer* SampleManager::getTrack(int index) const {
   return tracks.getUnchecked(index);
 }
 
-void SampleManager::setTrackRepaintCallback(std::function<void()> f) {
+void MixingBus::setTrackRepaintCallback(std::function<void()> f) {
   trackRepaintCallback = f;
 }
 
-void SampleManager::setFileImportedCallback(
-    std::function<void(std::string)> c) {
+void MixingBus::setFileImportedCallback(std::function<void(std::string)> c) {
   fileImportedCallback = c;
 }
 
 // delete track from list by setting it to nullptr and return point to track.
 // ArrangementArea is in charge of deleting the SamplePlayer instance or
 // putting it back with restoreDeletedTrack if usert hit ctrl+Z.
-SamplePlayer* SampleManager::deleteTrack(int index) {
+SamplePlayer* MixingBus::deleteTrack(int index) {
   tracks.set(index, nullptr);
   disableUiSampleCallback(index);
 }
 
-void SampleManager::restoreDeletedTrack(SamplePlayer* sp, int index) {
+void MixingBus::restoreDeletedTrack(SamplePlayer* sp, int index) {
   // only do it if no track at that index exists
   if (tracks.getUnchecked(index) != nullptr) {
     std::cout
         << "Warning: ArrangementArea is trying to restore an existing track"
         << std::endl;
+    return;
   }
   tracks.set(index, sp);
 }
 
-int SampleManager::duplicateTrack(int index, int newPos) {
+int MixingBus::duplicateTrack(int index, int newPos) {
   SamplePlayer* newSample = tracks[index]->createDuplicate(newPos, forwardFFT);
   int newTrackIndex;
   // get a scoped lock for the buffer array
@@ -452,6 +449,7 @@ int SampleManager::duplicateTrack(int index, int newPos) {
     // sources)
     tracks.add(newSample);
     newTrackIndex = tracks.size() - 1;
+    tracks[newTrackIndex]->setTrackIndex(newTrackIndex);
   }
 
   addUiSampleCallback(newSample);

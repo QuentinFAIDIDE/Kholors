@@ -8,8 +8,8 @@
 
 //==============================================================================
 MainComponent::MainComponent()
-    : sampleManager(notificationArea),
-      arrangementArea(sampleManager, notificationArea),
+    : mixingBus(notificationArea),
+      arrangementArea(mixingBus, notificationArea),
       actionTabs(juce::TabbedButtonBar::Orientation::TabsAtTop) {
   configureLookAndFeel();
 
@@ -29,15 +29,15 @@ MainComponent::MainComponent()
                     false);
 
   // tells the sample player where to report file import for count
-  sampleManager.setFileImportedCallback(audioLibraryTab.fileWasImported);
+  mixingBus.setFileImportedCallback(audioLibraryTab.fileWasImported);
 
   // make subwidgets visible
   addAndMakeVisible(arrangementArea);
   addAndMakeVisible(notificationArea);
   addAndMakeVisible(actionTabs);
 
-  // set the sampleManager callback to repaint arrangement area
-  sampleManager.setTrackRepaintCallback([this] {
+  // set the mixingBus callback to repaint arrangement area
+  mixingBus.setTrackRepaintCallback([this] {
     const juce::MessageManagerLock mmLock;
     arrangementArea.repaint();
   });
@@ -106,18 +106,18 @@ void MainComponent::resized() {
 void MainComponent::prepareToPlay(int samplesPerBlockExpected,
                                   double sampleRate) {
   // pass that callback down to the sample mananger
-  sampleManager.prepareToPlay(samplesPerBlockExpected, sampleRate);
+  mixingBus.prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
 void MainComponent::releaseResources() {
   // pass that callback down to the sample mananger
-  sampleManager.releaseResources();
+  mixingBus.releaseResources();
 }
 
 void MainComponent::getNextAudioBlock(
     const juce::AudioSourceChannelInfo& bufferToFill) {
   // pass that callback down to the sample mananger
-  sampleManager.getNextAudioBlock(bufferToFill);
+  mixingBus.getNextAudioBlock(bufferToFill);
 }
 
 void MainComponent::configureApp(Config& conf) {

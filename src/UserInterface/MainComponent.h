@@ -9,7 +9,7 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 #include <juce_gui_extra/juce_gui_extra.h>
 
-#include "../Audio/SampleManager.h"
+#include "../Audio/MixingBus.h"
 #include "ArrangementArea.h"
 #include "AudioLibraryTab.h"
 #include "EmptyTab.h"
@@ -44,7 +44,7 @@ class MainComponent : public juce::AudioAppComponent,
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
   // widgets
   // the object responsible for managing the various samples imported
-  SampleManager sampleManager;
+  MixingBus mixingBus;
   ArrangementArea arrangementArea;
   NotificationArea notificationArea;
   juce::TabbedComponent actionTabs;

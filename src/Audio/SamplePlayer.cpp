@@ -2,10 +2,7 @@
 
 #include <iterator>
 
-#include "../ColorPalette.h"
 #include "../Config.h"
-
-int SamplePlayer::lastUsedColor = 0;
 
 SamplePlayer::SamplePlayer(int64_t position)
     : editingPosition(position),
@@ -16,25 +13,14 @@ SamplePlayer::SamplePlayer(int64_t position)
       lowPassFreq(44100),
       highPassFreq(0),
       isSampleSet(false),
-      numFft(0) {
-  // pick a random color
-  colour = colourPalette[lastUsedColor];
-  lastUsedColor = (lastUsedColor + 1) % colourPalette.size();
-}
+      numFft(0),
+      trackIndex(-1) {}
 
 SamplePlayer::~SamplePlayer() {
   // TODO
 }
 
 bool SamplePlayer::hasBeenInitialized() const { return isSampleSet; }
-
-juce::Colour& SamplePlayer::getColor() { return colour; }
-
-void SamplePlayer::setColor(int colorId) {
-  colour = colourPalette[colorId % colourPalette.size()];
-}
-
-void SamplePlayer::setColor(juce::Colour& c) { colour = c; }
 
 void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT& fft) {
   // get lock and change buffer
@@ -59,7 +45,7 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT& fft) {
   // allocate a buffer to perform a fft (double size of fft)
   std::vector<float> inputOutputData((FREQVIEW_SAMPLE_FFT_SIZE) << 1, 0.0f);
 
-  float const* audioBufferRef;
+  float const* audioBufferData;
   int audioBufferPosition;
 
   // magic windowing function to reduce spectral leakage in fft
@@ -73,7 +59,7 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT& fft) {
 
   // for each channel
   for (size_t i = 0; i < numChannels; i++) {
-    audioBufferRef = targetBuffer->getAudioSampleBuffer()->getReadPointer(i);
+    audioBufferData = targetBuffer->getAudioSampleBuffer()->getReadPointer(i);
     audioBufferPosition = 0;
     // iterate over buffers of 1024 samples
     for (size_t j = 0; j < numFft; j++) {
@@ -82,7 +68,7 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT& fft) {
       std::fill(inputOutputData.begin(), inputOutputData.end(), 0.0f);
       // copy input data and increment position in audio buffer
       // NOTE: I apologize for using C inside C++, please forgive my ignorance
-      memcpy(&inputOutputData[0], &audioBufferRef[audioBufferPosition],
+      memcpy(&inputOutputData[0], &audioBufferData[audioBufferPosition],
              FREQVIEW_SAMPLE_FFT_SIZE * sizeof(float));
       audioBufferPosition += FREQVIEW_SAMPLE_FFT_SIZE;
       // do the actual fft processing
@@ -130,6 +116,14 @@ int SamplePlayer::getBufferNumChannels() const {
   // beware of segfaults if you play with SamplePlayer
   // outside of the tracks SampleManager list!
   return audioBufferRef->getAudioSampleBuffer()->getNumChannels();
+}
+
+std::string SamplePlayer::getFileName() {
+  if (audioBufferRef == nullptr) {
+    return "None";
+  } else {
+    return audioBufferRef->getName();
+  }
 }
 
 std::vector<float>& SamplePlayer::getFftData() {
@@ -192,7 +186,6 @@ SamplePlayer* SamplePlayer::createDuplicate(juce::int64 newPosition,
                                             juce::dsp::FFT& fft) {
   SamplePlayer* duplicate = new SamplePlayer(newPosition);
   duplicate->setBuffer(audioBufferRef, fft);
-  duplicate->setColor(getColor());
   return duplicate;
 }
 
@@ -312,3 +305,7 @@ void SamplePlayer::getNextAudioBlock(
 }
 
 int64_t SamplePlayer::getEditingPosition() const { return editingPosition; }
+
+void SamplePlayer::setTrackIndex(int id) { trackIndex = id; }
+
+int SamplePlayer::getTrackIndex() { return trackIndex; }

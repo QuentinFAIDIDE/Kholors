@@ -20,6 +20,9 @@ class SamplePlayer : public juce::PositionableAudioSource {
   // this tells the SamplePlayer which audio buffer to use
   void setBuffer(BufferPtr, juce::dsp::FFT&);
 
+  void setTrackIndex(int);
+  int getTrackIndex();
+
   // inherited from PositionableAudioSource
   juce::int64 getNextReadPosition() const override;
   void setNextReadPosition(juce::int64) override;
@@ -52,6 +55,8 @@ class SamplePlayer : public juce::PositionableAudioSource {
   // (returns new other half)
   SamplePlayer* split(juce::int64 positionLimit);
 
+  std::string getFileName();
+
   // get number of fft blocks we use to cover the buffer
   int getNumFft() const;
   std::vector<float>& getFftData();
@@ -60,10 +65,6 @@ class SamplePlayer : public juce::PositionableAudioSource {
   juce::SpinLock playerMutex;
   // helpers to read graphical properties
   int64_t getEditingPosition() const;
-  juce::Colour& getColor();
-  void setColor(int colorId);
-  void setColor(juce::Colour& c);
-
   bool hasBeenInitialized() const;
 
   // TODO: getters for stereo low and high pass
@@ -91,8 +92,7 @@ class SamplePlayer : public juce::PositionableAudioSource {
   // for this buffer
   int numFft;
 
-  // index of the last used color from colorPalette
-  static int lastUsedColor;
+  int trackIndex;
 };
 
 #endif  // DEF_SAMPLEPLAYER_HPP

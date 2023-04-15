@@ -5,7 +5,7 @@
 
 using namespace juce::gl;
 
-SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
+SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp, juce::Colour col) {
   if (sp == nullptr || !sp->hasBeenInitialized()) {
     return;
   }
@@ -15,8 +15,6 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
 
   // for now, all sample are simply rectangles (two triangles)
   // on which we map the fft texture.
-
-  juce::Colour col = sp->getColor();
 
   vertices.reserve(4);
 
@@ -109,9 +107,9 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
            nDuplicate++) {
         texturePos = getTextureIndex(freqi, ffti, nDuplicate, true);
         // now we write the intensity into the texture
-        texture[texturePos] = col.getFloatRed();
-        texture[texturePos + 1] = col.getFloatGreen();
-        texture[texturePos + 2] = col.getFloatBlue();
+        texture[texturePos] = 1.0f;
+        texture[texturePos + 1] = 1.0f;
+        texture[texturePos + 2] = 1.0f;
         texture[texturePos + 3] = intensity;
       }
 
@@ -135,9 +133,9 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer* sp) {
       for (int nDuplicate = 0; nDuplicate < horizontalScaleMultiplier;
            nDuplicate++) {
         texturePos = getTextureIndex(freqi, ffti, nDuplicate, false);
-        texture[texturePos] = col.getFloatRed();
-        texture[texturePos + 1] = col.getFloatGreen();
-        texture[texturePos + 2] = col.getFloatBlue();
+        texture[texturePos] = 1.0f;
+        texture[texturePos + 1] = 1.0f;
+        texture[texturePos + 2] = 1.0f;
         texture[texturePos + 3] = intensity;
       }
     }
@@ -168,6 +166,18 @@ void SampleGraphicModel::move(int64_t position) {
   vertices[1].position[0] = position + width;
   vertices[2].position[0] = position + width;
   vertices[3].position[0] = position;
+
+  uploadVerticesToGpu();
+}
+
+// To run on opengl thread, will recolor track
+void SampleGraphicModel::setColor(juce::Colour& col) {
+  for (size_t i = 0; i < vertices.size(); i++) {
+    vertices[i].colour[0] = col.getFloatRed();
+    vertices[i].colour[1] = col.getFloatGreen();
+    vertices[i].colour[2] = col.getFloatBlue();
+    vertices[i].colour[3] = col.getFloatAlpha();
+  }
 
   uploadVerticesToGpu();
 }
