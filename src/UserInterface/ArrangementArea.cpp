@@ -180,6 +180,15 @@ SampleLabelPosition ArrangementArea::addLabelAndPreventOverlaps(
   pixelLabelRect.setX(leftSidePixelCoords);
   pixelLabelRect.setHeight(FREQVIEW_LABEL_HEIGHT);
 
+  // reduce the width if there's unused space
+  int textPixelWidth =
+      juce::Font().getStringWidth(taxonomyManager.getSampleName(sampleIndex));
+  if (pixelLabelRect.getWidth() > textPixelWidth + FREQVIEW_LABELS_MARGINS * 2 +
+                                      pixelLabelRect.getHeight()) {
+    pixelLabelRect.setWidth(textPixelWidth + FREQVIEW_LABELS_MARGINS * 2 +
+                            pixelLabelRect.getHeight());
+  }
+
   // we will keep moving it untill there's no overlap
   float origin = float(bounds.getHeight() >> 1);
   pixelLabelRect.setY(origin - (FREQVIEW_LABEL_HEIGHT >> 1));
@@ -219,40 +228,30 @@ bool ArrangementArea::rectangleIntersects(
 
 void ArrangementArea::paintSampleLabel(juce::Graphics& g,
                                        juce::Rectangle<float>& box, int index) {
-  juce::Rectangle<float> shrinkedBox(box);
-  int textPixelWidth =
-      juce::Font().getStringWidth(taxonomyManager.getSampleName(index));
-  if (shrinkedBox.getWidth() >
-      textPixelWidth + FREQVIEW_LABELS_MARGINS * 2 + shrinkedBox.getHeight()) {
-    shrinkedBox.setWidth(textPixelWidth + FREQVIEW_LABELS_MARGINS * 2 +
-                         shrinkedBox.getHeight());
-  }
-
   g.setColour(juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.5f));
-  g.fillRoundedRectangle(shrinkedBox, FREQVIEW_LABELS_CORNER_ROUNDING);
+  g.fillRoundedRectangle(box, FREQVIEW_LABELS_CORNER_ROUNDING);
 
   g.setColour(COLOR_LABELS_BORDER);
 
   // different border width depending on if selected or not
   if (selectedTracks.find(index) != selectedTracks.end()) {
-    g.drawRoundedRectangle(shrinkedBox, FREQVIEW_LABELS_CORNER_ROUNDING,
+    g.drawRoundedRectangle(box, FREQVIEW_LABELS_CORNER_ROUNDING,
                            FREQVIEW_LABELS_BORDER_THICKNESS);
   } else {
-    g.drawRoundedRectangle(shrinkedBox, FREQVIEW_LABELS_CORNER_ROUNDING,
+    g.drawRoundedRectangle(box, FREQVIEW_LABELS_CORNER_ROUNDING,
                            FREQVIEW_LABELS_BORDER_THICKNESS / 2.0f);
   }
 
   auto reducedBox =
-      shrinkedBox.reduced(FREQVIEW_LABELS_MARGINS, FREQVIEW_LABELS_MARGINS);
+      box.reduced(FREQVIEW_LABELS_MARGINS, FREQVIEW_LABELS_MARGINS);
 
   g.setColour(taxonomyManager.getSampleColor(index));
-  g.fillRect(
-      reducedBox.withWidth(shrinkedBox.getHeight() - FREQVIEW_LABELS_MARGINS));
+  g.fillRect(reducedBox.withWidth(box.getHeight() - FREQVIEW_LABELS_MARGINS));
 
   g.setColour(COLOR_LABELS_BORDER);
   g.drawText(taxonomyManager.getSampleName(index),
-             reducedBox.translated(shrinkedBox.getHeight(), 0)
-                 .withWidth(reducedBox.getWidth() - shrinkedBox.getHeight()),
+             reducedBox.translated(box.getHeight(), 0)
+                 .withWidth(reducedBox.getWidth() - box.getHeight()),
              juce::Justification::centredLeft, true);
 }
 
