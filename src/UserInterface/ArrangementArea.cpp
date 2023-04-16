@@ -128,7 +128,7 @@ void ArrangementArea::paintLabels(juce::Graphics& g) {
   // clear the list of previous labels (to be later swapped)
   onScreenLabelsPixelsCoordsBuffer.clear();
 
-  juce::Rectangle<float> currentLabelPixelsCoords;
+  SampleLabelPosition currentLabelPixelsCoords;
 
   int currentSampleLeftSideFrame, currentSampleRightSideFrame;
 
@@ -159,7 +159,9 @@ void ArrangementArea::paintLabels(juce::Graphics& g) {
           onScreenLabelsPixelsCoordsBuffer,
           (currentSampleLeftSideFrame - viewPosition) / viewScale,
           (currentSampleRightSideFrame - viewPosition) / viewScale, i);
-      paintSampleLabel(g, currentLabelPixelsCoords, i);
+      if (currentLabelPixelsCoords.getSampleIndex() != -1) {
+        paintSampleLabel(g, currentLabelPixelsCoords, i);
+      }
     }
   }
 
@@ -167,7 +169,7 @@ void ArrangementArea::paintLabels(juce::Graphics& g) {
   onScreenLabelsPixelsCoords.swap(onScreenLabelsPixelsCoordsBuffer);
 }
 
-juce::Rectangle<float> ArrangementArea::addLabelAndPreventOverlaps(
+SampleLabelPosition ArrangementArea::addLabelAndPreventOverlaps(
     std::vector<SampleLabelPosition>& existingLabels, int leftSidePixelCoords,
     int rightSidePixelCoords, int sampleIndex) {
   // the pixel coordinates of the upcoming label
@@ -193,6 +195,12 @@ juce::Rectangle<float> ArrangementArea::addLabelAndPreventOverlaps(
     trials++;
   }
 
+  // skip label if it's too small by not giving it an id and not pushing it to
+  // the list of labels
+  if (pixelLabelRect.getWidth() < 2.0f * pixelLabelRect.getHeight()) {
+    return pixelLabelRect;
+  }
+
   // add and return new label with no overlap
   pixelLabelRect.setSampleIndex(sampleIndex);
   existingLabels.push_back(pixelLabelRect);
@@ -211,30 +219,40 @@ bool ArrangementArea::rectangleIntersects(
 
 void ArrangementArea::paintSampleLabel(juce::Graphics& g,
                                        juce::Rectangle<float>& box, int index) {
+  juce::Rectangle<float> shrinkedBox(box);
+  int textPixelWidth =
+      juce::Font().getStringWidth(taxonomyManager.getSampleName(index));
+  if (shrinkedBox.getWidth() >
+      textPixelWidth + FREQVIEW_LABELS_MARGINS * 2 + shrinkedBox.getHeight()) {
+    shrinkedBox.setWidth(textPixelWidth + FREQVIEW_LABELS_MARGINS * 2 +
+                         shrinkedBox.getHeight());
+  }
+
   g.setColour(juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.5f));
-  g.fillRoundedRectangle(box, FREQVIEW_LABELS_CORNER_ROUNDING);
+  g.fillRoundedRectangle(shrinkedBox, FREQVIEW_LABELS_CORNER_ROUNDING);
 
   g.setColour(COLOR_LABELS_BORDER);
 
   // different border width depending on if selected or not
   if (selectedTracks.find(index) != selectedTracks.end()) {
-    g.drawRoundedRectangle(box, FREQVIEW_LABELS_CORNER_ROUNDING,
+    g.drawRoundedRectangle(shrinkedBox, FREQVIEW_LABELS_CORNER_ROUNDING,
                            FREQVIEW_LABELS_BORDER_THICKNESS);
   } else {
-    g.drawRoundedRectangle(box, FREQVIEW_LABELS_CORNER_ROUNDING,
+    g.drawRoundedRectangle(shrinkedBox, FREQVIEW_LABELS_CORNER_ROUNDING,
                            FREQVIEW_LABELS_BORDER_THICKNESS / 2.0f);
   }
 
   auto reducedBox =
-      box.reduced(FREQVIEW_LABELS_MARGINS, FREQVIEW_LABELS_MARGINS);
+      shrinkedBox.reduced(FREQVIEW_LABELS_MARGINS, FREQVIEW_LABELS_MARGINS);
 
   g.setColour(taxonomyManager.getSampleColor(index));
-  g.fillRect(reducedBox.withWidth(box.getHeight() - FREQVIEW_LABELS_MARGINS));
+  g.fillRect(
+      reducedBox.withWidth(shrinkedBox.getHeight() - FREQVIEW_LABELS_MARGINS));
 
   g.setColour(COLOR_LABELS_BORDER);
   g.drawText(taxonomyManager.getSampleName(index),
-             reducedBox.translated(box.getHeight(), 0)
-                 .withWidth(reducedBox.getWidth() - box.getHeight()),
+             reducedBox.translated(shrinkedBox.getHeight(), 0)
+                 .withWidth(reducedBox.getWidth() - shrinkedBox.getHeight()),
              juce::Justification::centredLeft, true);
 }
 

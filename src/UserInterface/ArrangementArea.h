@@ -144,7 +144,7 @@ class ArrangementArea : public juce::Component,
   void paintLabels(juce::Graphics& g);
   void paintSampleLabel(juce::Graphics& g, juce::Rectangle<float>&, int index);
 
-  juce::Rectangle<float> addLabelAndPreventOverlaps(
+  SampleLabelPosition addLabelAndPreventOverlaps(
       std::vector<SampleLabelPosition>& existingLabels, int x, int y,
       int sampleIndex);
   bool rectangleIntersects(SampleLabelPosition&,
