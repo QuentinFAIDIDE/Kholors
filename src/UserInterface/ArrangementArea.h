@@ -21,6 +21,16 @@
 #include "NotificationArea.h"
 #include "juce_opengl/opengl/juce_gl.h"
 
+class SampleLabelPosition : public juce::Rectangle<float> {
+ public:
+  SampleLabelPosition() { index = -1; }
+  void setSampleIndex(int i) { index = i; }
+  int getSampleIndex() { return index; }
+
+ private:
+  int index;
+};
+
 //==============================================================================
 /*
     This component lives inside our window, and this is where you should put all
@@ -123,6 +133,11 @@ class ArrangementArea : public juce::Component,
   // numbers of squares we can fit on horizontal axis with fft
   int noVerticalSquaresFft;
 
+  // buffer and vector for the labels on screen (to be swapped after
+  // update)
+  std::vector<SampleLabelPosition> onScreenLabelsPixelsCoordsBuffer,
+      onScreenLabelsPixelsCoords;
+
   //==============================================================================
   void paintPlayCursor(juce::Graphics& g);
   void paintSelection(juce::Graphics& g);
@@ -130,14 +145,15 @@ class ArrangementArea : public juce::Component,
   void paintSampleLabel(juce::Graphics& g, juce::Rectangle<float>&, int index);
 
   juce::Rectangle<float> addLabelAndPreventOverlaps(
-      std::vector<juce::Rectangle<float>>& existingLabels, int x, int y);
-  bool rectangleIntersects(juce::Rectangle<float>&,
-                           std::vector<juce::Rectangle<float>>&);
+      std::vector<SampleLabelPosition>& existingLabels, int x, int y,
+      int sampleIndex);
+  bool rectangleIntersects(SampleLabelPosition&,
+                           std::vector<SampleLabelPosition>&);
 
   void handleMiddleButterDown(const juce::MouseEvent&);
   void handleLeftButtonDown(const juce::MouseEvent&);
   void handleLeftButtonUp(const juce::MouseEvent&);
-  int getTrackClicked(const juce::MouseEvent&);
+  int getTrackClicked();
   void deleteSelectedTracks();
   float polylens(float);
 

@@ -125,7 +125,9 @@ void ArrangementArea::paintLabels(juce::Graphics& g) {
   // Frame: coordinates in global audio samples position
   // Pixel: coordinates in pixels
 
-  std::vector<juce::Rectangle<float>> onScreenLabelsPixelsCoords;
+  // clear the list of previous labels (to be later swapped)
+  onScreenLabelsPixelsCoordsBuffer.clear();
+
   juce::Rectangle<float> currentLabelPixelsCoords;
 
   int currentSampleLeftSideFrame, currentSampleRightSideFrame;
@@ -148,29 +150,35 @@ void ArrangementArea::paintLabels(juce::Graphics& g) {
       if (currentSampleLeftSideFrame < viewLeftMostFrame) {
         currentSampleLeftSideFrame = viewLeftMostFrame;
       }
-      if (currentSampleRightSideFrame < viewRightMostFrame) {
+      if (currentSampleRightSideFrame > viewRightMostFrame) {
         currentSampleRightSideFrame = viewRightMostFrame;
       }
 
       // translate into pixel coordinates and prevent position conflicts
       currentLabelPixelsCoords = addLabelAndPreventOverlaps(
-          onScreenLabelsPixelsCoords,
+          onScreenLabelsPixelsCoordsBuffer,
           (currentSampleLeftSideFrame - viewPosition) / viewScale,
-          (currentSampleRightSideFrame - viewPosition) / viewScale);
+          (currentSampleRightSideFrame - viewPosition) / viewScale, i);
       paintSampleLabel(g, currentLabelPixelsCoords, i);
     }
   }
+
+  // save the labels displayed on screen
+  onScreenLabelsPixelsCoords.swap(onScreenLabelsPixelsCoordsBuffer);
 }
 
 juce::Rectangle<float> ArrangementArea::addLabelAndPreventOverlaps(
-    std::vector<juce::Rectangle<float>>& existingLabels,
-    int leftSidePixelCoords, int rightSidePixelCoords) {
-  juce::Rectangle<float> pixelLabelRect;
+    std::vector<SampleLabelPosition>& existingLabels, int leftSidePixelCoords,
+    int rightSidePixelCoords, int sampleIndex) {
+  // the pixel coordinates of the upcoming label
+  SampleLabelPosition pixelLabelRect;
   pixelLabelRect.setWidth(rightSidePixelCoords - leftSidePixelCoords);
   pixelLabelRect.setWidth(
       juce::jmin(pixelLabelRect.getWidth(), FREQVIEW_LABELS_MAX_WIDTH));
   pixelLabelRect.setX(leftSidePixelCoords);
   pixelLabelRect.setHeight(FREQVIEW_LABEL_HEIGHT);
+
+  // we will keep moving it untill there's no overlap
   float origin = float(bounds.getHeight() >> 1);
   pixelLabelRect.setY(origin - (FREQVIEW_LABEL_HEIGHT >> 1));
   int trials = 0;
@@ -184,13 +192,15 @@ juce::Rectangle<float> ArrangementArea::addLabelAndPreventOverlaps(
     }
     trials++;
   }
+
+  // add and return new label with no overlap
+  pixelLabelRect.setSampleIndex(sampleIndex);
   existingLabels.push_back(pixelLabelRect);
   return pixelLabelRect;
 }
 
 bool ArrangementArea::rectangleIntersects(
-    juce::Rectangle<float>& target,
-    std::vector<juce::Rectangle<float>>& rectangles) {
+    SampleLabelPosition& target, std::vector<SampleLabelPosition>& rectangles) {
   for (int i = 0; i < rectangles.size(); i++) {
     if (target.intersects(rectangles[i])) {
       return true;
@@ -201,14 +211,30 @@ bool ArrangementArea::rectangleIntersects(
 
 void ArrangementArea::paintSampleLabel(juce::Graphics& g,
                                        juce::Rectangle<float>& box, int index) {
-  g.setColour(taxonomyManager.getSampleColor(index).darker().withAlpha(0.3f));
+  g.setColour(juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.5f));
   g.fillRoundedRectangle(box, FREQVIEW_LABELS_CORNER_ROUNDING);
+
   g.setColour(COLOR_LABELS_BORDER);
-  g.drawRoundedRectangle(box, FREQVIEW_LABELS_CORNER_ROUNDING,
-                         FREQVIEW_LABELS_BORDER_THICKNESS);
+
+  // different border width depending on if selected or not
+  if (selectedTracks.find(index) != selectedTracks.end()) {
+    g.drawRoundedRectangle(box, FREQVIEW_LABELS_CORNER_ROUNDING,
+                           FREQVIEW_LABELS_BORDER_THICKNESS);
+  } else {
+    g.drawRoundedRectangle(box, FREQVIEW_LABELS_CORNER_ROUNDING,
+                           FREQVIEW_LABELS_BORDER_THICKNESS / 2.0f);
+  }
+
   auto reducedBox =
       box.reduced(FREQVIEW_LABELS_MARGINS, FREQVIEW_LABELS_MARGINS);
-  g.drawText(taxonomyManager.getSampleName(index), reducedBox,
+
+  g.setColour(taxonomyManager.getSampleColor(index));
+  g.fillRect(reducedBox.withWidth(box.getHeight() - FREQVIEW_LABELS_MARGINS));
+
+  g.setColour(COLOR_LABELS_BORDER);
+  g.drawText(taxonomyManager.getSampleName(index),
+             reducedBox.translated(box.getHeight(), 0)
+                 .withWidth(reducedBox.getWidth() - box.getHeight()),
              juce::Justification::centredLeft, true);
 }
 
@@ -419,7 +445,7 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent& jme) {
       isMovingCursor = true;
       // else, see if we're clicking tracks for selection
     } else if (!isMovingCursor && trackMovingInitialPosition == -1) {
-      clickedTrack = getTrackClicked(jme);
+      clickedTrack = getTrackClicked();
       if (clickedTrack != -1) {
         // if ctrl is not pressed, we clear selection set
         if (!jme.mods.isCtrlDown()) {
@@ -438,13 +464,25 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent& jme) {
   }
 }
 
-int ArrangementArea::getTrackClicked(const juce::MouseEvent& jme) {
+/**
+ * Give id of track clicked (label or sample fft).
+ * @return     Index of the sample clicked in the tracks/samples arrays. -1 if
+ * no match.
+ */
+int ArrangementArea::getTrackClicked() {
   size_t nTracks = samples.size();
   int64_t trackPosition;
 
   int bestTrackIndex = -1;
   float bestTrackIntensity = 0.0f;
   float currentIntensity;
+
+  // prioritize selection through label clicking
+  for (size_t i = 0; i < onScreenLabelsPixelsCoords.size(); i++) {
+    if (onScreenLabelsPixelsCoords[i].contains(lastMouseX, lastMouseY)) {
+      return onScreenLabelsPixelsCoords[i].getSampleIndex();
+    }
+  }
 
   // for each track
   for (size_t i = 0; i < nTracks; i++) {
@@ -473,7 +511,12 @@ int ArrangementArea::getTrackClicked(const juce::MouseEvent& jme) {
     }
   }
 
-  return bestTrackIndex;
+  // if there was a significant intensity for this track/sample, return its id
+  if (bestTrackIntensity > FREQVIEW_MIN_SAMPLE_CLICK_INTENSITY) {
+    return bestTrackIndex;
+  } else {
+    return -1;
+  }
 }
 
 void ArrangementArea::initSelectedTracksDrag() {
