@@ -34,6 +34,12 @@
 #define FREQVIEW_MIN_WIDTH 300
 #define FREQVIEW_MIN_HEIGHT FREQTIME_VIEW_HEIGHT
 
+#define FREQVIEW_LABEL_HEIGHT 30
+#define FREQVIEW_LABELS_CORNER_ROUNDING 4.0f
+#define FREQVIEW_LABELS_BORDER_THICKNESS 1.7f
+#define FREQVIEW_LABELS_MARGINS 2.0f
+#define FREQVIEW_LABELS_MAX_WIDTH 150.0f
+
 // minimum windows height to draw something
 #define MIN_SCREEN_WIDTH 350
 #define MIN_SCREEN_HEIGHT 600
@@ -56,6 +62,7 @@
 #define COLOR_NOTIF_TEXT juce::Colour(230, 230, 230)
 #define COLOR_NOTIF_BAR_TOP juce::Colour(62, 49, 49)
 #define COLOR_NOTIF_BAR_BOTTOM juce::Colour(10, 10, 10)
+#define COLOR_LABELS_BORDER juce::Colour(210, 210, 220)
 
 // the gain smoothing when the value is changed
 #define DSP_GAIN_SMOOTHING_RAMP_SEC 0.03f

@@ -27,6 +27,8 @@ class TaxonomyManager {
   void setSampleName(int sampleId, std::string name);
   void setSampleGroup(int sampleId, int groupId);
 
+  std::string getSampleName(int sampleId);
+
   void copyTaxonomy(int sourceSampleId, int destSampleId);
 
   juce::Colour& getSampleColor(int sampleId);

@@ -126,6 +126,13 @@ class ArrangementArea : public juce::Component,
   //==============================================================================
   void paintPlayCursor(juce::Graphics& g);
   void paintSelection(juce::Graphics& g);
+  void paintLabels(juce::Graphics& g);
+  void paintSampleLabel(juce::Graphics& g, juce::Rectangle<float>&, int index);
+
+  juce::Rectangle<float> addLabelAndPreventOverlaps(
+      std::vector<juce::Rectangle<float>>& existingLabels, int x, int y);
+  bool rectangleIntersects(juce::Rectangle<float>&,
+                           std::vector<juce::Rectangle<float>>&);
 
   void handleMiddleButterDown(const juce::MouseEvent&);
   void handleLeftButtonDown(const juce::MouseEvent&);

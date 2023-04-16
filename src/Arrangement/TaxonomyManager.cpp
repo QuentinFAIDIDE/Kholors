@@ -52,6 +52,12 @@ void TaxonomyManager::setSampleName(int sampleId, std::string name) {
   }
   samples[sampleId].name = name;
 }
+std::string TaxonomyManager::getSampleName(int sampleId) {
+  if (sampleId >= samples.size()) {
+    extendElementsArrays(sampleId);
+  }
+  return samples[sampleId].name;
+}
 
 void TaxonomyManager::setSampleGroup(int sampleId, int groupId) {
   int highestId = juce::jmax(sampleId, groupId);

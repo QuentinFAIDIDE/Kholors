@@ -86,6 +86,7 @@ void ArrangementArea::paint(juce::Graphics& g) {
 
   paintSelection(g);
   paintPlayCursor(g);
+  paintLabels(g);
 }
 
 void ArrangementArea::paintSelection(juce::Graphics& g) {
@@ -117,6 +118,98 @@ void ArrangementArea::paintSelection(juce::Graphics& g) {
       }
     }
   }
+}
+
+void ArrangementArea::paintLabels(juce::Graphics& g) {
+  // prefix notes:
+  // Frame: coordinates in global audio samples position
+  // Pixel: coordinates in pixels
+
+  std::vector<juce::Rectangle<float>> onScreenLabelsPixelsCoords;
+  juce::Rectangle<float> currentLabelPixelsCoords;
+
+  int currentSampleLeftSideFrame, currentSampleRightSideFrame;
+
+  int viewLeftMostFrame = viewPosition;
+  int viewRightMostFrame = viewPosition + (bounds.getWidth() * viewScale);
+
+  for (int i = 0; i < samples.size(); i++) {
+    if (samples[i].isDisabled()) {
+      continue;
+    }
+    currentSampleLeftSideFrame = samples[i].getFramePosition();
+    currentSampleRightSideFrame =
+        currentSampleLeftSideFrame + samples[i].getFrameLength();
+
+    // ignore samples that are out of bound
+    if (currentSampleLeftSideFrame < viewRightMostFrame &&
+        currentSampleRightSideFrame > viewLeftMostFrame) {
+      // put the labels limits in bounds
+      if (currentSampleLeftSideFrame < viewLeftMostFrame) {
+        currentSampleLeftSideFrame = viewLeftMostFrame;
+      }
+      if (currentSampleRightSideFrame < viewRightMostFrame) {
+        currentSampleRightSideFrame = viewRightMostFrame;
+      }
+
+      // translate into pixel coordinates and prevent position conflicts
+      currentLabelPixelsCoords = addLabelAndPreventOverlaps(
+          onScreenLabelsPixelsCoords,
+          (currentSampleLeftSideFrame - viewPosition) / viewScale,
+          (currentSampleRightSideFrame - viewPosition) / viewScale);
+      paintSampleLabel(g, currentLabelPixelsCoords, i);
+    }
+  }
+}
+
+juce::Rectangle<float> ArrangementArea::addLabelAndPreventOverlaps(
+    std::vector<juce::Rectangle<float>>& existingLabels, int xPixels,
+    int yPixels) {
+  juce::Rectangle<float> pixelLabelRect;
+  pixelLabelRect.setWidth(yPixels - xPixels);
+  pixelLabelRect.setWidth(
+      juce::jmin(pixelLabelRect.getWidth(), FREQVIEW_LABELS_MAX_WIDTH));
+  pixelLabelRect.setX(xPixels);
+  pixelLabelRect.setHeight(FREQVIEW_LABEL_HEIGHT);
+  float origin = float(bounds.getHeight() >> 1);
+  pixelLabelRect.setY(origin - (FREQVIEW_LABEL_HEIGHT >> 1));
+  int trials = 0;
+  while (rectangleIntersects(pixelLabelRect, existingLabels)) {
+    if (trials % 2 == 0) {
+      pixelLabelRect.setY(origin + ((trials >> 1) + 1) * FREQVIEW_LABEL_HEIGHT -
+                          (FREQVIEW_LABEL_HEIGHT >> 1));
+    } else {
+      pixelLabelRect.setY(origin - ((trials >> 1) + 1) * FREQVIEW_LABEL_HEIGHT -
+                          (FREQVIEW_LABEL_HEIGHT >> 1));
+    }
+    trials++;
+  }
+  existingLabels.push_back(pixelLabelRect);
+  return pixelLabelRect;
+}
+
+bool ArrangementArea::rectangleIntersects(
+    juce::Rectangle<float>& target,
+    std::vector<juce::Rectangle<float>>& rectangles) {
+  for (int i = 0; i < rectangles.size(); i++) {
+    if (target.intersects(rectangles[i])) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void ArrangementArea::paintSampleLabel(juce::Graphics& g,
+                                       juce::Rectangle<float>& box, int index) {
+  g.setColour(taxonomyManager.getSampleColor(index));
+  g.fillRoundedRectangle(box, FREQVIEW_LABELS_CORNER_ROUNDING);
+  g.setColour(COLOR_LABELS_BORDER);
+  g.drawRoundedRectangle(box, FREQVIEW_LABELS_CORNER_ROUNDING,
+                         FREQVIEW_LABELS_BORDER_THICKNESS);
+  auto reducedBox =
+      box.reduced(FREQVIEW_LABELS_MARGINS, FREQVIEW_LABELS_MARGINS);
+  g.drawText(taxonomyManager.getSampleName(index), reducedBox,
+             juce::Justification::centredLeft, true);
 }
 
 void ArrangementArea::resized() {
