@@ -163,13 +163,13 @@ void ArrangementArea::paintLabels(juce::Graphics& g) {
 }
 
 juce::Rectangle<float> ArrangementArea::addLabelAndPreventOverlaps(
-    std::vector<juce::Rectangle<float>>& existingLabels, int xPixels,
-    int yPixels) {
+    std::vector<juce::Rectangle<float>>& existingLabels,
+    int leftSidePixelCoords, int rightSidePixelCoords) {
   juce::Rectangle<float> pixelLabelRect;
-  pixelLabelRect.setWidth(yPixels - xPixels);
+  pixelLabelRect.setWidth(rightSidePixelCoords - leftSidePixelCoords);
   pixelLabelRect.setWidth(
       juce::jmin(pixelLabelRect.getWidth(), FREQVIEW_LABELS_MAX_WIDTH));
-  pixelLabelRect.setX(xPixels);
+  pixelLabelRect.setX(leftSidePixelCoords);
   pixelLabelRect.setHeight(FREQVIEW_LABEL_HEIGHT);
   float origin = float(bounds.getHeight() >> 1);
   pixelLabelRect.setY(origin - (FREQVIEW_LABEL_HEIGHT >> 1));
@@ -201,7 +201,7 @@ bool ArrangementArea::rectangleIntersects(
 
 void ArrangementArea::paintSampleLabel(juce::Graphics& g,
                                        juce::Rectangle<float>& box, int index) {
-  g.setColour(taxonomyManager.getSampleColor(index));
+  g.setColour(taxonomyManager.getSampleColor(index).darker().withAlpha(0.3f));
   g.fillRoundedRectangle(box, FREQVIEW_LABELS_CORNER_ROUNDING);
   g.setColour(COLOR_LABELS_BORDER);
   g.drawRoundedRectangle(box, FREQVIEW_LABELS_CORNER_ROUNDING,
