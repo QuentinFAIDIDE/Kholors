@@ -42,7 +42,7 @@ class ArrangementArea : public juce::Component,
                         public juce::OpenGLRenderer {
  public:
   //==============================================================================
-  ArrangementArea(MixingBus&, NotificationArea&);
+  ArrangementArea(MixingBus&, NotificationArea&, AppState&);
   ~ArrangementArea();
 
   //==============================================================================
@@ -68,6 +68,8 @@ class ArrangementArea : public juce::Component,
  private:
   //==============================================================================
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArrangementArea)
+
+  AppState& appState;
 
   juce::OpenGLContext openGLContext;
 

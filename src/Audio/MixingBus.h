@@ -16,6 +16,7 @@
 #include <atomic>
 #include <functional>
 
+#include "../Arrangement/AppState.h"
 #include "../UserInterface/NotificationArea.h"
 #include "ReferenceCountedBuffer.h"
 #include "SamplePlayer.h"
@@ -23,7 +24,7 @@
 //==============================================================================
 class MixingBus : public juce::PositionableAudioSource, private juce::Thread {
  public:
-  MixingBus(NotificationArea&);
+  MixingBus(NotificationArea&, AppState&);
   ~MixingBus();
 
   // when called, add sample from file path with position
@@ -147,6 +148,8 @@ class MixingBus : public juce::PositionableAudioSource, private juce::Thread {
 
   // used for fast fourier transforms of buffers
   juce::dsp::FFT forwardFFT;
+
+  AppState& appState;
 
   // Notes on exporting:
   /**
