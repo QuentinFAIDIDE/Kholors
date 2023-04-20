@@ -8,9 +8,9 @@
 
 //==============================================================================
 MainComponent::MainComponent()
-    : appState(APP_STATE_DEFAULT),
-      mixingBus(notificationArea, appState),
-      arrangementArea(mixingBus, notificationArea, appState),
+    : userInterfaceState(UI_STATE_DEFAULT),
+      mixingBus(notificationArea, userInterfaceState),
+      arrangementArea(mixingBus, notificationArea, userInterfaceState),
       actionTabs(juce::TabbedButtonBar::Orientation::TabsAtTop) {
   configureLookAndFeel();
 

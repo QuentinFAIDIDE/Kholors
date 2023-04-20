@@ -9,7 +9,7 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 #include <juce_gui_extra/juce_gui_extra.h>
 
-#include "../Arrangement/AppState.h"
+#include "../Arrangement/UserInterfaceState.h"
 #include "../Audio/MixingBus.h"
 #include "ArrangementArea.h"
 #include "AudioLibraryTab.h"
@@ -45,7 +45,7 @@ class MainComponent : public juce::AudioAppComponent,
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 
   // state of the app (resizing, moving samples, etc..)
-  AppState appState;
+  UserInterfaceState userInterfaceState;
 
   // widgets
   // the object responsible for managing the various samples imported
