@@ -4,14 +4,14 @@
 
 // initialize the MixingBus, as well as Thread and audio inherited
 // behaviours.
-MixingBus::MixingBus(NotificationArea& na, AppState& as)
+MixingBus::MixingBus(NotificationArea& na, ActivityManager& am)
     : notificationManager(na),
       playCursor(0),
       Thread("Background Thread"),
       totalFrameLength(0),
       numChannels(2),
       isPlaying(false),
-      appState(as),
+      appState(am.getAppState().getUiState()),
       forwardFFT(FREQVIEW_SAMPLE_FFT_ORDER) {
   // initialize format manager
   formatManager.registerBasicFormats();

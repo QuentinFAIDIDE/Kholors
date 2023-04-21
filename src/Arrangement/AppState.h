@@ -13,8 +13,8 @@ class AppState : public Marshalable {
   void setSample(int id, SampleState*);
   SampleState* getSample(int id);
   TaxonomyManager& getTaxonomy();
-  std::string Marshal();
-  Marshalable* Unmarshal();
+  std::string Marshal() override final;
+  Marshalable* Unmarshal(std::string&) override final;
   UserInterfaceState& getUiState();
   void setUiState(UserInterfaceState);
 

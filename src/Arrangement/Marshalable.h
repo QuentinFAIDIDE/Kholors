@@ -5,7 +5,7 @@
 
 class Marshalable {
   virtual std::string Marshal() = 0;
-  virtual Marshalable* Unmarshal() = 0;
+  virtual Marshalable* Unmarshal(std::string&) = 0;
 };
 
 #endif  // DEF_MARSHALABLE_HPP

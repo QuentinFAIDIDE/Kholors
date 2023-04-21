@@ -7,8 +7,8 @@
 #include "RobotoFont.h"
 
 //==============================================================================
-MainComponent::MainComponent(),
-      mixingBus(notificationArea, activityManager),
+MainComponent::MainComponent()
+    : mixingBus(notificationArea, activityManager),
       arrangementArea(mixingBus, notificationArea, activityManager),
       actionTabs(juce::TabbedButtonBar::Orientation::TabsAtTop) {
   configureLookAndFeel();
