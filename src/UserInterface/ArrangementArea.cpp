@@ -25,8 +25,8 @@
 
 //==============================================================================
 ArrangementArea::ArrangementArea(MixingBus& mb, NotificationArea& na,
-                                 AppState& as)
-    : mixingBus(mb), notificationArea(na), userInterfaceState(as) {
+                                 ActivityManager& am)
+    : mixingBus(mb), notificationArea(na), activityManager(am) {
   // save reference to the sample manager
   // initialize grid and position
   viewPosition = 0;
@@ -95,7 +95,7 @@ void ArrangementArea::paintSelection(juce::Graphics& g) {
   std::set<size_t>::iterator itr;
   juce::Rectangle<float> currentSampleBorders;
   int dragShift = 0;
-  if (userInterfaceState == UI_STATE_KEYBOARD_SAMPLE_DRAG) {
+  if (activityManager.getAppState().getUiState() == UI_STATE_KEYBOARD_SAMPLE_DRAG) {
     dragShift = lastMouseX - trackMovingInitialPosition;
   }
 
@@ -417,7 +417,7 @@ void ArrangementArea::paintPlayCursor(juce::Graphics& g) {
   g.setColour(cursorColor);
   // in the cursor moving phase, we avoid waiting tracks locks
   // by using the mouse value
-  if (userInterfaceState != UI_STATE_CURSOR_MOVING) {
+  if (activityManager.getAppState().getUiState() != UI_STATE_CURSOR_MOVING) {
     lastPlayCursorPosition =
         ((mixingBus.getNextReadPosition() - viewPosition) / viewScale);
     g.fillRect(lastPlayCursorPosition - (PLAYCURSOR_WIDTH >> 1), 0,
@@ -448,19 +448,19 @@ void ArrangementArea::mouseDown(const juce::MouseEvent& jme) {
 
 void ArrangementArea::handleMiddleButterDown(const juce::MouseEvent& jme) {
   // handle resize/mode mode activation
-  if (userInterfaceState == UI_STATE_DEFAULT) {
-    userInterfaceState = UI_STATE_VIEW_RESIZING;
+  if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT) {
+    activityManager.getAppState().setUiState(UI_STATE_VIEW_RESIZING);
   }
 }
 
 void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent& jme) {
   int clickedTrack;
   // handle click when in default mode
-  if (userInterfaceState == UI_STATE_DEFAULT) {
+  if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT) {
     // if we're clicking around a cursor
     if (abs(lastMouseX - lastPlayCursorPosition) < PLAYCURSOR_GRAB_WIDTH) {
       // enter cursor moving mode
-      userInterfaceState = UI_STATE_CURSOR_MOVING;
+      activityManager.getAppState().setUiState(UI_STATE_CURSOR_MOVING);
       // else, see if we're clicking tracks for selection
     } else {
       clickedTrack = getTrackClicked();
@@ -569,8 +569,8 @@ void ArrangementArea::mouseUp(const juce::MouseEvent& jme) {
 
 void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent& jme) {
   // handle cursor mode relieving
-  if (userInterfaceState == UI_STATE_CURSOR_MOVING) {
-    userInterfaceState = UI_STATE_DEFAULT;
+  if (activityManager.getAppState().getUiState() == UI_STATE_CURSOR_MOVING) {
+    activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
     mixingBus.setNextReadPosition(viewPosition + lastMouseX * viewScale);
   }
 }
@@ -586,7 +586,7 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent& jme) {
   bool viewUpdated = false;
 
   // handle resize mode
-  if (userInterfaceState == UI_STATE_VIEW_RESIZING) {
+  if (activityManager.getAppState().getUiState() == UI_STATE_VIEW_RESIZING) {
     // ratio from horizontal to vertical movement
     float movementRatio = ((float)abs(lastMouseX - newPosition.getX())) /
                           ((float)abs(lastMouseY - newPosition.getY()));
@@ -634,7 +634,7 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent& jme) {
   lastMouseY = newPosition.getY();
 
   // if updated view or in cursor moving mode, repaint
-  if (viewUpdated || userInterfaceState == UI_STATE_CURSOR_MOVING) {
+  if (viewUpdated || activityManager.getAppState().getUiState() == UI_STATE_CURSOR_MOVING) {
     updateShadersPositionUniforms();
     repaint();
   }
@@ -647,14 +647,14 @@ void ArrangementArea::mouseMove(const juce::MouseEvent& jme) {
   lastMouseY = newPosition.getY();
 
   // if we are in dragging mode and that mouse was moved, move the track as well
-  if (userInterfaceState == UI_STATE_KEYBOARD_SAMPLE_DRAG) {
+  if (activityManager.getAppState().getUiState() == UI_STATE_KEYBOARD_SAMPLE_DRAG) {
     updateSelectedTracksDrag(lastMouseX - trackMovingInitialPosition);
     repaint();
     // if quitting view resizing mode with mouse middle button relief, register
     // that we are not in resize mode anymore
-  } else if (userInterfaceState == UI_STATE_VIEW_RESIZING &&
+  } else if (activityManager.getAppState().getUiState() == UI_STATE_VIEW_RESIZING &&
              !jme.mods.isMiddleButtonDown()) {
-    userInterfaceState = UI_STATE_DEFAULT;
+    activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
   }
 }
 
@@ -663,14 +663,14 @@ bool ArrangementArea::keyPressed(const juce::KeyPress& key) {
   if (key == juce::KeyPress::spaceKey) {
     if (mixingBus.isCursorPlaying()) {
       mixingBus.stopPlayback();
-    } else if (userInterfaceState != UI_STATE_CURSOR_MOVING) {
+    } else if (activityManager.getAppState().getUiState() != UI_STATE_CURSOR_MOVING) {
       mixingBus.startPlayback();
     }
   } else if (key == juce::KeyPress::createFromDescription(KEYMAP_DRAG_MODE) ||
              key == juce::KeyPress::createFromDescription(
                         std::string("ctrl + ") + KEYMAP_DRAG_MODE)) {
     // if pressing d and not in any mode, start dragging
-    if (userInterfaceState == UI_STATE_DEFAULT) {
+    if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT) {
       // if ctrl is pressed, duplicate and add to selection
       if (key.getModifiers().isCtrlDown()) {
         // if nothing is selected, abort
@@ -703,14 +703,14 @@ bool ArrangementArea::keyPressed(const juce::KeyPress& key) {
       } else {
         // start dragging
         trackMovingInitialPosition = lastMouseX;
-        userInterfaceState = UI_STATE_KEYBOARD_SAMPLE_DRAG;
+        activityManager.getAppState().setUiState(UI_STATE_KEYBOARD_SAMPLE_DRAG);
         initSelectedTracksDrag();
       }
     }
   } else if (key ==
              juce::KeyPress::createFromDescription(KEYMAP_DELETE_SELECTION)) {
     // if pressing x and not in any mode, delete selected tracks
-    if (userInterfaceState == UI_STATE_DEFAULT && !selectedTracks.empty()) {
+    if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT && !selectedTracks.empty()) {
       deleteSelectedTracks();
     }
   }
@@ -761,7 +761,7 @@ void ArrangementArea::deleteSelectedTracks() {
 
 bool ArrangementArea::keyStateChanged(bool isKeyDown) {
   // if in drag mode
-  if (userInterfaceState == UI_STATE_KEYBOARD_SAMPLE_DRAG) {
+  if (activityManager.getAppState().getUiState() == UI_STATE_KEYBOARD_SAMPLE_DRAG) {
     // if the D key is not pressed anymore
     if (!juce::KeyPress::isKeyCurrentlyDown(
             juce::KeyPress::createFromDescription(KEYMAP_DRAG_MODE)
@@ -791,7 +791,7 @@ bool ArrangementArea::keyStateChanged(bool isKeyDown) {
           updateSamplePosition(i, trackPosition);
         }
       }
-      userInterfaceState = UI_STATE_DEFAULT;
+      activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
       repaint();
     }
   }

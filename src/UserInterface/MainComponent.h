@@ -44,8 +44,7 @@ class MainComponent : public juce::AudioAppComponent,
   //==============================================================================
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 
-  // state of the app (resizing, moving samples, etc..)
-  UserInterfaceState userInterfaceState;
+  ActivityManager activityManager;
 
   // widgets
   // the object responsible for managing the various samples imported
@@ -61,7 +60,7 @@ class MainComponent : public juce::AudioAppComponent,
   KholorsLookAndFeel appLookAndFeel;
   void configureLookAndFeel();
 
-  void _printAudioDeviceSettings();
+  void printAudioDeviceSettings();
 };
 
 #endif  // DEF_MAINCOMPONENT_HPP

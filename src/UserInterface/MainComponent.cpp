@@ -7,17 +7,16 @@
 #include "RobotoFont.h"
 
 //==============================================================================
-MainComponent::MainComponent()
-    : userInterfaceState(UI_STATE_DEFAULT),
-      mixingBus(notificationArea, userInterfaceState),
-      arrangementArea(mixingBus, notificationArea, userInterfaceState),
+MainComponent::MainComponent(),
+      mixingBus(notificationArea, activityManager),
+      arrangementArea(mixingBus, notificationArea, activityManager),
       actionTabs(juce::TabbedButtonBar::Orientation::TabsAtTop) {
   configureLookAndFeel();
 
   // initialize audio app with two outputs
   setAudioChannels(0, 2);
 
-  _printAudioDeviceSettings();
+  printAudioDeviceSettings();
 
   // set size of the component
   setSize(1400, 800);
@@ -44,7 +43,7 @@ MainComponent::MainComponent()
   });
 }
 
-void MainComponent::_printAudioDeviceSettings() {
+void MainComponent::printAudioDeviceSettings() {
   // print audio device settings
   std::cerr << "Input Device: "
             << deviceManager.getAudioDeviceSetup().inputDeviceName << std::endl;
