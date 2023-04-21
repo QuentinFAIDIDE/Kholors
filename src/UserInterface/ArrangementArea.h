@@ -12,6 +12,7 @@
 #include <memory>
 #include <vector>
 
+#include "../Arrangement/ActivityManager.h"
 #include "../Arrangement/TaxonomyManager.h"
 #include "../Audio/MixingBus.h"
 #include "../Config.h"
