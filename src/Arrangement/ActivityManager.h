@@ -3,19 +3,17 @@
 
 #include "../Audio/MixingBus.h"
 #include "../UserInterface/ArrangementArea.h"
+#include "./Action.h"
 
 class ActivityManager {
 public:
     ActivityManager();
     ~Activitymanager();
-    // TODO: add actions here eg moveSampleToPosition, etc...
+    AppState& getAppState();
 
 private:
     std::vector<Action> history;
-    UserInterfaceState uiState;
-    std::vector<SampleState> samplesStates;
-    int numTracks; // note: matches number of groups
-    TaxonomyManager taxonomy;
+    AppState appState;
 };
 
 #endif // DEF_ACTIVITY_MANAGER_HPP
