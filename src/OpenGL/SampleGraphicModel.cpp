@@ -121,28 +121,28 @@ void SampleGraphicModel::updateProperties(SamplePlayer *sp)
     vertices.clear();
     triangleIds.clear();
 
-    float horizontalStartPosition = float(sp->getBufferStart()) / float(sp->getTotalLength());
-    float horizontalEndPosition = float(sp->getBufferEnd()) / float(sp->getTotalLength());
+    startPositionNormalized = float(sp->getBufferStart()) / float(sp->getTotalLength());
+    endPositionNormalised = float(sp->getBufferEnd()) / float(sp->getTotalLength());
 
     // upper left corner 0
     vertices.push_back({{float(sp->getEditingPosition()), -1.0f},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 0.0f},
-                        {horizontalStartPosition, 1.0f}});
+                        {startPositionNormalized, 1.0f}});
 
     // upper right corner 1
     vertices.push_back({{float(sp->getEditingPosition() + sp->getLength()), -1.0f},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {horizontalEndPosition, 1.0f}});
+                        {endPositionNormalised, 1.0f}});
 
     // lower right corner 2
     vertices.push_back({{float(sp->getEditingPosition() + sp->getLength()), 1.0f},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {horizontalEndPosition, 0.0f}});
+                        {endPositionNormalised, 0.0f}});
 
     // lower left corner 3
     vertices.push_back({{float(sp->getEditingPosition()), 1.0f},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {horizontalStartPosition, 0.0f}});
+                        {startPositionNormalized, 0.0f}});
 
     // lower left triangle
     triangleIds.push_back(0);
@@ -256,7 +256,8 @@ void SampleGraphicModel::uploadVerticesToGpu()
 
 float SampleGraphicModel::textureIntensity(float x, float y)
 {
-    int timeIndex = x * numFfts;
+    float xInAudioBuffer = juce::jmap(x, startPositionNormalized, endPositionNormalised);
+    int timeIndex = xInAudioBuffer * numFfts;
     // index of zoomed frequencies, not linear to logarithm of frequencies
     int freqIndexNormalised = 0;
     if (y < 0.5)

@@ -37,6 +37,9 @@ class SampleGraphicModel : public TexturedModel
     int numChannels;
     int channelTextureShift;
     juce::Colour color;
+
+    // the position between 0 and 1 of samplePlayer startPosition and endPosition relative to audio buffer
+    float startPositionNormalized, endPositionNormalised;
 };
 
 #endif // DEF_SAMPLE_GRAPHIC_MODEL

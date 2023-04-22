@@ -800,7 +800,7 @@ void ArrangementArea::updateSelectedTracksStartDrag()
 {
     // compute distange to beginning
     int distanceInFrames = (lastMouseX - dragLastPosition) * viewScale;
-    if (distanceInFrames < FREQVIEW_MIN_RESIZE_FRAMES)
+    if (abs(distanceInFrames) < FREQVIEW_MIN_RESIZE_FRAMES)
     {
         return;
     }
