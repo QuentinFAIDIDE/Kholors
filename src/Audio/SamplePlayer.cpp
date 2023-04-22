@@ -170,10 +170,8 @@ juce::int64 SamplePlayer::getLength() const {
 // Shift parameter is the shift from audio buffer beginning.
 void SamplePlayer::setBufferShift(juce::int64 shift) {
   const juce::SpinLock::ScopedLockType lock(playerMutex);
-  // NOTE: Future feature, won't play with shift !
-
   // only change if the buffer can actuallydo it
-  if (shift < bufferEnd) {
+  if (shift < bufferEnd - SAMPLEPLAYER_MIN_FRAME_SIZE) {
     bufferStart = shift;
   }
 }
@@ -241,18 +239,17 @@ void SamplePlayer::getNextAudioBlock(
   auto numInputChannels = currentAudioSampleBuffer->getNumChannels();
   auto numOutputChannels = bufferToFill.buffer->getNumChannels();
   auto outputSamplesRemaining = bufferToFill.numSamples;
-  // how many samples have we already read ?
+  // how many samples have we already read ? (in this call to getNextAudioBlock)
   int64_t outputSamplesOffset = 0;
 
-  // NOTE: for now, let's consider bufferStart will always be zero.
-  // We start simple for now, and will only introduce bugs later :D
-
-  // set position relative to audio buffer beginning
+  // set position relative to audio buffer beginning.
+  // NOTE: 0 can be way before bufferStart since bufferStart since start
+  // sample can be shifted.
   bufferInitialPosition = position - editingPosition;
 
   // play nothing if sample is not playing
-  if ((bufferInitialPosition + outputSamplesRemaining) < 0 ||
-      bufferInitialPosition > getLength()) {
+  if ((bufferInitialPosition + outputSamplesRemaining) < bufferStart ||
+      bufferInitialPosition > bufferEnd) {
     bufferToFill.clearActiveBufferRegion();
     position += bufferToFill.numSamples;
     return;
@@ -260,20 +257,20 @@ void SamplePlayer::getNextAudioBlock(
 
   int64_t skippedSamples = 0;
   // pad beginning to start copying after the buffers starts
-  if (bufferInitialPosition < 0) {
-    skippedSamples = -bufferInitialPosition;
+  if (bufferInitialPosition < bufferStart) {
+    skippedSamples = bufferStart - bufferInitialPosition;
     // clear region untill the sample plays
     bufferToFill.buffer->clear(bufferToFill.startSample, skippedSamples);
     // move output cursors to the beginning of the sample
     outputSamplesOffset += skippedSamples;
-    outputSamplesRemaining += bufferInitialPosition;
+    outputSamplesRemaining -= skippedSamples;
   }
 
   // send audio buffer data
   while (outputSamplesRemaining > 0) {
     // decide on how many samples to copy
     int bufferSamplesRemaining =
-        getLength() - bufferInitialPosition - outputSamplesOffset;
+        bufferEnd - (bufferInitialPosition + outputSamplesOffset);
     int samplesThisTime =
         juce::jmin(outputSamplesRemaining, bufferSamplesRemaining);
 
