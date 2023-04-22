@@ -130,6 +130,6 @@ void MainComponent::configureApp(Config& conf) {
     deviceManager.setAudioDeviceSetup(oldSetup, true);
 
     std::cerr << "Audio Device Settings updated" << std::endl;
-    _printAudioDeviceSettings();
+    printAudioDeviceSettings();
   }
 }

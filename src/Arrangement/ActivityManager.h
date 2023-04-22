@@ -1,6 +1,8 @@
 #ifndef DEF_ACTIVITY_MANAGER_HPP
 #define DEF_ACTIVITY_MANAGER_HPP
 
+#include <vector>
+
 #include "./Action.h"
 #include "./AppState.h"
 

@@ -11,7 +11,7 @@ MixingBus::MixingBus(NotificationArea& na, ActivityManager& am)
       totalFrameLength(0),
       numChannels(2),
       isPlaying(false),
-      appState(am.getAppState().getUiState()),
+      uiState(am.getAppState().getUiState()),
       forwardFFT(FREQVIEW_SAMPLE_FFT_ORDER) {
   // initialize format manager
   formatManager.registerBasicFormats();

@@ -149,7 +149,7 @@ class MixingBus : public juce::PositionableAudioSource, private juce::Thread {
   // used for fast fourier transforms of buffers
   juce::dsp::FFT forwardFFT;
 
-  AppState& appState;
+  UserInterfaceState& uiState;
 
   // Notes on exporting:
   /**

@@ -1,6 +1,8 @@
 #ifndef DEF_SAMPLE_STATE_HPP
 #define DEF_SAMPLE_STATE_HPP
 
+#include <vector>
+
 #include "Action.h"
 #include "Marshalable.h"
 
