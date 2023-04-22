@@ -93,12 +93,15 @@ void ArrangementArea::paint(juce::Graphics& g) {
 void ArrangementArea::paintSelection(juce::Graphics& g) {
   // iterate over tracks and draw borders around them
   std::set<size_t>::iterator itr;
-  juce::Rectangle<float> currentSampleBorders;
+  IndexedRectangle currentSampleBorders;
   int dragShift = 0;
   if (activityManager.getAppState().getUiState() ==
       UI_STATE_KEYBOARD_SAMPLE_DRAG) {
     dragShift = lastMouseX - trackMovingInitialPosition;
   }
+
+  // empty buffer of selected samples borders
+  selectedSamplesCoordsBuffer.clear();
 
   g.setColour(COLOR_SAMPLE_BORDER);
   for (itr = selectedTracks.begin(); itr != selectedTracks.end(); itr++) {
@@ -117,9 +120,54 @@ void ArrangementArea::paintSelection(juce::Graphics& g) {
       if ((currentSampleBorders.getX() + currentSampleBorders.getWidth()) > 0 &&
           currentSampleBorders.getX() < bounds.getWidth()) {
         g.drawRoundedRectangle(currentSampleBorders, 4, 1.7);
+
+        currentSampleBorders.setSampleIndex(*itr);
+
+        selectedSamplesCoordsBuffer.push_back(
+            IndexedRectangle(currentSampleBorders));
       }
     }
   }
+
+  selectedSamplesCoords.swap(selectedSamplesCoordsBuffer);
+}
+
+juce::Optional<SampleBorder> ArrangementArea::mouseOverSelectionBorder() {
+  // iterate over on screen selected samples
+  for (size_t i = 0; i < selectedSamplesCoords.size(); i++) {
+    // if our click is in bounds of this sample
+    if (selectedSamplesCoords[i]
+            .expanded(PLAYCURSOR_GRAB_WIDTH)
+            .contains(lastMouseX, lastMouseY)) {
+      // switch on the border
+      if (abs(selectedSamplesCoords[i].getX() - lastMouseX) <
+          PLAYCURSOR_GRAB_WIDTH) {
+        return juce::Optional<SampleBorder>(SampleBorder(
+            selectedSamplesCoords[i].getSampleIndex(), BORDER_LEFT));
+      }
+
+      if (abs(selectedSamplesCoords[i].getX() +
+              selectedSamplesCoords[i].getWidth() - lastMouseX) <
+          PLAYCURSOR_GRAB_WIDTH) {
+        return juce::Optional<SampleBorder>(SampleBorder(
+            selectedSamplesCoords[i].getSampleIndex(), BORDER_RIGHT));
+      }
+
+      if (abs(selectedSamplesCoords[i].getY() - lastMouseY) <
+          PLAYCURSOR_GRAB_WIDTH) {
+        return juce::Optional<SampleBorder>(SampleBorder(
+            selectedSamplesCoords[i].getSampleIndex(), BORDER_UPPER));
+      }
+
+      if (abs(selectedSamplesCoords[i].getY() +
+              selectedSamplesCoords[i].getHeight() - lastMouseY) <
+          PLAYCURSOR_GRAB_WIDTH) {
+        return juce::Optional<SampleBorder>(SampleBorder(
+            selectedSamplesCoords[i].getSampleIndex(), BORDER_LOWER));
+      }
+    }
+  }
+  return juce::Optional<SampleBorder>(juce::nullopt);
 }
 
 void ArrangementArea::paintLabels(juce::Graphics& g) {
@@ -130,7 +178,7 @@ void ArrangementArea::paintLabels(juce::Graphics& g) {
   // clear the list of previous labels (to be later swapped)
   onScreenLabelsPixelsCoordsBuffer.clear();
 
-  SampleLabelPosition currentLabelPixelsCoords;
+  IndexedRectangle currentLabelPixelsCoords;
 
   int currentSampleLeftSideFrame, currentSampleRightSideFrame;
 
@@ -171,11 +219,11 @@ void ArrangementArea::paintLabels(juce::Graphics& g) {
   onScreenLabelsPixelsCoords.swap(onScreenLabelsPixelsCoordsBuffer);
 }
 
-SampleLabelPosition ArrangementArea::addLabelAndPreventOverlaps(
-    std::vector<SampleLabelPosition>& existingLabels, int leftSidePixelCoords,
+IndexedRectangle ArrangementArea::addLabelAndPreventOverlaps(
+    std::vector<IndexedRectangle>& existingLabels, int leftSidePixelCoords,
     int rightSidePixelCoords, int sampleIndex) {
   // the pixel coordinates of the upcoming label
-  SampleLabelPosition pixelLabelRect;
+  IndexedRectangle pixelLabelRect;
   pixelLabelRect.setWidth(rightSidePixelCoords - leftSidePixelCoords);
   pixelLabelRect.setWidth(
       juce::jmin(pixelLabelRect.getWidth(), FREQVIEW_LABELS_MAX_WIDTH));
@@ -219,7 +267,7 @@ SampleLabelPosition ArrangementArea::addLabelAndPreventOverlaps(
 }
 
 bool ArrangementArea::rectangleIntersects(
-    SampleLabelPosition& target, std::vector<SampleLabelPosition>& rectangles) {
+    IndexedRectangle& target, std::vector<IndexedRectangle>& rectangles) {
   for (int i = 0; i < rectangles.size(); i++) {
     if (target.intersects(rectangles[i])) {
       return true;
@@ -661,11 +709,43 @@ void ArrangementArea::mouseMove(const juce::MouseEvent& jme) {
     activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
   } else if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT) {
     if (getMouseCursor() == juce::MouseCursor::NormalCursor) {
+      juce::Optional<SampleBorder> borderUnderMouse =
+          mouseOverSelectionBorder();
+
       if (mouseOverPlayCursor()) {
         setMouseCursor(juce::MouseCursor::DraggingHandCursor);
+      } else if (borderUnderMouse.hasValue()) {
+        switch (borderUnderMouse->border) {
+          case BORDER_LEFT:
+            setMouseCursor(juce::MouseCursor::LeftEdgeResizeCursor);
+            break;
+
+          case BORDER_RIGHT:
+            setMouseCursor(juce::MouseCursor::RightEdgeResizeCursor);
+            break;
+
+          case BORDER_UPPER:
+            setMouseCursor(juce::MouseCursor::TopEdgeResizeCursor);
+            break;
+
+          case BORDER_LOWER:
+            setMouseCursor(juce::MouseCursor::BottomEdgeResizeCursor);
+            break;
+        }
       }
+
     } else if (getMouseCursor() == juce::MouseCursor::DraggingHandCursor) {
       if (!mouseOverPlayCursor()) {
+        setMouseCursor(juce::MouseCursor::NormalCursor);
+      }
+
+    } else if (getMouseCursor() == juce::MouseCursor::LeftEdgeResizeCursor ||
+               getMouseCursor() == juce::MouseCursor::RightEdgeResizeCursor ||
+               getMouseCursor() == juce::MouseCursor::TopEdgeResizeCursor ||
+               getMouseCursor() == juce::MouseCursor::BottomEdgeResizeCursor) {
+      juce::Optional<SampleBorder> borderUnderMouse =
+          mouseOverSelectionBorder();
+      if (!borderUnderMouse.hasValue()) {
         setMouseCursor(juce::MouseCursor::NormalCursor);
       }
     }

@@ -22,14 +22,23 @@
 #include "NotificationArea.h"
 #include "juce_opengl/opengl/juce_gl.h"
 
-class SampleLabelPosition : public juce::Rectangle<float> {
+class IndexedRectangle : public juce::Rectangle<float> {
  public:
-  SampleLabelPosition() { index = -1; }
+  IndexedRectangle() { index = -1; }
   void setSampleIndex(int i) { index = i; }
   int getSampleIndex() { return index; }
 
  private:
   int index;
+};
+
+enum Border { BORDER_LOWER, BORDER_UPPER, BORDER_LEFT, BORDER_RIGHT };
+
+class SampleBorder {
+ public:
+  SampleBorder(int i, Border b) : id(i), border(b) {}
+  int id;
+  Border border;
 };
 
 //==============================================================================
@@ -138,8 +147,11 @@ class ArrangementArea : public juce::Component,
 
   // buffer and vector for the labels on screen (to be swapped after
   // update)
-  std::vector<SampleLabelPosition> onScreenLabelsPixelsCoordsBuffer,
+  std::vector<IndexedRectangle> onScreenLabelsPixelsCoordsBuffer,
       onScreenLabelsPixelsCoords;
+  // buffer and vector for the coordinates of the selected samples on screen
+  std::vector<IndexedRectangle> selectedSamplesCoordsBuffer,
+      selectedSamplesCoords;
 
   //==============================================================================
   void paintPlayCursor(juce::Graphics& g);
@@ -147,11 +159,10 @@ class ArrangementArea : public juce::Component,
   void paintLabels(juce::Graphics& g);
   void paintSampleLabel(juce::Graphics& g, juce::Rectangle<float>&, int index);
 
-  SampleLabelPosition addLabelAndPreventOverlaps(
-      std::vector<SampleLabelPosition>& existingLabels, int x, int y,
+  IndexedRectangle addLabelAndPreventOverlaps(
+      std::vector<IndexedRectangle>& existingLabels, int x, int y,
       int sampleIndex);
-  bool rectangleIntersects(SampleLabelPosition&,
-                           std::vector<SampleLabelPosition>&);
+  bool rectangleIntersects(IndexedRectangle&, std::vector<IndexedRectangle>&);
 
   void handleMiddleButterDown(const juce::MouseEvent&);
   void handleLeftButtonDown(const juce::MouseEvent&);
@@ -177,6 +188,7 @@ class ArrangementArea : public juce::Component,
   int64_t lowestStartPosInSelection();
 
   bool mouseOverPlayCursor();
+  juce::Optional<SampleBorder> mouseOverSelectionBorder();
 };
 
 #endif  // DEF_ARRANGEMENTAREA_HPP
