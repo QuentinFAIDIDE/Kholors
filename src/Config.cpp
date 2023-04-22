@@ -56,7 +56,6 @@ Config::Config(std::string configFilePath) {
     std::cerr << "Error while parsing file: " << err.what() << std::endl;
     _errMsg = err.what();
     _invalid = true;
-    throw err;
   }
 }
 

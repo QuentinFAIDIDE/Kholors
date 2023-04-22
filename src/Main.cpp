@@ -31,12 +31,12 @@ class GuiAppApplication : public juce::JUCEApplication {
 
     mainWindow.reset(new MainWindow(getApplicationName()));
 
-    std::string err = "";
-    try {
-      Config kholorsConfig(configpath);
-      mainWindow->getMainComponent()->configureApp(kholorsConfig);
-    } catch (std::runtime_error& e) {
-      std::cerr << e.what() << std::endl;
+    Config kholorsConfig(configpath);
+    mainWindow->getMainComponent()->configureApp(kholorsConfig);
+
+    if (kholorsConfig.isInvalid()) {
+      std::cerr << "Configuration failed to be parsed" << std::endl;
+      std::cerr << kholorsConfig.getErrMessage() << std::endl;
       quit();
     }
   }
