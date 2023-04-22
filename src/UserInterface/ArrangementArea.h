@@ -175,6 +175,8 @@ class ArrangementArea : public juce::Component,
   void updateSelectedTracksDrag(int);
 
   int64_t lowestStartPosInSelection();
+
+  bool mouseOverPlayCursor();
 };
 
 #endif  // DEF_ARRANGEMENTAREA_HPP
