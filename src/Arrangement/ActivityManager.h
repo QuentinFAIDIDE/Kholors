@@ -6,15 +6,16 @@
 #include "./Action.h"
 #include "./AppState.h"
 
-class ActivityManager {
- public:
-  ActivityManager();
-  ~ActivityManager();
-  AppState& getAppState();
+class ActivityManager
+{
+  public:
+    ActivityManager();
+    ~ActivityManager();
+    AppState &getAppState();
 
- private:
-  std::vector<Action> history;
-  AppState appState;
+  private:
+    std::vector<Action> history;
+    AppState appState;
 };
 
-#endif  // DEF_ACTIVITY_MANAGER_HPP
+#endif // DEF_ACTIVITY_MANAGER_HPP

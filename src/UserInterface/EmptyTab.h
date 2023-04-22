@@ -4,9 +4,10 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 
 //
-class EmptyTab : public juce::Component {
- public:
-  EmptyTab();
+class EmptyTab : public juce::Component
+{
+  public:
+    EmptyTab();
 };
 
-#endif  // EMPTY_TAB_HPP
+#endif // EMPTY_TAB_HPP

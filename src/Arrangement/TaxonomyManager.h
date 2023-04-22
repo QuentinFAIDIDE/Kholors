@@ -5,45 +5,48 @@
 
 #include <string>
 
-class SampleGroup {
- public:
-  int groupId;
-  std::string name;
-  std::set<int> sampleIds;
-  juce::Colour color;
+class SampleGroup
+{
+  public:
+    int groupId;
+    std::string name;
+    std::set<int> sampleIds;
+    juce::Colour color;
 };
 
-class SampleMetadata {
- public:
-  int sampleId;
-  int groupId;
-  std::string name;
+class SampleMetadata
+{
+  public:
+    int sampleId;
+    int groupId;
+    std::string name;
 };
 
-class TaxonomyManager {
- public:
-  TaxonomyManager();
+class TaxonomyManager
+{
+  public:
+    TaxonomyManager();
 
-  void setSampleName(int sampleId, std::string name);
-  void setSampleGroup(int sampleId, int groupId);
+    void setSampleName(int sampleId, std::string name);
+    void setSampleGroup(int sampleId, int groupId);
 
-  std::string getSampleName(int sampleId);
+    std::string getSampleName(int sampleId);
 
-  void copyTaxonomy(int sourceSampleId, int destSampleId);
+    void copyTaxonomy(int sourceSampleId, int destSampleId);
 
-  juce::Colour& getSampleColor(int sampleId);
+    juce::Colour &getSampleColor(int sampleId);
 
-  void setGroupName(int groupId, std::string name);
-  void setGroupColor(int groupId, juce::Colour& c);
-  void setGroupColor(int groupId, int colorId);
+    void setGroupName(int groupId, std::string name);
+    void setGroupColor(int groupId, juce::Colour &c);
+    void setGroupColor(int groupId, int colorId);
 
-  void disableSample(int sampleId);
+    void disableSample(int sampleId);
 
- private:
-  std::vector<SampleMetadata> samples;
-  std::vector<SampleGroup> groups;
+  private:
+    std::vector<SampleMetadata> samples;
+    std::vector<SampleGroup> groups;
 
-  void extendElementsArrays(int);
+    void extendElementsArrays(int);
 };
 
-#endif  // DEF_GROUP_MANAGER
+#endif // DEF_GROUP_MANAGER

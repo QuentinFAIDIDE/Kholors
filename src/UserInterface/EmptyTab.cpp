@@ -1,3 +1,5 @@
 #include "EmptyTab.h"
 
-EmptyTab::EmptyTab() {}
+EmptyTab::EmptyTab()
+{
+}

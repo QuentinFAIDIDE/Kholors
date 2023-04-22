@@ -3,9 +3,10 @@
 
 #include <string>
 
-class Marshalable {
-  virtual std::string Marshal() = 0;
-  virtual Marshalable* Unmarshal(std::string&) = 0;
+class Marshalable
+{
+    virtual std::string Marshal() = 0;
+    virtual Marshalable *Unmarshal(std::string &) = 0;
 };
 
-#endif  // DEF_MARSHALABLE_HPP
+#endif // DEF_MARSHALABLE_HPP

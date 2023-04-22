@@ -3,13 +3,14 @@
 
 #include "GraphicModel.h"
 
-class BackgroundModel : public GraphicModel {
- public:
-  BackgroundModel();
-  ~BackgroundModel();
-  void registerGlObjects() override final;
-  void drawGlObjects() override final;
-  void disable() override final;
+class BackgroundModel : public GraphicModel
+{
+  public:
+    BackgroundModel();
+    ~BackgroundModel();
+    void registerGlObjects() override final;
+    void drawGlObjects() override final;
+    void disable() override final;
 };
 
-#endif  // DEF_BACKGROUND_MODEL
+#endif // DEF_BACKGROUND_MODEL

@@ -5,22 +5,40 @@
 #include "TaxonomyManager.h"
 #include "UserInterfaceState.h"
 
-AppState::AppState() {}
-AppState::~AppState() {}
-
-void setSample(int id, SampleState*) {
-  // TODO
+AppState::AppState()
+{
+}
+AppState::~AppState()
+{
 }
 
-TaxonomyManager& AppState::getTaxonomy() { return taxonomy; }
-
-std::string AppState::Marshal() {
-  // TODO
-  return "none";
+void setSample(int id, SampleState *)
+{
+    // TODO
 }
 
-Marshalable* AppState::Unmarshal(std::string& s) { return nullptr; }
+TaxonomyManager &AppState::getTaxonomy()
+{
+    return taxonomy;
+}
 
-UserInterfaceState& AppState::getUiState() { return uiState; }
+std::string AppState::Marshal()
+{
+    // TODO
+    return "none";
+}
 
-void AppState::setUiState(UserInterfaceState s) { uiState = s; }
+Marshalable *AppState::Unmarshal(std::string &s)
+{
+    return nullptr;
+}
+
+UserInterfaceState &AppState::getUiState()
+{
+    return uiState;
+}
+
+void AppState::setUiState(UserInterfaceState s)
+{
+    uiState = s;
+}

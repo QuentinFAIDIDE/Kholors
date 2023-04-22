@@ -100,4 +100,4 @@ void main()
 }
 )";
 
-#endif  // DEF_FREQVIEW_SHADERS_HPP
+#endif // DEF_FREQVIEW_SHADERS_HPP

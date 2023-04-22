@@ -22,45 +22,45 @@
     This component lives inside our window, and this is where you should put all
     your controls and content.
 */
-class MainComponent : public juce::AudioAppComponent,
-                      public juce::DragAndDropContainer {
- public:
-  //==============================================================================
-  MainComponent();
-  ~MainComponent();
+class MainComponent : public juce::AudioAppComponent, public juce::DragAndDropContainer
+{
+  public:
+    //==============================================================================
+    MainComponent();
+    ~MainComponent();
 
-  //==============================================================================
-  // inherited from Component from AudioAppComponent
-  void paint(juce::Graphics &) override;
-  void resized() override;
+    //==============================================================================
+    // inherited from Component from AudioAppComponent
+    void paint(juce::Graphics &) override;
+    void resized() override;
 
-  // inherited from AudioSource from AudioAppComponent
-  void prepareToPlay(int, double) override;
-  void releaseResources() override;
-  void getNextAudioBlock(const juce::AudioSourceChannelInfo &) override;
-  void configureApp(Config &conf);
+    // inherited from AudioSource from AudioAppComponent
+    void prepareToPlay(int, double) override;
+    void releaseResources() override;
+    void getNextAudioBlock(const juce::AudioSourceChannelInfo &) override;
+    void configureApp(Config &conf);
 
- private:
-  //==============================================================================
-  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
+  private:
+    //==============================================================================
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 
-  ActivityManager activityManager;
+    ActivityManager activityManager;
 
-  // widgets
-  // the object responsible for managing the various samples imported
-  MixingBus mixingBus;
-  ArrangementArea arrangementArea;
-  NotificationArea notificationArea;
-  juce::TabbedComponent actionTabs;
+    // widgets
+    // the object responsible for managing the various samples imported
+    MixingBus mixingBus;
+    ArrangementArea arrangementArea;
+    NotificationArea notificationArea;
+    juce::TabbedComponent actionTabs;
 
-  AudioLibraryTab audioLibraryTab;
-  EmptyTab sampleProcessingTab;
-  EmptyTab masteringTab;
+    AudioLibraryTab audioLibraryTab;
+    EmptyTab sampleProcessingTab;
+    EmptyTab masteringTab;
 
-  KholorsLookAndFeel appLookAndFeel;
-  void configureLookAndFeel();
+    KholorsLookAndFeel appLookAndFeel;
+    void configureLookAndFeel();
 
-  void printAudioDeviceSettings();
+    void printAudioDeviceSettings();
 };
 
-#endif  // DEF_MAINCOMPONENT_HPP
+#endif // DEF_MAINCOMPONENT_HPP

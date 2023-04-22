@@ -5,6 +5,6 @@
 
 #define DEFAULT_CONFIG_FILE "~/.kholors/default.yaml"
 
-std::string parseConfigPath(const juce::String& args);
+std::string parseConfigPath(const juce::String &args);
 
-#endif  // DEFAULT_CONFIG_PATH_HPP
+#endif // DEFAULT_CONFIG_PATH_HPP

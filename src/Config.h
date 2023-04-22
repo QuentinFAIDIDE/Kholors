@@ -8,8 +8,7 @@
 #define FREQTIME_VIEW_X_RESOLUTION 8192
 // How many shades of intensities we display
 #define FREQTIME_VIEW_INTENSITY_RESOLUTION_BITS 4
-#define FREQTIME_VIEW_INTENSITY_RESOLUTION \
-  (2 << (FREQTIME_VIEW_INTENSITY_RESOLUTION_BITS - 1))
+#define FREQTIME_VIEW_INTENSITY_RESOLUTION (2 << (FREQTIME_VIEW_INTENSITY_RESOLUTION_BITS - 1))
 // Max number of elements per pixel (used to preallocate cache)
 #define FREQTIME_VIEW_MAX_SINGLEPOINT_ELEMEMENTS 8
 #define FREQTIME_VIEW_HEIGHT 450
@@ -40,6 +39,8 @@
 #define FREQVIEW_LABELS_MARGINS 2.0f
 #define FREQVIEW_LABELS_MAX_WIDTH 300.0f
 #define FREQVIEW_MIN_SAMPLE_CLICK_INTENSITY 0.008f
+// samplerate divided by 2 pow 10 which makes 1024 so around 1ms of signal
+#define FREQVIEW_MIN_RESIZE_FRAMES (AUDIO_FRAMERATE >> 10)
 
 // minimum windows height to draw something
 #define MIN_SCREEN_WIDTH 350
@@ -79,12 +80,12 @@
 #define SAMPLE_BITMASK_SIZE int(SAMPLE_MAX_PLAYERS_USED >> 6) + 1
 
 #define SAMPLE_MASKING_DISTANCE_SEC 2 * SAMPLE_MAX_DURATION_SEC
-#define SAMPLE_MASKING_DISTANCE_FRAMES \
-  AUDIO_FRAMERATE* SAMPLE_MASKING_DISTANCE_SEC
+#define SAMPLE_MASKING_DISTANCE_FRAMES AUDIO_FRAMERATE *SAMPLE_MASKING_DISTANCE_SEC
 
 #define SAMPLEPLAYER_BORDER_RADIUS 4.0
 #define SAMPLEPLAYER_BORDER_COLOR juce::Colour(230, 230, 230)
 #define SAMPLEPLAYER_BORDER_WIDTH 2.5
+#define SAMPLEPLAYER_MIN_FRAME_SIZE 2048
 
 #define PLAYCURSOR_WIDTH 3
 #define PLAYCURSOR_GRAB_WIDTH 10
@@ -115,48 +116,49 @@
 #include <string>
 #include <vector>
 
-class Config {
- public:
-  Config(std::string);
+class Config
+{
+  public:
+    Config(std::string);
 
-  bool isInvalid() const;
-  std::string getProfileName() const;
-  int getNumAudioLibs() const;
-  std::string getAudioLibName(unsigned long) const;
-  std::string getAudioLibPath(unsigned long) const;
-  bool audioLibIgnoreCount(unsigned long) const;
-  std::string getErrMessage() const;
-  std::string getDataFolderPath() const;
-  int getBufferSize() const;
+    bool isInvalid() const;
+    std::string getProfileName() const;
+    int getNumAudioLibs() const;
+    std::string getAudioLibName(unsigned long) const;
+    std::string getAudioLibPath(unsigned long) const;
+    bool audioLibIgnoreCount(unsigned long) const;
+    std::string getErrMessage() const;
+    std::string getDataFolderPath() const;
+    int getBufferSize() const;
 
- private:
-  bool _invalid;
-  std::string _errMsg;
-  std::string _profile;
-  std::vector<std::string> _audioLibNames;
-  std::vector<std::string> _audioLibPaths;
-  std::vector<bool> _audioLibIgnoreCounts;
-  std::string _configDirectoryPath;
-  std::string _dataLibraryPath;
-  int _bufferSize;
+  private:
+    bool _invalid;
+    std::string _errMsg;
+    std::string _profile;
+    std::vector<std::string> _audioLibNames;
+    std::vector<std::string> _audioLibPaths;
+    std::vector<bool> _audioLibIgnoreCounts;
+    std::string _configDirectoryPath;
+    std::string _dataLibraryPath;
+    int _bufferSize;
 
-  void _checkMandatoryParameters(YAML::Node&);
-  void _checkApiVersion(YAML::Node&);
-  void _checkIfFieldScalarAndExists(YAML::Node&, std::string);
-  void _parseAudioLibraryLocations(YAML::Node&);
-  void _parseAudioLibLocationPath(YAML::Node&);
-  void _parseAudioLibLocationName(YAML::Node&);
-  void _parseAudioLibLocationIgnoreCount(YAML::Node&);
-  void _parseProfileName(YAML::Node&);
-  void _parseBufferSize(YAML::Node&);
+    void _checkMandatoryParameters(YAML::Node &);
+    void _checkApiVersion(YAML::Node &);
+    void _checkIfFieldScalarAndExists(YAML::Node &, std::string);
+    void _parseAudioLibraryLocations(YAML::Node &);
+    void _parseAudioLibLocationPath(YAML::Node &);
+    void _parseAudioLibLocationName(YAML::Node &);
+    void _parseAudioLibLocationIgnoreCount(YAML::Node &);
+    void _parseProfileName(YAML::Node &);
+    void _parseBufferSize(YAML::Node &);
 
-  void _getConfigDirectory(YAML::Node&);
-  void _getDataDirectory(YAML::Node&);
-  std::string _getProvidedOrDefaultPath(YAML::Node&, std::string, std::string);
+    void _getConfigDirectory(YAML::Node &);
+    void _getDataDirectory(YAML::Node &);
+    std::string _getProvidedOrDefaultPath(YAML::Node &, std::string, std::string);
 
-  void _createFolderIfNotExists(std::string);
+    void _createFolderIfNotExists(std::string);
 
-  static std::vector<std::string> mandatoryParameters;
+    static std::vector<std::string> mandatoryParameters;
 };
 
-#endif  // DEF_CONFIG_HPP
+#endif // DEF_CONFIG_HPP

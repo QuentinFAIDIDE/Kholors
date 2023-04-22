@@ -3,7 +3,6 @@
 
 #include <juce_gui_extra/juce_gui_extra.h>
 
-void drawSection(juce::Graphics &g, juce::Rectangle<int> &bounds,
-                 juce::String title, juce::Colour &background);
+void drawSection(juce::Graphics &g, juce::Rectangle<int> &bounds, juce::String title, juce::Colour &background);
 
-#endif  // DEF_SECTION_HPP
+#endif // DEF_SECTION_HPP
