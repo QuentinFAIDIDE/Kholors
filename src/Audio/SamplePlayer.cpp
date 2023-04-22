@@ -137,7 +137,7 @@ void SamplePlayer::setNextReadPosition(juce::int64 p) { position = p; }
 
 // length of entire buffer
 juce::int64 SamplePlayer::getTotalLength() const {
-  return (bufferEnd - bufferStart) + 1;
+  return audioBufferRef->getAudioSampleBuffer()->getNumSamples();
 }
 
 bool SamplePlayer::isLooping() const {
