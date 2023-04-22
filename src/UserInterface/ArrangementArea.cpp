@@ -691,11 +691,6 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
     juce::Point<int> newPosition = jme.getPosition();
     bool viewUpdated = false;
 
-    // handle resize mode
-    if (activityManager.getAppState().getUiState() == UI_STATE_VIEW_RESIZING)
-    {
-    }
-
     switch (activityManager.getAppState().getUiState())
     {
     case UI_STATE_VIEW_RESIZING:
