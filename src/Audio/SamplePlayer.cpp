@@ -2,12 +2,12 @@
 
 #include <iterator>
 
-#include "../Config.h"
-
 SamplePlayer::SamplePlayer(int64_t position)
     : editingPosition(position), bufferInitialPosition(0), bufferStart(0), bufferEnd(0), position(0),
-      lowPassFreq(44100), highPassFreq(0), isSampleSet(false), numFft(0), trackIndex(-1)
+      lowPassFreq(AUDIO_FRAMERATE), highPassFreq(0), isSampleSet(false), numFft(0), trackIndex(-1)
 {
+    setLowPassFreq(lowPassFreq);
+    setHighPassFreq(highPassFreq);
 }
 
 SamplePlayer::~SamplePlayer()
@@ -315,6 +315,7 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferT
     if (retainedCurrentBuffer == nullptr)
     {
         bufferToFill.clearActiveBufferRegion();
+        applyFilters(bufferToFill);
         position += bufferToFill.numSamples;
         return;
     }
@@ -335,6 +336,7 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferT
     {
         bufferToFill.clearActiveBufferRegion();
         position += bufferToFill.numSamples;
+        applyFilters(bufferToFill);
         return;
     }
 
@@ -383,6 +385,8 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferT
 
     // update the global track position stored in the samplePlayer
     position += bufferToFill.numSamples;
+
+    applyFilters(bufferToFill);
 }
 
 int64_t SamplePlayer::getEditingPosition() const
@@ -398,4 +402,76 @@ void SamplePlayer::setTrackIndex(int id)
 int SamplePlayer::getTrackIndex()
 {
     return trackIndex;
+}
+
+void SamplePlayer::setLowPassFreq(int freq)
+{
+    lowPassFreq = freq;
+
+    if (lowPassFreq == AUDIO_FRAMERATE)
+    {
+        for (size_t i = 0; i < SAMPLEPLAYER_MAX_FILTER_REPEAT; i++)
+        {
+            lowPassFilterLeft[i].makeInactive();
+            lowPassFilterRight[i].makeInactive();
+        }
+        return;
+    }
+
+    auto coefs = juce::IIRCoefficients::makeLowPass(AUDIO_FRAMERATE, lowPassFreq);
+    for (size_t i = 0; i < SAMPLEPLAYER_MAX_FILTER_REPEAT; i++)
+    {
+        lowPassFilterLeft[i].setCoefficients(coefs);
+        lowPassFilterRight[i].setCoefficients(coefs);
+    }
+}
+
+void SamplePlayer::setHighPassFreq(int freq)
+{
+    highPassFreq = freq;
+
+    if (highPassFreq == 0)
+    {
+        for (size_t i = 0; i < SAMPLEPLAYER_MAX_FILTER_REPEAT; i++)
+        {
+            highPassFilterLeft[i].makeInactive();
+            highPassFilterRight[i].makeInactive();
+        }
+        return;
+    }
+
+    auto coefs = juce::IIRCoefficients::makeHighPass(AUDIO_FRAMERATE, highPassFreq);
+    for (size_t i = 0; i < SAMPLEPLAYER_MAX_FILTER_REPEAT; i++)
+    {
+        highPassFilterLeft[i].setCoefficients(coefs);
+        highPassFilterRight[i].setCoefficients(coefs);
+    }
+}
+
+void SamplePlayer::applyFilters(const juce::AudioSourceChannelInfo &bufferToFill)
+{
+    for (size_t channel = 0; channel < bufferToFill.buffer->getNumChannels(); ++channel)
+    {
+
+        juce::IIRFilter *highPassFilters, *lowPassFilters;
+        if (channel % 2 == 0)
+        {
+            highPassFilters = highPassFilterLeft;
+            lowPassFilters = lowPassFilterLeft;
+        }
+        else
+        {
+            highPassFilters = highPassFilterRight;
+            lowPassFilters = lowPassFilterRight;
+        }
+
+        float *audioSamples = bufferToFill.buffer->getWritePointer(channel);
+        for (size_t i = 0; i < SAMPLEPLAYER_MAX_FILTER_REPEAT; i++)
+        {
+            highPassFilters[i].processSamples(audioSamples + bufferToFill.startSample * sizeof(float),
+                                              bufferToFill.numSamples);
+            lowPassFilters[i].processSamples(audioSamples + bufferToFill.startSample * sizeof(float),
+                                             bufferToFill.numSamples);
+        }
+    }
 }

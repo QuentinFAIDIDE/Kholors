@@ -13,6 +13,8 @@
 
 #include "ReferenceCountedBuffer.h"
 
+#include "../Config.h"
+
 class SamplePlayer : public juce::PositionableAudioSource
 {
   public:
@@ -62,6 +64,9 @@ class SamplePlayer : public juce::PositionableAudioSource
     int getBufferStart() const;
     int getBufferEnd() const;
 
+    void setLowPassFreq(int freq);
+    void setHighPassFreq(int freq);
+
     std::string getFileName();
 
     // get number of fft blocks we use to cover the buffer
@@ -94,8 +99,12 @@ class SamplePlayer : public juce::PositionableAudioSource
 
     // this position is the one shared with all tracks (cursor pos)
     int position;
+
+    // frequency of low pass filter. Disabled if equal to AUDIO_FRAMERATE
     float lowPassFreq;
+    // frequency of high pass filter. Disabled if equal to 0
     float highPassFreq;
+
     BufferPtr audioBufferRef;
     bool isSampleSet;
     juce::Colour colour;
@@ -110,6 +119,14 @@ class SamplePlayer : public juce::PositionableAudioSource
     int numFft;
 
     int trackIndex;
+
+    juce::IIRFilter lowPassFilterLeft[SAMPLEPLAYER_MAX_FILTER_REPEAT];
+    juce::IIRFilter lowPassFilterRight[SAMPLEPLAYER_MAX_FILTER_REPEAT];
+
+    juce::IIRFilter highPassFilterLeft[SAMPLEPLAYER_MAX_FILTER_REPEAT];
+    juce::IIRFilter highPassFilterRight[SAMPLEPLAYER_MAX_FILTER_REPEAT];
+
+    void applyFilters(const juce::AudioSourceChannelInfo &bufferToFill);
 };
 
 #endif // DEF_SAMPLEPLAYER_HPP
