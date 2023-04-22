@@ -198,6 +198,7 @@ void SampleGraphicModel::setColor(juce::Colour &col)
         vertices[i].colour[3] = col.getFloatAlpha();
     }
 
+    color = col;
     uploadVerticesToGpu();
 }
 

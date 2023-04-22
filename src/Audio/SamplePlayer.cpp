@@ -263,6 +263,8 @@ SamplePlayer *SamplePlayer::createDuplicate(juce::int64 newPosition, juce::dsp::
 {
     SamplePlayer *duplicate = new SamplePlayer(newPosition);
     duplicate->setBuffer(audioBufferRef, fft);
+    duplicate->setBufferShift(bufferStart);
+    duplicate->setLength(getLength());
     return duplicate;
 }
 
