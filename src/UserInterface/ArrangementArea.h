@@ -189,7 +189,6 @@ class ArrangementArea : public juce::Component,
     float polylens(float);
 
     void addNewSample(SamplePlayer *);
-    void updateSamplePosition(int index, juce::int64 position);
     void syncSampleColor(int sampleIndex);
 
     bool buildShaders();

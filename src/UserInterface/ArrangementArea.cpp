@@ -467,12 +467,6 @@ void ArrangementArea::addNewSample(SamplePlayer *sp)
                                     true);
 }
 
-void ArrangementArea::updateSamplePosition(int index, juce::int64 position)
-{
-    openGLContext.executeOnGLThread([this, index, position](juce::OpenGLContext &c) { samples[index].move(position); },
-                                    true);
-}
-
 void ArrangementArea::paintPlayCursor(juce::Graphics &g)
 {
     g.setColour(cursorColor);
@@ -853,7 +847,9 @@ void ArrangementArea::cropSampleEdgeHorizontally(bool cropFront)
             {
                 // apply change to opengl sample
                 openGLContext.executeOnGLThread(
-                    [this, itr, currentTrack](juce::OpenGLContext &c) { samples[*itr].updateProperties(currentTrack); },
+                    [this, itr, currentTrack](juce::OpenGLContext &c) {
+                        samples[*itr].updatePropertiesAndUploadToGpu(currentTrack);
+                    },
                     true);
             }
         }
@@ -1060,6 +1056,7 @@ bool ArrangementArea::keyStateChanged(bool isKeyDown)
             SamplePlayer *sp;
             int64_t trackPosition;
             int64_t dragDistance = (lastMouseX - trackMovingInitialPosition) * viewScale;
+            // TODO: iterate over set rather than looping over all tracks
             // for each track
             for (size_t i = 0; i < nTracks; i++)
             {
@@ -1078,7 +1075,9 @@ bool ArrangementArea::keyStateChanged(bool isKeyDown)
                     trackPosition = sp->getEditingPosition();
                     trackPosition += dragDistance;
                     sp->move(trackPosition);
-                    updateSamplePosition(i, trackPosition);
+                    openGLContext.executeOnGLThread(
+                        [this, sp, i](juce::OpenGLContext &c) { this->samples[i].updatePropertiesAndUploadToGpu(sp); },
+                        true);
                 }
             }
             activityManager.getAppState().setUiState(UI_STATE_DEFAULT);

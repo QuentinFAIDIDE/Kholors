@@ -2,6 +2,7 @@
 
 #include "../Config.h"
 #include "Vertex.h"
+#include <algorithm>
 
 using namespace juce::gl;
 
@@ -20,7 +21,7 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer *sp, juce::Colour col)
 
     color = col;
 
-    updateProperties(sp);
+    updatePropertiesAndUploadToGpu(sp);
 
     // generate texture from fft (layout described in SamplePlayer.h)
     std::vector<float> ffts = sp->getFftData();
@@ -114,47 +115,83 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer *sp, juce::Colour col)
     }
 }
 
-void SampleGraphicModel::updateProperties(SamplePlayer *sp)
+void SampleGraphicModel::updatePropertiesAndUploadToGpu(SamplePlayer *sp)
 {
-    vertices.reserve(4);
-    triangleIds.reserve(6);
-    vertices.clear();
-    triangleIds.clear();
 
     startPositionNormalized = float(sp->getBufferStart()) / float(sp->getTotalLength());
     endPositionNormalised = float(sp->getBufferEnd()) / float(sp->getTotalLength());
 
+    float leftX = float(sp->getEditingPosition());
+    float rightX = leftX + float(sp->getLength());
+
+    generateAndUploadVertices(leftX, rightX);
+}
+
+void SampleGraphicModel::generateAndUploadVertices(float leftX, float rightX)
+{
+
+    vertices.reserve(8);
+    triangleIds.reserve(6);
+    vertices.clear();
+    triangleIds.clear();
+
     // upper left corner 0
-    vertices.push_back({{float(sp->getEditingPosition()), -1.0f},
-                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 0.0f},
+    vertices.push_back({{leftX, -1.0f},
+                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
                         {startPositionNormalized, 1.0f}});
 
     // upper right corner 1
-    vertices.push_back({{float(sp->getEditingPosition() + sp->getLength()), -1.0f},
+    vertices.push_back({{rightX, -1.0f},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
                         {endPositionNormalised, 1.0f}});
 
-    // lower right corner 2
-    vertices.push_back({{float(sp->getEditingPosition() + sp->getLength()), 1.0f},
+    // right upper band bottom corner 2
+    vertices.push_back({{rightX, 0.0f},
+                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
+                        {endPositionNormalised, 0.5f}});
+
+    // left upper band bottom corner 3
+    vertices.push_back({{leftX, 0.0f},
+                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
+                        {startPositionNormalized, 0.5f}});
+
+    // left lower band top 4
+    vertices.push_back({{leftX, 0.0f},
+                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
+                        {startPositionNormalized, 0.5f}});
+
+    // right lower band top 5
+    vertices.push_back({{rightX, 0.0f},
+                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
+                        {endPositionNormalised, 0.5f}});
+
+    // lower right corner 6
+    vertices.push_back({{rightX, 1.0f},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
                         {endPositionNormalised, 0.0f}});
 
-    // lower left corner 3
-    vertices.push_back({{float(sp->getEditingPosition()), 1.0f},
+    // lower left corner 7
+    vertices.push_back({{leftX, 1.0f},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
                         {startPositionNormalized, 0.0f}});
 
+    connectSquareFromVertexIds(0, 1, 2, 3);
+    connectSquareFromVertexIds(4, 5, 6, 7);
+    uploadVerticesToGpu();
+}
+
+void SampleGraphicModel::connectSquareFromVertexIds(size_t topLeft, size_t topRight, size_t bottomRight,
+                                                    size_t bottomLeft)
+{
     // lower left triangle
-    triangleIds.push_back(0);
-    triangleIds.push_back(2);
-    triangleIds.push_back(3);
+    triangleIds.push_back(topLeft);
+    triangleIds.push_back(bottomRight);
+    triangleIds.push_back(bottomLeft);
 
     // upper right triangle
-    triangleIds.push_back(0);
-    triangleIds.push_back(1);
-    triangleIds.push_back(2);
-
-    uploadVerticesToGpu();
+    triangleIds.push_back(topLeft);
+    triangleIds.push_back(topRight);
+    triangleIds.push_back(bottomRight);
 }
 
 int SampleGraphicModel::getTextureIndex(int freqIndex, int timeIndex, int freqDuplicateShift, bool isLeftChannel)
@@ -173,33 +210,13 @@ int SampleGraphicModel::getTextureIndex(int freqIndex, int timeIndex, int freqDu
     }
 }
 
-// To run on opengl thread, will move track to this absolute editing position in
-// audio frames.
-void SampleGraphicModel::move(int64_t position)
-{
-    int width = vertices[1].position[0] - vertices[0].position[0];
-
-    vertices[0].position[0] = position;
-    vertices[1].position[0] = position + width;
-    vertices[2].position[0] = position + width;
-    vertices[3].position[0] = position;
-
-    uploadVerticesToGpu();
-}
-
 // To run on opengl thread, will recolor track
 void SampleGraphicModel::setColor(juce::Colour &col)
 {
-    for (size_t i = 0; i < vertices.size(); i++)
-    {
-        vertices[i].colour[0] = col.getFloatRed();
-        vertices[i].colour[1] = col.getFloatGreen();
-        vertices[i].colour[2] = col.getFloatBlue();
-        vertices[i].colour[3] = col.getFloatAlpha();
-    }
-
+    float leftX = vertices[0].position[0];
+    float rightX = vertices[1].position[0];
     color = col;
-    uploadVerticesToGpu();
+    generateAndUploadVertices(leftX, rightX);
 }
 
 void SampleGraphicModel::transformIntensity(float &intensity)
@@ -235,11 +252,7 @@ void SampleGraphicModel::initDrag()
 void SampleGraphicModel::updateDrag(int frameMove)
 {
     int position = dragStartPosition + frameMove;
-    vertices[0].position[0] = position;
-    vertices[1].position[0] = position + lastWidth;
-    vertices[2].position[0] = position + lastWidth;
-    vertices[3].position[0] = position;
-    uploadVerticesToGpu();
+    generateAndUploadVertices(position, position + lastWidth);
 }
 
 void SampleGraphicModel::uploadVerticesToGpu()

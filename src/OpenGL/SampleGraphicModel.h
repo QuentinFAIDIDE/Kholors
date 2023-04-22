@@ -13,14 +13,13 @@ class SampleGraphicModel : public TexturedModel
 {
   public:
     SampleGraphicModel(SamplePlayer *, juce::Colour);
-    void move(int64_t position);
     void initDrag();
     void updateDrag(int);
     float textureIntensity(float x, float y);
     juce::int64 getFramePosition();
     juce::int64 getFrameLength();
     void setColor(juce::Colour &);
-    void updateProperties(SamplePlayer *sp);
+    void updatePropertiesAndUploadToGpu(SamplePlayer *sp);
 
   private:
     void transformIntensity(float &);
@@ -28,6 +27,10 @@ class SampleGraphicModel : public TexturedModel
     int dragStartPosition;
     int lastWidth;
     int getTextureIndex(int freqIndex, int timeIndex, int freqDuplicateShift, bool isLeftChannel);
+
+    void generateAndUploadVertices(float leftX, float rightX);
+
+    void connectSquareFromVertexIds(size_t, size_t, size_t, size_t);
 
     int horizontalScaleMultiplier;
 
