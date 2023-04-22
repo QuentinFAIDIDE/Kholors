@@ -172,7 +172,7 @@ void SamplePlayer::setLength(juce::int64 length)
     }
     else
     {
-        bufferEnd = audioBufferRef->getAudioSampleBuffer()->getNumSamples();
+        bufferEnd = audioBufferRef->getAudioSampleBuffer()->getNumSamples() - 1;
     }
 }
 
@@ -200,19 +200,43 @@ int SamplePlayer::tryMovingStart(int desiredShift)
     {
         return 0;
     }
-    // if enlarging played section (negative value), see if it's possible
-    int roomToResize, actualChange;
+
+    int actualChange;
     if (desiredShift < 0)
     {
         actualChange = -juce::jmin(bufferStart, -desiredShift);
     }
     else
     {
-        actualChange = juce::jmin((int)getLength() - SAMPLEPLAYER_MIN_FRAME_SIZE - 1, desiredShift);
+        actualChange = juce::jmin((int)getLength() - SAMPLEPLAYER_MIN_FRAME_SIZE, desiredShift);
     }
 
     setBufferShift(getBufferShift() + actualChange);
     move(getEditingPosition() + actualChange);
+    return actualChange;
+}
+
+// tryMovingStart will try to change the length of played buffer section from
+// desired number of frames. It return the actual shift performed.
+int SamplePlayer::tryMovingEnd(int desiredShift)
+{
+    if (desiredShift == 0)
+    {
+        return 0;
+    }
+
+    int actualChange;
+    if (desiredShift > 0)
+    {
+        int lastBufferIndexAvailable = (getTotalLength() - 1);
+        actualChange = juce::jmin(lastBufferIndexAvailable - bufferEnd, desiredShift);
+    }
+    else
+    {
+        actualChange = -juce::jmin((int)getLength() - SAMPLEPLAYER_MIN_FRAME_SIZE, -desiredShift);
+    }
+
+    setLength(getLength() + actualChange);
     return actualChange;
 }
 

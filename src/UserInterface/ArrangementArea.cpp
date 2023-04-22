@@ -536,10 +536,16 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
         }
         else if (sampleBorderClicked.hasValue())
         {
-            // if start position is changed
+
             if (sampleBorderClicked->border == BORDER_LEFT)
             {
                 activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_SAMPLE_START);
+                dragLastPosition = lastMouseX;
+            }
+
+            if (sampleBorderClicked->border == BORDER_RIGHT)
+            {
+                activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_SAMPLE_LENGTH);
                 dragLastPosition = lastMouseX;
             }
         }
@@ -674,15 +680,26 @@ void ArrangementArea::mouseUp(const juce::MouseEvent &jme)
 
 void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent &jme)
 {
-    // handle cursor mode relieving
-    if (activityManager.getAppState().getUiState() == UI_STATE_CURSOR_MOVING)
+    switch (activityManager.getAppState().getUiState())
     {
+
+    case UI_STATE_CURSOR_MOVING:
         activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
         mixingBus.setNextReadPosition(viewPosition + lastMouseX * viewScale);
-    }
-    if (activityManager.getAppState().getUiState() == UI_STATE_MOUSE_DRAG_SAMPLE_START)
-    {
+        break;
+
+    case UI_STATE_MOUSE_DRAG_SAMPLE_START:
         activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
+        break;
+
+    case UI_STATE_MOUSE_DRAG_SAMPLE_LENGTH:
+        activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
+        break;
+
+    case UI_STATE_DEFAULT:
+    case UI_STATE_VIEW_RESIZING:
+    case UI_STATE_KEYBOARD_SAMPLE_DRAG:
+        break;
     }
 }
 
@@ -693,16 +710,21 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
 
     switch (activityManager.getAppState().getUiState())
     {
+
     case UI_STATE_VIEW_RESIZING:
         viewUpdated = updateViewResizing(newPosition);
         break;
     case UI_STATE_MOUSE_DRAG_SAMPLE_START:
-        updateSelectedTracksStartDrag();
+        cropSampleEdgeHorizontally(true);
         break;
+
+    case UI_STATE_MOUSE_DRAG_SAMPLE_LENGTH:
+        cropSampleEdgeHorizontally(false);
+        break;
+
     case UI_STATE_DEFAULT:
     case UI_STATE_CURSOR_MOVING:
     case UI_STATE_KEYBOARD_SAMPLE_DRAG:
-    case UI_STATE_MOUSE_DRAG_SAMPLE_LENGTH:
         break;
     }
 
@@ -796,7 +818,7 @@ void ArrangementArea::mouseMove(const juce::MouseEvent &jme)
     updateMouseCursor();
 }
 
-void ArrangementArea::updateSelectedTracksStartDrag()
+void ArrangementArea::cropSampleEdgeHorizontally(bool cropFront)
 {
     // compute distange to beginning
     int distanceInFrames = (lastMouseX - dragLastPosition) * viewScale;
@@ -809,13 +831,24 @@ void ArrangementArea::updateSelectedTracksStartDrag()
     SamplePlayer *currentTrack;
     // for each track in the selection
     std::set<size_t>::iterator itr;
+    int actualFrameChange;
+
     for (itr = selectedTracks.begin(); itr != selectedTracks.end(); itr++)
     {
         currentTrack = mixingBus.getTrack(*itr);
         // if possible to dra
         if (currentTrack != nullptr)
         {
-            int actualFrameChange = currentTrack->tryMovingStart(distanceInFrames);
+
+            if (cropFront)
+            {
+                actualFrameChange = currentTrack->tryMovingStart(distanceInFrames);
+            }
+            else
+            {
+                actualFrameChange = currentTrack->tryMovingEnd(distanceInFrames);
+            }
+
             if (actualFrameChange != 0)
             {
                 // apply change to opengl sample

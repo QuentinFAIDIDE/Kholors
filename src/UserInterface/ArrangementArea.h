@@ -206,7 +206,7 @@ class ArrangementArea : public juce::Component,
     bool mouseOverPlayCursor();
     juce::Optional<SampleBorder> mouseOverSelectionBorder();
     void updateMouseCursor();
-    void updateSelectedTracksStartDrag();
+    void cropSampleEdgeHorizontally(bool cropFront);
 
     bool updateViewResizing(juce::Point<int> &);
 };

@@ -57,6 +57,7 @@ class SamplePlayer : public juce::PositionableAudioSource
     SamplePlayer *split(juce::int64 positionLimit);
 
     int tryMovingStart(int desiredShift);
+    int tryMovingEnd(int desiredShift);
 
     int getBufferStart() const;
     int getBufferEnd() const;
@@ -77,10 +78,20 @@ class SamplePlayer : public juce::PositionableAudioSource
 
   private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SamplePlayer)
+
+    // the position from which bufferStart is mapped into the global
+    // app play position
     int editingPosition;
+
+    // a buffer value we keep off the stack for no reason
     int bufferInitialPosition;
+
+    // bufferStart is the index from which starts the played section
     int bufferStart;
+    // bufferEnd is the index above which the buffer is not read anymore.
+    // Note that this is effectively the index of the last included audio frame.
     int bufferEnd;
+
     // this position is the one shared with all tracks (cursor pos)
     int position;
     float lowPassFreq;
