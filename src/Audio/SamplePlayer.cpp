@@ -74,6 +74,10 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
             // do the actual fft processing
             window.multiplyWithWindowingTable(&inputOutputData[0], FREQVIEW_SAMPLE_FFT_SIZE);
             fft.performFrequencyOnlyForwardTransform(&inputOutputData[0], true);
+
+            // fft index in the destination storage
+            auto fftIndex = (((i * numFft) + j) * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
+
             // convert the result into decibels
             for (size_t k = 0; k < (FREQVIEW_SAMPLE_FFT_SIZE >> 1); k++)
             {
@@ -88,8 +92,6 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
 
                 // map the index to magnify important frequencies
                 auto logIndexFft = UnitConverter::magnifyFftIndex(k);
-
-                auto fftIndex = (((i * numFft) + j) * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
 
                 audioBufferFrequencies[fftIndex + k] = inputOutputData[logIndexFft];
             }
