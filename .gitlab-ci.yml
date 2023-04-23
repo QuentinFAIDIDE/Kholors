@@ -1,0 +1,47 @@
+image: registry.gitlab.com/faidide/juce-test-01/kholors-builder:v0.1.0
+
+cache:
+  - key: JUCE_FOLDER
+    paths:
+      - JUCE/
+  - key: $CI_COMMIT_REF_SLUG
+    paths:
+      - .cache
+      - build
+
+before_script:
+  - if [[ ! -d ./JUCE ]]; then git clone --depth 1 7.0.2 https://github.com/juce-framework/JUCE.git ; fi
+  - mkdir build || echo "build dir already exists"
+  - cd build
+  - cmake ..
+
+stages:
+  - build
+  - test
+  - versionning
+
+build:
+  stage: build
+  script:
+    - make
+  except:
+    refs:
+      - tag
+
+test:
+  stage: test
+  script:
+    - ctest --output-on-failure
+  except:
+    refs:
+      - tag
+
+versionning:
+  image: node:latest
+  stage: versionning
+  only:
+    refs:
+      - master
+  script:
+    - npm install @semantic-release/gitlab
+    - npx semantic-release
