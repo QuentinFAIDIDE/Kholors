@@ -10,9 +10,8 @@ cache:
       - build
 
 before_script:
-  - ls
   - if [[ ! -d ./JUCE ]]; then git clone --depth 1 --branch 7.0.2 https://github.com/juce-framework/JUCE.git ; fi
-  - mkdir build || echo "build dir already exists"
+  - if [[ ! -d ./build ]]; then mkdir build ; fi
   - cd build
   - cmake ..
 
@@ -40,6 +39,7 @@ test:
 versionning:
   image: node:latest
   stage: versionning
+  before_script: []
   only:
     refs:
       - master
