@@ -6,6 +6,8 @@
 
 using namespace juce::gl;
 
+#include "../Audio/UnitConverter.h"
+
 SampleGraphicModel::SampleGraphicModel(SamplePlayer *sp, juce::Colour col)
 {
     if (sp == nullptr || !sp->hasBeenInitialized())
@@ -68,13 +70,13 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer *sp, juce::Colour col)
         for (int freqi = 0; freqi < FREQVIEW_SAMPLE_FFT_SCOPE_SIZE; freqi++)
         {
             // we apply our polynomial lens freqi transformation to zoom in a bit
-            freqiZoomed = transformFrequencyLocation(freqi);
+            freqiZoomed = UnitConverter::magnifyTextureFrequencyIndex(freqi);
             // as the frequencies in the ffts goes from low to high, we have
             // to flip the freqi to fetch the frequency and it's all good !
             intensity =
                 ffts[(ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + (FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - (freqiZoomed + 1))];
             // increase contrast and map between 0 and 1
-            transformIntensity(intensity);
+            intensity = UnitConverter::magnifyIntensity(intensity);
 
             for (int nDuplicate = 0; nDuplicate < horizontalScaleMultiplier; nDuplicate++)
             {
@@ -90,8 +92,9 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer *sp, juce::Colour col)
             // first channel instead)
 
             // pick freq index in the fft
-            freqiZoomed = FREQVIEW_SAMPLE_FFT_SCOPE_SIZE -
-                          (transformFrequencyLocation((FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - (freqi + 1))) + 1);
+            freqiZoomed =
+                FREQVIEW_SAMPLE_FFT_SCOPE_SIZE -
+                (UnitConverter::magnifyTextureFrequencyIndex((FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - (freqi + 1))) + 1);
             // get the value depending on if we got a second channel or not
             if (numChannels == 2)
             {
@@ -101,7 +104,7 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer *sp, juce::Colour col)
             {
                 intensity = ffts[(ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + freqiZoomed];
             }
-            transformIntensity(intensity);
+            intensity = UnitConverter::magnifyIntensity(intensity);
 
             for (int nDuplicate = 0; nDuplicate < horizontalScaleMultiplier; nDuplicate++)
             {
@@ -217,27 +220,6 @@ void SampleGraphicModel::setColor(juce::Colour &col)
     float rightX = vertices[1].position[0];
     color = col;
     generateAndUploadVertices(leftX, rightX);
-}
-
-void SampleGraphicModel::transformIntensity(float &intensity)
-{
-    // we need to normalize the frequency by mapping the range
-    intensity = juce::jmap(intensity, MIN_DB, MAX_DB, 0.0f, 1.0f);
-    // then we make it a little prettier with a sigmoid function
-    // (increase contrasts)
-    intensity = sigmoid((intensity * 12.0) - 6.0);
-    // and finally we make sure it falls in range
-    intensity = juce::jlimit(0.0f, 1.0f, intensity);
-}
-
-int SampleGraphicModel::transformFrequencyLocation(int freqi)
-{
-    // we apply our polynomial lens freqi transformation to zoom in a bit
-    int freqiZoomed =
-        int(polylens(float(freqi) / float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)) * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
-    // let's take extra care that it's inbound
-    freqiZoomed = juce::jlimit(0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1, freqiZoomed);
-    return freqiZoomed;
 }
 
 // Save position and width when selection dragging begins.

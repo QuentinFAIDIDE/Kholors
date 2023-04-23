@@ -22,8 +22,6 @@ class SampleGraphicModel : public TexturedModel
     void updatePropertiesAndUploadToGpu(SamplePlayer *sp);
 
   private:
-    void transformIntensity(float &);
-    int transformFrequencyLocation(int);
     int dragStartPosition;
     int lastWidth;
     int getTextureIndex(int freqIndex, int timeIndex, int freqDuplicateShift, bool isLeftChannel);

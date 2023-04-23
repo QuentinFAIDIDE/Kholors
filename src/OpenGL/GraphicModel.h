@@ -19,27 +19,6 @@ class GraphicModel
     };
 
   protected:
-    // polynomial transformation to zoom in the middle of frequencies and make
-    // things easier to view. Works on floats between 0 and 1.
-    float polylens(float v)
-    {
-        if (v < 0.5)
-        {
-            return std::pow(v, 0.3f) * (0.5 / (std::pow(0.5, 0.3)));
-        }
-        else
-        {
-            return 0.5 + std::pow(v - 0.5, 2.0f) * (0.5 / (std::pow(0.5, 2.0f)));
-        }
-    }
-
-    // Sigmoid activation function to try to increase contrast in fft intensities.
-    // Works on floats between 0 and 1.
-    float sigmoid(float val)
-    {
-        return 1 / (1 + exp(-val));
-    };
-
     std::vector<Vertex> vertices;
     std::vector<unsigned int> triangleIds;
     // vertex buffer object identifier
