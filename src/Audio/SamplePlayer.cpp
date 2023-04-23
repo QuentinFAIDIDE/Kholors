@@ -60,6 +60,9 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
     {
         audioBufferData = targetBuffer->getAudioSampleBuffer()->getReadPointer(i);
         audioBufferPosition = 0;
+
+        auto channelFftIndex = (i * numFft);
+
         // iterate over buffers of 1024 samples
         for (size_t j = 0; j < numFft; j++)
         {
@@ -76,7 +79,7 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
             fft.performFrequencyOnlyForwardTransform(&inputOutputData[0], true);
 
             // fft index in the destination storage
-            auto fftIndex = (((i * numFft) + j) * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
+            auto fftIndex = ((channelFftIndex + j) * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
 
             // convert the result into decibels
             for (size_t k = 0; k < (FREQVIEW_SAMPLE_FFT_SIZE >> 1); k++)
