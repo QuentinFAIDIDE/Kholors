@@ -12,6 +12,7 @@
 #include <atomic>
 
 #include "ReferenceCountedBuffer.h"
+#include "UnitConverter.h"
 
 #include "../Config.h"
 

@@ -91,7 +91,8 @@ target_sources(TestAudioLib
 target_sources(TestSamplePlayer
     PRIVATE
         src/Audio/SamplePlayer.cpp
-        test/TestSamplePlayer.cpp)
+        test/TestSamplePlayer.cpp
+        src/Audio/UnitConverter.cpp)
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
 # project, these might be passed in the 'Preprocessor Definitions' field. JUCE modules also make use

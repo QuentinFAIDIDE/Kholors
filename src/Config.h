@@ -94,11 +94,20 @@
 #define KEYMAP_DRAG_MODE "d"
 #define KEYMAP_DELETE_SELECTION "x"
 
-// warning: if the fft size goes below freqview height, nothing will display
 #define FREQVIEW_SAMPLE_FFT_ORDER 11
+// total number of fft frequency values. Given that the real part of the result is half of it
+// the effective number of frequency bins from 1 to AUDIO_FRAMERATE (samplerate)
+// is half that.
 #define FREQVIEW_SAMPLE_FFT_SIZE (1 << FREQVIEW_SAMPLE_FFT_ORDER)
+// How many frequencies we will store for each fft.
 #define FREQVIEW_SAMPLE_FFT_SCOPE_SIZE 4096
 #define FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS 3
+
+// A and B are used to normalize log10
+#define FFT_MAGNIFY_A 0.00009990793
+#define FFT_MAGNIFY_B 4.0004
+// C is the following power applied
+#define FFT_MAGNIFY_C 0.88
 
 #define MIN_DB -100.0f
 #define MAX_DB 0.0f

@@ -1,4 +1,5 @@
 #include "SamplePlayer.h"
+#include "UnitConverter.h"
 
 #include <iterator>
 
@@ -76,9 +77,7 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
             // convert the result into decibels
             for (size_t k = 0; k < (FREQVIEW_SAMPLE_FFT_SIZE >> 1); k++)
             {
-                inputOutputData[k] = juce::jlimit(MIN_DB, MAX_DB,
-                                                  juce::Decibels::gainToDecibels(inputOutputData[k]) -
-                                                      juce::Decibels::gainToDecibels((float)FREQVIEW_SAMPLE_FFT_SIZE));
+                inputOutputData[k] = UnitConverter::gainToDb(inputOutputData[k]);
             }
             // copy back the results
             for (size_t k = 0; k < FREQVIEW_SAMPLE_FFT_SCOPE_SIZE; k++)
@@ -87,17 +86,12 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
                 // a quarter of our inputdata array example idea
                 // https://docs.juce.com/master/tutorial_spectrum_analyser.html
 
-                // compute base 10 log and correct amounts so they fit in 0 - 1 range
-                auto log10Index =
-                    0.00009990793 * std::pow(10, 4.0004 * (float(k) / float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)));
-                // scale it to be a little more convenient for human eyes
-                log10Index = std::pow(log10Index, 0.88f);
+                // map the index to magnify important frequencies
+                auto logIndexFft = UnitConverter::magnifyFftIndex(k);
 
-                // pick and save frequency intensity
-                auto logIndexFft = juce::jlimit(0, FREQVIEW_SAMPLE_FFT_SIZE / 2,
-                                                (int)(log10Index * (float)FREQVIEW_SAMPLE_FFT_SIZE * 0.5f));
-                audioBufferFrequencies[(((i * numFft) + j) * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + k] =
-                    inputOutputData[logIndexFft];
+                auto fftIndex = (((i * numFft) + j) * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
+
+                audioBufferFrequencies[fftIndex + k] = inputOutputData[logIndexFft];
             }
         }
     }
