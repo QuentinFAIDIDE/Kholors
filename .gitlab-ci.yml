@@ -1,7 +1,7 @@
-image: registry.gitlab.com/faidide/juce-test-01/kholors-builder:v0.1.1
+image: registry.gitlab.com/faidide/juce-test-01/kholors-builder:v0.1.2
 
 cache:
-  - key: JUCE_FOLDER
+  - key: juce
     paths:
       - JUCE/
   - key: $CI_COMMIT_REF_SLUG
@@ -10,6 +10,7 @@ cache:
       - build
 
 before_script:
+  - ls
   - if [[ ! -d ./JUCE ]]; then git clone --depth 1 --branch 7.0.2 https://github.com/juce-framework/JUCE.git ; fi
   - mkdir build || echo "build dir already exists"
   - cd build
