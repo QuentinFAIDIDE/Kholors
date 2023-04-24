@@ -3,9 +3,11 @@
 
 #include <iterator>
 
+int SamplePlayer::maxFilterFreq = (AUDIO_FRAMERATE >> 1) - 1;
+
 SamplePlayer::SamplePlayer(int64_t position)
     : editingPosition(position), bufferInitialPosition(0), bufferStart(0), bufferEnd(0), position(0),
-      lowPassFreq(AUDIO_FRAMERATE), highPassFreq(0), isSampleSet(false), numFft(0), trackIndex(-1)
+      lowPassFreq(maxFilterFreq), highPassFreq(0), isSampleSet(false), numFft(0), trackIndex(-1)
 {
     setLowPassFreq(lowPassFreq);
     setHighPassFreq(highPassFreq);
@@ -407,8 +409,14 @@ void SamplePlayer::setLowPassFreq(int freq)
 {
     lowPassFreq = freq;
 
-    if (lowPassFreq == AUDIO_FRAMERATE)
+    if (lowPassFreq < 0)
     {
+        lowPassFreq = 0;
+    }
+
+    if (lowPassFreq >= maxFilterFreq)
+    {
+        lowPassFreq = maxFilterFreq;
         for (size_t i = 0; i < SAMPLEPLAYER_MAX_FILTER_REPEAT; i++)
         {
             lowPassFilterLeft[i].makeInactive();
@@ -429,8 +437,14 @@ void SamplePlayer::setHighPassFreq(int freq)
 {
     highPassFreq = freq;
 
-    if (highPassFreq == 0)
+    if (highPassFreq > maxFilterFreq)
     {
+        highPassFreq = maxFilterFreq;
+    }
+
+    if (highPassFreq <= 0)
+    {
+        highPassFreq = 0;
         for (size_t i = 0; i < SAMPLEPLAYER_MAX_FILTER_REPEAT; i++)
         {
             highPassFilterLeft[i].makeInactive();

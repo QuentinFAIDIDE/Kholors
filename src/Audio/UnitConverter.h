@@ -33,12 +33,14 @@ class UnitConverter
     /**
      * Subsequent layer of magnification to write texture data
      * to opengl for individual samples. Sort of zoom in the index.
-     * @param  k index to magnify.
-     * @return   index after zooming in.
+     * @param  k index to magnify in range [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE].
+     * @return   index after zooming in, in range [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE].
      */
     static int magnifyTextureFrequencyIndex(int k);
     /**
      * Invert of the magnifyTextureFrequency function.
+     * @param  k index magnfied in range [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE].
+     * @return   index before zooming in, in range [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE].
      */
     static int magnifyTextureFrequencyIndexInv(int k);
 

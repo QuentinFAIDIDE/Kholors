@@ -47,15 +47,16 @@ int UnitConverter::magnifyTextureFrequencyIndex(int k)
     // to find factors to precompute
 
     // we apply our polynomial lens transformation to zoom in a bit
-    int freqiZoomed = int(polylens(float(k) / float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)) * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
-    // let's take extra care that it's inbound
-    return juce::jlimit(0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1, freqiZoomed);
+    float position = float(k) / float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1);
+    int index = int((polylens(position) * (FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1)) + 0.5);
+    return juce::jlimit(0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1, index);
 }
 
 int UnitConverter::magnifyTextureFrequencyIndexInv(int k)
 {
-    // TODO
-    return 0;
+    float position = float(k) / float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1);
+    int index = int((polylensInv(position) * (FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1)) + 0.5);
+    return juce::jlimit(0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1, index);
 }
 
 float UnitConverter::sigmoid(float val)

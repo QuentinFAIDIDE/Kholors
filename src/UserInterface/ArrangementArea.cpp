@@ -531,16 +531,24 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
         else if (sampleBorderClicked.hasValue())
         {
 
-            if (sampleBorderClicked->border == BORDER_LEFT)
+            switch (sampleBorderClicked->border)
             {
+            case BORDER_LEFT:
                 activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_SAMPLE_START);
                 dragLastPosition = lastMouseX;
-            }
-
-            if (sampleBorderClicked->border == BORDER_RIGHT)
-            {
+                break;
+            case BORDER_LOWER:
+                activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_MONO_LOWPASS);
+                dragLastPosition = lastMouseY;
+                break;
+            case BORDER_UPPER:
+                activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_MONO_LOWPASS);
+                dragLastPosition = lastMouseY;
+                break;
+            case BORDER_RIGHT:
                 activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_SAMPLE_LENGTH);
                 dragLastPosition = lastMouseX;
+                break;
             }
         }
         else
@@ -690,6 +698,11 @@ void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent &jme)
         activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
         break;
 
+    case UI_STATE_MOUSE_DRAG_MONO_LOWPASS:
+        activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
+        break;
+
+    case UI_STATE_MOUSE_DRAG_MONO_HIGHPASS:
     case UI_STATE_DEFAULT:
     case UI_STATE_VIEW_RESIZING:
     case UI_STATE_KEYBOARD_SAMPLE_DRAG:
@@ -716,6 +729,11 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
         cropSampleEdgeHorizontally(false);
         break;
 
+    case UI_STATE_MOUSE_DRAG_MONO_LOWPASS:
+        cropSampleOuterBordersVertically();
+        break;
+
+    case UI_STATE_MOUSE_DRAG_MONO_HIGHPASS:
     case UI_STATE_DEFAULT:
     case UI_STATE_CURSOR_MOVING:
     case UI_STATE_KEYBOARD_SAMPLE_DRAG:
@@ -732,6 +750,62 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
         updateShadersPositionUniforms();
         repaint();
     }
+}
+
+void ArrangementArea::cropSampleOuterBordersVertically()
+{
+    // compute the frequency to set in the filter
+    float filterFreq = verticalPositionToFrequency(lastMouseY);
+    // set the filter frequency for each sample
+    std::set<size_t>::iterator itr;
+
+    SamplePlayer *currentSample;
+
+    for (itr = selectedTracks.begin(); itr != selectedTracks.end(); itr++)
+    {
+        currentSample = mixingBus.getTrack(*itr);
+        if (currentSample != nullptr)
+        {
+            currentSample->setLowPassFreq(filterFreq);
+        }
+    }
+}
+
+float ArrangementArea::verticalPositionToFrequency(int y)
+{
+    // REMINDER: upper half (below half height) is the first
+    // fft with lower frequencies below. second halve freqs are the opposite disposition.
+
+    // freqRatio is the ratio from 0 to max frequency (AUDIO_FRAMRATE).
+    // It's not linear to freqs, we therefore need to invert our index correction
+    // from texture freq index to storage freq index and then from storage
+    // freq index to fft index.
+    float freqRatio = 0.0f;
+    if (y < (FREQTIME_VIEW_HEIGHT >> 1))
+    {
+        freqRatio = 1.0f - (float(y) / float(FREQTIME_VIEW_HEIGHT >> 1));
+    }
+    else
+    {
+        freqRatio = (float(y) / float(FREQTIME_VIEW_HEIGHT >> 1)) - 1.0f;
+    }
+
+    // apply back the index transformation to make it linear to frequencies
+    int textureFreqIndex = int((freqRatio * float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)) + 0.5f);
+    int storageFreqIndex = UnitConverter::magnifyTextureFrequencyIndexInv(textureFreqIndex);
+    int fftFreqIndex = UnitConverter::magnifyFftIndex(storageFreqIndex);
+    // map the fft index to a frequency (add 0.5 to index because these are frequency bins and we want to be at the
+    // center)
+    float freq = (float(fftFreqIndex) + 0.5f) * ((2.0f * AUDIO_FRAMERATE) / FREQVIEW_SAMPLE_FFT_SIZE);
+
+    std::cout << "y: " << y << std::endl;
+    std::cout << "freqRatio: " << freqRatio << std::endl;
+    std::cout << "textureFreqIndex: " << textureFreqIndex << std::endl;
+    std::cout << "storageFreqIndex: " << storageFreqIndex << std::endl;
+    std::cout << "fftFreqIndex: " << fftFreqIndex << std::endl;
+    std::cout << "freq: " << freq << std::endl;
+
+    return juce::jlimit(0.0f, float(AUDIO_FRAMERATE), freq);
 }
 
 bool ArrangementArea::updateViewResizing(juce::Point<int> &newPosition)
@@ -801,6 +875,8 @@ void ArrangementArea::mouseMove(const juce::MouseEvent &jme)
         updateSelectedTracksDrag(lastMouseX - trackMovingInitialPosition);
         repaint();
         break;
+    case UI_STATE_MOUSE_DRAG_MONO_LOWPASS:
+    case UI_STATE_MOUSE_DRAG_MONO_HIGHPASS:
     case UI_STATE_MOUSE_DRAG_SAMPLE_START:
     case UI_STATE_CURSOR_MOVING:
     case UI_STATE_VIEW_RESIZING:

@@ -80,6 +80,8 @@ class SamplePlayer : public juce::PositionableAudioSource
     int64_t getEditingPosition() const;
     bool hasBeenInitialized() const;
 
+    static int maxFilterFreq;
+
     // TODO: getters for stereo low and high pass
 
   private:
