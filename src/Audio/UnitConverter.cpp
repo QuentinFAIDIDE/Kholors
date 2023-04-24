@@ -8,16 +8,15 @@ float UnitConverter::magnifyFftInvPrecomputedFator1 = FREQVIEW_SAMPLE_FFT_SCOPE_
 float UnitConverter::magnifyFftInvPrecomputedFator2 =
     magnifyFftInvPrecomputedFator1 * log10(2 / (std::pow(FFT_MAGNIFY_A, FFT_MAGNIFY_C) * FREQVIEW_SAMPLE_FFT_SIZE));
 
-float UnitConverter::gainToDb(float val)
+float UnitConverter::fftToDb(float val)
 {
-    return juce::jlimit(MIN_DB, MAX_DB,
-                        juce::Decibels::gainToDecibels(val) -
-                            juce::Decibels::gainToDecibels((float)FREQVIEW_SAMPLE_FFT_SIZE));
+    return juce::jlimit(MIN_DB, MAX_DB, juce::Decibels::gainToDecibels(val / (float)FREQVIEW_SAMPLE_FFT_SIZE));
 };
 
-float UnitConverter::gainToDbInv(float val)
+float UnitConverter::fftToDbInv(float val)
 {
-    return juce::jlimit(0.0f, 1.0f, val + juce::Decibels::gainToDecibels((float)FREQVIEW_SAMPLE_FFT_SIZE));
+    return juce::jlimit(0.0f, (float)FREQVIEW_SAMPLE_FFT_SIZE,
+                        juce::Decibels::decibelsToGain(val) * (float)FREQVIEW_SAMPLE_FFT_SIZE);
 }
 
 int UnitConverter::magnifyFftIndex(int k)

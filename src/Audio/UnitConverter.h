@@ -8,8 +8,8 @@
 class UnitConverter
 {
   public:
-    static float gainToDb(float val);
-    static float gainToDbInv(float val);
+    static float fftToDb(float val);
+    static float fftToDbInv(float val);
 
     /**
      * Projects the [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE] index of the stored fft data

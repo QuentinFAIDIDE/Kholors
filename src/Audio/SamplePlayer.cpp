@@ -84,7 +84,7 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
             // convert the result into decibels
             for (size_t k = 0; k < (FREQVIEW_SAMPLE_FFT_SIZE >> 1); k++)
             {
-                inputOutputData[k] = UnitConverter::gainToDb(inputOutputData[k]);
+                inputOutputData[k] = UnitConverter::fftToDb(inputOutputData[k]);
             }
             // copy back the results
             for (size_t k = 0; k < FREQVIEW_SAMPLE_FFT_SCOPE_SIZE; k++)
