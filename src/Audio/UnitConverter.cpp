@@ -1,4 +1,5 @@
 #include "UnitConverter.h"
+#include <cmath>
 
 float UnitConverter::magnifyFftPrecomputedFactor1 =
     ((FFT_MAGNIFY_B * FFT_MAGNIFY_C) / float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE));
@@ -64,8 +65,7 @@ float UnitConverter::sigmoid(float val)
 
 float UnitConverter::sigmoidInv(float val)
 {
-    // TODO
-    return 0.0f;
+    return -std::log((1.0 / val) - 1.0);
 }
 
 float UnitConverter::polylens(float v)
@@ -82,8 +82,14 @@ float UnitConverter::polylens(float v)
 
 float UnitConverter::polylensInv(float v)
 {
-    // TODO
-    return 0.0f;
+    if (v < 0.5)
+    {
+        return std::pow(v, 10.0 / 3.0);
+    }
+    else
+    {
+        return 0.5 + std::sqrt((2.0 * v) - 1.0);
+    }
 }
 
 float UnitConverter::magnifyIntensity(float input)
