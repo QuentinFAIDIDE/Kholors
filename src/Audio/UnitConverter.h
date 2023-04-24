@@ -17,6 +17,7 @@ class UnitConverter
      * that are result of the FFT.
      * Ie use this to convert an index of the stored fft data into an index of
      * the fft computing result.
+     * BUG: If called back and forth with its inv, low values are drifting away from the original value.
      * @param  k index in range [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE] (powered of .88 log10 relation to Hz)
      * @return   index in range [0, FREQVIEW_SAMPLE_FFT_SIZE/2] (linear relation to Hz)
      */

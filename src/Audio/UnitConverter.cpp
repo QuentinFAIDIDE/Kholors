@@ -72,11 +72,11 @@ float UnitConverter::polylens(float v)
 {
     if (v < 0.5)
     {
-        return std::pow(v, 0.3f) * (0.5 / (std::pow(0.5, 0.3)));
+        return std::pow(v, 0.3f) * POLYLENS_ONE_ON_TWO_POW_7_10TH;
     }
     else
     {
-        return 0.5 + std::pow(v - 0.5, 2.0f) * (0.5 / (std::pow(0.5, 2.0f)));
+        return 0.5 + (std::pow(v - 0.5, 2.0f) * 0.5);
     }
 }
 

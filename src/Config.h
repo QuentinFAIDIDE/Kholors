@@ -109,6 +109,8 @@
 // C is the following power applied
 #define FFT_MAGNIFY_C 0.88
 
+#define POLYLENS_ONE_ON_TWO_POW_7_10TH 0.6155722066724582
+
 #define MIN_DB -100.0f
 #define MAX_DB 0.0f
 
