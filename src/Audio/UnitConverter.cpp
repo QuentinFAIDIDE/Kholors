@@ -7,7 +7,8 @@ float UnitConverter::magnifyFftPrecomputedFactor2 = 0.5 * std::pow(FFT_MAGNIFY_A
 
 float UnitConverter::magnifyFftInvPrecomputedFator1 = FREQVIEW_SAMPLE_FFT_SCOPE_SIZE / (FFT_MAGNIFY_B * FFT_MAGNIFY_C);
 float UnitConverter::magnifyFftInvPrecomputedFator2 =
-    magnifyFftInvPrecomputedFator1 * log10(2 / (std::pow(FFT_MAGNIFY_A, FFT_MAGNIFY_C) * FREQVIEW_SAMPLE_FFT_SIZE));
+    magnifyFftInvPrecomputedFator1 *
+    log10(2 / (std::pow(FFT_MAGNIFY_A, FFT_MAGNIFY_C) * (FREQVIEW_SAMPLE_FFT_SIZE >> 1)));
 
 float UnitConverter::fftToDb(float val)
 {
@@ -31,7 +32,7 @@ int UnitConverter::magnifyFftIndex(int k)
     // formula and precompute as much as possible
 
     float t1 = k * magnifyFftPrecomputedFactor1;
-    float res = magnifyFftPrecomputedFactor2 * std::pow(10.0f, t1) * FREQVIEW_SAMPLE_FFT_SIZE;
+    float res = magnifyFftPrecomputedFactor2 * std::pow(10.0f, t1) * (FREQVIEW_SAMPLE_FFT_SIZE >> 1);
     return juce::jlimit(0, FREQVIEW_SAMPLE_FFT_SIZE >> 1, int(res + 0.5f));
 }
 
@@ -71,26 +72,14 @@ float UnitConverter::sigmoidInv(float val)
 
 float UnitConverter::polylens(float v)
 {
-    if (v < 0.5)
-    {
-        return std::pow(v, 0.3f) * POLYLENS_ONE_ON_TWO_POW_7_10TH;
-    }
-    else
-    {
-        return 0.5 + (std::pow(v - 0.5, 2.0f) * 0.5);
-    }
+    // TODO: find a new easilly invertible function
+    return v;
 }
 
 float UnitConverter::polylensInv(float v)
 {
-    if (v < 0.5)
-    {
-        return std::pow(v, 10.0 / 3.0);
-    }
-    else
-    {
-        return 0.5 + std::sqrt((2.0 * v) - 1.0);
-    }
+    // TODO: find a new easilly invertible function
+    return v;
 }
 
 float UnitConverter::magnifyIntensity(float input)

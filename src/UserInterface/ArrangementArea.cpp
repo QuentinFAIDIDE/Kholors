@@ -797,14 +797,6 @@ float ArrangementArea::verticalPositionToFrequency(int y)
     // map the fft index to a frequency (add 0.5 to index because these are frequency bins and we want to be at the
     // center)
     float freq = (float(fftFreqIndex) + 0.5f) * ((2.0f * AUDIO_FRAMERATE) / FREQVIEW_SAMPLE_FFT_SIZE);
-
-    std::cout << "y: " << y << std::endl;
-    std::cout << "freqRatio: " << freqRatio << std::endl;
-    std::cout << "textureFreqIndex: " << textureFreqIndex << std::endl;
-    std::cout << "storageFreqIndex: " << storageFreqIndex << std::endl;
-    std::cout << "fftFreqIndex: " << fftFreqIndex << std::endl;
-    std::cout << "freq: " << freq << std::endl;
-
     return juce::jlimit(0.0f, float(AUDIO_FRAMERATE), freq);
 }
 
