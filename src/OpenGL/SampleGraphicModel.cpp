@@ -127,10 +127,13 @@ void SampleGraphicModel::updatePropertiesAndUploadToGpu(SamplePlayer *sp)
     float leftX = float(sp->getEditingPosition());
     float rightX = leftX + float(sp->getLength());
 
-    generateAndUploadVertices(leftX, rightX);
+    lastLowPassFreq = sp->getLowPassFreq();
+    lastHighPassFreq = sp->getHighPassFreq();
+
+    generateAndUploadVertices(leftX, rightX, lastLowPassFreq, lastHighPassFreq);
 }
 
-void SampleGraphicModel::generateAndUploadVertices(float leftX, float rightX)
+void SampleGraphicModel::generateAndUploadVertices(float leftX, float rightX, float lowPassFreq, float highPassFreq)
 {
 
     vertices.reserve(8);
@@ -138,15 +141,18 @@ void SampleGraphicModel::generateAndUploadVertices(float leftX, float rightX)
     vertices.clear();
     triangleIds.clear();
 
+    float lowPassPositionRatio = freqToPositionRatio(lowPassFreq);
+    float halfLowPassPos = lowPassPositionRatio / 2.0;
+
     // upper left corner 0
-    vertices.push_back({{leftX, -1.0f},
+    vertices.push_back({{leftX, -lowPassPositionRatio},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {startPositionNormalized, 1.0f}});
+                        {startPositionNormalized, 0.5f + halfLowPassPos}});
 
     // upper right corner 1
-    vertices.push_back({{rightX, -1.0f},
+    vertices.push_back({{rightX, -lowPassPositionRatio},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {endPositionNormalised, 1.0f}});
+                        {endPositionNormalised, 0.5f + halfLowPassPos}});
 
     // right upper band bottom corner 2
     vertices.push_back({{rightX, 0.0f},
@@ -169,18 +175,26 @@ void SampleGraphicModel::generateAndUploadVertices(float leftX, float rightX)
                         {endPositionNormalised, 0.5f}});
 
     // lower right corner 6
-    vertices.push_back({{rightX, 1.0f},
+    vertices.push_back({{rightX, lowPassPositionRatio},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {endPositionNormalised, 0.0f}});
+                        {endPositionNormalised, 0.5f - halfLowPassPos}});
 
     // lower left corner 7
-    vertices.push_back({{leftX, 1.0f},
+    vertices.push_back({{leftX, lowPassPositionRatio},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {startPositionNormalized, 0.0f}});
+                        {startPositionNormalized, 0.5f - halfLowPassPos}});
 
     connectSquareFromVertexIds(0, 1, 2, 3);
     connectSquareFromVertexIds(4, 5, 6, 7);
     uploadVerticesToGpu();
+}
+
+float SampleGraphicModel::freqToPositionRatio(float freq)
+{
+    int fftIndex = (freq / float(AUDIO_FRAMERATE / 2)) * (FREQVIEW_SAMPLE_FFT_SIZE >> 1);
+    int storageIndex = UnitConverter::magnifyFftIndexInv(fftIndex);
+    int textureIndex = UnitConverter::magnifyTextureFrequencyIndex(storageIndex);
+    return float(textureIndex) / float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
 }
 
 void SampleGraphicModel::connectSquareFromVertexIds(size_t topLeft, size_t topRight, size_t bottomRight,
@@ -219,7 +233,7 @@ void SampleGraphicModel::setColor(juce::Colour &col)
     float leftX = vertices[0].position[0];
     float rightX = vertices[1].position[0];
     color = col;
-    generateAndUploadVertices(leftX, rightX);
+    generateAndUploadVertices(leftX, rightX, lastLowPassFreq, lastHighPassFreq);
 }
 
 // Save position and width when selection dragging begins.
@@ -234,7 +248,7 @@ void SampleGraphicModel::initDrag()
 void SampleGraphicModel::updateDrag(int frameMove)
 {
     int position = dragStartPosition + frameMove;
-    generateAndUploadVertices(position, position + lastWidth);
+    generateAndUploadVertices(position, position + lastWidth, lastLowPassFreq, lastHighPassFreq);
 }
 
 void SampleGraphicModel::uploadVerticesToGpu()

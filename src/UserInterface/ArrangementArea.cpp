@@ -767,6 +767,12 @@ void ArrangementArea::cropSampleOuterBordersVertically()
         if (currentSample != nullptr)
         {
             currentSample->setLowPassFreq(filterFreq);
+            // apply change to opengl sample
+            openGLContext.executeOnGLThread(
+                [this, itr, currentSample](juce::OpenGLContext &c) {
+                    samples[*itr].updatePropertiesAndUploadToGpu(currentSample);
+                },
+                true);
         }
     }
 }
@@ -797,7 +803,7 @@ float ArrangementArea::verticalPositionToFrequency(int y)
     // map the fft index to a frequency (add 0.5 to index because these are frequency bins and we want to be at the
     // center)
     float freq = (float(fftFreqIndex) + 0.5f) * ((2.0f * AUDIO_FRAMERATE) / FREQVIEW_SAMPLE_FFT_SIZE);
-    return juce::jlimit(0.0f, float(AUDIO_FRAMERATE), freq);
+    return juce::jlimit(0.0f, float(AUDIO_FRAMERATE >> 1), freq);
 }
 
 bool ArrangementArea::updateViewResizing(juce::Point<int> &newPosition)

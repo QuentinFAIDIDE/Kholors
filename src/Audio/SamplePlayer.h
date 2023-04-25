@@ -67,6 +67,8 @@ class SamplePlayer : public juce::PositionableAudioSource
 
     void setLowPassFreq(int freq);
     void setHighPassFreq(int freq);
+    float getLowPassFreq();
+    float getHighPassFreq();
 
     std::string getFileName();
 

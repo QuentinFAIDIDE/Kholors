@@ -488,3 +488,13 @@ void SamplePlayer::applyFilters(const juce::AudioSourceChannelInfo &bufferToFill
         }
     }
 }
+
+float SamplePlayer::getLowPassFreq()
+{
+    return lowPassFreq;
+}
+
+float SamplePlayer::getHighPassFreq()
+{
+    return highPassFreq;
+}

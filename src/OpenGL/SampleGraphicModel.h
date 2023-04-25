@@ -26,7 +26,7 @@ class SampleGraphicModel : public TexturedModel
     int lastWidth;
     int getTextureIndex(int freqIndex, int timeIndex, int freqDuplicateShift, bool isLeftChannel);
 
-    void generateAndUploadVertices(float leftX, float rightX);
+    void generateAndUploadVertices(float leftX, float rightX, float lowFreq, float highFreq);
 
     void connectSquareFromVertexIds(size_t, size_t, size_t, size_t);
 
@@ -34,10 +34,13 @@ class SampleGraphicModel : public TexturedModel
 
     void uploadVerticesToGpu();
 
+    float freqToPositionRatio(float freq);
+
     int numFfts;
     int numChannels;
     int channelTextureShift;
     juce::Colour color;
+    float lastLowPassFreq, lastHighPassFreq;
 
     // the position between 0 and 1 of samplePlayer startPosition and endPosition relative to audio buffer
     float startPositionNormalized, endPositionNormalised;
