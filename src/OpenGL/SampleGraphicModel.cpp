@@ -191,9 +191,9 @@ void SampleGraphicModel::generateAndUploadVertices(float leftX, float rightX, fl
 
 float SampleGraphicModel::freqToPositionRatio(float freq)
 {
-    int fftIndex = (freq / float(AUDIO_FRAMERATE / 2)) * (FREQVIEW_SAMPLE_FFT_SIZE >> 1);
-    int storageIndex = UnitConverter::magnifyFftIndexInv(fftIndex);
-    int textureIndex = UnitConverter::magnifyTextureFrequencyIndex(storageIndex);
+    float fftIndex = freq * (float(FREQVIEW_SAMPLE_FFT_SIZE) / float(AUDIO_FRAMERATE));
+    float storageIndex = UnitConverter::magnifyFftIndexInv(fftIndex);
+    float textureIndex = UnitConverter::magnifyTextureFrequencyIndex(storageIndex);
     return float(textureIndex) / float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
 }
 

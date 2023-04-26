@@ -21,14 +21,14 @@ class UnitConverter
      * @param  k index in range [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE] (powered of .88 log10 relation to Hz)
      * @return   index in range [0, FREQVIEW_SAMPLE_FFT_SIZE/2] (linear relation to Hz)
      */
-    static int magnifyFftIndex(int k);
+    static float magnifyFftIndex(float k);
     /**
      * Exact inverse of magnifyFftIndex. Will take an index from the fft and convert it
      * back into an index of the stored data.
      * @param  k index in range [0, FREQVIEW_SAMPLE_FFT_SIZE/2] (linear relation to Hz)
      * @return   index in range [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE] (powered of .88 log10 relation to Hz)
      */
-    static int magnifyFftIndexInv(int k);
+    static float magnifyFftIndexInv(float k);
 
     /**
      * Subsequent layer of magnification to write texture data
@@ -36,13 +36,13 @@ class UnitConverter
      * @param  k index to magnify in range [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE].
      * @return   index after zooming in, in range [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE].
      */
-    static int magnifyTextureFrequencyIndex(int k);
+    static float magnifyTextureFrequencyIndex(float k);
     /**
      * Invert of the magnifyTextureFrequency function.
      * @param  k index magnfied in range [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE].
      * @return   index before zooming in, in range [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE].
      */
-    static int magnifyTextureFrequencyIndexInv(int k);
+    static float magnifyTextureFrequencyIndexInv(float k);
 
     /**
      * Increase contrast from stored ffts to displayed

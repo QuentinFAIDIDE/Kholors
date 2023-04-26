@@ -21,7 +21,7 @@ float UnitConverter::fftToDbInv(float val)
                         juce::Decibels::decibelsToGain(val) * (float)FREQVIEW_SAMPLE_FFT_SIZE);
 }
 
-int UnitConverter::magnifyFftIndex(int k)
+float UnitConverter::magnifyFftIndex(float k)
 {
     // the transfo is mainly made of three steps:
     // log10 normalized to [0, 1] using A and B
@@ -33,31 +33,31 @@ int UnitConverter::magnifyFftIndex(int k)
 
     float t1 = k * magnifyFftPrecomputedFactor1;
     float res = magnifyFftPrecomputedFactor2 * std::pow(10.0f, t1) * (FREQVIEW_SAMPLE_FFT_SIZE >> 1);
-    return juce::jlimit(0, FREQVIEW_SAMPLE_FFT_SIZE >> 1, int(res + 0.5f));
+    return juce::jlimit(0.0f, float(FREQVIEW_SAMPLE_FFT_SIZE >> 1), res);
 }
 
-int UnitConverter::magnifyFftIndexInv(int k)
+float UnitConverter::magnifyFftIndexInv(float k)
 {
     float res = (magnifyFftInvPrecomputedFator1 * log10(k)) + magnifyFftInvPrecomputedFator2;
-    return juce::jlimit(0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE, int(res + 0.5f));
+    return juce::jlimit(0.0f, float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE), res);
 }
 
-int UnitConverter::magnifyTextureFrequencyIndex(int k)
+float UnitConverter::magnifyTextureFrequencyIndex(float k)
 {
     // TODO: develop and factor the mixing of polylens to try
     // to find factors to precompute
 
     // we apply our polynomial lens transformation to zoom in a bit
-    float position = float(k) / float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1);
-    int index = int((polylens(position) * (FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1)) + 0.5);
-    return juce::jlimit(0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1, index);
+    float position = k / float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1);
+    float index = polylens(position) * float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1);
+    return juce::jlimit(0.0f, float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1), index);
 }
 
-int UnitConverter::magnifyTextureFrequencyIndexInv(int k)
+float UnitConverter::magnifyTextureFrequencyIndexInv(float k)
 {
     float position = float(k) / float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1);
-    int index = int((polylensInv(position) * (FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1)) + 0.5);
-    return juce::jlimit(0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1, index);
+    float index = polylensInv(position) * float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1);
+    return juce::jlimit(0.0f, float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1), index);
 }
 
 float UnitConverter::sigmoid(float val)

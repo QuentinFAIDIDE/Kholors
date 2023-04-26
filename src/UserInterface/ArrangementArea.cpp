@@ -797,12 +797,11 @@ float ArrangementArea::verticalPositionToFrequency(int y)
     }
 
     // apply back the index transformation to make it linear to frequencies
-    int textureFreqIndex = int((freqRatio * float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE)) + 0.5f);
-    int storageFreqIndex = UnitConverter::magnifyTextureFrequencyIndexInv(textureFreqIndex);
-    int fftFreqIndex = UnitConverter::magnifyFftIndex(storageFreqIndex);
-    // map the fft index to a frequency (add 0.5 to index because these are frequency bins and we want to be at the
-    // center)
-    float freq = (float(fftFreqIndex) + 0.5f) * ((2.0f * AUDIO_FRAMERATE) / FREQVIEW_SAMPLE_FFT_SIZE);
+    float textureFreqIndex = freqRatio * float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1);
+    float storageFreqIndex = UnitConverter::magnifyTextureFrequencyIndexInv(textureFreqIndex);
+    float fftFreqIndex = UnitConverter::magnifyFftIndex(storageFreqIndex);
+    // map the fft index to a frequency
+    float freq = fftFreqIndex * (AUDIO_FRAMERATE / FREQVIEW_SAMPLE_FFT_SIZE);
     return juce::jlimit(0.0f, float(AUDIO_FRAMERATE >> 1), freq);
 }
 
