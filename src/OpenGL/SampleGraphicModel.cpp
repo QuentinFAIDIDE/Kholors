@@ -290,3 +290,18 @@ juce::int64 SampleGraphicModel::getFrameLength()
 {
     return juce::int64(vertices[1].position[0] - vertices[0].position[0]);
 }
+
+std::vector<juce::Rectangle<float>> SampleGraphicModel::getPixelBounds(float viewPosition, float viewScale,
+                                                                       float viewHeight)
+{
+    float freqRatioLowPass = freqToPositionRatio(lastLowPassFreq);
+    float freqRatioHighPass = freqToPositionRatio(lastHighPassFreq);
+    float height = (freqRatioLowPass - freqRatioHighPass) * viewHeight;
+    float width = vertices[1].position[0] - vertices[0].position[0];
+
+    std::vector<juce::Rectangle<float>> rectangles;
+    rectangles.push_back(juce::Rectangle<float>(vertices[1].position[0], (1.0 - freqRatioLowPass) * (viewHeight / 2.0),
+                                                vertices[1].position[0] - vertices[0].position[0], height));
+
+    return rectangles;
+}

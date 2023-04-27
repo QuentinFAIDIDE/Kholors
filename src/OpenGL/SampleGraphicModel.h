@@ -20,6 +20,7 @@ class SampleGraphicModel : public TexturedModel
     juce::int64 getFrameLength();
     void setColor(juce::Colour &);
     void updatePropertiesAndUploadToGpu(SamplePlayer *sp);
+    std::vector<juce::Rectangle<float>> getPixelBounds(float viewPosition, float viewScale, float viewHeight);
 
   private:
     int dragStartPosition;
