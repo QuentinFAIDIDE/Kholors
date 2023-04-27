@@ -159,12 +159,6 @@ class ArrangementArea : public juce::Component,
     int64_t trackMovingInitialPosition;
     int64_t dragLastPosition;
 
-    // size of fft blocks
-    float fftBlockWidth, fftBlockHeight;
-
-    // numbers of squares we can fit on horizontal axis with fft
-    int noVerticalSquaresFft;
-
     // buffer and vector for the labels on screen (to be swapped after
     // update)
     std::vector<IndexedRectangle> onScreenLabelsPixelsCoordsBuffer, onScreenLabelsPixelsCoords;

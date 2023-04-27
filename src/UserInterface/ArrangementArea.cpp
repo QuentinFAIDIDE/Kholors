@@ -37,10 +37,10 @@ ArrangementArea::ArrangementArea(MixingBus &mb, NotificationArea &na, ActivityMa
     isMovingCursor = false;
     lastPlayCursorPosition = 0;
     trackMovingInitialPosition = -1;
-    // TODO: make fft block height dynamic for zooming on y axis
-    fftBlockHeight = float(FREQTIME_VIEW_HEIGHT - FREQTIME_VIEW_INNER_MARGINS) / float(FREQVIEW_SAMPLE_FFT_SIZE << 1);
-    // TODO: configure this in args or config file
+
+
     tempo = 120;
+    
     // bars drawned in order, watch for overlaps (use smaller subdiv first)
     gridSubdivisions.push_back((GridLevel){4.0, 80});
     gridSubdivisions.push_back((GridLevel){1.0, 160});
