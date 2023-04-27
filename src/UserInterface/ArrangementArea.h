@@ -136,12 +136,7 @@ class ArrangementArea : public juce::Component,
     // last mouse coordinates
     int lastMouseX;
     int lastMouseY;
-    // levels to display bars
-    std::vector<GridLevel> gridSubdivisions;
-    // are we in resize mode ? (middle mouse button pressed)
-    bool isResizing;
-    // are we moving the play cursor around ?
-    bool isMovingCursor;
+
     // reference to the sample manager in use
     MixingBus &mixingBus;
     NotificationArea &notificationArea;

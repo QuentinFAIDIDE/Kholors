@@ -33,18 +33,12 @@ ArrangementArea::ArrangementArea(MixingBus &mb, NotificationArea &na, ActivityMa
     viewScale = 100;
     lastMouseX = 0;
     lastMouseY = 0;
-    isResizing = false;
-    isMovingCursor = false;
     lastPlayCursorPosition = 0;
     trackMovingInitialPosition = -1;
 
 
     tempo = 120;
-    
-    // bars drawned in order, watch for overlaps (use smaller subdiv first)
-    gridSubdivisions.push_back((GridLevel){4.0, 80});
-    gridSubdivisions.push_back((GridLevel){1.0, 160});
-    gridSubdivisions.push_back((GridLevel){0.25, 200});
+
     // play cursor color
     cursorColor = juce::Colour(240, 240, 240);
     // enable keyboard events
