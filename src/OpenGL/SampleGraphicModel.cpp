@@ -297,7 +297,6 @@ std::vector<juce::Rectangle<float>> SampleGraphicModel::getPixelBounds(float vie
     float freqRatioLowPass = freqToPositionRatio(lastLowPassFreq);
     float freqRatioHighPass = freqToPositionRatio(lastHighPassFreq);
     float height = (freqRatioLowPass - freqRatioHighPass) * viewHeight;
-    float width = vertices[1].position[0] - vertices[0].position[0];
 
     std::vector<juce::Rectangle<float>> rectangles;
 
@@ -305,31 +304,20 @@ std::vector<juce::Rectangle<float>> SampleGraphicModel::getPixelBounds(float vie
     {
 
         rectangles.push_back(juce::Rectangle<float>(
-            (vertices[1].position[0] - viewPosition) / viewScale,
-            (1.0 - freqRatioLowPass) * (viewHeight / 2.0),
-            (vertices[1].position[0] - vertices[0].position[0])/viewScale,
-            height
-            )
-        );
-
-    } else {
+            (vertices[0].position[0] - viewPosition) / viewScale, (1.0 - freqRatioLowPass) * (viewHeight / 2.0),
+            (vertices[1].position[0] - vertices[0].position[0]) / viewScale, height));
+    }
+    else
+    {
 
         rectangles.push_back(juce::Rectangle<float>(
-            (vertices[1].position[0] - viewPosition) / viewScale,
-            (1.0 - freqRatioLowPass) * (viewHeight / 2.0),
-            (vertices[1].position[0] - vertices[0].position[0]) / viewScale,
-            height/2.0
-            )
-        );
+            (vertices[0].position[0] - viewPosition) / viewScale, (1.0 - freqRatioLowPass) * (viewHeight / 2.0),
+            (vertices[1].position[0] - vertices[0].position[0]) / viewScale, height / 2.0));
 
-        rectangles.push_back(juce::Rectangle<float>(
-            (vertices[1].position[0] - viewPosition) / viewScale,
-            (viewHeight / 2.0) + ((freqRatioHighPass) * (viewHeight / 2.0)),
-            (vertices[1].position[0] - vertices[0].position[0]) / viewScale,
-            height/2.0
-            )
-        );
-
+        rectangles.push_back(juce::Rectangle<float>((vertices[0].position[0] - viewPosition) / viewScale,
+                                                    (viewHeight / 2.0) + ((freqRatioHighPass) * (viewHeight / 2.0)),
+                                                    (vertices[1].position[0] - vertices[0].position[0]) / viewScale,
+                                                    height / 2.0));
     }
 
     return rectangles;

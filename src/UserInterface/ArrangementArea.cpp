@@ -87,11 +87,6 @@ void ArrangementArea::paintSelection(juce::Graphics &g)
     // iterate over tracks and draw borders around them
     std::set<size_t>::iterator itr;
     IndexedRectangle currentSampleBorders;
-    int dragShift = 0;
-    if (activityManager.getAppState().getUiState() == UI_STATE_KEYBOARD_SAMPLE_DRAG)
-    {
-        dragShift = lastMouseX - trackMovingInitialPosition;
-    }
 
     // empty buffer of selected samples borders
     selectedSamplesCoordsBuffer.clear();
@@ -754,11 +749,14 @@ void ArrangementArea::cropSampleOuterBordersVertically()
 
     SamplePlayer *currentSample;
 
+    bool changedSomething = false;
+
     for (itr = selectedTracks.begin(); itr != selectedTracks.end(); itr++)
     {
         currentSample = mixingBus.getTrack(*itr);
         if (currentSample != nullptr)
         {
+            changedSomething = true;
             currentSample->setLowPassFreq(filterFreq);
             // apply change to opengl sample
             openGLContext.executeOnGLThread(
@@ -767,6 +765,11 @@ void ArrangementArea::cropSampleOuterBordersVertically()
                 },
                 true);
         }
+    }
+
+    if (changedSomething)
+    {
+        repaint();
     }
 }
 
