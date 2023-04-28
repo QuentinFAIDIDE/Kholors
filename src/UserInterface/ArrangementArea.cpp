@@ -765,7 +765,7 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
     }
 }
 
-void ArrangementArea::cropSampleBordersVertically(float innerBorders)
+void ArrangementArea::cropSampleBordersVertically(bool innerBorders)
 {
     // compute the frequency to set in the filter
     float filterFreq = verticalPositionToFrequency(lastMouseY);
