@@ -36,7 +36,6 @@ ArrangementArea::ArrangementArea(MixingBus &mb, NotificationArea &na, ActivityMa
     lastPlayCursorPosition = 0;
     trackMovingInitialPosition = -1;
 
-
     tempo = 120;
 
     // play cursor color
@@ -103,12 +102,12 @@ void ArrangementArea::paintSelection(juce::Graphics &g)
         // ignore deleted selected tracks
         if (mixingBus.getTrack(*itr) != nullptr)
         {
-            auto samplesRects = samples[*itr];
-            
-            for(size_t i=0; i<samplesRects.size(); i++)
+            auto samplesRects = samples[*itr].getPixelBounds(viewPosition, viewScale, bounds.getHeight());
+
+            for (size_t i = 0; i < samplesRects.size(); i++)
             {
                 // reject what's not on screen
-                if (samplesRects[i].getX()+samplesRects[i].getWidth() < 0 ||
+                if (samplesRects[i].getX() + samplesRects[i].getWidth() < 0 ||
                     samplesRects[i].getX() > bounds.getWidth())
                 {
                     continue;
@@ -116,6 +115,7 @@ void ArrangementArea::paintSelection(juce::Graphics &g)
 
                 // if we reach here it's on screen, we draw and save it
                 currentSampleBorders = samplesRects[i];
+
                 g.drawRoundedRectangle(currentSampleBorders, 4, 1.7);
                 currentSampleBorders.setSampleIndex(*itr);
                 selectedSamplesCoordsBuffer.push_back(IndexedRectangle(currentSampleBorders));

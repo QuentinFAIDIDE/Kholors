@@ -37,6 +37,15 @@ class IndexedRectangle : public juce::Rectangle<float>
     {
         return index;
     }
+    IndexedRectangle &operator=(juce::Rectangle<float> other)
+    {
+        setWidth(other.getWidth());
+        setHeight(other.getHeight());
+        setX(other.getX());
+        setY(other.getY());
+
+        return *this;
+    }
 
   private:
     int index;
