@@ -409,12 +409,17 @@ void SamplePlayer::setLowPassFreq(int freq)
 {
     lowPassFreq = freq;
 
-    if (lowPassFreq < 0)
+    if (lowPassFreq < highPassFreq/SAMPLEPLAYER_FILTER_SNAP_RATIO)
+    {
+        lowPassFreq = highPassFreq/SAMPLEPLAYER_FILTER_SNAP_RATIO;
+    }
+
+    if (lowPassFreq < ((1.0-SAMPLEPLAYER_FILTER_SNAP_RATIO)*(AUDIO_FRAMERATE/2.0)))
     {
         lowPassFreq = 0;
     }
 
-    if (lowPassFreq >= maxFilterFreq)
+    if (lowPassFreq >= maxFilterFreq*SAMPLEPLAYER_FILTER_SNAP_RATIO)
     {
         lowPassFreq = maxFilterFreq;
         for (size_t i = 0; i < SAMPLEPLAYER_MAX_FILTER_REPEAT; i++)
@@ -437,12 +442,17 @@ void SamplePlayer::setHighPassFreq(int freq)
 {
     highPassFreq = freq;
 
-    if (highPassFreq > maxFilterFreq)
+    if (highPassFreq > maxFilterFreq*SAMPLEPLAYER_FILTER_SNAP_RATIO)
     {
         highPassFreq = maxFilterFreq;
     }
 
-    if (highPassFreq <= 0)
+    if (highPassFreq > lowPassFreq*SAMPLEPLAYER_FILTER_SNAP_RATIO)
+    {
+        highPassFreq = lowPassFreq*SAMPLEPLAYER_FILTER_SNAP_RATIO;
+    }
+
+    if (highPassFreq <= ((1.0-SAMPLEPLAYER_FILTER_SNAP_RATIO)*(AUDIO_FRAMERATE/2.0)))
     {
         highPassFreq = 0;
         for (size_t i = 0; i < SAMPLEPLAYER_MAX_FILTER_REPEAT; i++)
