@@ -24,11 +24,11 @@ class SampleAreaRectangle : public juce::Rectangle<float>
     int getNumParts() {
       return numParts;
     }
-    void setIsTopPart(bool is) {
-      isSampleTopOne = is;
+    void setPartId(int id) {
+      partId = id;
     }
-    bool isTopPart() {
-      return isSampleTopOne;
+    int getPartId() {
+      return partId;
     }
 
     SampleAreaRectangle &operator=(juce::Rectangle<float> other)
@@ -44,7 +44,7 @@ class SampleAreaRectangle : public juce::Rectangle<float>
   private:
     int index;
     int numParts;
-    bool isSampleTopOne;
+    int partId;
 };
 
 #endif // DEF_SAMPLE_AREA_RECT_HPP

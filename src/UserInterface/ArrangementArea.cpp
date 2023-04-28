@@ -111,8 +111,11 @@ void ArrangementArea::paintSelection(juce::Graphics &g)
                 // if we reach here it's on screen, we draw and save it
                 currentSampleBorders = samplesRects[i];
 
-                g.drawRoundedRectangle(currentSampleBorders, 4, 1.7);
                 currentSampleBorders.setSampleIndex(*itr);
+                currentSampleBorders.setNumParts(samplesRects.size());
+                currentSampleBorders.setPartId(i);
+
+                g.drawRoundedRectangle(currentSampleBorders, 4, 1.7);
                 selectedSamplesCoordsBuffer.push_back(SampleAreaRectangle(currentSampleBorders));
             }
         }

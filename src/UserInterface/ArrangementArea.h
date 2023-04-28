@@ -31,14 +31,22 @@ enum Border
     BORDER_RIGHT
 };
 
+enum SampleDirection
+{
+  LOW_FREQS_TO_BOTTOM,
+  LOW_FREQS_TO_TOP,
+};
+
 class SampleBorder
 {
   public:
-    SampleBorder(int i, Border b) : id(i), border(b)
-    {
-    }
+    SampleBorder(int i, Border b, SampleDirection dir) : 
+      id(i),
+      border(b),
+      direction(dir) { }
     int id;
     Border border;
+    SampleDirection direction;
 };
 
 //==============================================================================
