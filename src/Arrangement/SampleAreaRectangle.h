@@ -1,3 +1,8 @@
+#ifndef DEF_SAMPLE_AREA_RECT_HPP
+#define DEF_SAMPLE_AREA_RECT_HPP
+
+#include <juce_gui_extra/juce_gui_extra.h>
+
 class SampleAreaRectangle : public juce::Rectangle<float>
 {
   public:
@@ -41,3 +46,5 @@ class SampleAreaRectangle : public juce::Rectangle<float>
     int numParts;
     bool isTopPart;
 };
+
+#endif // DEF_SAMPLE_AREA_RECT_HPP
