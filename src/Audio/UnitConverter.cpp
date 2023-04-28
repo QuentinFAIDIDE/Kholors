@@ -72,14 +72,12 @@ float UnitConverter::sigmoidInv(float val)
 
 float UnitConverter::polylens(float v)
 {
-    // TODO: find a new easilly invertible function
-    return v;
+    return std::pow(v, 2.0f);
 }
 
 float UnitConverter::polylensInv(float v)
 {
-    // TODO: find a new easilly invertible function
-    return v;
+    return std::pow(v, 0.5f);
 }
 
 float UnitConverter::magnifyIntensity(float input)
