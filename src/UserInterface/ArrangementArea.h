@@ -13,12 +13,12 @@
 #include <vector>
 
 #include "../Arrangement/ActivityManager.h"
+#include "../Arrangement/SampleAreaRectangle.h"
 #include "../Arrangement/TaxonomyManager.h"
 #include "../Audio/MixingBus.h"
 #include "../Config.h"
 #include "../OpenGL/BackgroundModel.h"
 #include "../OpenGL/SampleGraphicModel.h"
-#include "../Arrangement/SampleAreaRectangle.h"
 #include "GridLevel.h"
 #include "NotificationArea.h"
 #include "juce_opengl/opengl/juce_gl.h"
@@ -33,17 +33,16 @@ enum Border
 
 enum SampleDirection
 {
-  LOW_FREQS_TO_BOTTOM,
-  LOW_FREQS_TO_TOP,
+    LOW_FREQS_TO_BOTTOM,
+    LOW_FREQS_TO_TOP,
 };
 
 class SampleBorder
 {
   public:
-    SampleBorder(int i, Border b, SampleDirection dir) : 
-      id(i),
-      border(b),
-      direction(dir) { }
+    SampleBorder(int i, Border b, SampleDirection dir) : id(i), border(b), direction(dir)
+    {
+    }
     int id;
     Border border;
     SampleDirection direction;
@@ -156,7 +155,7 @@ class ArrangementArea : public juce::Component,
     void paintSampleLabel(juce::Graphics &g, juce::Rectangle<float> &, int index);
 
     SampleAreaRectangle addLabelAndPreventOverlaps(std::vector<SampleAreaRectangle> &existingLabels, int x, int y,
-                                                int sampleIndex);
+                                                   int sampleIndex);
     bool rectangleIntersects(SampleAreaRectangle &, std::vector<SampleAreaRectangle> &);
 
     void handleMiddleButterDown(const juce::MouseEvent &);
@@ -187,6 +186,8 @@ class ArrangementArea : public juce::Component,
     float verticalPositionToFrequency(int);
     void cropSampleEdgeHorizontally(bool cropFront);
     void cropSampleBordersVertically(bool isInnerBorder);
+
+    bool overlapSampleArea(SampleAreaRectangle &, int, int);
 
     bool updateViewResizing(juce::Point<int> &);
 };

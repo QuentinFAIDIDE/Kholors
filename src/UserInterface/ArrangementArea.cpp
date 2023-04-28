@@ -126,6 +126,16 @@ void ArrangementArea::paintSelection(juce::Graphics &g)
 
 juce::Optional<SampleBorder> ArrangementArea::mouseOverSelectionBorder()
 {
+
+    // if we're already over a label, do nothing
+    for (size_t i = 0; i < onScreenLabelsPixelsCoords.size(); i++)
+    {
+        if (onScreenLabelsPixelsCoords[i].contains(lastMouseX, lastMouseY))
+        {
+            return juce::Optional<SampleBorder>(juce::nullopt);
+        }
+    }
+
     // iterate over on screen selected samples
     for (size_t i = 0; i < selectedSamplesCoords.size(); i++)
     {
@@ -173,7 +183,7 @@ juce::Optional<SampleBorder> ArrangementArea::mouseOverSelectionBorder()
 void ArrangementArea::paintLabels(juce::Graphics &g)
 {
     // prefix notes:
-    // Frame: coordinates in global audio samples position
+    // Frame: coordinates in global audio frames position
     // Pixel: coordinates in pixels
 
     // clear the list of previous labels (to be later swapped)
@@ -224,8 +234,8 @@ void ArrangementArea::paintLabels(juce::Graphics &g)
 }
 
 SampleAreaRectangle ArrangementArea::addLabelAndPreventOverlaps(std::vector<SampleAreaRectangle> &existingLabels,
-                                                             int leftSidePixelCoords, int rightSidePixelCoords,
-                                                             int sampleIndex)
+                                                                int leftSidePixelCoords, int rightSidePixelCoords,
+                                                                int sampleIndex)
 {
     // the pixel coordinates of the upcoming label
     SampleAreaRectangle pixelLabelRect;
@@ -241,11 +251,14 @@ SampleAreaRectangle ArrangementArea::addLabelAndPreventOverlaps(std::vector<Samp
         pixelLabelRect.setWidth(textPixelWidth + FREQVIEW_LABELS_MARGINS * 2 + pixelLabelRect.getHeight());
     }
 
-    // we will keep moving it untill there's no overlap
+    int maxTrials = bounds.getHeight() / FREQVIEW_LABEL_HEIGHT;
+
+    // we will keep moving it untill there's no overlap to other labels
+    // and it lies over its samples area
     float origin = float(bounds.getHeight() >> 1);
     pixelLabelRect.setY(origin - (FREQVIEW_LABEL_HEIGHT >> 1));
     int trials = 0;
-    while (rectangleIntersects(pixelLabelRect, existingLabels))
+    while (rectangleIntersects(pixelLabelRect, existingLabels) || !overlapSampleArea(pixelLabelRect, sampleIndex, 4))
     {
         if (trials % 2 == 0)
         {
@@ -256,6 +269,11 @@ SampleAreaRectangle ArrangementArea::addLabelAndPreventOverlaps(std::vector<Samp
             pixelLabelRect.setY(origin - ((trials >> 1) + 1) * FREQVIEW_LABEL_HEIGHT - (FREQVIEW_LABEL_HEIGHT >> 1));
         }
         trials++;
+
+        if (trials >= maxTrials)
+        {
+            return pixelLabelRect;
+        }
     }
 
     // skip label if it's too small by not giving it an id and not pushing it to
@@ -276,6 +294,27 @@ bool ArrangementArea::rectangleIntersects(SampleAreaRectangle &target, std::vect
     for (int i = 0; i < rectangles.size(); i++)
     {
         if (target.intersects(rectangles[i]))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool ArrangementArea::overlapSampleArea(SampleAreaRectangle &rect, int sampleIndex, int margin)
+{
+    auto sampleRects = samples[sampleIndex].getPixelBounds(viewPosition, viewScale, bounds.getHeight());
+
+    if (sampleRects[0].enlargeIfAdjacent(sampleRects[1]))
+    {
+        std::vector<juce::Rectangle<float>> newRects;
+        newRects.push_back(sampleRects[0]);
+        sampleRects.swap(newRects);
+    }
+
+    for (size_t i = 0; i < sampleRects.size(); i++)
+    {
+        if (sampleRects[i].expanded(margin, margin).contains(rect))
         {
             return true;
         }
@@ -539,7 +578,8 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
                 if (sampleBorderClicked->direction == LOW_FREQS_TO_BOTTOM)
                 {
                     activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_MONO_HIGHPASS);
-                } else
+                }
+                else
                 {
                     activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_MONO_LOWPASS);
                 }
@@ -549,7 +589,8 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
                 if (sampleBorderClicked->direction == LOW_FREQS_TO_BOTTOM)
                 {
                     activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_MONO_LOWPASS);
-                } else
+                }
+                else
                 {
                     activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_MONO_HIGHPASS);
                 }
@@ -782,10 +823,11 @@ void ArrangementArea::cropSampleBordersVertically(bool innerBorders)
         if (currentSample != nullptr)
         {
             changedSomething = true;
-            if (innerBorders) 
+            if (innerBorders)
             {
                 currentSample->setHighPassFreq(filterFreq);
-            } else
+            }
+            else
             {
                 currentSample->setLowPassFreq(filterFreq);
             }
