@@ -132,31 +132,38 @@ juce::Optional<SampleBorder> ArrangementArea::mouseOverSelectionBorder()
         // if our click is in bounds of this sample
         if (selectedSamplesCoords[i].expanded(PLAYCURSOR_GRAB_WIDTH).contains(lastMouseX, lastMouseY))
         {
+
+            SampleDirection direction = LOW_FREQS_TO_TOP;
+            if (selectedSamplesCoords[i].getPartId() == 0)
+            {
+                direction = LOW_FREQS_TO_BOTTOM;
+            }
+
             // switch on the border
             if (abs(selectedSamplesCoords[i].getX() - lastMouseX) < PLAYCURSOR_GRAB_WIDTH)
             {
                 return juce::Optional<SampleBorder>(
-                    SampleBorder(selectedSamplesCoords[i].getSampleIndex(), BORDER_LEFT));
+                    SampleBorder(selectedSamplesCoords[i].getSampleIndex(), BORDER_LEFT, direction));
             }
 
             if (abs(selectedSamplesCoords[i].getX() + selectedSamplesCoords[i].getWidth() - lastMouseX) <
                 PLAYCURSOR_GRAB_WIDTH)
             {
                 return juce::Optional<SampleBorder>(
-                    SampleBorder(selectedSamplesCoords[i].getSampleIndex(), BORDER_RIGHT));
+                    SampleBorder(selectedSamplesCoords[i].getSampleIndex(), BORDER_RIGHT, direction));
             }
 
             if (abs(selectedSamplesCoords[i].getY() - lastMouseY) < PLAYCURSOR_GRAB_WIDTH)
             {
                 return juce::Optional<SampleBorder>(
-                    SampleBorder(selectedSamplesCoords[i].getSampleIndex(), BORDER_UPPER));
+                    SampleBorder(selectedSamplesCoords[i].getSampleIndex(), BORDER_UPPER, direction));
             }
 
             if (abs(selectedSamplesCoords[i].getY() + selectedSamplesCoords[i].getHeight() - lastMouseY) <
                 PLAYCURSOR_GRAB_WIDTH)
             {
                 return juce::Optional<SampleBorder>(
-                    SampleBorder(selectedSamplesCoords[i].getSampleIndex(), BORDER_LOWER));
+                    SampleBorder(selectedSamplesCoords[i].getSampleIndex(), BORDER_LOWER, direction));
             }
         }
     }
