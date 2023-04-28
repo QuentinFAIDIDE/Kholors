@@ -300,25 +300,14 @@ std::vector<juce::Rectangle<float>> SampleGraphicModel::getPixelBounds(float vie
 
     std::vector<juce::Rectangle<float>> rectangles;
 
-    if (lastHighPassFreq == 0)
-    {
+    rectangles.push_back(juce::Rectangle<float>(
+        (vertices[0].position[0] - viewPosition) / viewScale, (1.0 - freqRatioLowPass) * (viewHeight / 2.0),
+        (vertices[1].position[0] - vertices[0].position[0]) / viewScale, height / 2.0));
 
-        rectangles.push_back(juce::Rectangle<float>(
-            (vertices[0].position[0] - viewPosition) / viewScale, (1.0 - freqRatioLowPass) * (viewHeight / 2.0),
-            (vertices[1].position[0] - vertices[0].position[0]) / viewScale, height));
-    }
-    else
-    {
-
-        rectangles.push_back(juce::Rectangle<float>(
-            (vertices[0].position[0] - viewPosition) / viewScale, (1.0 - freqRatioLowPass) * (viewHeight / 2.0),
-            (vertices[1].position[0] - vertices[0].position[0]) / viewScale, height / 2.0));
-
-        rectangles.push_back(juce::Rectangle<float>((vertices[0].position[0] - viewPosition) / viewScale,
-                                                    (viewHeight / 2.0) + ((freqRatioHighPass) * (viewHeight / 2.0)),
-                                                    (vertices[1].position[0] - vertices[0].position[0]) / viewScale,
-                                                    height / 2.0));
-    }
+    rectangles.push_back(juce::Rectangle<float>((vertices[0].position[0] - viewPosition) / viewScale,
+                                                (viewHeight / 2.0) + ((freqRatioHighPass) * (viewHeight / 2.0)),
+                                                (vertices[1].position[0] - vertices[0].position[0]) / viewScale,
+                                                height / 2.0));
 
     return rectangles;
 }
