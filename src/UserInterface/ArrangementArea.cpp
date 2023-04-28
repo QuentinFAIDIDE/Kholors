@@ -536,11 +536,23 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
                 dragLastPosition = lastMouseX;
                 break;
             case BORDER_LOWER:
-                activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_MONO_LOWPASS);
+                if (sampleBorderClicked->direction == LOW_FREQS_TO_BOTTOM)
+                {
+                    activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_MONO_HIGHPASS);
+                } else
+                {
+                    activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_MONO_LOWPASS);
+                }
                 dragLastPosition = lastMouseY;
                 break;
             case BORDER_UPPER:
-                activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_MONO_LOWPASS);
+                if (sampleBorderClicked->direction == LOW_FREQS_TO_BOTTOM)
+                {
+                    activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_MONO_LOWPASS);
+                } else
+                {
+                    activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_MONO_HIGHPASS);
+                }
                 dragLastPosition = lastMouseY;
                 break;
             case BORDER_RIGHT:
@@ -697,10 +709,10 @@ void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent &jme)
         break;
 
     case UI_STATE_MOUSE_DRAG_MONO_LOWPASS:
+    case UI_STATE_MOUSE_DRAG_MONO_HIGHPASS:
         activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
         break;
 
-    case UI_STATE_MOUSE_DRAG_MONO_HIGHPASS:
     case UI_STATE_DEFAULT:
     case UI_STATE_VIEW_RESIZING:
     case UI_STATE_KEYBOARD_SAMPLE_DRAG:
@@ -728,10 +740,13 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
         break;
 
     case UI_STATE_MOUSE_DRAG_MONO_LOWPASS:
-        cropSampleOuterBordersVertically();
+        cropSampleBordersVertically(false);
         break;
 
     case UI_STATE_MOUSE_DRAG_MONO_HIGHPASS:
+        cropSampleBordersVertically(true);
+        break;
+
     case UI_STATE_DEFAULT:
     case UI_STATE_CURSOR_MOVING:
     case UI_STATE_KEYBOARD_SAMPLE_DRAG:
@@ -750,7 +765,7 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
     }
 }
 
-void ArrangementArea::cropSampleOuterBordersVertically()
+void ArrangementArea::cropSampleBordersVertically(float innerBorders)
 {
     // compute the frequency to set in the filter
     float filterFreq = verticalPositionToFrequency(lastMouseY);
@@ -767,7 +782,13 @@ void ArrangementArea::cropSampleOuterBordersVertically()
         if (currentSample != nullptr)
         {
             changedSomething = true;
-            currentSample->setLowPassFreq(filterFreq);
+            if (innerBorders) 
+            {
+                currentSample->setHighPassFreq(filterFreq);
+            } else
+            {
+                currentSample->setLowPassFreq(filterFreq);
+            }
             // apply change to opengl sample
             openGLContext.executeOnGLThread(
                 [this, itr, currentSample](juce::OpenGLContext &c) {

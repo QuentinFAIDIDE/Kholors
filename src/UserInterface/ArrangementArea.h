@@ -186,7 +186,7 @@ class ArrangementArea : public juce::Component,
 
     float verticalPositionToFrequency(int);
     void cropSampleEdgeHorizontally(bool cropFront);
-    void cropSampleOuterBordersVertically();
+    void cropSampleBordersVertically(bool isInnerBorder);
 
     bool updateViewResizing(juce::Point<int> &);
 };
