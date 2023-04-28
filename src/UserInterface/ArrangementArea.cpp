@@ -86,7 +86,7 @@ void ArrangementArea::paintSelection(juce::Graphics &g)
 {
     // iterate over tracks and draw borders around them
     std::set<size_t>::iterator itr;
-    IndexedRectangle currentSampleBorders;
+    SampleAreaRectangle currentSampleBorders;
 
     // empty buffer of selected samples borders
     selectedSamplesCoordsBuffer.clear();
@@ -113,7 +113,7 @@ void ArrangementArea::paintSelection(juce::Graphics &g)
 
                 g.drawRoundedRectangle(currentSampleBorders, 4, 1.7);
                 currentSampleBorders.setSampleIndex(*itr);
-                selectedSamplesCoordsBuffer.push_back(IndexedRectangle(currentSampleBorders));
+                selectedSamplesCoordsBuffer.push_back(SampleAreaRectangle(currentSampleBorders));
             }
         }
     }
@@ -169,7 +169,7 @@ void ArrangementArea::paintLabels(juce::Graphics &g)
     // clear the list of previous labels (to be later swapped)
     onScreenLabelsPixelsCoordsBuffer.clear();
 
-    IndexedRectangle currentLabelPixelsCoords;
+    SampleAreaRectangle currentLabelPixelsCoords;
 
     int currentSampleLeftSideFrame, currentSampleRightSideFrame;
 
@@ -213,12 +213,12 @@ void ArrangementArea::paintLabels(juce::Graphics &g)
     onScreenLabelsPixelsCoords.swap(onScreenLabelsPixelsCoordsBuffer);
 }
 
-IndexedRectangle ArrangementArea::addLabelAndPreventOverlaps(std::vector<IndexedRectangle> &existingLabels,
+SampleAreaRectangle ArrangementArea::addLabelAndPreventOverlaps(std::vector<SampleAreaRectangle> &existingLabels,
                                                              int leftSidePixelCoords, int rightSidePixelCoords,
                                                              int sampleIndex)
 {
     // the pixel coordinates of the upcoming label
-    IndexedRectangle pixelLabelRect;
+    SampleAreaRectangle pixelLabelRect;
     pixelLabelRect.setWidth(rightSidePixelCoords - leftSidePixelCoords);
     pixelLabelRect.setWidth(juce::jmin(pixelLabelRect.getWidth(), FREQVIEW_LABELS_MAX_WIDTH));
     pixelLabelRect.setX(leftSidePixelCoords);
@@ -261,7 +261,7 @@ IndexedRectangle ArrangementArea::addLabelAndPreventOverlaps(std::vector<Indexed
     return pixelLabelRect;
 }
 
-bool ArrangementArea::rectangleIntersects(IndexedRectangle &target, std::vector<IndexedRectangle> &rectangles)
+bool ArrangementArea::rectangleIntersects(SampleAreaRectangle &target, std::vector<SampleAreaRectangle> &rectangles)
 {
     for (int i = 0; i < rectangles.size(); i++)
     {

@@ -18,38 +18,10 @@
 #include "../Config.h"
 #include "../OpenGL/BackgroundModel.h"
 #include "../OpenGL/SampleGraphicModel.h"
+#include "../Arrangement/SampleAreaRectangle.h"
 #include "GridLevel.h"
 #include "NotificationArea.h"
 #include "juce_opengl/opengl/juce_gl.h"
-
-class IndexedRectangle : public juce::Rectangle<float>
-{
-  public:
-    IndexedRectangle()
-    {
-        index = -1;
-    }
-    void setSampleIndex(int i)
-    {
-        index = i;
-    }
-    int getSampleIndex()
-    {
-        return index;
-    }
-    IndexedRectangle &operator=(juce::Rectangle<float> other)
-    {
-        setWidth(other.getWidth());
-        setHeight(other.getHeight());
-        setX(other.getX());
-        setY(other.getY());
-
-        return *this;
-    }
-
-  private:
-    int index;
-};
 
 enum Border
 {
@@ -165,9 +137,9 @@ class ArrangementArea : public juce::Component,
 
     // buffer and vector for the labels on screen (to be swapped after
     // update)
-    std::vector<IndexedRectangle> onScreenLabelsPixelsCoordsBuffer, onScreenLabelsPixelsCoords;
+    std::vector<SampleAreaRectangle> onScreenLabelsPixelsCoordsBuffer, onScreenLabelsPixelsCoords;
     // buffer and vector for the coordinates of the selected samples on screen
-    std::vector<IndexedRectangle> selectedSamplesCoordsBuffer, selectedSamplesCoords;
+    std::vector<SampleAreaRectangle> selectedSamplesCoordsBuffer, selectedSamplesCoords;
 
     //==============================================================================
     void paintPlayCursor(juce::Graphics &g);
@@ -175,9 +147,9 @@ class ArrangementArea : public juce::Component,
     void paintLabels(juce::Graphics &g);
     void paintSampleLabel(juce::Graphics &g, juce::Rectangle<float> &, int index);
 
-    IndexedRectangle addLabelAndPreventOverlaps(std::vector<IndexedRectangle> &existingLabels, int x, int y,
+    SampleAreaRectangle addLabelAndPreventOverlaps(std::vector<SampleAreaRectangle> &existingLabels, int x, int y,
                                                 int sampleIndex);
-    bool rectangleIntersects(IndexedRectangle &, std::vector<IndexedRectangle> &);
+    bool rectangleIntersects(SampleAreaRectangle &, std::vector<SampleAreaRectangle> &);
 
     void handleMiddleButterDown(const juce::MouseEvent &);
     void handleLeftButtonDown(const juce::MouseEvent &);
