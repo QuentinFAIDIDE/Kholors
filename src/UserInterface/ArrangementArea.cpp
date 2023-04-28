@@ -103,22 +103,21 @@ void ArrangementArea::paintSelection(juce::Graphics &g)
         // ignore deleted selected tracks
         if (mixingBus.getTrack(*itr) != nullptr)
         {
-            SamplePlayer *sp = mixingBus.getTrack(*itr);
-
-            currentSampleBorders.setX(dragShift + ((sp->getEditingPosition() - viewPosition) / viewScale));
-            currentSampleBorders.setWidth(sp->getLength() / viewScale);
-            // NOTE: these 2 instructions will be replaced when filtering is
-            // implemented
-            currentSampleBorders.setY(1);
-            currentSampleBorders.setHeight(bounds.getHeight() - 1);
-
-            if ((currentSampleBorders.getX() + currentSampleBorders.getWidth()) > 0 &&
-                currentSampleBorders.getX() < bounds.getWidth())
+            auto samplesRects = samples[*itr];
+            
+            for(size_t i=0; i<samplesRects.size(); i++)
             {
+                // reject what's not on screen
+                if (samplesRects[i].getX()+samplesRects[i].getWidth() < 0 ||
+                    samplesRects[i].getX() > bounds.getWidth())
+                {
+                    continue;
+                }
+
+                // if we reach here it's on screen, we draw and save it
+                currentSampleBorders = samplesRects[i];
                 g.drawRoundedRectangle(currentSampleBorders, 4, 1.7);
-
                 currentSampleBorders.setSampleIndex(*itr);
-
                 selectedSamplesCoordsBuffer.push_back(IndexedRectangle(currentSampleBorders));
             }
         }
