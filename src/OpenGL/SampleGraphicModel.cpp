@@ -142,7 +142,9 @@ void SampleGraphicModel::generateAndUploadVertices(float leftX, float rightX, fl
     triangleIds.clear();
 
     float lowPassPositionRatio = freqToPositionRatio(lowPassFreq);
+    float highPassPositionRatio = freqToPositionRatio(highPassFreq);
     float halfLowPassPos = lowPassPositionRatio / 2.0;
+    float halfHighPassPos = highPassPositionRatio / 2.0;
 
     // upper left corner 0
     vertices.push_back({{leftX, -lowPassPositionRatio},
@@ -155,24 +157,24 @@ void SampleGraphicModel::generateAndUploadVertices(float leftX, float rightX, fl
                         {endPositionNormalised, 0.5f + halfLowPassPos}});
 
     // right upper band bottom corner 2
-    vertices.push_back({{rightX, 0.0f},
+    vertices.push_back({{rightX, -highPassPositionRatio},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {endPositionNormalised, 0.5f}});
+                        {endPositionNormalised, 0.5f + halfHighPassPos}});
 
     // left upper band bottom corner 3
-    vertices.push_back({{leftX, 0.0f},
+    vertices.push_back({{leftX, -highPassPositionRatio},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {startPositionNormalized, 0.5f}});
+                        {startPositionNormalized, 0.5f + halfHighPassPos}});
 
     // left lower band top 4
-    vertices.push_back({{leftX, 0.0f},
+    vertices.push_back({{leftX, highPassPositionRatio},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {startPositionNormalized, 0.5f}});
+                        {startPositionNormalized, 0.5f - halfHighPassPos}});
 
     // right lower band top 5
-    vertices.push_back({{rightX, 0.0f},
+    vertices.push_back({{rightX, highPassPositionRatio},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {endPositionNormalised, 0.5f}});
+                        {endPositionNormalised, 0.5f - halfHighPassPos}});
 
     // lower right corner 6
     vertices.push_back({{rightX, lowPassPositionRatio},
