@@ -1011,54 +1011,36 @@ void ArrangementArea::updateMouseCursor()
 {
     if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT)
     {
-        if (getMouseCursor() == juce::MouseCursor::NormalCursor)
+        juce::Optional<SampleBorder> borderUnderMouse = mouseOverSelectionBorder();
+
+        if (mouseOverPlayCursor())
         {
-            juce::Optional<SampleBorder> borderUnderMouse = mouseOverSelectionBorder();
-
-            if (mouseOverPlayCursor())
+            setMouseCursor(juce::MouseCursor::DraggingHandCursor);
+            return;
+        }
+        else if (borderUnderMouse.hasValue())
+        {
+            switch (borderUnderMouse->border)
             {
-                setMouseCursor(juce::MouseCursor::DraggingHandCursor);
-            }
-            else if (borderUnderMouse.hasValue())
-            {
-                switch (borderUnderMouse->border)
-                {
-                case BORDER_LEFT:
-                    setMouseCursor(juce::MouseCursor::LeftEdgeResizeCursor);
-                    break;
+            case BORDER_LEFT:
+                setMouseCursor(juce::MouseCursor::LeftEdgeResizeCursor);
+                return;
 
-                case BORDER_RIGHT:
-                    setMouseCursor(juce::MouseCursor::RightEdgeResizeCursor);
-                    break;
+            case BORDER_RIGHT:
+                setMouseCursor(juce::MouseCursor::RightEdgeResizeCursor);
+                return;
 
-                case BORDER_UPPER:
-                    setMouseCursor(juce::MouseCursor::TopEdgeResizeCursor);
-                    break;
+            case BORDER_UPPER:
+                setMouseCursor(juce::MouseCursor::TopEdgeResizeCursor);
+                return;
 
-                case BORDER_LOWER:
-                    setMouseCursor(juce::MouseCursor::BottomEdgeResizeCursor);
-                    break;
-                }
+            case BORDER_LOWER:
+                setMouseCursor(juce::MouseCursor::BottomEdgeResizeCursor);
+                return;
             }
         }
-        else if (getMouseCursor() == juce::MouseCursor::DraggingHandCursor)
-        {
-            if (!mouseOverPlayCursor())
-            {
-                setMouseCursor(juce::MouseCursor::NormalCursor);
-            }
-        }
-        else if (getMouseCursor() == juce::MouseCursor::LeftEdgeResizeCursor ||
-                 getMouseCursor() == juce::MouseCursor::RightEdgeResizeCursor ||
-                 getMouseCursor() == juce::MouseCursor::TopEdgeResizeCursor ||
-                 getMouseCursor() == juce::MouseCursor::BottomEdgeResizeCursor)
-        {
-            juce::Optional<SampleBorder> borderUnderMouse = mouseOverSelectionBorder();
-            if (!borderUnderMouse.hasValue())
-            {
-                setMouseCursor(juce::MouseCursor::NormalCursor);
-            }
-        }
+
+        setMouseCursor(juce::MouseCursor::NormalCursor);
     }
 }
 
