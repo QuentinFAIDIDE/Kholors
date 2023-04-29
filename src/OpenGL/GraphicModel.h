@@ -30,6 +30,8 @@ class GraphicModel
 
     bool loaded;
     bool disabled;
+
+    juce::CriticalSection loadingMutex;
 };
 
 #endif // DEF_GRAPHIC_MODEL

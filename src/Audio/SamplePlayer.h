@@ -24,9 +24,6 @@ class SamplePlayer : public juce::PositionableAudioSource
     // this tells the SamplePlayer which audio buffer to use
     void setBuffer(BufferPtr, juce::dsp::FFT &);
 
-    void setTrackIndex(int);
-    int getTrackIndex();
-
     // inherited from PositionableAudioSource
     juce::int64 getNextReadPosition() const override;
     void setNextReadPosition(juce::int64) override;
@@ -122,8 +119,6 @@ class SamplePlayer : public juce::PositionableAudioSource
     // how many blocks of FREQVIEW_SAMPLE_FFT_SIZE samples
     // for this buffer
     int numFft;
-
-    int trackIndex;
 
     juce::IIRFilter lowPassFilterLeft[SAMPLEPLAYER_MAX_FILTER_REPEAT];
     juce::IIRFilter lowPassFilterRight[SAMPLEPLAYER_MAX_FILTER_REPEAT];

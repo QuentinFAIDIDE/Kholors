@@ -255,6 +255,9 @@ void SampleGraphicModel::updateDrag(int frameMove)
 
 void SampleGraphicModel::uploadVerticesToGpu()
 {
+
+    const juce::ScopedLock lock(loadingMutex);
+
     glBindVertexArray(vao);
 
     // register and upload the vertices data
@@ -264,6 +267,12 @@ void SampleGraphicModel::uploadVerticesToGpu()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * triangleIds.size(), triangleIds.data(),
                  GL_STATIC_DRAW);
+
+    GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR)
+    {
+        std::cerr << "got following open gl error after upploading vertices data: " << err << std::endl;
+    }
 }
 
 float SampleGraphicModel::textureIntensity(float x, float y)

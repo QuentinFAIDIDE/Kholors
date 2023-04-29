@@ -3,8 +3,8 @@
 
 #include <vector>
 
-#include "./Action.h"
 #include "./AppState.h"
+#include "./Task.h"
 
 class ActivityManager
 {
@@ -14,7 +14,7 @@ class ActivityManager
     AppState &getAppState();
 
   private:
-    std::vector<Action> history;
+    std::vector<Task> history;
     AppState appState;
 };
 

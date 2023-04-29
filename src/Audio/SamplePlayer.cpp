@@ -7,7 +7,7 @@ int SamplePlayer::maxFilterFreq = (AUDIO_FRAMERATE >> 1) - 1;
 
 SamplePlayer::SamplePlayer(int64_t position)
     : editingPosition(position), bufferInitialPosition(0), bufferStart(0), bufferEnd(0), position(0),
-      lowPassFreq(maxFilterFreq), highPassFreq(0), isSampleSet(false), numFft(0), trackIndex(-1)
+      lowPassFreq(maxFilterFreq), highPassFreq(0), isSampleSet(false), numFft(0)
 {
     setLowPassFreq(lowPassFreq);
     setHighPassFreq(highPassFreq);
@@ -395,16 +395,6 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferT
 int64_t SamplePlayer::getEditingPosition() const
 {
     return editingPosition;
-}
-
-void SamplePlayer::setTrackIndex(int id)
-{
-    trackIndex = id;
-}
-
-int SamplePlayer::getTrackIndex()
-{
-    return trackIndex;
 }
 
 void SamplePlayer::setLowPassFreq(int freq)

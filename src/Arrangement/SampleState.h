@@ -3,20 +3,19 @@
 
 #include <vector>
 
-#include "Action.h"
 #include "Marshalable.h"
+#include "Task.h"
 
 class SampleState : public Marshalable, public State
 {
+  public:
     int id;
     std::string samplePath;
     int64_t editingPosition;
     int64_t bufferPosition;
     int64_t length;
-    int64_t lowPassRepeat;
-    int64_t highPassRepeat;
-    std::vector<std::pair<int64_t, int>> lowPassFreqsAutomation;
-    std::vector<std::pair<int64_t, int>> highPassFreqsAutomation;
+    float lowPassFreq;
+    float highPassFreq;
 };
 
 #endif // DEF_SAMPLE_STATE_HPP

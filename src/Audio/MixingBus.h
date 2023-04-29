@@ -21,6 +21,8 @@
 #include "ReferenceCountedBuffer.h"
 #include "SamplePlayer.h"
 
+#define TASK_QUEUE_RESERVED_SIZE 16
+
 //==============================================================================
 class MixingBus : public juce::PositionableAudioSource, private juce::Thread
 {
@@ -29,7 +31,7 @@ class MixingBus : public juce::PositionableAudioSource, private juce::Thread
     ~MixingBus();
 
     // when called, add sample from file path with position
-    void addSample(juce::String, int64_t);
+    void addSample(SampleImportTask);
     bool filePathsValid(const juce::StringArray &);
 
     // inherited from audio source
@@ -55,15 +57,13 @@ class MixingBus : public juce::PositionableAudioSource, private juce::Thread
     SamplePlayer *deleteTrack(int index);
     void restoreDeletedTrack(SamplePlayer *sp, int index);
 
-    int duplicateTrack(int index, int newPos);
-
     // set callback to safely access gui's
     // MessageThread to repaint tracks
     void setTrackRepaintCallback(std::function<void()>);
     void setFileImportedCallback(std::function<void(std::string)>);
 
     // callback to add new samples to the user interface
-    std::function<void(SamplePlayer *)> addUiSampleCallback;
+    std::function<void(SamplePlayer *, SampleImportTask task)> addUiSampleCallback;
     // callback to add new samples to the user interface
     std::function<void(int)> disableUiSampleCallback;
 
@@ -134,10 +134,8 @@ class MixingBus : public juce::PositionableAudioSource, private juce::Thread
     // mutex to swap the path and access tracks
     juce::CriticalSection pathMutex, mixbusMutex;
 
-    // path of the next file to import
-    juce::String filePathToImport;
-    // position to import file at
-    std::atomic_int64_t filePositionToImport;
+    // stack of files to import
+    std::vector<SampleImportTask> importTaskQueue;
 
     // master bus main
     juce::dsp::Gain<float> masterGain;
@@ -170,6 +168,10 @@ class MixingBus : public juce::PositionableAudioSource, private juce::Thread
     // this stop the cursor from moving forward an cuts audio when nothing is
     // playing anymore
     void pauseIfCursorNotInBound();
+
+    void importNewFile(SampleImportTask &task);
+
+    void duplicateTrack(SampleImportTask &task);
 
     // used to manage background thread allocations
     void checkForFileToImport();

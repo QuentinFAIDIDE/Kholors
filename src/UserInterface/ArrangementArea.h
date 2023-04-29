@@ -94,7 +94,7 @@ class ArrangementArea : public juce::Component,
 
     // NOTE: we will draw each sample fft in OpenGL
     // with a square on which we map a texture.
-    std::vector<SampleGraphicModel> samples;
+    std::vector<SampleGraphicModel *> samples;
     BackgroundModel backgroundGrid;
     std::unique_ptr<juce::OpenGLShaderProgram> texturedPositionedShader;
     std::unique_ptr<juce::OpenGLShaderProgram> backgroundGridShader;
@@ -165,7 +165,7 @@ class ArrangementArea : public juce::Component,
     void deleteSelectedTracks();
     float polylens(float);
 
-    void addNewSample(SamplePlayer *);
+    void displaySample(SamplePlayer *, SampleImportTask task);
     void syncSampleColor(int sampleIndex);
 
     bool buildShaders();

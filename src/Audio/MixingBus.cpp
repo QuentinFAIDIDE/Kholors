@@ -1,5 +1,6 @@
 #include "MixingBus.h"
 
+#include <cstdint>
 #include <iostream>
 
 // initialize the MixingBus, as well as Thread and audio inherited
@@ -93,16 +94,13 @@ bool MixingBus::isCursorPlaying() const
     return isPlaying;
 }
 
-void MixingBus::addSample(juce::String filePath, int64_t frameIndex)
+void MixingBus::addSample(SampleImportTask import)
 {
     // swap a file to load variable to avoid blocking event thread for disk i/o
     {
         // get lock for scoped block
         const juce::ScopedLock lock(pathMutex);
-        // swap the strings with the one to load
-        filePathToImport.swapWith(filePath);
-        // record the desired frame position to insert at
-        filePositionToImport = frameIndex;
+        importTaskQueue.push_back(import);
     }
     // notify the thread so it's triggered
     notify();
@@ -110,6 +108,7 @@ void MixingBus::addSample(juce::String filePath, int64_t frameIndex)
 
 void MixingBus::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
+    const juce::ScopedLock lock(mixbusMutex);
     // prepare all inputs
     for (size_t i = 0; i < tracks.size(); i++)
     {
@@ -131,16 +130,13 @@ void MixingBus::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
     // prepare to play with these settings
     masterLimiter.prepare(currentAudioSpec);
 
-    // recomputes nearby tracks bitmask
-    // and allocate/free memory around in the background thread
+    // allocate/free memory around in the background thread
     notify();
-
-    // TODO: look at MixerAudioSource code to double check what is performed is ok
 }
 
 void MixingBus::releaseResources()
 {
-    // TODO: look at MixerAudioSource code to double check what is performed is ok
+    const juce::ScopedLock lock(mixbusMutex);
 
     // call all inputs releaseResources
     for (size_t i = 0; i < tracks.size(); i++)
@@ -293,98 +289,117 @@ void MixingBus::checkForBuffersToFree()
 
 void MixingBus::checkForFileToImport()
 {
-    // inspired by LoopingAudioSampleBuffer juce tutorial
 
-    // desired position for sample to import
-    int64_t desiredPosition;
+    std::vector<SampleImportTask> localTaskQueue;
+    // let's preallocate here to avoid doing it on the message thread
+    localTaskQueue.reserve(TASK_QUEUE_RESERVED_SIZE);
 
-    // swap class member string of path to open with an empty one
-    juce::String pathToOpen;
     {
         const juce::ScopedLock lock(pathMutex);
-        pathToOpen.swapWith(filePathToImport);
-        // also copy the position at the same moment
-        desiredPosition = filePositionToImport;
+        importTaskQueue.swap(localTaskQueue);
     }
 
     // if the path is non empty (meaning we're awaiting importing)
-    if (pathToOpen.isNotEmpty())
+    for (size_t taskIndex = 0; taskIndex < localTaskQueue.size(); taskIndex++)
     {
-        std::cout << "Preparing to load file at path: " << pathToOpen << std::endl;
-        // create file object
-        juce::File file(pathToOpen);
-        // create reader object
-        std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(file));
-        // if the reader can read our file
-        if (reader.get() != nullptr)
+
+        if (localTaskQueue[taskIndex].isDuplication())
         {
-            // sample duration in seconds
-            auto duration = (float)reader->lengthInSamples / reader->sampleRate;
-
-            std::cout << "The file has a length of " << duration << "secs" << std::endl;
-
-            // only load it if below our global constant maximum sample duration
-            if (duration < SAMPLE_MAX_DURATION_SEC)
-            {
-                // allocate a buffer
-                BufferPtr newBuffer = new ReferenceCountedBuffer(file.getFileName(), (int)reader->numChannels,
-                                                                 (int)reader->lengthInSamples);
-
-                // do the actual reading
-                reader->read(newBuffer->getAudioSampleBuffer(), 0, (int)reader->lengthInSamples, 0, true, true);
-
-                // TODO: compute hash of sample, and do not save those
-                // which already exists. Use a function like getBufferFromHash
-                // to set the new samplePlayer to the already existing sample.
-                // HINT: File class can give us a hash already ! :)
-
-                // create a new sample player
-                SamplePlayer *newSample = new SamplePlayer(desiredPosition);
-                try
-                {
-                    // assign buffer to the new SamplePlayer
-                    newSample->setBuffer(newBuffer, forwardFFT);
-                    // if the memory allocation fail, abort with error
-                }
-                catch (std::bad_alloc &ba)
-                {
-                    std::cout << "Unable to allocate memory to perform FFT" << std::endl;
-                    notificationManager.notifyError(juce::String("Unable to allocate memory to load: ") + pathToOpen);
-                    delete newSample;
-                    return;
-                }
-
-                // get a scoped lock for the buffer array
-                {
-                    const juce::SpinLock::ScopedLockType lock(mutex);
-
-                    // add new SamplePlayer to the tracks list (positionable audio
-                    // sources)
-                    tracks.add(newSample);
-                    int newTrackIndex = tracks.size() - 1;
-                    tracks[newTrackIndex]->setTrackIndex(newTrackIndex);
-
-                    // add the buffer the array of audio buffers
-                    buffers.add(newBuffer);
-                }
-
-                addUiSampleCallback(newSample);
-                fileImportedCallback(pathToOpen.toStdString());
-                trackRepaintCallback();
-            }
-            else
-            {
-                // notify user about sample being too long to be loaded
-                notificationManager.notifyError(juce::String("Due to a hardcoded sample duration limit of ") +
-                                                juce::String(SAMPLE_MAX_DURATION_SEC) +
-                                                juce::String(" seconds, this sample was not loaded: ") + pathToOpen);
-            }
+            duplicateTrack(localTaskQueue[taskIndex]);
         }
         else
         {
-            // if the file reader doesn't want to read, notify an error
-            notificationManager.notifyError(juce::String("Unable to read: ") + pathToOpen);
+            importNewFile(localTaskQueue[taskIndex]);
         }
+    }
+}
+
+void MixingBus::importNewFile(SampleImportTask &task)
+{
+    // inspired by LoopingAudioSampleBuffer juce tutorial
+
+    std::string pathToOpen = task.getFilePath();
+    int64_t desiredPosition = task.getPosition();
+
+    std::cout << "Preparing to load file at path: " << pathToOpen << std::endl;
+    // create file object
+    juce::File file(pathToOpen);
+    // create reader object
+    std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(file));
+    // if the reader can read our file
+    if (reader.get() != nullptr)
+    {
+        // sample duration in seconds
+        auto duration = (float)reader->lengthInSamples / reader->sampleRate;
+
+        std::cout << "The file has a length of " << duration << "secs" << std::endl;
+
+        // only load it if below our global constant maximum sample duration
+        if (duration < SAMPLE_MAX_DURATION_SEC)
+        {
+            // allocate a buffer
+            BufferPtr newBuffer =
+                new ReferenceCountedBuffer(file.getFileName(), (int)reader->numChannels, (int)reader->lengthInSamples);
+
+            // do the actual reading
+            reader->read(newBuffer->getAudioSampleBuffer(), 0, (int)reader->lengthInSamples, 0, true, true);
+
+            // TODO: compute hash of sample, and do not save those
+            // which already exists. Use a function like getBufferFromHash
+            // to set the new samplePlayer to the already existing sample.
+            // HINT: File class can give us a hash already ! :)
+
+            // create a new sample player
+            SamplePlayer *newSample = new SamplePlayer(desiredPosition);
+            try
+            {
+                // assign buffer to the new SamplePlayer
+                newSample->setBuffer(newBuffer, forwardFFT);
+                // if the memory allocation fail, abort with error
+            }
+            catch (std::bad_alloc &ba)
+            {
+                std::cout << "Unable to allocate memory to perform FFT" << std::endl;
+                notificationManager.notifyError(juce::String("Unable to allocate memory to load: ") + pathToOpen);
+                delete newSample;
+                task.setFailed(true);
+                return;
+            }
+
+            // get a scoped lock for the buffer array
+            int newTrackIndex;
+            {
+                const juce::ScopedLock lock(mixbusMutex);
+
+                // add new SamplePlayer to the tracks list (positionable audio
+                // sources)
+                tracks.add(newSample);
+                newTrackIndex = tracks.size() - 1;
+                // add the buffer the array of audio buffers
+                buffers.add(newBuffer);
+            }
+
+            task.setAllocatedIndex(newTrackIndex);
+
+            addUiSampleCallback(newSample, task);
+            fileImportedCallback(pathToOpen);
+            trackRepaintCallback();
+        }
+        else
+        {
+            // notify user about sample being too long to be loaded
+            notificationManager.notifyError(juce::String("Max is ") + juce::String(SAMPLE_MAX_DURATION_SEC) +
+                                            juce::String("s, sample was not loaded: ") + pathToOpen);
+            task.setFailed(true);
+            return;
+        }
+    }
+    else
+    {
+        // if the file reader doesn't want to read, notify an error
+        notificationManager.notifyError(juce::String("Unable to read: ") + pathToOpen);
+        task.setFailed(true);
+        return;
     }
 }
 
@@ -482,22 +497,21 @@ void MixingBus::restoreDeletedTrack(SamplePlayer *sp, int index)
     tracks.set(index, sp);
 }
 
-int MixingBus::duplicateTrack(int index, int newPos)
+void MixingBus::duplicateTrack(SampleImportTask &task)
 {
-    SamplePlayer *newSample = tracks[index]->createDuplicate(newPos, forwardFFT);
+    SamplePlayer *newSample = tracks[task.getDuplicateTargetId()]->createDuplicate(task.getPosition(), forwardFFT);
     int newTrackIndex;
     // get a scoped lock for the buffer array
     {
-        const juce::SpinLock::ScopedLockType lock(mutex);
+        const juce::ScopedLock lock(mixbusMutex);
 
         // add new SamplePlayer to the tracks list (positionable audio
         // sources)
         tracks.add(newSample);
         newTrackIndex = tracks.size() - 1;
-        tracks[newTrackIndex]->setTrackIndex(newTrackIndex);
     }
+    task.setAllocatedIndex(newTrackIndex);
 
-    addUiSampleCallback(newSample);
+    addUiSampleCallback(newSample, task);
     trackRepaintCallback();
-    return newTrackIndex;
 }

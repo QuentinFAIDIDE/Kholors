@@ -7,6 +7,7 @@
 
 AppState::AppState()
 {
+    uiState = UI_STATE_DEFAULT;
 }
 AppState::~AppState()
 {

@@ -9,6 +9,9 @@ using namespace juce::gl;
 // utility for that !
 void TexturedModel::registerGlObjects()
 {
+
+    const juce::ScopedLock lock(loadingMutex);
+
     // generate objects
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
@@ -36,6 +39,12 @@ void TexturedModel::registerGlObjects()
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
+    GLenum err;
+    while ((err = glGetError()) != GL_NO_ERROR)
+    {
+        std::cerr << "got following open gl error after registering vertices data: " << err << std::endl;
+    }
+
     // register the texture
     glGenTextures(1, &tbo);
     glBindTexture(GL_TEXTURE_2D, tbo);
@@ -49,6 +58,11 @@ void TexturedModel::registerGlObjects()
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, textureWidth, textureHeight, 0, GL_RGBA, GL_FLOAT, texture.data());
     glGenerateMipmap(GL_TEXTURE_2D);
 
+    while ((err = glGetError()) != GL_NO_ERROR)
+    {
+        std::cerr << "got following open gl error after uploading texture data: " << err << std::endl;
+    }
+
     loaded = true;
 }
 
@@ -57,6 +71,9 @@ void TexturedModel::registerGlObjects()
 // to use/bind the right shader before calling this.
 void TexturedModel::drawGlObjects()
 {
+
+    const juce::ScopedLock lock(loadingMutex);
+
     // abort if openGL object are not loaded
     if (!loaded || disabled)
     {
