@@ -75,6 +75,8 @@ class ArrangementArea : public juce::Component,
     bool keyPressed(const juce::KeyPress &) override;
     bool keyStateChanged(bool) override;
 
+    void mouseWheelMove(const juce::MouseEvent &e, const juce::MouseWheelDetails &wheel) override;
+
     bool isInterestedInDragSource(const SourceDetails &dragSourceDetails) override;
     void itemDropped(const SourceDetails &dragSourceDetails) override;
 

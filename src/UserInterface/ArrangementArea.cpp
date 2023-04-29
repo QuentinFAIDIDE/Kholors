@@ -826,6 +826,42 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
     }
 }
 
+void ArrangementArea::mouseWheelMove(const juce::MouseEvent &e, const juce::MouseWheelDetails &wheel)
+{
+    if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT)
+    {
+        if (!wheel.isInertial && std::abs(wheel.deltaY) > 0.001)
+        {
+
+            if (e.mods.isShiftDown())
+            {
+                viewPosition = viewPosition - ((float)(viewScale * 200) * wheel.deltaY);
+                if (viewPosition < 0)
+                {
+                    viewPosition = 0;
+                }
+            }
+            else
+            {
+
+                viewScale = (float)viewScale * (1.0f - wheel.deltaY);
+
+                if (viewScale < FREQVIEW_MIN_SCALE_FRAME_PER_PIXEL)
+                {
+                    viewScale = FREQVIEW_MIN_SCALE_FRAME_PER_PIXEL;
+                }
+                if (viewScale > FREQVIEW_MAX_SCALE_FRAME_PER_PIXEL)
+                {
+                    viewScale = FREQVIEW_MAX_SCALE_FRAME_PER_PIXEL;
+                }
+            }
+
+            repaint();
+            updateShadersPositionUniforms(false);
+        }
+    }
+}
+
 void ArrangementArea::cropSampleBordersVertically(bool innerBorders)
 {
     // compute the frequency to set in the filter
@@ -1124,7 +1160,8 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key)
             }
         }
     }
-    else if (key == juce::KeyPress::createFromDescription(KEYMAP_DELETE_SELECTION))
+    else if (key == juce::KeyPress::createFromDescription(KEYMAP_DELETE_SELECTION) ||
+             key == juce::KeyPress::createFromDescription("delete"))
     {
         // if pressing x and not in any mode, delete selected tracks
         if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT && !selectedTracks.empty())
