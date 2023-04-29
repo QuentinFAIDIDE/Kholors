@@ -619,8 +619,20 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
                 if (!jme.mods.isCtrlDown())
                 {
                     selectedTracks.clear();
+                    selectedTracks.insert(clickedTrack);
                 }
-                selectedTracks.insert(clickedTrack);
+                else
+                {
+                    if (selectedTracks.find(clickedTrack) == selectedTracks.end())
+                    {
+                        selectedTracks.insert(clickedTrack);
+                    }
+                    else
+                    {
+                        selectedTracks.erase(clickedTrack);
+                    }
+                }
+
                 repaint();
                 // if clicking in the void, unselected everything
             }
