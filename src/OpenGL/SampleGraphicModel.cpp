@@ -34,7 +34,9 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer *sp, juce::Colour col)
     // of neigbouring pixels. So as we have less pixel over time than pixel over
     // frequencies, a glitch appear and the values leak to the sides.
     // This multiplier should help reduce horizontal leakage of textures.
-    horizontalScaleMultiplier = 16;
+    // If this is raised too high, this can blow up the GPU memory real fast.
+    // If you change this value, make sure to stress test the loading a bit on shitty GPUs.
+    horizontalScaleMultiplier = 6;
 
     // NOTE: we store the texture colors (fft intensity) as RGBA.
     // This implies some harsh data duplication, but openGL
