@@ -209,7 +209,7 @@ int SamplePlayer::tryMovingStart(int desiredShift)
     }
     else
     {
-        actualChange = juce::jmin((int)getLength() - SAMPLEPLAYER_MIN_FRAME_SIZE, desiredShift);
+        actualChange = juce::jmin((int)getLength() - SAMPLE_MIN_DURATION_FRAMES, desiredShift);
     }
 
     setBufferShift(getBufferShift() + actualChange);
@@ -234,7 +234,7 @@ int SamplePlayer::tryMovingEnd(int desiredShift)
     }
     else
     {
-        actualChange = -juce::jmin((int)getLength() - SAMPLEPLAYER_MIN_FRAME_SIZE, -desiredShift);
+        actualChange = -juce::jmin((int)getLength() - SAMPLE_MIN_DURATION_FRAMES, -desiredShift);
     }
 
     setLength(getLength() + actualChange);
@@ -247,7 +247,7 @@ void SamplePlayer::setBufferShift(juce::int64 shift)
 {
     const juce::SpinLock::ScopedLockType lock(playerMutex);
     // only change if the buffer can actuallydo it
-    if (shift < bufferEnd - SAMPLEPLAYER_MIN_FRAME_SIZE)
+    if (shift < bufferEnd - SAMPLE_MIN_DURATION_FRAMES)
     {
         bufferStart = shift;
     }

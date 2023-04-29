@@ -74,6 +74,8 @@
 
 // maximum number of seconds above which we refuse to load it
 #define SAMPLE_MAX_DURATION_SEC 10
+// minimum number of audio samples (frame in our taxonomy) a sample must have
+#define SAMPLE_MIN_DURATION_FRAMES 2048
 // the maximum number of elements a song can have
 #define SAMPLE_MAX_PLAYERS_USED 16383
 // how many 64bits blocks the bitmask has
@@ -85,7 +87,6 @@
 #define SAMPLEPLAYER_BORDER_RADIUS 4.0
 #define SAMPLEPLAYER_BORDER_COLOR juce::Colour(230, 230, 230)
 #define SAMPLEPLAYER_BORDER_WIDTH 2.5
-#define SAMPLEPLAYER_MIN_FRAME_SIZE 2048
 #define SAMPLEPLAYER_MAX_FILTER_REPEAT 4
 #define SAMPLEPLAYER_FILTER_SNAP_RATIO 0.999
 #define SAMPLEPLAYER_MIN_FILTER_FREQ 10

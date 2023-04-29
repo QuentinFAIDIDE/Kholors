@@ -335,7 +335,7 @@ void MixingBus::importNewFile(SampleImportTask &task)
         std::cout << "The file has a length of " << duration << "secs" << std::endl;
 
         // only load it if below our global constant maximum sample duration
-        if (duration < SAMPLE_MAX_DURATION_SEC)
+        if (duration < SAMPLE_MAX_DURATION_SEC && reader->lengthInSamples > SAMPLE_MIN_DURATION_FRAMES)
         {
             // allocate a buffer
             BufferPtr newBuffer =
@@ -388,8 +388,16 @@ void MixingBus::importNewFile(SampleImportTask &task)
         else
         {
             // notify user about sample being too long to be loaded
-            notificationManager.notifyError(juce::String("Max is ") + juce::String(SAMPLE_MAX_DURATION_SEC) +
-                                            juce::String("s, sample was not loaded: ") + pathToOpen);
+            if (duration >= SAMPLE_MAX_DURATION_SEC)
+            {
+                notificationManager.notifyError(juce::String("Max is ") + juce::String(SAMPLE_MAX_DURATION_SEC) +
+                                                juce::String("s, sample was not loaded: ") + pathToOpen);
+            }
+            if (reader->lengthInSamples <= SAMPLE_MIN_DURATION_FRAMES)
+            {
+                notificationManager.notifyError(juce::String("min is ") + juce::String(SAMPLE_MIN_DURATION_FRAMES) +
+                                                juce::String("audio samples, sample was not loaded: ") + pathToOpen);
+            }
             task.setFailed(true);
             return;
         }

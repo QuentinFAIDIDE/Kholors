@@ -305,13 +305,6 @@ bool ArrangementArea::overlapSampleArea(SampleAreaRectangle &rect, int sampleInd
 {
     auto sampleRects = samples[sampleIndex]->getPixelBounds(viewPosition, viewScale, bounds.getHeight());
 
-    if (sampleRects[0].enlargeIfAdjacent(sampleRects[1]))
-    {
-        std::vector<juce::Rectangle<float>> newRects;
-        newRects.push_back(sampleRects[0]);
-        sampleRects.swap(newRects);
-    }
-
     for (size_t i = 0; i < sampleRects.size(); i++)
     {
         if (sampleRects[i].expanded(margin, margin).contains(rect))
