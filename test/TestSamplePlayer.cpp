@@ -37,6 +37,7 @@ int testSamplePlayerWithSample(std::string path, int blockSize, int offset, int 
     SamplePlayer *newSample = new SamplePlayer(offset);
     newSample->setBuffer(newBuffer, fft);
     newSample->setBufferShift(startShift);
+    newSample->setGainRamp(0.0f);
     // set initial position
     newSample->setNextReadPosition(0);
 
