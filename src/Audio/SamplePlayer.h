@@ -67,6 +67,8 @@ class SamplePlayer : public juce::PositionableAudioSource
     float getLowPassFreq();
     float getHighPassFreq();
 
+    void setGainRamp(float);
+
     std::string getFileName();
 
     // get number of fft blocks we use to cover the buffer
@@ -85,6 +87,8 @@ class SamplePlayer : public juce::PositionableAudioSource
 
   private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SamplePlayer)
+
+    int fadeInFrameLength, fadeOutFrameLength;
 
     // the position from which bufferStart is mapped into the global
     // app play position
@@ -127,6 +131,7 @@ class SamplePlayer : public juce::PositionableAudioSource
     juce::IIRFilter highPassFilterRight[SAMPLEPLAYER_MAX_FILTER_REPEAT];
 
     void applyFilters(const juce::AudioSourceChannelInfo &bufferToFill);
+    void applyGainFade(float *data, int startIndex, int length, int startIndexLocalPositon);
 };
 
 #endif // DEF_SAMPLEPLAYER_HPP

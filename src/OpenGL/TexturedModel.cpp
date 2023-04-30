@@ -57,7 +57,6 @@ void TexturedModel::registerGlObjects()
     // send the texture to the gpu
     glTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA, textureWidth, textureHeight, 0, GL_RGBA, GL_FLOAT,
                  texture.data());
-    // glGenerateMipmap(GL_TEXTURE_2D);
 
     while ((err = glGetError()) != GL_NO_ERROR)
     {

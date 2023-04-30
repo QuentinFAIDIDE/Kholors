@@ -11,11 +11,35 @@ SamplePlayer::SamplePlayer(int64_t position)
 {
     setLowPassFreq(lowPassFreq);
     setHighPassFreq(highPassFreq);
+
+    setGainRamp(SAMPLEPLAYER_DEFAULT_FADE_MS);
 }
 
 SamplePlayer::~SamplePlayer()
 {
     // TODO
+}
+
+void SamplePlayer::setGainRamp(float ms)
+{
+    int frameLength = SAMPLEPLAYER_DEFAULT_FADE_MS * (float(AUDIO_FRAMERATE) / 1000.0);
+    if (frameLength < 0)
+    {
+        fadeInFrameLength = 0;
+        fadeOutFrameLength = 0;
+    }
+    else if (ms > SAMPLEPLAYER_MAX_FADE_MS)
+    {
+        fadeInFrameLength = SAMPLEPLAYER_MAX_FADE_MS * (float(AUDIO_FRAMERATE) / 1000.0);
+        ;
+        fadeOutFrameLength = SAMPLEPLAYER_MAX_FADE_MS * (float(AUDIO_FRAMERATE) / 1000.0);
+        ;
+    }
+    else if (fadeInFrameLength + fadeOutFrameLength < getLength())
+    {
+        fadeInFrameLength = frameLength;
+        fadeOutFrameLength = frameLength;
+    }
 }
 
 bool SamplePlayer::hasBeenInitialized() const
@@ -373,6 +397,8 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferT
             bufferToFill.buffer->copyFrom(channel, bufferToFill.startSample + outputSamplesOffset,
                                           *currentAudioSampleBuffer, channel % numInputChannels,
                                           bufferStart + bufferInitialPosition + outputSamplesOffset, samplesThisTime);
+            applyGainFade(bufferToFill.buffer->getWritePointer(channel), bufferToFill.startSample + outputSamplesOffset,
+                          samplesThisTime, bufferStart + bufferInitialPosition + outputSamplesOffset);
         }
 
         outputSamplesRemaining -= samplesThisTime;
@@ -390,6 +416,67 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferT
     position += bufferToFill.numSamples;
 
     applyFilters(bufferToFill);
+}
+
+void SamplePlayer::applyGainFade(float *data, int startIndex, int length, int startIndexLocalPosition)
+{
+
+    if (fadeInFrameLength == 0 && fadeOutFrameLength == 0)
+    {
+        return;
+    }
+
+    int stopIndexLocalPosition = startIndexLocalPosition + (length - 1);
+
+    int fadeInStart = 0;
+    int fadeInEnd = fadeInStart + (fadeInFrameLength - 1);
+    int fadeOutStart = 0;
+    int fadeOutEnd = fadeOutStart + (fadeOutFrameLength - 1);
+
+    bool includesFadeIn = startIndexLocalPosition < fadeInEnd && stopIndexLocalPosition >= fadeInStart;
+    bool includesFadeOut = startIndexLocalPosition < fadeOutEnd && stopIndexLocalPosition >= fadeOutStart;
+    if (!includesFadeIn && !includesFadeOut)
+    {
+        return;
+    }
+
+    if (!includesFadeIn && fadeOutFrameLength == 0)
+    {
+        return;
+    }
+
+    if (!includesFadeOut && fadeInFrameLength == 0)
+    {
+        return;
+    }
+
+    int currentLocalPosition = startIndexLocalPosition;
+    int currentBlockPosition = startIndex;
+    float factor;
+    while (currentBlockPosition < startIndex + length)
+    {
+        // applying fade int
+        if (fadeInFrameLength > 0 && currentLocalPosition >= fadeInStart && currentLocalPosition <= fadeInEnd)
+        {
+            factor = float(currentLocalPosition - fadeInStart) / float(fadeInFrameLength);
+            data[currentBlockPosition] = factor * data[currentBlockPosition];
+            currentLocalPosition++;
+            currentBlockPosition++;
+            continue;
+        }
+
+        if (fadeOutFrameLength > 0 && currentLocalPosition >= fadeOutStart && currentLocalPosition <= fadeOutEnd)
+        {
+            factor = float(currentLocalPosition - fadeOutStart) / float(fadeOutFrameLength);
+            data[currentBlockPosition] = factor * data[currentBlockPosition];
+            currentLocalPosition++;
+            currentBlockPosition++;
+            continue;
+        }
+
+        currentLocalPosition++;
+        currentBlockPosition++;
+    }
 }
 
 int64_t SamplePlayer::getEditingPosition() const
