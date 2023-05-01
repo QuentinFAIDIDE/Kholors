@@ -12,6 +12,8 @@ SamplePlayer::SamplePlayer(int64_t position)
     setLowPassFreq(lowPassFreq);
     setHighPassFreq(highPassFreq);
 
+    fadeInFrameLength = 0;
+    fadeOutFrameLength = 0;
     setGainRamp(SAMPLEPLAYER_DEFAULT_FADE_MS);
 }
 
@@ -22,20 +24,25 @@ SamplePlayer::~SamplePlayer()
 
 void SamplePlayer::setGainRamp(float ms)
 {
-    int frameLength = SAMPLEPLAYER_DEFAULT_FADE_MS * (float(AUDIO_FRAMERATE) / 1000.0);
-    if (frameLength < 0)
+    int frameLength = ms * (float(AUDIO_FRAMERATE) / 1000.0);
+    if (frameLength <= 0)
     {
         fadeInFrameLength = 0;
         fadeOutFrameLength = 0;
+        return;
     }
     else if (ms > SAMPLEPLAYER_MAX_FADE_MS)
     {
         fadeInFrameLength = SAMPLEPLAYER_MAX_FADE_MS * (float(AUDIO_FRAMERATE) / 1000.0);
-        ;
         fadeOutFrameLength = SAMPLEPLAYER_MAX_FADE_MS * (float(AUDIO_FRAMERATE) / 1000.0);
-        ;
+        return;
     }
-    else if (fadeInFrameLength + fadeOutFrameLength < getLength())
+    else if (2 * frameLength >= getLength())
+    {
+        fadeInFrameLength = getLength() >> 1;
+        fadeOutFrameLength = getLength() >> 1;
+    }
+    else
     {
         fadeInFrameLength = frameLength;
         fadeOutFrameLength = frameLength;
@@ -126,6 +133,8 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
             }
         }
     }
+
+    setGainRamp(SAMPLEPLAYER_DEFAULT_FADE_MS);
 }
 
 int SamplePlayer::getNumFft() const
@@ -398,7 +407,7 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferT
                                           *currentAudioSampleBuffer, channel % numInputChannels,
                                           bufferStart + bufferInitialPosition + outputSamplesOffset, samplesThisTime);
             applyGainFade(bufferToFill.buffer->getWritePointer(channel), bufferToFill.startSample + outputSamplesOffset,
-                          samplesThisTime, bufferStart + bufferInitialPosition + outputSamplesOffset);
+                          samplesThisTime, bufferInitialPosition + outputSamplesOffset);
         }
 
         outputSamplesRemaining -= samplesThisTime;
@@ -421,17 +430,18 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferT
 void SamplePlayer::applyGainFade(float *data, int startIndex, int length, int startIndexLocalPosition)
 {
 
-    if (fadeInFrameLength == 0 && fadeOutFrameLength == 0)
+    if (fadeInFrameLength <= 1 && fadeOutFrameLength <= 1)
     {
         return;
     }
 
     int stopIndexLocalPosition = startIndexLocalPosition + (length - 1);
 
+    // these position are relative to bufferStart
     int fadeInStart = 0;
     int fadeInEnd = fadeInStart + (fadeInFrameLength - 1);
-    int fadeOutStart = 0;
-    int fadeOutEnd = fadeOutStart + (fadeOutFrameLength - 1);
+    int fadeOutStart = (getLength() - 1) - fadeOutFrameLength;
+    int fadeOutEnd = getLength() - 1;
 
     bool includesFadeIn = startIndexLocalPosition < fadeInEnd && stopIndexLocalPosition >= fadeInStart;
     bool includesFadeOut = startIndexLocalPosition < fadeOutEnd && stopIndexLocalPosition >= fadeOutStart;
@@ -440,12 +450,12 @@ void SamplePlayer::applyGainFade(float *data, int startIndex, int length, int st
         return;
     }
 
-    if (!includesFadeIn && fadeOutFrameLength == 0)
+    if (!includesFadeIn && fadeOutFrameLength <= 1)
     {
         return;
     }
 
-    if (!includesFadeOut && fadeInFrameLength == 0)
+    if (!includesFadeOut && fadeInFrameLength <= 1)
     {
         return;
     }
@@ -455,20 +465,24 @@ void SamplePlayer::applyGainFade(float *data, int startIndex, int length, int st
     float factor;
     while (currentBlockPosition < startIndex + length)
     {
-        // applying fade int
-        if (fadeInFrameLength > 0 && currentLocalPosition >= fadeInStart && currentLocalPosition <= fadeInEnd)
+
+        // applies fade int
+        if (includesFadeIn && fadeInFrameLength > 1 && currentLocalPosition >= fadeInStart &&
+            currentLocalPosition <= fadeInEnd)
         {
-            factor = float(currentLocalPosition - fadeInStart) / float(fadeInFrameLength);
+            factor = float(currentLocalPosition - fadeInStart) / float(fadeInFrameLength - 1);
             data[currentBlockPosition] = factor * data[currentBlockPosition];
             currentLocalPosition++;
             currentBlockPosition++;
             continue;
         }
 
-        if (fadeOutFrameLength > 0 && currentLocalPosition >= fadeOutStart && currentLocalPosition <= fadeOutEnd)
+        // applies fade out
+        if (includesFadeOut && fadeOutFrameLength > 1 && currentLocalPosition >= fadeOutStart &&
+            currentLocalPosition <= fadeOutEnd)
         {
-            factor = float(currentLocalPosition - fadeOutStart) / float(fadeOutFrameLength);
-            data[currentBlockPosition] = factor * data[currentBlockPosition];
+            factor = float(currentLocalPosition - fadeOutStart) / float(fadeOutFrameLength - 1);
+            data[currentBlockPosition] = (1.0 - factor) * data[currentBlockPosition];
             currentLocalPosition++;
             currentBlockPosition++;
             continue;
