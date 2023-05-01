@@ -65,6 +65,7 @@
 #define COLOR_NOTIF_BAR_TOP juce::Colour(62, 49, 49)
 #define COLOR_NOTIF_BAR_BOTTOM juce::Colour(10, 10, 10)
 #define COLOR_LABELS_BORDER juce::Colour(210, 210, 220)
+#define COLOR_SPLIT_PLACEHOLDER juce::Colour(210, 30, 30)
 
 // the gain smoothing when the value is changed
 #define DSP_GAIN_SMOOTHING_RAMP_SEC 0.03f
@@ -99,6 +100,8 @@
 
 #define KEYMAP_DRAG_MODE "d"
 #define KEYMAP_DELETE_SELECTION "x"
+#define KEYMAP_SPLIT_SAMPLE_AT_FREQUENCY "s"
+#define KEYMAP_SPLIT_SAMPLE_AT_TIME "shift + s"
 
 #define FREQVIEW_SAMPLE_FFT_ORDER 11
 // total number of fft frequency values. Given that the real part of the result is half of it

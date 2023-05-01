@@ -155,6 +155,7 @@ class ArrangementArea : public juce::Component,
     void paintSelection(juce::Graphics &g);
     void paintLabels(juce::Graphics &g);
     void paintSampleLabel(juce::Graphics &g, juce::Rectangle<float> &, int index);
+    void paintSplitLocation(juce::Graphics &g);
 
     SampleAreaRectangle addLabelAndPreventOverlaps(std::vector<SampleAreaRectangle> &existingLabels, int x, int y,
                                                    int sampleIndex);

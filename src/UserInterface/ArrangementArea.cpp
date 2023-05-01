@@ -44,7 +44,6 @@ ArrangementArea::ArrangementArea(MixingBus &mb, NotificationArea &na, ActivityMa
     setWantsKeyboardFocus(true);
 
     shadersCompiled = false;
-    recentlyDuplicated = false;
 
     // Indicates that no part of this Component is transparent.
     setOpaque(true);
@@ -80,6 +79,7 @@ void ArrangementArea::paint(juce::Graphics &g)
     paintSelection(g);
     paintPlayCursor(g);
     paintLabels(g);
+    paintSplitLocation(g);
 }
 
 void ArrangementArea::paintSelection(juce::Graphics &g)
@@ -122,6 +122,21 @@ void ArrangementArea::paintSelection(juce::Graphics &g)
     }
 
     selectedSamplesCoords.swap(selectedSamplesCoordsBuffer);
+}
+
+void ArrangementArea::paintSplitLocation(juce::Graphics &g)
+{
+    g.setColour(COLOR_SPLIT_PLACEHOLDER);
+
+    if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION)
+    {
+        g.drawHorizontalLine(lastMouseY, bounds.getX(), bounds.getX() + bounds.getWidth());
+    }
+
+    if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_TIME_SPLIT_LOCATION)
+    {
+        g.drawVerticalLine(lastMouseX, bounds.getY(), bounds.getY() + bounds.getHeight());
+    }
 }
 
 juce::Optional<SampleBorder> ArrangementArea::mouseOverSelectionBorder()
@@ -573,6 +588,7 @@ void ArrangementArea::handleMiddleButterDown(const juce::MouseEvent &jme)
 void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
 {
     int clickedTrack;
+
     // handle click when in default mode
     if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT)
     {
@@ -656,6 +672,18 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
                 }
             }
         }
+    }
+
+    if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION)
+    {
+        activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
+        // TODO: for each sample, call the split function
+    }
+
+    if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION)
+    {
+        activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
+        // TODO: for each sample, call the split function
     }
 }
 
@@ -788,6 +816,8 @@ void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent &jme)
     case UI_STATE_DEFAULT:
     case UI_STATE_VIEW_RESIZING:
     case UI_STATE_KEYBOARD_SAMPLE_DRAG:
+    case UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION:
+    case UI_STATE_DISPLAY_TIME_SPLIT_LOCATION:
         break;
     }
 }
@@ -822,6 +852,8 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
     case UI_STATE_DEFAULT:
     case UI_STATE_CURSOR_MOVING:
     case UI_STATE_KEYBOARD_SAMPLE_DRAG:
+    case UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION:
+    case UI_STATE_DISPLAY_TIME_SPLIT_LOCATION:
         break;
     }
 
@@ -1004,10 +1036,16 @@ void ArrangementArea::mouseMove(const juce::MouseEvent &jme)
 
     switch (activityManager.getAppState().getUiState())
     {
+
+    // Note: Ugly real life optimization, if UI_STATE_KEYBOARD_SAMPLE_DRAG is
+    // hit the whole blocks executes up the next break !!
     case UI_STATE_KEYBOARD_SAMPLE_DRAG:
         updateSelectedTracksDrag(lastMouseX - trackMovingInitialPosition);
+    case UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION:
+    case UI_STATE_DISPLAY_TIME_SPLIT_LOCATION:
         repaint();
         break;
+
     case UI_STATE_MOUSE_DRAG_MONO_LOWPASS:
     case UI_STATE_MOUSE_DRAG_MONO_HIGHPASS:
     case UI_STATE_MOUSE_DRAG_SAMPLE_START:
@@ -1160,7 +1198,6 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key)
                     mixingBus.addSample(task);
                     it++;
                 }
-                recentlyDuplicated = true;
             }
             else
             {
@@ -1178,6 +1215,20 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key)
         if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT && !selectedTracks.empty())
         {
             deleteSelectedTracks();
+        }
+    }
+    else if (key == juce::KeyPress::createFromDescription(KEYMAP_SPLIT_SAMPLE_AT_FREQUENCY))
+    {
+        if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT && !selectedTracks.empty())
+        {
+            activityManager.getAppState().setUiState(UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION);
+        }
+    }
+    else if (key == juce::KeyPress::createFromDescription(KEYMAP_SPLIT_SAMPLE_AT_TIME))
+    {
+        if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT && !selectedTracks.empty())
+        {
+            activityManager.getAppState().setUiState(UI_STATE_DISPLAY_TIME_SPLIT_LOCATION);
         }
     }
     // do not intercept the signal and pass it around
@@ -1271,12 +1322,25 @@ bool ArrangementArea::keyStateChanged(bool isKeyDown)
             repaint();
         }
     }
-    if (recentlyDuplicated &&
-        !juce::KeyPress::isKeyCurrentlyDown(juce::KeyPress::createFromDescription(KEYMAP_DRAG_MODE).getKeyCode()) &&
-        !juce::KeyPress::isKeyCurrentlyDown(
-            juce::KeyPress::createFromDescription(std::string("ctrl + ") + KEYMAP_DRAG_MODE).getKeyCode()))
+
+    else if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION)
     {
-        recentlyDuplicated = false;
+        if (!juce::KeyPress::isKeyCurrentlyDown(
+                juce::KeyPress::createFromDescription(KEYMAP_SPLIT_SAMPLE_AT_FREQUENCY).getKeyCode()))
+        {
+            activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
+            repaint();
+        }
+    }
+
+    else if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_TIME_SPLIT_LOCATION)
+    {
+        if (!juce::KeyPress::isKeyCurrentlyDown(
+                juce::KeyPress::createFromDescription(KEYMAP_SPLIT_SAMPLE_AT_TIME).getKeyCode()))
+        {
+            activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
+            repaint();
+        }
     }
 
     return false;
