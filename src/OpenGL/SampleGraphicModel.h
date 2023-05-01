@@ -31,18 +31,16 @@ class SampleGraphicModel : public TexturedModel
 
     void connectSquareFromVertexIds(size_t, size_t, size_t, size_t);
 
-    int horizontalScaleMultiplier;
-
     void uploadVerticesToGpu();
-
     float freqToPositionRatio(float freq);
+    int isFilteredArea(float y);
 
     int numFfts;
     int numChannels;
     int channelTextureShift;
     juce::Colour color;
     float lastLowPassFreq, lastHighPassFreq;
-
+    int horizontalScaleMultiplier;
     // the position between 0 and 1 of samplePlayer startPosition and endPosition relative to audio buffer
     float startPositionNormalized, endPositionNormalised;
 };

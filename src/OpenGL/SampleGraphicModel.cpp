@@ -279,6 +279,16 @@ void SampleGraphicModel::uploadVerticesToGpu()
 
 float SampleGraphicModel::textureIntensity(float x, float y)
 {
+    if (x < 0.0 || x > 1.0 || y < 0.0 || y > 1.0)
+    {
+        return 0.0f;
+    }
+
+    if (isFilteredArea(y))
+    {
+        return 0.0f;
+    }
+
     float xInAudioBuffer = juce::jmap(x, startPositionNormalized, endPositionNormalised);
     int timeIndex = xInAudioBuffer * numFfts;
     // index of zoomed frequencies, not linear to logarithm of frequencies
@@ -292,6 +302,25 @@ float SampleGraphicModel::textureIntensity(float x, float y)
         freqIndexNormalised = (y - 0.5) * 2 * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE;
     }
     return texture[getTextureIndex(freqIndexNormalised, timeIndex, 1, y < 0.5) + 3];
+}
+
+int SampleGraphicModel::isFilteredArea(float y)
+{
+    // Here, the "top" is in the sense of the frequency, i.e., on-screen position.
+    // The "top" value is therefore lower in value to that of the "bottom" in the
+    // coordinates system (taken from the Juce library) !
+
+    float leftChannelTop = 0.5 - (0.5 * freqToPositionRatio(lastLowPassFreq));
+    float leftChannelBottom = 0.5 - (0.5 * freqToPositionRatio(lastHighPassFreq));
+
+    float rightChannelTop = 0.5 + (0.5 * freqToPositionRatio(lastHighPassFreq));
+    float rightChannelBottom = 0.5 + (0.5 * freqToPositionRatio(lastLowPassFreq));
+
+    if (y < leftChannelTop || (y > leftChannelBottom && y < rightChannelTop) || y > rightChannelBottom)
+    {
+        return true;
+    }
+    return false;
 }
 
 juce::int64 SampleGraphicModel::getFramePosition()
