@@ -317,18 +317,21 @@ bool ArrangementArea::overlapSampleArea(SampleAreaRectangle &rect, int sampleInd
 
 void ArrangementArea::paintSampleLabel(juce::Graphics &g, juce::Rectangle<float> &box, int index)
 {
-    g.setColour(juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.5f));
-    g.fillRoundedRectangle(box, FREQVIEW_LABELS_CORNER_ROUNDING);
-
-    g.setColour(COLOR_LABELS_BORDER);
+    bool selected = selectedTracks.find(index) != selectedTracks.end();
 
     // different border width depending on if selected or not
-    if (selectedTracks.find(index) != selectedTracks.end())
+    if (selected)
     {
+        g.setColour(juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.75f));
+        g.fillRoundedRectangle(box, FREQVIEW_LABELS_CORNER_ROUNDING);
+        g.setColour(COLOR_LABELS_BORDER);
         g.drawRoundedRectangle(box, FREQVIEW_LABELS_CORNER_ROUNDING, FREQVIEW_LABELS_BORDER_THICKNESS);
     }
     else
     {
+        g.setColour(juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.55f));
+        g.fillRoundedRectangle(box, FREQVIEW_LABELS_CORNER_ROUNDING);
+        g.setColour(COLOR_LABELS_BORDER.withAlpha(0.8f));
         g.drawRoundedRectangle(box, FREQVIEW_LABELS_CORNER_ROUNDING, FREQVIEW_LABELS_BORDER_THICKNESS / 2.0f);
     }
 
@@ -337,7 +340,15 @@ void ArrangementArea::paintSampleLabel(juce::Graphics &g, juce::Rectangle<float>
     g.setColour(taxonomyManager.getSampleColor(index));
     g.fillRect(reducedBox.withWidth(box.getHeight() - FREQVIEW_LABELS_MARGINS));
 
-    g.setColour(COLOR_LABELS_BORDER);
+    if (selected)
+    {
+        g.setColour(COLOR_LABELS_BORDER);
+    }
+    else
+    {
+        g.setColour(COLOR_LABELS_BORDER.withAlpha(0.8f));
+    }
+
     g.drawText(taxonomyManager.getSampleName(index),
                reducedBox.translated(box.getHeight(), 0).withWidth(reducedBox.getWidth() - box.getHeight()),
                juce::Justification::centredLeft, true);
