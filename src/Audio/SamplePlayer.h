@@ -23,6 +23,7 @@ class SamplePlayer : public juce::PositionableAudioSource
     ~SamplePlayer();
     // this tells the SamplePlayer which audio buffer to use
     void setBuffer(BufferPtr, juce::dsp::FFT &);
+    void setBuffer(BufferPtr, std::vector<float> &fftData);
 
     // inherited from PositionableAudioSource
     juce::int64 getNextReadPosition() const override;
@@ -41,19 +42,26 @@ class SamplePlayer : public juce::PositionableAudioSource
     void setLength(juce::int64);
     // get the length up to which the buffer is readead
     juce::int64 getLength() const;
-    // set the shift for the buffer reading start position
-    void setBufferShift(juce::int64);
-    // get the shift of the buffer shift
-    juce::int64 getBufferShift() const;
+
     // how many channels does the buffer has ?
     int getBufferNumChannels() const;
+
     // create and move a duplicate (uses same underlying audio buffer)
-    SamplePlayer *createDuplicate(juce::int64, juce::dsp::FFT &);
-    // will split the sample in two at a frquency provided
-    // (returns new other half)
+    SamplePlayer *createDuplicate(juce::int64);
+
+    /**
+     * will split the sample in two at a frequency provided (returns new other half)
+     */
     SamplePlayer *split(float frequencyLimitHz);
-    // will split the sample in two at the time provided
-    // (returns new other half)
+
+    /**
+     * will split the sample in two at a time provided (returns new other half).
+     * Time is relative to bufferStart (the position we start reading the buffer
+     * at).
+     * A positionLimit of 10 means that from bufferStart (0th) to bufferStart+9 (9th)
+     * the current sample will play. Then the new play from bufferStart+10 (10th)
+     * to bufferEnd included (= bufferStart + (getLength()-1)).
+     */
     SamplePlayer *split(juce::int64 positionLimit);
 
     int tryMovingStart(int desiredShift);
@@ -82,6 +90,11 @@ class SamplePlayer : public juce::PositionableAudioSource
     bool hasBeenInitialized() const;
 
     static int maxFilterFreq;
+
+    // set the shift for the buffer reading start position
+    void setBufferShift(juce::int64);
+    // get the shift of the buffer shift
+    juce::int64 getBufferShift() const;
 
     // TODO: getters for stereo low and high pass
 
@@ -132,6 +145,12 @@ class SamplePlayer : public juce::PositionableAudioSource
 
     void applyFilters(const juce::AudioSourceChannelInfo &bufferToFill);
     void applyGainFade(float *data, int startIndex, int length, int startIndexLocalPositon);
+
+    /**
+     * addOnScreenAmountToFreq will add an amount to the frequency freq
+     * equivalent to a movement of (screenProportion*100) % of the screen.
+     */
+    float addOnScreenAmountToFreq(float freq, float screenProportion);
 };
 
 #endif // DEF_SAMPLEPLAYER_HPP

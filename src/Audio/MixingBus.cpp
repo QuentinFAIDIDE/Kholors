@@ -507,7 +507,7 @@ void MixingBus::restoreDeletedTrack(SamplePlayer *sp, int index)
 
 void MixingBus::duplicateTrack(SampleImportTask &task)
 {
-    SamplePlayer *newSample = tracks[task.getDuplicateTargetId()]->createDuplicate(task.getPosition(), forwardFFT);
+    SamplePlayer *newSample = tracks[task.getDuplicateTargetId()]->createDuplicate(task.getPosition());
     int newTrackIndex;
     // get a scoped lock for the buffer array
     {

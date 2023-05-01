@@ -75,7 +75,7 @@
 // maximum number of seconds above which we refuse to load it
 #define SAMPLE_MAX_DURATION_SEC 10
 // minimum number of audio samples (frame in our taxonomy) a sample must have
-#define SAMPLE_MIN_DURATION_FRAMES 2048
+#define SAMPLE_MIN_DURATION_FRAMES 1024
 // the maximum number of elements a song can have
 #define SAMPLE_MAX_PLAYERS_USED 16383
 // how many 64bits blocks the bitmask has
@@ -92,6 +92,7 @@
 #define SAMPLEPLAYER_MIN_FILTER_FREQ 10
 #define SAMPLEPLAYER_DEFAULT_FADE_MS 30.0
 #define SAMPLEPLAYER_MAX_FADE_MS 1000.0
+#define SAMPLEPLAYER_MIN_FREQ_DISTANCE_FACTOR 0.1
 
 #define PLAYCURSOR_WIDTH 3
 #define PLAYCURSOR_GRAB_WIDTH 4

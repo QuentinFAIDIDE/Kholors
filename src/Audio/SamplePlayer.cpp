@@ -137,6 +137,26 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
     setGainRamp(SAMPLEPLAYER_DEFAULT_FADE_MS);
 }
 
+void SamplePlayer::setBuffer(BufferPtr targetBuffer, std::vector<float> &fftData)
+{
+    // get lock and change buffer
+    const juce::SpinLock::ScopedLockType lock(playerMutex);
+    audioBufferRef = targetBuffer;
+
+    int numChannels = targetBuffer->getAudioSampleBuffer()->getNumChannels();
+    int numSamples = targetBuffer->getAudioSampleBuffer()->getNumSamples();
+    numFft = numSamples / (FREQVIEW_SAMPLE_FFT_SIZE);
+
+    // reset sample length
+    bufferStart = 0;
+    bufferEnd = numSamples - 1;
+    isSampleSet = true;
+
+    // set the fft data
+    audioBufferFrequencies = fftData;
+    setGainRamp(SAMPLEPLAYER_DEFAULT_FADE_MS);
+}
+
 int SamplePlayer::getNumFft() const
 {
     return numFft;
@@ -199,6 +219,12 @@ void SamplePlayer::move(juce::int64 newPosition)
 // set the length up to which reading the buffer
 void SamplePlayer::setLength(juce::int64 length)
 {
+
+    if (length < SAMPLE_MIN_DURATION_FRAMES)
+    {
+        return;
+    }
+
     const juce::SpinLock::ScopedLockType lock(playerMutex);
     if (bufferStart + length < audioBufferRef->getAudioSampleBuffer()->getNumSamples())
     {
@@ -293,10 +319,10 @@ juce::int64 SamplePlayer::getBufferShift() const
 }
 
 // create and move a duplicate (uses same underlying audio buffer)
-SamplePlayer *SamplePlayer::createDuplicate(juce::int64 newPosition, juce::dsp::FFT &fft)
+SamplePlayer *SamplePlayer::createDuplicate(juce::int64 newPosition)
 {
     SamplePlayer *duplicate = new SamplePlayer(newPosition);
-    duplicate->setBuffer(audioBufferRef, fft);
+    duplicate->setBuffer(audioBufferRef, audioBufferFrequencies);
     duplicate->setBufferShift(bufferStart);
     duplicate->setLength(getLength());
     duplicate->setLowPassFreq(lowPassFreq);
@@ -304,20 +330,71 @@ SamplePlayer *SamplePlayer::createDuplicate(juce::int64 newPosition, juce::dsp::
     return duplicate;
 }
 
-// will split the sample in two at a frquency provided
-// (returns new other half)
 SamplePlayer *SamplePlayer::split(float frequencyLimitHz)
 {
-    // TODO
-    return nullptr;
+    float minFreq = addOnScreenAmountToFreq(highPassFreq, SAMPLEPLAYER_MIN_FREQ_DISTANCE_FACTOR);
+    float maxFreq = addOnScreenAmountToFreq(lowPassFreq, -SAMPLEPLAYER_MIN_FREQ_DISTANCE_FACTOR);
+
+    if (frequencyLimitHz < minFreq || frequencyLimitHz > maxFreq)
+    {
+        return nullptr;
+    }
+
+    // we make a new sample that will be the low end part
+    SamplePlayer *duplicate = new SamplePlayer(editingPosition);
+    duplicate->setBuffer(audioBufferRef, audioBufferFrequencies);
+    duplicate->setBufferShift(bufferStart);
+    duplicate->setLength(getLength());
+    duplicate->setLowPassFreq(frequencyLimitHz);
+    duplicate->setHighPassFreq(highPassFreq);
+
+    // we are now the high end part
+    duplicate->setHighPassFreq(frequencyLimitHz);
+
+    return duplicate;
 }
 
-// will split the sample in two at the time provided
-// (returns new other half)
 SamplePlayer *SamplePlayer::split(juce::int64 positionLimit)
 {
-    // TODO
-    return nullptr;
+
+    if (positionLimit > getLength() - SAMPLE_MIN_DURATION_FRAMES)
+    {
+        return nullptr;
+    }
+
+    if (positionLimit < SAMPLE_MIN_DURATION_FRAMES)
+    {
+        return nullptr;
+    }
+
+    // we make a new sample that will be the last part
+    SamplePlayer *duplicate = new SamplePlayer(editingPosition + positionLimit);
+    duplicate->setBuffer(audioBufferRef, audioBufferFrequencies);
+    duplicate->setBufferShift(bufferStart + positionLimit);
+    duplicate->setLength(getLength() - positionLimit);
+    duplicate->setLowPassFreq(lowPassFreq);
+    duplicate->setHighPassFreq(highPassFreq);
+
+    // we are now the first part
+    setLength(positionLimit);
+
+    return duplicate;
+}
+
+float SamplePlayer::addOnScreenAmountToFreq(float freq, float screenProportion)
+{
+    // convert from frequency domain to on-screen domain
+    float fftIndex = freq * (float(FREQVIEW_SAMPLE_FFT_SIZE) / float(AUDIO_FRAMERATE));
+    float storedFftDataIndex = UnitConverter::magnifyFftIndexInv(fftIndex);
+    float textureIndex = UnitConverter::magnifyTextureFrequencyIndex(storedFftDataIndex);
+
+    // now we can add the constant amount that matched on scren distance
+    textureIndex = textureIndex + (screenProportion * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
+
+    // now come back to frequency domain and return result
+    storedFftDataIndex = UnitConverter::magnifyTextureFrequencyIndexInv(textureIndex);
+    fftIndex = UnitConverter::magnifyFftIndex(fftIndex);
+    return fftIndex * (float(AUDIO_FRAMERATE / float(FREQVIEW_SAMPLE_FFT_SIZE)));
 }
 
 void SamplePlayer::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
