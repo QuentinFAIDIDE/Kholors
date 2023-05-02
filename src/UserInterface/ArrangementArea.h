@@ -200,6 +200,8 @@ class ArrangementArea : public juce::Component,
     bool overlapSampleArea(SampleAreaRectangle &, int, int);
 
     bool updateViewResizing(juce::Point<int> &);
+
+    void refreshSampleOpenGlView(int index);
 };
 
 #endif // DEF_ARRANGEMENTAREA_HPP

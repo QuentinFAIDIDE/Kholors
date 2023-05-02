@@ -144,42 +144,37 @@ void ArrangementArea::paintSplitLocation(juce::Graphics &g)
 
         for (size_t i = 0; i < samplesRects.size(); i++)
         {
-                // reject what's not on screen
-                if (samplesRects[i].getX() + samplesRects[i].getWidth() < 0 ||
-                    samplesRects[i].getX() > bounds.getWidth())
+            // reject what's not on screen
+            if (samplesRects[i].getX() + samplesRects[i].getWidth() < 0 || samplesRects[i].getX() > bounds.getWidth())
+            {
+                continue;
+            }
+
+            // reject what's not on the line and draw the line
+            if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION)
+            {
+                if (samplesRects[i].getY() > lastMouseY ||
+                    samplesRects[i].getY() + samplesRects[i].getHeight() < lastMouseY)
                 {
                     continue;
                 }
 
-                // reject what's not on the line and draw the line
-                if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION)
+                g.drawHorizontalLine(lastMouseY, samplesRects[i].getX(),
+                                     samplesRects[i].getX() + samplesRects[i].getWidth());
+                g.drawHorizontalLine(bounds.getHeight() - lastMouseY, samplesRects[i].getX(),
+                                     samplesRects[i].getX() + samplesRects[i].getWidth());
+            }
+            if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_TIME_SPLIT_LOCATION)
+            {
+                if (samplesRects[i].getX() > lastMouseX ||
+                    samplesRects[i].getX() + samplesRects[i].getWidth() < lastMouseX)
                 {
-                    if (samplesRects[i].getY() > lastMouseY || samplesRects[i].getY()+samplesRects[i].getHeight() < lastMouseY)
-                    {
-                        continue;
-                    }
-
-                    g.drawHorizontalLine(lastMouseY, samplesRects[i].getX(), samplesRects[i].getX() + samplesRects[i].getWidth());
+                    continue;
                 }
-                if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_TIME_SPLIT_LOCATION)
-                {
-                    if (samplesRects[i].getX() > lastMouseX || samplesRects[i].getX()+samplesRects[i].getWidth() < lastMouseX)
-                    {
-                        continue;
-                    }
-                    g.drawVerticalLine(lastMouseX, samplesRects[i].getY(), samplesRects[i].getY() + samplesRects[i].getHeight());
-                }
+                g.drawVerticalLine(lastMouseX, samplesRects[i].getY(),
+                                   samplesRects[i].getY() + samplesRects[i].getHeight());
+            }
         }
-    }
-
-    if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION)
-    {
-        g.drawHorizontalLine(lastMouseY, bounds.getX(), bounds.getX() + bounds.getWidth());
-    }
-
-    if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_TIME_SPLIT_LOCATION)
-    {
-        g.drawVerticalLine(lastMouseX, bounds.getY(), bounds.getY() + bounds.getHeight());
     }
 }
 
@@ -189,7 +184,7 @@ void ArrangementArea::paintSelectionArea(juce::Graphics &g)
     {
         g.setColour(COLOR_SELECT_AREA.withAlpha(0.2f));
         g.fillRoundedRectangle(currentSelectionRect, FREQVIEW_LABELS_CORNER_ROUNDING);
-        
+
         g.setColour(COLOR_SELECT_AREA);
         g.drawRoundedRectangle(currentSelectionRect, 4, 1.7);
     }
@@ -590,6 +585,13 @@ void ArrangementArea::displaySample(SamplePlayer *sp, SampleCreateTask task)
     {
         taxonomyManager.copyTaxonomy(task.getDuplicateTargetId(), task.getAllocatedIndex());
         syncSampleColor(task.getAllocatedIndex());
+
+        if (task.getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_FREQUENCY ||
+            task.getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_POSITION)
+        {
+            refreshSampleOpenGlView(task.getDuplicateTargetId());
+        }
+
         selectedTracks.insert(task.getAllocatedIndex());
     }
 }
@@ -730,8 +732,9 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
         }
     }
 
-    if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION || activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_TIME_SPLIT_LOCATION)
-    {        
+    if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION ||
+        activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_TIME_SPLIT_LOCATION)
+    {
         // iterate over selected tracks to duplicate everything
         std::set<std::size_t>::iterator it = selectedTracks.begin();
 
@@ -747,16 +750,16 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
             else
             {
                 auto xSampleLocations = samples[*it]->getPixelBounds(viewPosition, viewScale, bounds.getHeight());
-                if (lastMouseX > xSampleLocations[0].getX() && lastMouseX < xSampleLocations[0].getX()+xSampleLocations[0].getWidth())
+                if (lastMouseX > xSampleLocations[0].getX() &&
+                    lastMouseX < xSampleLocations[0].getX() + xSampleLocations[0].getWidth())
                 {
-                    int frameSplitPosition = (lastMouseX-xSampleLocations[0].getX()) * viewScale;
+                    int frameSplitPosition = (lastMouseX - xSampleLocations[0].getX()) * viewScale;
                     SampleCreateTask task(frameSplitPosition, *it, DUPLICATION_TYPE_SPLIT_AT_POSITION);
                     mixingBus.addSample(task);
                 }
             }
             it++;
         }
-
 
         activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
     }
@@ -907,8 +910,6 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
     juce::Point<int> newPosition = jme.getPosition();
     bool viewUpdated = false;
 
-    lastMouseX = newPosition.getX();
-
     switch (activityManager.getAppState().getUiState())
     {
 
@@ -967,10 +968,8 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
 
 void ArrangementArea::addSelectedSamples()
 {
-    currentSelectionRect = juce::Rectangle<float>(
-        juce::Point<float> (startSelectX, startSelectY),
-        juce::Point<float> (lastMouseX, lastMouseY)
-    );
+    currentSelectionRect = juce::Rectangle<float>(juce::Point<float>(startSelectX, startSelectY),
+                                                  juce::Point<float>(lastMouseX, lastMouseY));
 
     for (size_t i = 0; i < samples.size(); i++)
     {
@@ -980,13 +979,13 @@ void ArrangementArea::addSelectedSamples()
         }
 
         auto sampleAreas = samples[i]->getPixelBounds(viewPosition, viewScale, bounds.getHeight());
-        for (size_t j = 0; j < sampleAreas.size(); j++) {
+        for (size_t j = 0; j < sampleAreas.size(); j++)
+        {
 
             if (currentSelectionRect.intersects(sampleAreas[j]))
             {
                 selectedTracks.insert(i);
             }
-
         }
     }
 }
@@ -1052,12 +1051,7 @@ void ArrangementArea::cropSampleBordersVertically(bool innerBorders)
             {
                 currentSample->setLowPassFreq(filterFreq);
             }
-            // apply change to opengl sample
-            openGLContext.executeOnGLThread(
-                [this, itr, currentSample](juce::OpenGLContext &c) {
-                    samples[*itr]->updatePropertiesAndUploadToGpu(currentSample);
-                },
-                true);
+            refreshSampleOpenGlView(*itr);
         }
     }
 
@@ -1065,6 +1059,17 @@ void ArrangementArea::cropSampleBordersVertically(bool innerBorders)
     {
         repaint();
     }
+}
+
+void ArrangementArea::refreshSampleOpenGlView(int index)
+{
+    SamplePlayer *sp = mixingBus.getTrack(index);
+    if (sp == nullptr)
+    {
+        return;
+    }
+    openGLContext.executeOnGLThread(
+        [this, index, sp](juce::OpenGLContext &c) { samples[index]->updatePropertiesAndUploadToGpu(sp); }, true);
 }
 
 float ArrangementArea::verticalPositionToFrequency(int y)
@@ -1214,12 +1219,7 @@ void ArrangementArea::cropSampleEdgeHorizontally(bool cropFront)
 
             if (actualFrameChange != 0)
             {
-                // apply change to opengl sample
-                openGLContext.executeOnGLThread(
-                    [this, itr, currentTrack](juce::OpenGLContext &c) {
-                        samples[*itr]->updatePropertiesAndUploadToGpu(currentTrack);
-                    },
-                    true);
+                refreshSampleOpenGlView(*itr);
             }
         }
     }
@@ -1435,9 +1435,7 @@ bool ArrangementArea::keyStateChanged(bool isKeyDown)
                     trackPosition = sp->getEditingPosition();
                     trackPosition += dragDistance;
                     sp->move(trackPosition);
-                    openGLContext.executeOnGLThread(
-                        [this, sp, i](juce::OpenGLContext &c) { this->samples[i]->updatePropertiesAndUploadToGpu(sp); },
-                        true);
+                    refreshSampleOpenGlView(i);
                 }
             }
             activityManager.getAppState().setUiState(UI_STATE_DEFAULT);

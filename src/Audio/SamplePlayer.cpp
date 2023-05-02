@@ -349,7 +349,7 @@ SamplePlayer *SamplePlayer::splitAtFrequency(float frequencyLimitHz)
     duplicate->setHighPassFreq(highPassFreq);
 
     // we are now the high end part
-    duplicate->setHighPassFreq(frequencyLimitHz);
+    setHighPassFreq(frequencyLimitHz);
 
     return duplicate;
 }
@@ -389,11 +389,11 @@ float SamplePlayer::addOnScreenAmountToFreq(float freq, float screenProportion)
     float textureIndex = UnitConverter::magnifyTextureFrequencyIndex(storedFftDataIndex);
 
     // now we can add the constant amount that matched on scren distance
-    textureIndex = textureIndex + (screenProportion * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
+    textureIndex = textureIndex + (screenProportion * float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE));
 
     // now come back to frequency domain and return result
     storedFftDataIndex = UnitConverter::magnifyTextureFrequencyIndexInv(textureIndex);
-    fftIndex = UnitConverter::magnifyFftIndex(fftIndex);
+    fftIndex = UnitConverter::magnifyFftIndex(storedFftDataIndex);
     return fftIndex * (float(AUDIO_FRAMERATE / float(FREQVIEW_SAMPLE_FFT_SIZE)));
 }
 
