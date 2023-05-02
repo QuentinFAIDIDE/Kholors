@@ -23,11 +23,11 @@ class Task : public Marshalable
     bool completed;
 };
 
-class SampleImportTask : public Task
+class SampleCreateTask : public Task
 {
   public:
-    SampleImportTask(std::string path, int position);
-    SampleImportTask(int position, int sampleCopyIndex);
+    SampleCreateTask(std::string path, int position);
+    SampleCreateTask(int position, int sampleCopyIndex);
 
     bool isDuplication();
     int getDuplicateTargetId();

@@ -53,7 +53,7 @@ ArrangementArea::ArrangementArea(MixingBus &mb, NotificationArea &na, ActivityMa
     openGLContext.attachTo(*this);
 
     // register the callback to register newly created samples
-    mixingBus.addUiSampleCallback = [this](SamplePlayer *sp, SampleImportTask task) { displaySample(sp, task); };
+    mixingBus.addUiSampleCallback = [this](SamplePlayer *sp, SampleCreateTask task) { displaySample(sp, task); };
     mixingBus.disableUiSampleCallback = [this](int index) { samples[index]->disable(); };
 }
 
@@ -555,7 +555,7 @@ void ArrangementArea::openGLContextClosing()
 {
 }
 
-void ArrangementArea::displaySample(SamplePlayer *sp, SampleImportTask task)
+void ArrangementArea::displaySample(SamplePlayer *sp, SampleCreateTask task)
 {
     // create graphic objects from the sample
     SampleGraphicModel *sampleRef =
@@ -1237,7 +1237,7 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key)
                     // insert selected tracks at the mouse cursor position
                     int pos = mixingBus.getTrack(*it)->getEditingPosition();
                     newPosition = (viewPosition + (lastMouseX * viewScale)) + (pos - selectionBeginPos);
-                    SampleImportTask task(newPosition, *it);
+                    SampleCreateTask task(newPosition, *it);
                     mixingBus.addSample(task);
                     it++;
                 }
@@ -1415,7 +1415,7 @@ void ArrangementArea::filesDropped(const juce::StringArray &files, int x, int y)
     // we try to load the samples
     for (int i = 0; i < files.size(); i++)
     {
-        SampleImportTask task(files[i].toStdString(), framePos);
+        SampleCreateTask task(files[i].toStdString(), framePos);
         mixingBus.addSample(task);
     }
 }
@@ -1427,6 +1427,6 @@ void ArrangementArea::itemDropped(const SourceDetails &dragSourceDetails)
     int64_t framePos = viewPosition + (x * viewScale);
     // we try to load the sample
     juce::String filename = dragSourceDetails.description.toString().replaceFirstOccurrenceOf("file:", "");
-    SampleImportTask task(filename.toStdString(), framePos);
+    SampleCreateTask task(filename.toStdString(), framePos);
     mixingBus.addSample(task);
 }

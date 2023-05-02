@@ -94,7 +94,7 @@ bool MixingBus::isCursorPlaying() const
     return isPlaying;
 }
 
-void MixingBus::addSample(SampleImportTask import)
+void MixingBus::addSample(SampleCreateTask import)
 {
     // swap a file to load variable to avoid blocking event thread for disk i/o
     {
@@ -290,7 +290,7 @@ void MixingBus::checkForBuffersToFree()
 void MixingBus::checkForFileToImport()
 {
 
-    std::vector<SampleImportTask> localTaskQueue;
+    std::vector<SampleCreateTask> localTaskQueue;
     // let's preallocate here to avoid doing it on the message thread
     localTaskQueue.reserve(TASK_QUEUE_RESERVED_SIZE);
 
@@ -314,7 +314,7 @@ void MixingBus::checkForFileToImport()
     }
 }
 
-void MixingBus::importNewFile(SampleImportTask &task)
+void MixingBus::importNewFile(SampleCreateTask &task)
 {
     // inspired by LoopingAudioSampleBuffer juce tutorial
 
@@ -505,7 +505,7 @@ void MixingBus::restoreDeletedTrack(SamplePlayer *sp, int index)
     tracks.set(index, sp);
 }
 
-void MixingBus::duplicateTrack(SampleImportTask &task)
+void MixingBus::duplicateTrack(SampleCreateTask &task)
 {
     SamplePlayer *newSample = tracks[task.getDuplicateTargetId()]->createDuplicate(task.getPosition());
     int newTrackIndex;
