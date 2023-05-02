@@ -13,19 +13,19 @@ class UnitConverter
 
     /**
      * Projects the [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE] index of the stored fft data
-     * into the [0, FREQVIEW_SAMPLE_FFT_SIZE/2] range of the Hz frequencies bins
+     * into the [0, FREQVIEW_SAMPLE_FFT_SIZE] range of the Hz frequencies bins
      * that are result of the FFT.
      * Ie use this to convert an index of the stored fft data into an index of
      * the fft computing result.
      * BUG: If called back and forth with its inv, low values are drifting away from the original value.
      * @param  k index in range [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE] (powered of .88 log10 relation to Hz)
-     * @return   index in range [0, FREQVIEW_SAMPLE_FFT_SIZE/2] (linear relation to Hz)
+     * @return   index in range [0, FREQVIEW_SAMPLE_FFT_SIZE] (linear relation to Hz)
      */
     static float magnifyFftIndex(float k);
     /**
      * Exact inverse of magnifyFftIndex. Will take an index from the fft and convert it
      * back into an index of the stored data.
-     * @param  k index in range [0, FREQVIEW_SAMPLE_FFT_SIZE/2] (linear relation to Hz)
+     * @param  k index in range [0, FREQVIEW_SAMPLE_FFT_SIZE] (linear relation to Hz)
      * @return   index in range [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE] (powered of .88 log10 relation to Hz)
      */
     static float magnifyFftIndexInv(float k);

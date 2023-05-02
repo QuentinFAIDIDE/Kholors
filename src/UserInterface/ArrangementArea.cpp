@@ -744,6 +744,7 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
             {
                 float freq = verticalPositionToFrequency(lastMouseY);
                 // create a track duplicate from the sample id at *it
+                std::cout << freq << std::endl;
                 SampleCreateTask task(freq, *it);
                 mixingBus.addSample(task);
             }
@@ -1078,7 +1079,7 @@ float ArrangementArea::verticalPositionToFrequency(int y)
     // REMINDER: upper half (below half height) is the first
     // fft with lower frequencies below. second halve freqs are the opposite disposition.
 
-    // freqRatio is the ratio from 0 to max frequency (AUDIO_FRAMRATE).
+    // freqRatio is the ratio from 0 to max frequency (AUDIO_FRAMRATE/2).
     // It's not linear to freqs, we therefore need to invert our index correction
     // from texture freq index to storage freq index and then from storage
     // freq index to fft index.
@@ -1097,7 +1098,7 @@ float ArrangementArea::verticalPositionToFrequency(int y)
     float storageFreqIndex = UnitConverter::magnifyTextureFrequencyIndexInv(textureFreqIndex);
     float fftFreqIndex = UnitConverter::magnifyFftIndex(storageFreqIndex);
     // map the fft index to a frequency
-    float freq = fftFreqIndex * (AUDIO_FRAMERATE / FREQVIEW_SAMPLE_FFT_SIZE);
+    float freq = fftFreqIndex * (float(AUDIO_FRAMERATE) / float(FREQVIEW_SAMPLE_FFT_SIZE));
     return juce::jlimit(0.0f, float(AUDIO_FRAMERATE >> 1), freq);
 }
 

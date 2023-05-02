@@ -5,10 +5,10 @@ float UnitConverter::magnifyFftPrecomputedFactor1 =
     ((FFT_MAGNIFY_B * FFT_MAGNIFY_C) / float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE));
 float UnitConverter::magnifyFftPrecomputedFactor2 = 0.5 * std::pow(FFT_MAGNIFY_A, FFT_MAGNIFY_C);
 
-float UnitConverter::magnifyFftInvPrecomputedFator1 = FREQVIEW_SAMPLE_FFT_SCOPE_SIZE / (FFT_MAGNIFY_B * FFT_MAGNIFY_C);
+float UnitConverter::magnifyFftInvPrecomputedFator1 =
+    float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) / (FFT_MAGNIFY_B * FFT_MAGNIFY_C);
 float UnitConverter::magnifyFftInvPrecomputedFator2 =
-    magnifyFftInvPrecomputedFator1 *
-    log10(2 / (std::pow(FFT_MAGNIFY_A, FFT_MAGNIFY_C) * (FREQVIEW_SAMPLE_FFT_SIZE >> 1)));
+    magnifyFftInvPrecomputedFator1 * log10(2 / (std::pow(FFT_MAGNIFY_A, FFT_MAGNIFY_C) * (FREQVIEW_SAMPLE_FFT_SIZE)));
 
 float UnitConverter::fftToDb(float val)
 {
@@ -26,14 +26,14 @@ float UnitConverter::magnifyFftIndex(float k)
     // the transfo is mainly made of three steps:
     // log10 normalized to [0, 1] using A and B
     // then set to power of C to zoom in a little
-    // then normalized to fit in [0, FREQVIEW_SAMPLE_FFT_SIZE/2]
+    // then normalized to fit in [0, FREQVIEW_SAMPLE_FFT_SIZE]
 
     // this has been simplfied and refactored to fit in a single
     // formula and precompute as much as possible
 
     float t1 = k * magnifyFftPrecomputedFactor1;
-    float res = magnifyFftPrecomputedFactor2 * std::pow(10.0f, t1) * (FREQVIEW_SAMPLE_FFT_SIZE >> 1);
-    return juce::jlimit(0.0f, float(FREQVIEW_SAMPLE_FFT_SIZE >> 1), res);
+    float res = magnifyFftPrecomputedFactor2 * std::pow(10.0f, t1) * (FREQVIEW_SAMPLE_FFT_SIZE);
+    return juce::jlimit(0.0f, float(FREQVIEW_SAMPLE_FFT_SIZE), res);
 }
 
 float UnitConverter::magnifyFftIndexInv(float k)
