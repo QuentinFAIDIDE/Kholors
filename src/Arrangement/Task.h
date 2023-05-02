@@ -6,6 +6,14 @@ class State
 {
 };
 
+enum DuplicationType 
+{
+  DUPLICATION_TYPE_NO_DUPLICATION,
+  DUPLICATION_TYPE_COPY_AT_POSITION,
+  DUPLICATION_TYPE_SPLIT_AT_POSITION,
+  DUPLICATION_TYPE_SPLIT_AT_FREQUENCY
+};
+
 class Task : public Marshalable
 {
   public:
@@ -26,8 +34,12 @@ class Task : public Marshalable
 class SampleCreateTask : public Task
 {
   public:
+    // constructor for brand new samples imported from
     SampleCreateTask(std::string path, int position);
-    SampleCreateTask(int position, int sampleCopyIndex);
+    // contructor for duplication at frequency
+    SampleCreateTask(float frequency, int sampleCopyIndex);
+    // contructor for other duplication tasks
+    SampleCreateTask(int position, int sampleCopyIndex, DuplicationType d);
 
     bool isDuplication();
     int getDuplicateTargetId();
@@ -37,14 +49,18 @@ class SampleCreateTask : public Task
     bool hasFailed();
     void setAllocatedIndex(int);
     int getAllocatedIndex();
+    float getSplitFrequency();
+    DuplicationType getDuplicationType();
 
   private:
+    DuplicationType duplicationType;
     std::string filePath;
     int editingPosition;
     bool isCopy;
     int duplicatedSampleId;
     bool failed;
     int newIndex;
+    float splitFrequency;
 };
 
 #endif // DEF_ACTION_HPP

@@ -27,22 +27,37 @@ void Task::setCompleted(bool c)
 
 // ============================
 
-SampleImportTask::SampleImportTask(std::string path, int position)
-    : filePath(path), editingPosition(position), isCopy(false), failed(false)
+SampleCreateTask::SampleCreateTask(std::string path, int position)
+    : filePath(path), editingPosition(position), isCopy(false), failed(false), duplicationType(DUPLICATION_TYPE_NO_DUPLICATION)
 {
 }
 
-SampleImportTask::SampleImportTask(int position, int sampleCopyIndex)
-    : editingPosition(position), isCopy(true), duplicatedSampleId(sampleCopyIndex), failed(false)
+SampleCreateTask::SampleCreateTask(int position, int sampleCopyIndex, DuplicationType d)
+    : editingPosition(position), isCopy(true), duplicatedSampleId(sampleCopyIndex), failed(false), duplicationType(d)
 {
 }
 
-bool SampleImportTask::isDuplication()
+SampleCreateTask::SampleCreateTask(float frequency, int sampleCopyIndex)
+    : splitFrequency(frequency), isCopy(true), duplicatedSampleId(sampleCopyIndex), failed(false), duplicationType(DUPLICATION_TYPE_SPLIT_AT_FREQUENCY)
 {
-    return isCopy;
+}
+
+float SampleCreateTask::getSplitFrequency()
+{
+    return splitFrequency;
+}
+
+DuplicationType SampleCreateTask::getDuplicationType()
+{
+    return duplicationType;
+}
+
+bool SampleCreateTask::isDuplication()
+{
+    return DuplicationType != DUPLICATION_TYPE_NO_DUPLICATION;
 };
 
-int SampleImportTask::getDuplicateTargetId()
+int SampleCreateTask::getDuplicateTargetId()
 {
     if (isCopy)
     {
@@ -54,32 +69,32 @@ int SampleImportTask::getDuplicateTargetId()
     }
 }
 
-std::string SampleImportTask::getFilePath()
+std::string SampleCreateTask::getFilePath()
 {
     return filePath;
 }
 
-int64_t SampleImportTask::getPosition()
+int64_t SampleCreateTask::getPosition()
 {
     return editingPosition;
 }
 
-void SampleImportTask::setFailed(bool f)
+void SampleCreateTask::setFailed(bool f)
 {
     failed = f;
 }
 
-bool SampleImportTask::hasFailed()
+bool SampleCreateTask::hasFailed()
 {
     return failed;
 }
 
-void SampleImportTask::setAllocatedIndex(int i)
+void SampleCreateTask::setAllocatedIndex(int i)
 {
     newIndex = i;
 }
 
-int SampleImportTask::getAllocatedIndex()
+int SampleCreateTask::getAllocatedIndex()
 {
     return newIndex;
 }

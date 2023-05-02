@@ -717,16 +717,38 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
         }
     }
 
-    if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION)
-    {
-        activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
-        // TODO: for each sample, call the split function
-    }
+    if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION || activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_TIME_SPLIT_LOCATION)
+    {        
+        // iterate over selected tracks to duplicate everything
+        std::set<std::size_t>::iterator it = selectedTracks.begin();
 
-    if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION)
-    {
+        
+        
+
+        while (it != selectedTracks.end())
+        {
+            if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION)
+            {
+                float freq = verticalPositionToFrequency(lastMouseY);
+                // create a track duplicate from the sample id at *it
+                SampleCreateTask task(freq, *it);
+                mixingBus.addSample(task);
+            }
+            else
+            {
+                auto xSampleLocations = samples[*it]->getPixelBounds(viewPosition, viewScale, bounds.getHeight());
+                if (lastMouseX > xSampleLocations[0].getX() && lastMouseX < xSampleLocations[0].getX()+xSampleLocations[0].getWidth())
+                {
+                    int frameSplitPosition = (lastMouseX-xSampleLocations[0].getX()) * viewScale;
+                    SampleCreateTask task(frameSplitPosition, *it, DUPLICATION_TYPE_SPLIT_AT_POSITION);
+                    mixingBus.addSample(task);
+                }
+            }
+            it++;
+        }
+
+
         activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
-        // TODO: for each sample, call the split function
     }
 }
 
@@ -1237,7 +1259,7 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key)
                     // insert selected tracks at the mouse cursor position
                     int pos = mixingBus.getTrack(*it)->getEditingPosition();
                     newPosition = (viewPosition + (lastMouseX * viewScale)) + (pos - selectionBeginPos);
-                    SampleCreateTask task(newPosition, *it);
+                    SampleCreateTask task(newPosition, *it, DUPLICATION_TYPE_COPY_AT_POSITION);
                     mixingBus.addSample(task);
                     it++;
                 }

@@ -168,7 +168,7 @@ class ArrangementArea : public juce::Component,
     void deleteSelectedTracks();
     float polylens(float);
 
-    void displaySample(SamplePlayer *, SampleImportTask task);
+    void displaySample(SamplePlayer *, SampleCreateTask task);
     void syncSampleColor(int sampleIndex);
 
     bool buildShaders();

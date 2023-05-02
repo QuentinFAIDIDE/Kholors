@@ -507,8 +507,30 @@ void MixingBus::restoreDeletedTrack(SamplePlayer *sp, int index)
 
 void MixingBus::duplicateTrack(SampleCreateTask &task)
 {
-    SamplePlayer *newSample = tracks[task.getDuplicateTargetId()]->createDuplicate(task.getPosition());
-    int newTrackIndex;
+    // Note: this runs from the background thread
+
+    SamplePlayer *newSample = nullptr;
+    int newTrackIndex = -1;
+
+    if (task.getDuplicationType() == DUPLICATION_TYPE_COPY_AT_POSITION)
+    {
+        newSample = tracks[task.getDuplicateTargetId()]->createDuplicate(task.getPosition());
+    }
+    else if (task.getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_FREQUENCY)
+    {
+        newSample = tracks[task.getDuplicateTargetId()]->split(task.getSplitFrequency());
+    }
+    else if (task.getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_POSITION)
+    {
+        newSample = tracks[task.getDuplicateTargetId()]->split((int)task.getPosition());
+    }
+
+    if (newSample == nullptr)
+    {
+        task.setFailed(true);
+        return;
+    }
+
     // get a scoped lock for the buffer array
     {
         const juce::ScopedLock lock(mixbusMutex);
@@ -518,8 +540,9 @@ void MixingBus::duplicateTrack(SampleCreateTask &task)
         tracks.add(newSample);
         newTrackIndex = tracks.size() - 1;
     }
-    task.setAllocatedIndex(newTrackIndex);
 
+    task.setAllocatedIndex(newTrackIndex);
+    
     addUiSampleCallback(newSample, task);
     trackRepaintCallback();
 }
