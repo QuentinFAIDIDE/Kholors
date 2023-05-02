@@ -136,6 +136,7 @@ void ArrangementArea::paintSplitLocation(juce::Graphics &g)
     g.setColour(COLOR_SPLIT_PLACEHOLDER);
 
     // iterate over selected items
+    std::set<size_t>::iterator itr;
     for (itr = selectedTracks.begin(); itr != selectedTracks.end(); itr++)
     {
         auto samplesRects = samples[*itr]->getPixelBounds(viewPosition, viewScale, bounds.getHeight());
