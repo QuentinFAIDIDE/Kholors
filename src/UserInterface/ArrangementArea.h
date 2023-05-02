@@ -127,6 +127,10 @@ class ArrangementArea : public juce::Component,
     int lastMouseX;
     int lastMouseY;
 
+    // position at which the selection area is started
+    int startSelectX, startSelectY;
+    juce::Rectangle<float> currentSelectionRect;
+
     // reference to the sample manager in use
     MixingBus &mixingBus;
     NotificationArea &notificationArea;
@@ -156,6 +160,7 @@ class ArrangementArea : public juce::Component,
     void paintLabels(juce::Graphics &g);
     void paintSampleLabel(juce::Graphics &g, juce::Rectangle<float> &, int index);
     void paintSplitLocation(juce::Graphics &g);
+    void paintSelectionArea(juce::Graphics &g);
 
     SampleAreaRectangle addLabelAndPreventOverlaps(std::vector<SampleAreaRectangle> &existingLabels, int x, int y,
                                                    int sampleIndex);

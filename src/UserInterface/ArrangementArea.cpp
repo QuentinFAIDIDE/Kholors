@@ -80,6 +80,7 @@ void ArrangementArea::paint(juce::Graphics &g)
     paintPlayCursor(g);
     paintLabels(g);
     paintSplitLocation(g);
+    paintSelectionArea(g);
 }
 
 void ArrangementArea::paintSelection(juce::Graphics &g)
@@ -179,6 +180,18 @@ void ArrangementArea::paintSplitLocation(juce::Graphics &g)
     if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_TIME_SPLIT_LOCATION)
     {
         g.drawVerticalLine(lastMouseX, bounds.getY(), bounds.getY() + bounds.getHeight());
+    }
+}
+
+void ArrangementArea::paintSelectionArea(juce::Graphics &g)
+{
+    if (activityManager.getAppState().getUiState() == UI_STATE_SELECT_AREA_WITH_MOUSE)
+    {
+        g.setColour(COLOR_SELECT_AREA.withAlpha(0.2f));
+        g.fillRoundedRectangle(currentSelectionRect, FREQVIEW_LABELS_CORNER_ROUNDING);
+        
+        g.setColour(COLOR_SELECT_AREA);
+        g.drawRoundedRectangle(currentSelectionRect, 4, 1.7);
     }
 }
 
@@ -722,9 +735,6 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
         // iterate over selected tracks to duplicate everything
         std::set<std::size_t>::iterator it = selectedTracks.begin();
 
-        
-        
-
         while (it != selectedTracks.end())
         {
             if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION)
@@ -857,6 +867,7 @@ void ArrangementArea::mouseUp(const juce::MouseEvent &jme)
 
 void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent &jme)
 {
+
     switch (activityManager.getAppState().getUiState())
     {
 
@@ -878,6 +889,10 @@ void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent &jme)
         activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
         break;
 
+    case UI_STATE_SELECT_AREA_WITH_MOUSE:
+        activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
+        break;
+
     case UI_STATE_DEFAULT:
     case UI_STATE_VIEW_RESIZING:
     case UI_STATE_KEYBOARD_SAMPLE_DRAG:
@@ -891,6 +906,8 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
 {
     juce::Point<int> newPosition = jme.getPosition();
     bool viewUpdated = false;
+
+    lastMouseX = newPosition.getX();
 
     switch (activityManager.getAppState().getUiState())
     {
@@ -915,6 +932,20 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
         break;
 
     case UI_STATE_DEFAULT:
+        if (jme.mods.isCtrlDown() && jme.isLeftButtonDown())
+        {
+            activityManager.getAppState().setUiState(UI_STATE_SELECT_AREA_WITH_MOUSE);
+            startSelectX = newPosition.getX();
+            startSelectY = newPosition.getY();
+            addSelectedSamples();
+        }
+        break;
+
+    case UI_STATE_SELECT_AREA_WITH_MOUSE:
+        addSelectedSamples();
+        repaint();
+        break;
+
     case UI_STATE_CURSOR_MOVING:
     case UI_STATE_KEYBOARD_SAMPLE_DRAG:
     case UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION:
@@ -931,6 +962,32 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
     {
         updateShadersPositionUniforms();
         repaint();
+    }
+}
+
+void ArrangementArea::addSelectedSamples()
+{
+    currentSelectionRect = rect(
+        juce::Point<float> (startSelectX, startSelectY),
+        juce::Point<float> (lastMouseX, lastMouseY)
+    );
+
+    for (size_t i = 0; i < samples.size(); i++)
+    {
+        if (samples[i] == nullptr || samples[i]->isDisabled())
+        {
+            continue;
+        }
+
+        auto sampleAreas = samples[i]->getPixelBounds();
+        for (size_t j = 0; j < sampleAreas.size(); j++) {
+
+            if (currentSelectionRect.intersects(sampleAreas[j]))
+            {
+                selectedTracks.insert(i);
+            }
+
+        }
     }
 }
 
