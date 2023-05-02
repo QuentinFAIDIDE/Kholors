@@ -54,7 +54,7 @@ DuplicationType SampleCreateTask::getDuplicationType()
 
 bool SampleCreateTask::isDuplication()
 {
-    return DuplicationType != DUPLICATION_TYPE_NO_DUPLICATION;
+    return duplicationType != DUPLICATION_TYPE_NO_DUPLICATION;
 };
 
 int SampleCreateTask::getDuplicateTargetId()
