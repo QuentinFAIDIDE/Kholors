@@ -153,7 +153,7 @@ void ArrangementArea::paintSplitLocation(juce::Graphics &g)
                 // reject what's not on the line and draw the line
                 if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION)
                 {
-                    if (samplesRects[i].getY() > lastMouseY || sampleRects[i].getY()+sampleRects[i].getHeight() < lastMouseY)
+                    if (samplesRects[i].getY() > lastMouseY || samplesRects[i].getY()+samplesRects[i].getHeight() < lastMouseY)
                     {
                         continue;
                     }
@@ -162,7 +162,7 @@ void ArrangementArea::paintSplitLocation(juce::Graphics &g)
                 }
                 if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_TIME_SPLIT_LOCATION)
                 {
-                    if (samplesRects[i].getX() > lastMouseX || sampleRects[i].getX()+sampleRects[i].getWidth() < lastMouseX)
+                    if (samplesRects[i].getX() > lastMouseX || samplesRects[i].getX()+samplesRects[i].getWidth() < lastMouseX)
                     {
                         continue;
                     }
