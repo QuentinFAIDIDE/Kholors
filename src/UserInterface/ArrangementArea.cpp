@@ -932,7 +932,7 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
         break;
 
     case UI_STATE_DEFAULT:
-        if (jme.mods.isCtrlDown() && jme.isLeftButtonDown())
+        if (jme.mods.isCtrlDown() && jme.mods.isLeftButtonDown())
         {
             activityManager.getAppState().setUiState(UI_STATE_SELECT_AREA_WITH_MOUSE);
             startSelectX = newPosition.getX();
@@ -967,7 +967,7 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
 
 void ArrangementArea::addSelectedSamples()
 {
-    currentSelectionRect = rect(
+    currentSelectionRect = juce::Rectangle<float>(
         juce::Point<float> (startSelectX, startSelectY),
         juce::Point<float> (lastMouseX, lastMouseY)
     );
@@ -979,7 +979,7 @@ void ArrangementArea::addSelectedSamples()
             continue;
         }
 
-        auto sampleAreas = samples[i]->getPixelBounds();
+        auto sampleAreas = samples[i]->getPixelBounds(viewPosition, viewScale, bounds.getHeight());
         for (size_t j = 0; j < sampleAreas.size(); j++) {
 
             if (currentSelectionRect.intersects(sampleAreas[j]))

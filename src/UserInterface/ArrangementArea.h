@@ -185,6 +185,8 @@ class ArrangementArea : public juce::Component,
     void initSelectedTracksDrag();
     void updateSelectedTracksDrag(int);
 
+    void addSelectedSamples();
+
     int64_t lowestStartPosInSelection();
 
     bool mouseOverPlayCursor();
