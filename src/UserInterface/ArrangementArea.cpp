@@ -186,7 +186,7 @@ void ArrangementArea::paintSelectionArea(juce::Graphics &g)
         g.fillRoundedRectangle(currentSelectionRect, FREQVIEW_LABELS_CORNER_ROUNDING);
 
         g.setColour(COLOR_SELECT_AREA);
-        g.drawRoundedRectangle(currentSelectionRect, 4, 1.7);
+        g.drawRoundedRectangle(currentSelectionRect, 4, 1);
     }
 }
 
@@ -894,6 +894,7 @@ void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent &jme)
 
     case UI_STATE_SELECT_AREA_WITH_MOUSE:
         activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
+        repaint();
         break;
 
     case UI_STATE_DEFAULT:
