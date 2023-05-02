@@ -66,6 +66,7 @@
 #define COLOR_NOTIF_BAR_BOTTOM juce::Colour(10, 10, 10)
 #define COLOR_LABELS_BORDER juce::Colour(210, 210, 220)
 #define COLOR_SPLIT_PLACEHOLDER juce::Colour(210, 30, 30)
+#define COLOR_SELECT_AREA juce::Colour(30, 30, 210)
 
 // the gain smoothing when the value is changed
 #define DSP_GAIN_SMOOTHING_RAMP_SEC 0.03f
