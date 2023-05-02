@@ -126,7 +126,49 @@ void ArrangementArea::paintSelection(juce::Graphics &g)
 
 void ArrangementArea::paintSplitLocation(juce::Graphics &g)
 {
+    // the split location is only displayed in these ui states
+    if (activityManager.getAppState().getUiState() != UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION &&
+        activityManager.getAppState().getUiState() != UI_STATE_DISPLAY_TIME_SPLIT_LOCATION)
+    {
+        return;
+    }
+
     g.setColour(COLOR_SPLIT_PLACEHOLDER);
+
+    // iterate over selected items
+    for (itr = selectedTracks.begin(); itr != selectedTracks.end(); itr++)
+    {
+        auto samplesRects = samples[*itr]->getPixelBounds(viewPosition, viewScale, bounds.getHeight());
+
+        for (size_t i = 0; i < samplesRects.size(); i++)
+        {
+                // reject what's not on screen
+                if (samplesRects[i].getX() + samplesRects[i].getWidth() < 0 ||
+                    samplesRects[i].getX() > bounds.getWidth())
+                {
+                    continue;
+                }
+
+                // reject what's not on the line and draw the line
+                if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION)
+                {
+                    if (samplesRects[i].getY() > lastMouseY || sampleRects[i].getY()+sampleRects[i].getHeight() < lastMouseY)
+                    {
+                        continue;
+                    }
+
+                    g.drawHorizontalLine(lastMouseY, samplesRects[i].getX(), samplesRects[i].getX() + samplesRects[i].getWidth());
+                }
+                if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_TIME_SPLIT_LOCATION)
+                {
+                    if (samplesRects[i].getX() > lastMouseX || sampleRects[i].getX()+sampleRects[i].getWidth() < lastMouseX)
+                    {
+                        continue;
+                    }
+                    g.drawVerticalLine(lastMouseX, samplesRects[i].getY(), samplesRects[i].getY() + samplesRects[i].getHeight());
+                }
+        }
+    }
 
     if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION)
     {
