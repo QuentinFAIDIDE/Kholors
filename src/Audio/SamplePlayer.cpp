@@ -122,8 +122,7 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
             // copy back the results
             for (size_t k = 0; k < FREQVIEW_SAMPLE_FFT_SCOPE_SIZE; k++)
             {
-                // NOTE: The relevant frequency amplitude data is half the fft size, so
-                // a quarter of our inputdata array example idea
+                // NOTE: The relevant frequency amplitude data is half the fft size
                 // https://docs.juce.com/master/tutorial_spectrum_analyser.html
 
                 // map the index to magnify important frequencies
