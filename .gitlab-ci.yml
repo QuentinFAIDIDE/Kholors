@@ -26,7 +26,7 @@ build:
     - make
   except:
     refs:
-      - tag
+      - tags
 
 test:
   stage: test
@@ -34,7 +34,7 @@ test:
     - ctest --output-on-failure
   except:
     refs:
-      - tag
+      - tags
 
 versionning:
   image: node:latest
