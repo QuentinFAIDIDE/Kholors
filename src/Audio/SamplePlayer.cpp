@@ -330,7 +330,7 @@ SamplePlayer *SamplePlayer::createDuplicate(juce::int64 newPosition)
     return duplicate;
 }
 
-SamplePlayer *SamplePlayer::split(float frequencyLimitHz)
+SamplePlayer *SamplePlayer::splitAtFrequency(float frequencyLimitHz)
 {
     float minFreq = addOnScreenAmountToFreq(highPassFreq, SAMPLEPLAYER_MIN_FREQ_DISTANCE_FACTOR);
     float maxFreq = addOnScreenAmountToFreq(lowPassFreq, -SAMPLEPLAYER_MIN_FREQ_DISTANCE_FACTOR);
@@ -354,7 +354,7 @@ SamplePlayer *SamplePlayer::split(float frequencyLimitHz)
     return duplicate;
 }
 
-SamplePlayer *SamplePlayer::split(juce::int64 positionLimit)
+SamplePlayer *SamplePlayer::splitAtPosition(juce::int64 positionLimit)
 {
 
     if (positionLimit > getLength() - SAMPLE_MIN_DURATION_FRAMES)

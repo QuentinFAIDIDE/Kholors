@@ -52,7 +52,7 @@ class SamplePlayer : public juce::PositionableAudioSource
     /**
      * will split the sample in two at a frequency provided (returns new other half)
      */
-    SamplePlayer *split(float frequencyLimitHz);
+    SamplePlayer *splitAtFrequency(float frequencyLimitHz);
 
     /**
      * will split the sample in two at a time provided (returns new other half).
@@ -62,7 +62,7 @@ class SamplePlayer : public juce::PositionableAudioSource
      * the current sample will play. Then the new play from bufferStart+10 (10th)
      * to bufferEnd included (= bufferStart + (getLength()-1)).
      */
-    SamplePlayer *split(juce::int64 positionLimit);
+    SamplePlayer *splitAtPosition(juce::int64 positionLimit);
 
     int tryMovingStart(int desiredShift);
     int tryMovingEnd(int desiredShift);

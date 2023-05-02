@@ -518,11 +518,11 @@ void MixingBus::duplicateTrack(SampleCreateTask &task)
     }
     else if (task.getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_FREQUENCY)
     {
-        newSample = tracks[task.getDuplicateTargetId()]->split(task.getSplitFrequency());
+        newSample = tracks[task.getDuplicateTargetId()]->splitAtFrequency(task.getSplitFrequency());
     }
     else if (task.getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_POSITION)
     {
-        newSample = tracks[task.getDuplicateTargetId()]->split((int)task.getPosition());
+        newSample = tracks[task.getDuplicateTargetId()]->splitAtPosition((int)task.getPosition());
     }
 
     if (newSample == nullptr)
