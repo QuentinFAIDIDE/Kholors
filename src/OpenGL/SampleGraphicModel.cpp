@@ -25,10 +25,15 @@ SampleGraphicModel::SampleGraphicModel(SamplePlayer *sp, juce::Colour col)
 
     updatePropertiesAndUploadToGpu(sp);
 
-    // generate texture from fft (layout described in SamplePlayer.h)
+    // stored fft data we parse in SamplePlayer
     std::vector<float> ffts = sp->getFftData();
-    numFfts = sp->getNumFft();
-    numChannels = sp->getBufferNumChannels();
+    loadFftDataToTexture(ffts, sp->getNumFft(), sp->getBufferNumChannels());
+}
+
+void SampleGraphicModel::loadFftDataToTexture(std::vector<float> &ffts, int fftCount, int channelCount)
+{
+    numFfts = fftCount;
+    numChannels = channelCount;
 
     // the texture scaling in opengl use either manhatan distance or linear sum
     // of neigbouring pixels. So as we have less pixel over time than pixel over

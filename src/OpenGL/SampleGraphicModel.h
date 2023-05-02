@@ -35,6 +35,15 @@ class SampleGraphicModel : public TexturedModel
     float freqToPositionRatio(float freq);
     int isFilteredArea(float y);
 
+    /**
+     * Read the data from the stored fft, and load it into the texture array
+     * in a format friendly to OpenGL textures.
+     * @param ffts         The array holding the stored fft data loaded by SamplePlayer.
+     * @param fftCount     How many fft this array contains.
+     * @param channelCount How many channels this array contains.
+     */
+    void loadFftDataToTexture(std::vector<float> &ffts, int fftCount, int channelCount);
+
     int numFfts;
     int numChannels;
     int channelTextureShift;
