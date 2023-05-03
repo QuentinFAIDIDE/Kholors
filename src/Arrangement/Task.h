@@ -24,11 +24,14 @@ class Task : public Marshalable
     Marshalable *Unmarshal(std::string &) override;
 
     bool isCompleted();
-
     void setCompleted(bool c);
+    void setFailed(bool);
+    bool hasFailed();
 
   private:
     bool completed;
+    bool failed;
+    std::string errorMessage;
 };
 
 class SampleCreateTask : public Task
@@ -45,8 +48,6 @@ class SampleCreateTask : public Task
     int getDuplicateTargetId();
     std::string getFilePath();
     int64_t getPosition();
-    void setFailed(bool);
-    bool hasFailed();
     void setAllocatedIndex(int);
     int getAllocatedIndex();
     float getSplitFrequency();
@@ -58,7 +59,6 @@ class SampleCreateTask : public Task
     int editingPosition;
     bool isCopy;
     int duplicatedSampleId;
-    bool failed;
     int newIndex;
     float splitFrequency;
 };

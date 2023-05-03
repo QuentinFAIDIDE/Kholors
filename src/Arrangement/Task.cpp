@@ -25,6 +25,16 @@ void Task::setCompleted(bool c)
     completed = c;
 }
 
+void Task::setFailed(bool f)
+{
+    failed = f;
+}
+
+bool Task::hasFailed()
+{
+    return failed;
+}
+
 // ============================
 
 SampleCreateTask::SampleCreateTask(std::string path, int position)
@@ -77,16 +87,6 @@ std::string SampleCreateTask::getFilePath()
 int64_t SampleCreateTask::getPosition()
 {
     return editingPosition;
-}
-
-void SampleCreateTask::setFailed(bool f)
-{
-    failed = f;
-}
-
-bool SampleCreateTask::hasFailed()
-{
-    return failed;
 }
 
 void SampleCreateTask::setAllocatedIndex(int i)
