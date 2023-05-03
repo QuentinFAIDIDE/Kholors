@@ -17,7 +17,7 @@ enum DuplicationType
 class Task : public Marshalable
 {
   public:
-    virtual Task();
+    Task();
     virtual ~Task() = 0;
 
     std::string Marshal() override;
