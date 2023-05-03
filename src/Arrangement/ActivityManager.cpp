@@ -33,7 +33,7 @@ void ActivityManager::broadcastTask(std::shared_ptr<Task> task)
     }
 
     {
-        const juce::SpinLock::ScopedLockType lock(taskQueueLock);
+        const juce::SpinLock::ScopedLockType queueLock(taskQueueLock);
         taskQueue.push(task);
     }
 
@@ -43,7 +43,7 @@ void ActivityManager::broadcastTask(std::shared_ptr<Task> task)
         std::shared_ptr<Task> taskToBroadcast = nullptr;
         
         {
-            const juce::SpinLock::ScopedLockType lock(taskQueueLock);
+            const juce::SpinLock::ScopedLockType queueLock(taskQueueLock);
             taskToBroadcast = taskQueue.pop();
         }
 
@@ -60,7 +60,7 @@ void ActivityManager::broadcastTask(std::shared_ptr<Task> task)
 
             taskToBroadcast = nullptr;
             {
-                const juce::SpinLock::ScopedLockType lock(taskQueueLock);
+                const juce::SpinLock::ScopedLockType queueLock(taskQueueLock);
                 if (!taskQueue.empty())
                 {
                     taskToBroadcast = taskQueue.pop();
