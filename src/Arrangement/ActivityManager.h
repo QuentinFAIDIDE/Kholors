@@ -17,7 +17,7 @@ class ActivityManager
     * Copy the task at the pointer and broadcast it
     * to listeners.
     */
-    void broadcastTask(Task*);
+    void broadcastTask(std::shared_ptr<Task>);
 
   private:
     std::vector<Task> history;

@@ -15,7 +15,7 @@ AppState &ActivityManager::getAppState()
     return appState;
 }
 
-void ActivityManager::broadcastTask(Task* newtask)
+void ActivityManager::broadcastTask(std::shared_ptr<Task> task)
 {
     // TODO
 }
