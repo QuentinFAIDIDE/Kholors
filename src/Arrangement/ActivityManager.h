@@ -12,7 +12,7 @@ public:
   * Returns true if the task don't need further broadcast.
   */
   virtual bool taskHandler(std::shared_ptr<Task> task) = 0;
-}
+};
 
 class ActivityManager
 {
@@ -29,7 +29,7 @@ class ActivityManager
     void broadcastTask(std::shared_ptr<Task>);
 
   private:
-    std::vector<Task> history;
+    std::vector<std::shared_ptr<Task>> history;
     AppState appState;
     std::vector<TaskListener*> taskListeners;
     std::queue<std::shared_ptr<Task>> taskQueue;
