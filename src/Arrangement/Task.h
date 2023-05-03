@@ -54,7 +54,7 @@ class SampleCreateTask : public Task
     float getSplitFrequency();
     DuplicationType getDuplicationType();
 
-  private:
+  private:  
     DuplicationType duplicationType;
     std::string filePath;
     int editingPosition;

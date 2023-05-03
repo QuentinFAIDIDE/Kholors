@@ -88,11 +88,9 @@ class ArrangementArea : public juce::Component,
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArrangementArea)
 
-    ActivityManager activityManager;
+    ActivityManager& activityManager;
 
     juce::OpenGLContext openGLContext;
-
-    TaxonomyManager taxonomyManager;
 
     // NOTE: we will draw each sample fft in OpenGL
     // with a square on which we map a texture.

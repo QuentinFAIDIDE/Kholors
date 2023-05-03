@@ -68,6 +68,7 @@ class MixingBus : public juce::PositionableAudioSource, private juce::Thread
     std::function<void(int)> disableUiSampleCallback;
 
   private:
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MixingBus)
     // TODO: add a readahead buffer
     // just like AudioTransportSource implementation
 

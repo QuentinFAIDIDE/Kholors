@@ -43,6 +43,8 @@ class TaxonomyManager
     void disableSample(int sampleId);
 
   private:
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TaxonomyManager)
+
     std::vector<SampleMetadata> samples;
     std::vector<SampleGroup> groups;
 
