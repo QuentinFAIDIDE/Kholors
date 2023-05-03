@@ -15,7 +15,7 @@ AppState &ActivityManager::getAppState()
     return appState;
 }
 
-void ActivityManager:broadcastTask(Task* newtask)
+void ActivityManager::broadcastTask(Task* newtask)
 {
     // TODO
 }
