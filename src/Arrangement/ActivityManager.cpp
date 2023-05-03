@@ -40,11 +40,12 @@ void ActivityManager::broadcastTask(std::shared_ptr<Task> task)
     // only one broadcast call will iterate over items at any time
     if (lock.isLocked())
     {
-        std::shared_ptr<Task> taskToBroadcast = nullptr;
+        std::shared_ptr<Task> taskToBroadcast(nullptr);
         
         {
             const juce::SpinLock::ScopedLockType queueLock(taskQueueLock);
-            taskToBroadcast = taskQueue.pop();
+            taskToBroadcast = taskQueue.front();
+            taskQueue.pop();
         }
 
         while (taskToBroadcast != nullptr)
@@ -58,12 +59,13 @@ void ActivityManager::broadcastTask(std::shared_ptr<Task> task)
                 }
             }
 
-            taskToBroadcast = nullptr;
+            taskToBroadcast = std::shared_ptr<Task>(nullptr);
             {
                 const juce::SpinLock::ScopedLockType queueLock(taskQueueLock);
                 if (!taskQueue.empty())
                 {
-                    taskToBroadcast = taskQueue.pop();
+                    taskToBroadcast = taskQueue.front();
+                    taskQueue.pop();
                 }
             }
         }
