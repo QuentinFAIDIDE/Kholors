@@ -3,6 +3,7 @@
 Task::Task()
 {
     completed = false;
+    failed = false;
 }
 
 std::string Task::Marshal()
@@ -43,12 +44,12 @@ SampleCreateTask::SampleCreateTask(std::string path, int position)
 }
 
 SampleCreateTask::SampleCreateTask(int position, int sampleCopyIndex, DuplicationType d)
-    : editingPosition(position), isCopy(true), duplicatedSampleId(sampleCopyIndex), failed(false), duplicationType(d)
+    : editingPosition(position), isCopy(true), duplicatedSampleId(sampleCopyIndex), duplicationType(d)
 {
 }
 
 SampleCreateTask::SampleCreateTask(float frequency, int sampleCopyIndex)
-    : splitFrequency(frequency), isCopy(true), duplicatedSampleId(sampleCopyIndex), failed(false), duplicationType(DUPLICATION_TYPE_SPLIT_AT_FREQUENCY)
+    : splitFrequency(frequency), isCopy(true), duplicatedSampleId(sampleCopyIndex), duplicationType(DUPLICATION_TYPE_SPLIT_AT_FREQUENCY)
 {
 }
 
