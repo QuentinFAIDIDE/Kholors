@@ -12,6 +12,12 @@ class ActivityManager
     ActivityManager();
     ~ActivityManager();
     AppState &getAppState();
+    
+    /**
+    * Copy the task at the pointer and broadcast it
+    * to listeners.
+    */
+    void broadcastTask(Task*);
 
   private:
     std::vector<Task> history;
