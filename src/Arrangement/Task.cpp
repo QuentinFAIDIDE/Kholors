@@ -39,7 +39,7 @@ bool Task::hasFailed()
 // ============================
 
 SampleCreateTask::SampleCreateTask(std::string path, int position)
-    : filePath(path), editingPosition(position), isCopy(false), failed(false), duplicationType(DUPLICATION_TYPE_NO_DUPLICATION)
+    : filePath(path), editingPosition(position), isCopy(false), duplicationType(DUPLICATION_TYPE_NO_DUPLICATION)
 {
 }
 
