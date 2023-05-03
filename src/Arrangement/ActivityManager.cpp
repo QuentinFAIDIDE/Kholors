@@ -2,7 +2,7 @@
 
 ActivityManager::ActivityManager()
 {
-    // TODO
+    taskBroadcastStopped = false;
 }
 
 ActivityManager::~ActivityManager()
@@ -15,12 +15,22 @@ AppState &ActivityManager::getAppState()
     return appState;
 }
 
+void ActivityManager::stopTaskBroadcast()
+{
+    const juce::SpinLock::ScopedLockType lock(broadcastLock);
+    taskBroadcastStopped = true;
+}
+
 void ActivityManager::broadcastTask(std::shared_ptr<Task> task)
 {
 
     // TODO: only allow message thread
 
     const juce::SpinLock::ScopedTryLockType lock(broadcastLock);
+    if (taskBroadcastStopped)
+    {
+        return;
+    }
 
     {
         const juce::SpinLock::ScopedLockType lock(taskQueueLock);
@@ -41,7 +51,7 @@ void ActivityManager::broadcastTask(std::shared_ptr<Task> task)
         {
             for (size_t i=0; i < taskListeners.size(); i++)
             {
-                bool shouldStop = taskListeners[i].taskHandler(taskToBroadcast);
+                bool shouldStop = taskListeners[i]->taskHandler(taskToBroadcast);
                 if (shouldStop)
                 {
                     break;

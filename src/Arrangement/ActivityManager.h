@@ -21,6 +21,7 @@ class ActivityManager
     ~ActivityManager();
     AppState &getAppState();
     void registerTaskListener(TaskListener*);
+    void stopTaskBroadcast();
     
     /**
     * Broadcast the task to all listeners.
@@ -34,6 +35,7 @@ class ActivityManager
     std::queue<std::shared_ptr<Task>> taskQueue;
     juce::SpinLock taskQueueLock;
     juce::SpinLock broadcastLock;
+    bool taskBroadcastStopped;
 };
 
 #endif // DEF_ACTIVITY_MANAGER_HPP
