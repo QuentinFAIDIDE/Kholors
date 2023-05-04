@@ -18,7 +18,7 @@ class Task : public Marshalable
 {
   public:
     Task();
-    virtual ~Task() = 0;
+    virtual ~Task();
 
     std::string Marshal() override;
 

@@ -6,6 +6,11 @@ Task::Task()
     failed = false;
 }
 
+Task::~Task()
+{
+    
+}
+
 std::string Task::Marshal()
 {
     return "none";
