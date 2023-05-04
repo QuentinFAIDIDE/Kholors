@@ -25,7 +25,7 @@
 
 //==============================================================================
 ArrangementArea::ArrangementArea(MixingBus &mb, NotificationArea &na, ActivityManager &am)
-    : mixingBus(mb), notificationArea(na), activityManager(am)
+    : mixingBus(mb), notificationArea(na), activityManager(am), taxonomyManager(am.getAppState().getTaxonomy())
 {
     // save reference to the sample manager
     // initialize grid and position

@@ -89,6 +89,7 @@ class ArrangementArea : public juce::Component,
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArrangementArea)
 
     ActivityManager& activityManager;
+    TaxonomyManager& taxonomyManager;
 
     juce::OpenGLContext openGLContext;
 
