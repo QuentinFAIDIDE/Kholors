@@ -20,7 +20,6 @@
 #include "../OpenGL/BackgroundModel.h"
 #include "../OpenGL/SampleGraphicModel.h"
 #include "GridLevel.h"
-#include "NotificationArea.h"
 #include "juce_opengl/opengl/juce_gl.h"
 
 enum Border
@@ -61,7 +60,7 @@ class ArrangementArea : public juce::Component,
 {
   public:
     //==============================================================================
-    ArrangementArea(MixingBus &, NotificationArea &, ActivityManager &);
+    ArrangementArea(MixingBus &, ActivityManager &);
     ~ArrangementArea();
 
     //==============================================================================
@@ -134,7 +133,6 @@ class ArrangementArea : public juce::Component,
 
     // reference to the sample manager in use
     MixingBus &mixingBus;
-    NotificationArea &notificationArea;
     // color of the play cursor
     juce::Colour cursorColor;
     int64_t lastPlayCursorPosition;
