@@ -27,7 +27,7 @@
 class MixingBus : public juce::PositionableAudioSource, public TaskListener, private juce::Thread,
 {
   public:
-    MixingBus(NotificationArea &, ActivityManager &);
+    MixingBus(ActivityManager &);
     ~MixingBus();
 
     // this is the handler for the app's broadcasted tasks
@@ -75,8 +75,8 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     // TODO: add a readahead buffer
     // just like AudioTransportSource implementation
 
-    // we need a reference to the notification object
-    NotificationArea &notificationManager;
+    ActivityManager &activityManager;
+
     // file formats manager
     juce::AudioFormatManager formatManager;
     // play cursom position in audio frames, as well as furthest frame
