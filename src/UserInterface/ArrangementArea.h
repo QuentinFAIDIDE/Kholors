@@ -64,7 +64,7 @@ class ArrangementArea : public juce::Component,
     ~ArrangementArea();
 
     //==============================================================================
-    bool taskHandler(std::shared_ptr<Task> task);
+    bool taskHandler(std::shared_ptr<Task> task) override;
     void paint(juce::Graphics &) override;
     void resized() override;
     void mouseDown(const juce::MouseEvent &) override;
@@ -172,7 +172,7 @@ class ArrangementArea : public juce::Component,
     void deleteSelectedTracks();
     float polylens(float);
 
-    void displaySample(SamplePlayer *, SampleCreateTask task);
+    void displaySample(SamplePlayer *, std::shared_ptr<SampleCreateTask> task);
     void syncSampleColor(int sampleIndex);
 
     bool buildShaders();

@@ -1,6 +1,7 @@
 #ifndef DEF_ACTION_HPP
 #define DEF_ACTION_HPP
 
+#include "../Audio/SamplePlayer.h"
 #include "Marshalable.h"
 #include <juce_audio_basics/juce_audio_basics.h>
 
@@ -64,6 +65,14 @@ class SampleCreateTask : public Task
     int duplicatedSampleId;
     int newIndex;
     float splitFrequency;
+};
+
+class SampleDisplayTask : public Task
+{
+  public:
+    SampleDisplayTask(SamplePlayer *, std::shared_ptr<SampleCreateTask>);
+    SamplePlayer *sample;
+    std::shared_ptr<SampleCreateTask> creationTask;
 };
 
 class NotificationTask : public Task

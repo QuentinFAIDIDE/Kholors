@@ -13,9 +13,9 @@ MainComponent::MainComponent()
 {
     configureLookAndFeel();
 
-    activityManager.registerTaskListener(&notificationArea);
     activityManager.registerTaskListener(&mixingBus);
     activityManager.registerTaskListener(&arrangementArea);
+    activityManager.registerTaskListener(&notificationArea);
 
     // initialize audio app with two outputs
     setAudioChannels(0, 2);

@@ -53,8 +53,6 @@ ArrangementArea::ArrangementArea(MixingBus &mb, ActivityManager &am)
     openGLContext.setContinuousRepainting(false);
     openGLContext.attachTo(*this);
 
-    // register the callback to register newly created samples
-    mixingBus.addUiSampleCallback = [this](SamplePlayer *sp, SampleCreateTask task) { displaySample(sp, task); };
     mixingBus.disableUiSampleCallback = [this](int index) { samples[index]->disable(); };
 }
 
@@ -128,7 +126,14 @@ void ArrangementArea::paintSelection(juce::Graphics &g)
 
 bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
 {
-    // TODO
+    std::shared_ptr<SampleDisplayTask> sc = std::dynamic_pointer_cast<SampleDisplayTask>(task);
+
+    if (sc != nullptr && !sc->isCompleted() && !sc->hasFailed())
+    {
+        displaySample(sc->sample, sc->creationTask);
+        return true;
+    }
+
     return false;
 }
 
@@ -570,36 +575,36 @@ void ArrangementArea::openGLContextClosing()
 {
 }
 
-void ArrangementArea::displaySample(SamplePlayer *sp, SampleCreateTask task)
+void ArrangementArea::displaySample(SamplePlayer *sp, std::shared_ptr<SampleCreateTask> task)
 {
     // create graphic objects from the sample
     SampleGraphicModel *sampleRef =
-        new SampleGraphicModel(sp, taxonomyManager.getSampleColor(task.getAllocatedIndex()));
+        new SampleGraphicModel(sp, taxonomyManager.getSampleColor(task->getAllocatedIndex()));
     samples.push_back(sampleRef);
     // fatal error if sample ids are different
-    if ((samples.size() - 1) != task.getAllocatedIndex())
+    if ((samples.size() - 1) != task->getAllocatedIndex())
     {
         std::cerr << "FATAL: Sample ids don't match in Mixbus and ArrangementArea" << std::endl;
         juce::JUCEApplicationBase::quit();
     }
     // assign default name to sample
-    taxonomyManager.setSampleName(task.getAllocatedIndex(), sp->getFileName());
+    taxonomyManager.setSampleName(task->getAllocatedIndex(), sp->getFileName());
     // send the data to the GPUs from the OpenGL thread
     openGLContext.executeOnGLThread(
         [this](juce::OpenGLContext &c) { samples[samples.size() - 1]->registerGlObjects(); }, true);
     // if it's a copy, set the group and update the color
-    if (task.isDuplication())
+    if (task->isDuplication())
     {
-        taxonomyManager.copyTaxonomy(task.getDuplicateTargetId(), task.getAllocatedIndex());
-        syncSampleColor(task.getAllocatedIndex());
+        taxonomyManager.copyTaxonomy(task->getDuplicateTargetId(), task->getAllocatedIndex());
+        syncSampleColor(task->getAllocatedIndex());
 
-        if (task.getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_FREQUENCY ||
-            task.getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_POSITION)
+        if (task->getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_FREQUENCY ||
+            task->getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_POSITION)
         {
-            refreshSampleOpenGlView(task.getDuplicateTargetId());
+            refreshSampleOpenGlView(task->getDuplicateTargetId());
         }
 
-        selectedTracks.insert(task.getAllocatedIndex());
+        selectedTracks.insert(task->getAllocatedIndex());
     }
 }
 

@@ -119,3 +119,11 @@ std::string NotificationTask::getMessage()
 {
     return message;
 }
+
+/////////////////////////////////////////////////
+
+SampleDisplayTask::SampleDisplayTask(SamplePlayer *sp, std::shared_ptr<SampleCreateTask> crTask)
+{
+    sample = sp;
+    creationTask = crTask;
+}

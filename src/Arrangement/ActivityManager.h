@@ -1,17 +1,19 @@
 #ifndef DEF_ACTIVITY_MANAGER_HPP
 #define DEF_ACTIVITY_MANAGER_HPP
 
+#include <memory>
 #include <vector>
 
 #include "./AppState.h"
 #include "./Task.h"
 
-class TaskListener {
-public:
-  /**
-  * Returns true if the task don't need further broadcast.
-  */
-  virtual bool taskHandler(std::shared_ptr<Task> task) = 0;
+class TaskListener
+{
+  public:
+    /**
+     * Returns true if the task don't need further broadcast.
+     */
+    virtual bool taskHandler(std::shared_ptr<Task> task) = 0;
 };
 
 class ActivityManager
@@ -20,18 +22,24 @@ class ActivityManager
     ActivityManager();
     ~ActivityManager();
     AppState &getAppState();
-    void registerTaskListener(TaskListener*);
+    void registerTaskListener(TaskListener *);
     void stopTaskBroadcast();
-    
+
     /**
-    * Broadcast the task to all listeners.
-    */
+     * Broadcast the task to all listeners.
+     */
     void broadcastTask(std::shared_ptr<Task>);
+
+    /**
+     * This should only be called from an already running taskHandler.
+     * Will call another taskHandler and jump the queue of tasks.
+     */
+    void broadcastNestedTaskNow(std::shared_ptr<Task>);
 
   private:
     std::vector<std::shared_ptr<Task>> history;
     AppState appState;
-    std::vector<TaskListener*> taskListeners;
+    std::vector<TaskListener *> taskListeners;
     std::queue<std::shared_ptr<Task>> taskQueue;
     juce::SpinLock taskQueueLock;
     juce::SpinLock broadcastLock;

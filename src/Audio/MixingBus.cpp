@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <memory>
 
 // initialize the MixingBus, as well as Thread and audio inherited
 // behaviours.
@@ -72,7 +73,7 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
 
     if (sc != nullptr && !sc->isCompleted() && !sc->hasFailed())
     {
-        addSample(*sc);
+        addSample(sc);
         return true;
     }
 
@@ -107,7 +108,7 @@ bool MixingBus::isCursorPlaying() const
     return isPlaying;
 }
 
-void MixingBus::addSample(SampleCreateTask import)
+void MixingBus::addSample(std::shared_ptr<SampleCreateTask> import)
 {
     // swap a file to load variable to avoid blocking event thread for disk i/o
     {
@@ -303,7 +304,7 @@ void MixingBus::checkForBuffersToFree()
 void MixingBus::checkForFileToImport()
 {
 
-    std::vector<SampleCreateTask> localTaskQueue;
+    std::vector<std::shared_ptr<SampleCreateTask>> localTaskQueue;
     // let's preallocate here to avoid doing it on the message thread
     localTaskQueue.reserve(TASK_QUEUE_RESERVED_SIZE);
 
@@ -316,7 +317,7 @@ void MixingBus::checkForFileToImport()
     for (size_t taskIndex = 0; taskIndex < localTaskQueue.size(); taskIndex++)
     {
 
-        if (localTaskQueue[taskIndex].isDuplication())
+        if (localTaskQueue[taskIndex]->isDuplication())
         {
             duplicateTrack(localTaskQueue[taskIndex]);
         }
@@ -327,12 +328,12 @@ void MixingBus::checkForFileToImport()
     }
 }
 
-void MixingBus::importNewFile(SampleCreateTask &task)
+void MixingBus::importNewFile(std::shared_ptr<SampleCreateTask> task)
 {
     // inspired by LoopingAudioSampleBuffer juce tutorial
 
-    std::string pathToOpen = task.getFilePath();
-    int64_t desiredPosition = task.getPosition();
+    std::string pathToOpen = task->getFilePath();
+    int64_t desiredPosition = task->getPosition();
 
     std::cout << "Preparing to load file at path: " << pathToOpen << std::endl;
     // create file object
@@ -377,7 +378,7 @@ void MixingBus::importNewFile(SampleCreateTask &task)
                     juce::String("Unable to allocate memory to load: ") + pathToOpen);
                 activityManager.broadcastTask(notif);
                 delete newSample;
-                task.setFailed(true);
+                task->setFailed(true);
                 return;
             }
 
@@ -394,9 +395,12 @@ void MixingBus::importNewFile(SampleCreateTask &task)
                 buffers.add(newBuffer);
             }
 
-            task.setAllocatedIndex(newTrackIndex);
+            task->setAllocatedIndex(newTrackIndex);
 
-            addUiSampleCallback(newSample, task);
+            task->setCompleted(true);
+            std::shared_ptr<SampleDisplayTask> displayTask = std::make_shared<SampleDisplayTask>(newSample, task);
+            activityManager.broadcastNestedTaskNow(displayTask);
+
             fileImportedCallback(pathToOpen);
             trackRepaintCallback();
         }
@@ -417,7 +421,7 @@ void MixingBus::importNewFile(SampleCreateTask &task)
                     juce::String("audio samples, sample was not loaded: ") + pathToOpen);
                 activityManager.broadcastTask(notif);
             }
-            task.setFailed(true);
+            task->setFailed(true);
             return;
         }
     }
@@ -428,7 +432,7 @@ void MixingBus::importNewFile(SampleCreateTask &task)
             std::make_shared<NotificationTask>(juce::String("Unable to read: ") + pathToOpen);
         activityManager.broadcastTask(notif);
 
-        task.setFailed(true);
+        task->setFailed(true);
         return;
     }
 }
@@ -527,29 +531,29 @@ void MixingBus::restoreDeletedTrack(SamplePlayer *sp, int index)
     tracks.set(index, sp);
 }
 
-void MixingBus::duplicateTrack(SampleCreateTask &task)
+void MixingBus::duplicateTrack(std::shared_ptr<SampleCreateTask> task)
 {
     // Note: this runs from the background thread
 
     SamplePlayer *newSample = nullptr;
     int newTrackIndex = -1;
 
-    if (task.getDuplicationType() == DUPLICATION_TYPE_COPY_AT_POSITION)
+    if (task->getDuplicationType() == DUPLICATION_TYPE_COPY_AT_POSITION)
     {
-        newSample = tracks[task.getDuplicateTargetId()]->createDuplicate(task.getPosition());
+        newSample = tracks[task->getDuplicateTargetId()]->createDuplicate(task->getPosition());
     }
-    else if (task.getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_FREQUENCY)
+    else if (task->getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_FREQUENCY)
     {
-        newSample = tracks[task.getDuplicateTargetId()]->splitAtFrequency(task.getSplitFrequency());
+        newSample = tracks[task->getDuplicateTargetId()]->splitAtFrequency(task->getSplitFrequency());
     }
-    else if (task.getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_POSITION)
+    else if (task->getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_POSITION)
     {
-        newSample = tracks[task.getDuplicateTargetId()]->splitAtPosition((int)task.getPosition());
+        newSample = tracks[task->getDuplicateTargetId()]->splitAtPosition((int)task->getPosition());
     }
 
     if (newSample == nullptr)
     {
-        task.setFailed(true);
+        task->setFailed(true);
         return;
     }
 
@@ -563,8 +567,11 @@ void MixingBus::duplicateTrack(SampleCreateTask &task)
         newTrackIndex = tracks.size() - 1;
     }
 
-    task.setAllocatedIndex(newTrackIndex);
+    task->setAllocatedIndex(newTrackIndex);
 
-    addUiSampleCallback(newSample, task);
+    task->setCompleted(true);
+    std::shared_ptr<SampleDisplayTask> displayTask = std::make_shared<SampleDisplayTask>(newSample, task);
+    activityManager.broadcastNestedTaskNow(displayTask);
+
     trackRepaintCallback();
 }

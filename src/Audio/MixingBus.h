@@ -15,6 +15,7 @@
 
 #include <atomic>
 #include <functional>
+#include <memory>
 
 #include "../Arrangement/ActivityManager.h"
 #include "../UserInterface/NotificationArea.h"
@@ -34,7 +35,7 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     bool taskHandler(std::shared_ptr<Task> task);
 
     // when called, add sample from file path with position
-    void addSample(SampleCreateTask);
+    void addSample(std::shared_ptr<SampleCreateTask> import);
     bool filePathsValid(const juce::StringArray &);
 
     // inherited from audio source
@@ -65,8 +66,6 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     void setTrackRepaintCallback(std::function<void()>);
     void setFileImportedCallback(std::function<void(std::string)>);
 
-    // callback to add new samples to the user interface
-    std::function<void(SamplePlayer *, SampleCreateTask task)> addUiSampleCallback;
     // callback to add new samples to the user interface
     std::function<void(int)> disableUiSampleCallback;
 
@@ -139,7 +138,7 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     juce::CriticalSection pathMutex, mixbusMutex;
 
     // stack of files to import
-    std::vector<SampleCreateTask> importTaskQueue;
+    std::vector<std::shared_ptr<SampleCreateTask>> importTaskQueue;
 
     // master bus main
     juce::dsp::Gain<float> masterGain;
@@ -173,9 +172,8 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     // playing anymore
     void pauseIfCursorNotInBound();
 
-    void importNewFile(SampleCreateTask &task);
-
-    void duplicateTrack(SampleCreateTask &task);
+    void importNewFile(std::shared_ptr<SampleCreateTask> task);
+    void duplicateTrack(std::shared_ptr<SampleCreateTask> task);
 
     // used to manage background thread allocations
     void checkForFileToImport();
