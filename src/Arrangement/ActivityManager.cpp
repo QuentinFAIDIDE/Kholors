@@ -38,7 +38,10 @@ void ActivityManager::broadcastTask(std::shared_ptr<Task> task)
     if (lock.isLocked())
     {
         std::shared_ptr<Task> taskToBroadcast(nullptr);
-        
+
+        // all broadcasted tasks arrive on the message thread
+        const juce::MessageManagerLock mmLock;
+
         {
             const juce::SpinLock::ScopedLockType queueLock(taskQueueLock);
             taskToBroadcast = taskQueue.front();
@@ -47,10 +50,8 @@ void ActivityManager::broadcastTask(std::shared_ptr<Task> task)
 
         while (taskToBroadcast != nullptr)
         {
-            for (size_t i=0; i < taskListeners.size(); i++)
+            for (size_t i = 0; i < taskListeners.size(); i++)
             {
-                // all broadcasted tasks arrive on the message thread
-                const juce::MessageManagerLock mmLock;
                 bool shouldStop = taskListeners[i]->taskHandler(taskToBroadcast);
                 if (shouldStop)
                 {
@@ -71,8 +72,8 @@ void ActivityManager::broadcastTask(std::shared_ptr<Task> task)
     }
 }
 
-void ActivityManager::registerTaskListener(TaskListener* newListener)
+void ActivityManager::registerTaskListener(TaskListener *newListener)
 {
     const juce::SpinLock::ScopedLockType lock(broadcastLock);
-    taskListeners.push_back(newListener); 
+    taskListeners.push_back(newListener);
 }

@@ -11,6 +11,8 @@
 #include <mutex>
 #include <thread>
 
+#include "../Arrangement/ActivityManager.h"
+#include "../Arrangement/Task.h"
 #include "../Config.h"
 #include "LogoDarkPng.h"
 
@@ -61,19 +63,6 @@ class NotificationArea : public juce::AnimatedAppComponent, public TaskListener
     // Position of the popup including animation movements relative to base
     // position.
     int popupX, popupY;
-
-    // part in brackets is the actual drawn card when it's not animated:
-
-    //   left outer margin  baseX + OUTER_MARGINS                            right
-    //   outer margins
-    //               |      | |
-    //     baseX     |      |          baseX + OUTER_MARGINS + INNER_MARGINS | |
-    //     |      |          |                                          | |
-    //     [----------| My notfication text here |----------]        )
-    //                           |                                      | |
-    //                    left inner margin                    right inner margin
-    //                    |
-    //                                                                                screen end
 
     // buffer value used in the drawing function
     int maxWidth;

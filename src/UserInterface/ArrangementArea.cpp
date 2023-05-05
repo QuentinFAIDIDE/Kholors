@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 
 #include "../OpenGL/FreqviewShaders.h"
@@ -751,7 +752,7 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
                 float freq = verticalPositionToFrequency(lastMouseY);
                 // create a track duplicate from the sample id at *it
                 std::cout << freq << std::endl;
-                SampleCreateTask task(freq, *it);
+                std::shared_ptr<SampleCreateTask> task = std::make_shared<SampleCreateTask>(freq, *it);
                 activityManager.broadcastTask(task);
             }
             else
@@ -761,7 +762,8 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
                     lastMouseX < xSampleLocations[0].getX() + xSampleLocations[0].getWidth())
                 {
                     int frameSplitPosition = (lastMouseX - xSampleLocations[0].getX()) * viewScale;
-                    SampleCreateTask task(frameSplitPosition, *it, DUPLICATION_TYPE_SPLIT_AT_POSITION);
+                    std::shared_ptr<SampleCreateTask> task =
+                        std::make_shared<SampleCreateTask>(frameSplitPosition, *it, DUPLICATION_TYPE_SPLIT_AT_POSITION);
                     activityManager.broadcastTask(task);
                 }
             }
@@ -1324,7 +1326,8 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key)
                     // insert selected tracks at the mouse cursor position
                     int pos = mixingBus.getTrack(*it)->getEditingPosition();
                     newPosition = (viewPosition + (lastMouseX * viewScale)) + (pos - selectionBeginPos);
-                    SampleCreateTask task(newPosition, *it, DUPLICATION_TYPE_COPY_AT_POSITION);
+                    std::shared_ptr<SampleCreateTask> task =
+                        std::make_shared<SampleCreateTask>(newPosition, *it, DUPLICATION_TYPE_COPY_AT_POSITION);
                     activityManager.broadcastTask(task);
                     it++;
                 }
@@ -1500,7 +1503,7 @@ void ArrangementArea::filesDropped(const juce::StringArray &files, int x, int y)
     // we try to load the samples
     for (int i = 0; i < files.size(); i++)
     {
-        SampleCreateTask task(files[i].toStdString(), framePos);
+        std::shared_ptr<SampleCreateTask> task = std::make_shared<SampleCreateTask>(files[i].toStdString(), framePos);
         activityManager.broadcastTask(task);
     }
 }
@@ -1512,6 +1515,7 @@ void ArrangementArea::itemDropped(const SourceDetails &dragSourceDetails)
     int64_t framePos = viewPosition + (x * viewScale);
     // we try to load the sample
     juce::String filename = dragSourceDetails.description.toString().replaceFirstOccurrenceOf("file:", "");
-    SampleCreateTask task(filename.toStdString(), framePos);
+
+    std::shared_ptr<SampleCreateTask> task = std::make_shared<SampleCreateTask>(filename.toStdString(), framePos);
     activityManager.broadcastTask(task);
 }

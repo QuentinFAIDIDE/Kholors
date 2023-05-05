@@ -70,7 +70,7 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
 {
     std::shared_ptr<SampleCreateTask> sc = std::dynamic_pointer_cast<SampleCreateTask>(task);
 
-    if (sc != nullptr && !sc->isCompleted() && !sc->hasFailed()) 
+    if (sc != nullptr && !sc->isCompleted() && !sc->hasFailed())
     {
         addSample(*sc);
         return true;
@@ -373,7 +373,8 @@ void MixingBus::importNewFile(SampleCreateTask &task)
             catch (std::bad_alloc &ba)
             {
                 std::cout << "Unable to allocate memory to perform FFT" << std::endl;
-                std::shared_ptr notif = std::make_shared<NotificationTask>(NotificationTask(juce::String("Unable to allocate memory to load: ") + pathToOpen));
+                std::shared_ptr<NotificationTask> notif = std::make_shared<NotificationTask>(
+                    juce::String("Unable to allocate memory to load: ") + pathToOpen);
                 activityManager.broadcastTask(notif);
                 delete newSample;
                 task.setFailed(true);
@@ -404,14 +405,16 @@ void MixingBus::importNewFile(SampleCreateTask &task)
             // notify user about sample being too long to be loaded
             if (duration >= SAMPLE_MAX_DURATION_SEC)
             {
-                std::shared_ptr notif = std::make_shared<NotificationTask>(NotificationTask((juce::String("Max is ") + juce::String(SAMPLE_MAX_DURATION_SEC) +
-                                                juce::String("s, sample was not loaded: ") + pathToOpen)));
+                std::shared_ptr<NotificationTask> notif =
+                    std::make_shared<NotificationTask>(juce::String("Max is ") + juce::String(SAMPLE_MAX_DURATION_SEC) +
+                                                       juce::String("s, sample was not loaded: ") + pathToOpen);
                 activityManager.broadcastTask(notif);
             }
             if (reader->lengthInSamples <= SAMPLE_MIN_DURATION_FRAMES)
             {
-                std::shared_ptr notif = std::make_shared<NotificationTask>(NotificationTask(juce::String("min is ") + juce::String(SAMPLE_MIN_DURATION_FRAMES) +
-                                                juce::String("audio samples, sample was not loaded: ") + pathToOpen));
+                std::shared_ptr<NotificationTask> notif = std::make_shared<NotificationTask>(
+                    juce::String("min is ") + juce::String(SAMPLE_MIN_DURATION_FRAMES) +
+                    juce::String("audio samples, sample was not loaded: ") + pathToOpen);
                 activityManager.broadcastTask(notif);
             }
             task.setFailed(true);
@@ -421,7 +424,8 @@ void MixingBus::importNewFile(SampleCreateTask &task)
     else
     {
         // if the file reader doesn't want to read, notify an error
-        std::shared_ptr notif = std::make_shared<NotificationTask>(NotificationTask(juce::String("Unable to read: ") + pathToOpen));
+        std::shared_ptr<NotificationTask> notif =
+            std::make_shared<NotificationTask>(juce::String("Unable to read: ") + pathToOpen);
         activityManager.broadcastTask(notif);
 
         task.setFailed(true);
@@ -560,7 +564,7 @@ void MixingBus::duplicateTrack(SampleCreateTask &task)
     }
 
     task.setAllocatedIndex(newTrackIndex);
-    
+
     addUiSampleCallback(newSample, task);
     trackRepaintCallback();
 }

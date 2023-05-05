@@ -24,7 +24,7 @@
 #define TASK_QUEUE_RESERVED_SIZE 16
 
 //==============================================================================
-class MixingBus : public juce::PositionableAudioSource, public TaskListener, private juce::Thread,
+class MixingBus : public juce::PositionableAudioSource, public TaskListener, private juce::Thread
 {
   public:
     MixingBus(ActivityManager &);

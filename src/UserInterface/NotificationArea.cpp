@@ -21,9 +21,9 @@ bool NotificationArea::taskHandler(std::shared_ptr<Task> task)
 {
     std::shared_ptr<NotificationTask> notif = std::dynamic_pointer_cast<NotificationTask>(task);
 
-    if (notif != nullptr && !sc->isCompleted() && !sc->hasFailed()) 
+    if (notif != nullptr && !notif->isCompleted() && !notif->hasFailed())
     {
-        notifyError(notif.getMessage());
+        notifyError(notif->getMessage());
         return true;
     }
 

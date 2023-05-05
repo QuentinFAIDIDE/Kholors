@@ -2,16 +2,18 @@
 #define DEF_ACTION_HPP
 
 #include "Marshalable.h"
+#include <juce_audio_basics/juce_audio_basics.h>
+
 class State
 {
 };
 
-enum DuplicationType 
+enum DuplicationType
 {
-  DUPLICATION_TYPE_NO_DUPLICATION,
-  DUPLICATION_TYPE_COPY_AT_POSITION,
-  DUPLICATION_TYPE_SPLIT_AT_POSITION,
-  DUPLICATION_TYPE_SPLIT_AT_FREQUENCY,
+    DUPLICATION_TYPE_NO_DUPLICATION,
+    DUPLICATION_TYPE_COPY_AT_POSITION,
+    DUPLICATION_TYPE_SPLIT_AT_POSITION,
+    DUPLICATION_TYPE_SPLIT_AT_FREQUENCY,
 };
 
 class Task : public Marshalable
@@ -54,7 +56,7 @@ class SampleCreateTask : public Task
     float getSplitFrequency();
     DuplicationType getDuplicationType();
 
-  private:  
+  private:
     DuplicationType duplicationType;
     std::string filePath;
     int editingPosition;
@@ -64,14 +66,14 @@ class SampleCreateTask : public Task
     float splitFrequency;
 };
 
-
 class NotificationTask : public Task
 {
   public:
     NotificationTask(std::string path);
+    NotificationTask(juce::String path);
     std::string getMessage();
 
-  private:  
+  private:
     std::string message;
 };
 

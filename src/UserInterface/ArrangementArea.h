@@ -56,7 +56,7 @@ class ArrangementArea : public juce::Component,
                         public juce::FileDragAndDropTarget,
                         public juce::DragAndDropTarget,
                         public juce::OpenGLRenderer,
-                        public TaskListener,
+                        public TaskListener
 {
   public:
     //==============================================================================
@@ -89,8 +89,8 @@ class ArrangementArea : public juce::Component,
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArrangementArea)
 
-    ActivityManager& activityManager;
-    TaxonomyManager& taxonomyManager;
+    ActivityManager &activityManager;
+    TaxonomyManager &taxonomyManager;
 
     juce::OpenGLContext openGLContext;
 

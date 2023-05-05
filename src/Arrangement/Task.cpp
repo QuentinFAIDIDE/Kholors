@@ -8,7 +8,6 @@ Task::Task()
 
 Task::~Task()
 {
-    
 }
 
 std::string Task::Marshal()
@@ -54,7 +53,8 @@ SampleCreateTask::SampleCreateTask(int position, int sampleCopyIndex, Duplicatio
 }
 
 SampleCreateTask::SampleCreateTask(float frequency, int sampleCopyIndex)
-    : splitFrequency(frequency), isCopy(true), duplicatedSampleId(sampleCopyIndex), duplicationType(DUPLICATION_TYPE_SPLIT_AT_FREQUENCY)
+    : splitFrequency(frequency), isCopy(true), duplicatedSampleId(sampleCopyIndex),
+      duplicationType(DUPLICATION_TYPE_SPLIT_AT_FREQUENCY)
 {
 }
 
@@ -107,9 +107,12 @@ int SampleCreateTask::getAllocatedIndex()
 
 ///////////////////////////////////////////////
 
-NotificationTask::NotificationTask(std::string s): message(s)
+NotificationTask::NotificationTask(std::string s) : message(s)
 {
+}
 
+NotificationTask::NotificationTask(juce::String s) : message(s.toStdString())
+{
 }
 
 std::string NotificationTask::getMessage()
