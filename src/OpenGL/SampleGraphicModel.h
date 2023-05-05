@@ -32,7 +32,6 @@ class SampleGraphicModel : public TexturedModel
     void connectSquareFromVertexIds(size_t, size_t, size_t, size_t);
 
     void uploadVerticesToGpu();
-    float freqToPositionRatio(float freq);
     int isFilteredArea(float y);
 
     /**

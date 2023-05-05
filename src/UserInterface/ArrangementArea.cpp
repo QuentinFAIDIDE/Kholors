@@ -760,7 +760,7 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
         {
             if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION)
             {
-                float freq = verticalPositionToFrequency(lastMouseY);
+                float freq = UnitConverter::verticalPositionToFrequency(lastMouseY);
                 // create a track duplicate from the sample id at *it
                 std::cout << freq << std::endl;
                 std::shared_ptr<SampleCreateTask> task = std::make_shared<SampleCreateTask>(freq, *it);
@@ -1050,7 +1050,7 @@ void ArrangementArea::mouseWheelMove(const juce::MouseEvent &e, const juce::Mous
 void ArrangementArea::cropSampleBordersVertically(bool innerBorders)
 {
     // compute the frequency to set in the filter
-    float filterFreq = verticalPositionToFrequency(lastMouseY);
+    float filterFreq = UnitConverter::verticalPositionToFrequency(lastMouseY);
     // set the filter frequency for each sample
     std::set<size_t>::iterator itr;
 
@@ -1091,34 +1091,6 @@ void ArrangementArea::refreshSampleOpenGlView(int index)
     }
     openGLContext.executeOnGLThread(
         [this, index, sp](juce::OpenGLContext &c) { samples[index]->updatePropertiesAndUploadToGpu(sp); }, true);
-}
-
-float ArrangementArea::verticalPositionToFrequency(int y)
-{
-    // REMINDER: upper half (below half height) is the first
-    // fft with lower frequencies below. second halve freqs are the opposite disposition.
-
-    // freqRatio is the ratio from 0 to max frequency (AUDIO_FRAMRATE/2).
-    // It's not linear to freqs, we therefore need to invert our index correction
-    // from texture freq index to storage freq index and then from storage
-    // freq index to fft index.
-    float freqRatio = 0.0f;
-    if (y < (FREQTIME_VIEW_HEIGHT >> 1))
-    {
-        freqRatio = 1.0f - (float(y) / float(FREQTIME_VIEW_HEIGHT >> 1));
-    }
-    else
-    {
-        freqRatio = (float(y) / float(FREQTIME_VIEW_HEIGHT >> 1)) - 1.0f;
-    }
-
-    // apply back the index transformation to make it linear to frequencies
-    float textureFreqIndex = freqRatio * float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1);
-    float storageFreqIndex = UnitConverter::magnifyTextureFrequencyIndexInv(textureFreqIndex);
-    float fftFreqIndex = UnitConverter::magnifyFftIndex(storageFreqIndex);
-    // map the fft index to a frequency
-    float freq = fftFreqIndex * (float(AUDIO_FRAMERATE) / float(FREQVIEW_SAMPLE_FFT_SIZE));
-    return juce::jlimit(0.0f, float(AUDIO_FRAMERATE >> 1), freq);
 }
 
 bool ArrangementArea::updateViewResizing(juce::Point<int> &newPosition)

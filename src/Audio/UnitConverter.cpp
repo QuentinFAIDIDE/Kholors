@@ -33,7 +33,7 @@ float UnitConverter::magnifyFftIndex(float k)
 
     float t1 = k * magnifyFftPrecomputedFactor1;
     float res = magnifyFftPrecomputedFactor2 * std::pow(10.0f, t1) * (FREQVIEW_SAMPLE_FFT_SIZE);
-    return juce::jlimit(0.0f, float(FREQVIEW_SAMPLE_FFT_SIZE), res);
+    return juce::jlimit(0.0f, float(FREQVIEW_SAMPLE_FFT_SIZE >> 1), res);
 }
 
 float UnitConverter::magnifyFftIndexInv(float k)
@@ -92,4 +92,47 @@ float UnitConverter::magnifyIntensity(float input)
     // and finally we make sure it falls in range
     intensity = juce::jlimit(0.0f, 1.0f, intensity);
     return intensity;
+}
+
+float UnitConverter::verticalPositionToFrequency(int y)
+{
+    // REMINDER: upper half (below half height) is the first
+    // fft with lower frequencies below. second halve freqs are the opposite disposition.
+
+    // freqRatio is the ratio from 0 to max frequency (AUDIO_FRAMRATE/2).
+    // It's not linear to freqs, we therefore need to invert our index correction
+    // from texture freq index to storage freq index and then from storage
+    // freq index to fft index.
+    float freqRatio = 0.0f;
+    if (y < (FREQTIME_VIEW_HEIGHT >> 1))
+    {
+        freqRatio = 1.0f - (float(y) / float(FREQTIME_VIEW_HEIGHT >> 1));
+    }
+    else
+    {
+        freqRatio = (float(y) / float(FREQTIME_VIEW_HEIGHT >> 1)) - 1.0f;
+    }
+
+    // texture are flipped
+    freqRatio = 1.0 - freqRatio;
+
+    // apply back the index transformation to make it linear to frequencies
+    float textureFreqIndex = freqRatio * float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - 1);
+    float storageFreqIndex =
+        FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - (UnitConverter::magnifyTextureFrequencyIndex(textureFreqIndex) + 1);
+    float fftFreqIndex = UnitConverter::magnifyFftIndex(storageFreqIndex);
+    // map the fft index to a frequency
+    float freq = fftFreqIndex * (float(AUDIO_FRAMERATE) / float(FREQVIEW_SAMPLE_FFT_SIZE));
+
+    return juce::jlimit(0.0f, float(AUDIO_FRAMERATE >> 1), freq);
+}
+
+float UnitConverter::freqToPositionRatio(float freq)
+{
+    float fftIndex = freq * (float(FREQVIEW_SAMPLE_FFT_SIZE) / float(AUDIO_FRAMERATE));
+    float storageIndex = UnitConverter::magnifyFftIndexInv(fftIndex);
+    storageIndex = float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) - storageIndex;
+    float textureIndex = UnitConverter::magnifyTextureFrequencyIndexInv(storageIndex);
+    float ratio = (float(textureIndex) / float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE));
+    return juce::jlimit(0.0f, 1.0f, 1.0f - ratio);
 }

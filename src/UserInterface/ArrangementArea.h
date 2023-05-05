@@ -192,7 +192,6 @@ class ArrangementArea : public juce::Component,
     juce::Optional<SampleBorder> mouseOverSelectionBorder();
     void updateMouseCursor();
 
-    float verticalPositionToFrequency(int);
     void cropSampleEdgeHorizontally(bool cropFront);
     void cropSampleBordersVertically(bool isInnerBorder);
 

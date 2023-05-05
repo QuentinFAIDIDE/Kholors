@@ -73,7 +73,7 @@ void SampleGraphicModel::loadFftDataToTexture(std::vector<float> &ffts, int fftC
     // for each fourier transform over time
     for (int ffti = 0; ffti < numFfts; ffti++)
     {
-        // for each frequency of the current fourrier transform
+        // for each frequency of the texture (linear to displayed texture)
         for (int freqi = 0; freqi < FREQVIEW_SAMPLE_FFT_SCOPE_SIZE; freqi++)
         {
             // we apply our polynomial lens freqi transformation to zoom in a bit
@@ -148,8 +148,8 @@ void SampleGraphicModel::generateAndUploadVertices(float leftX, float rightX, fl
     vertices.clear();
     triangleIds.clear();
 
-    float lowPassPositionRatio = freqToPositionRatio(lowPassFreq);
-    float highPassPositionRatio = freqToPositionRatio(highPassFreq);
+    float lowPassPositionRatio = UnitConverter::freqToPositionRatio(lowPassFreq);
+    float highPassPositionRatio = UnitConverter::freqToPositionRatio(highPassFreq);
     float halfLowPassPos = lowPassPositionRatio / 2.0;
     float halfHighPassPos = highPassPositionRatio / 2.0;
 
@@ -196,14 +196,6 @@ void SampleGraphicModel::generateAndUploadVertices(float leftX, float rightX, fl
     connectSquareFromVertexIds(0, 1, 2, 3);
     connectSquareFromVertexIds(4, 5, 6, 7);
     uploadVerticesToGpu();
-}
-
-float SampleGraphicModel::freqToPositionRatio(float freq)
-{
-    float fftIndex = freq * (float(FREQVIEW_SAMPLE_FFT_SIZE) / float(AUDIO_FRAMERATE));
-    float storageIndex = UnitConverter::magnifyFftIndexInv(fftIndex);
-    float textureIndex = UnitConverter::magnifyTextureFrequencyIndex(storageIndex);
-    return float(textureIndex) / float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
 }
 
 void SampleGraphicModel::connectSquareFromVertexIds(size_t topLeft, size_t topRight, size_t bottomRight,
@@ -315,11 +307,11 @@ int SampleGraphicModel::isFilteredArea(float y)
     // The "top" value is therefore lower in value to that of the "bottom" in the
     // coordinates system (taken from the Juce library) !
 
-    float leftChannelTop = 0.5 - (0.5 * freqToPositionRatio(lastLowPassFreq));
-    float leftChannelBottom = 0.5 - (0.5 * freqToPositionRatio(lastHighPassFreq));
+    float leftChannelTop = 0.5 - (0.5 * UnitConverter::freqToPositionRatio(lastLowPassFreq));
+    float leftChannelBottom = 0.5 - (0.5 * UnitConverter::freqToPositionRatio(lastHighPassFreq));
 
-    float rightChannelTop = 0.5 + (0.5 * freqToPositionRatio(lastHighPassFreq));
-    float rightChannelBottom = 0.5 + (0.5 * freqToPositionRatio(lastLowPassFreq));
+    float rightChannelTop = 0.5 + (0.5 * UnitConverter::freqToPositionRatio(lastHighPassFreq));
+    float rightChannelBottom = 0.5 + (0.5 * UnitConverter::freqToPositionRatio(lastLowPassFreq));
 
     if (y < leftChannelTop || (y > leftChannelBottom && y < rightChannelTop) || y > rightChannelBottom)
     {
@@ -341,8 +333,8 @@ juce::int64 SampleGraphicModel::getFrameLength()
 std::vector<juce::Rectangle<float>> SampleGraphicModel::getPixelBounds(float viewPosition, float viewScale,
                                                                        float viewHeight)
 {
-    float freqRatioLowPass = freqToPositionRatio(lastLowPassFreq);
-    float freqRatioHighPass = freqToPositionRatio(lastHighPassFreq);
+    float freqRatioLowPass = UnitConverter::freqToPositionRatio(lastLowPassFreq);
+    float freqRatioHighPass = UnitConverter::freqToPositionRatio(lastHighPassFreq);
     float height = (freqRatioLowPass - freqRatioHighPass) * viewHeight;
 
     std::vector<juce::Rectangle<float>> rectangles;
