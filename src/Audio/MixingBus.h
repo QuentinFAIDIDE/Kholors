@@ -24,11 +24,14 @@
 #define TASK_QUEUE_RESERVED_SIZE 16
 
 //==============================================================================
-class MixingBus : public juce::PositionableAudioSource, private juce::Thread
+class MixingBus : public juce::PositionableAudioSource, public TaskListener, private juce::Thread,
 {
   public:
     MixingBus(NotificationArea &, ActivityManager &);
     ~MixingBus();
+
+    // this is the handler for the app's broadcasted tasks
+    bool taskHandler(std::shared_ptr<Task> task);
 
     // when called, add sample from file path with position
     void addSample(SampleCreateTask);

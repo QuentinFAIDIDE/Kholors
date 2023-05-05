@@ -13,6 +13,10 @@ MainComponent::MainComponent()
 {
     configureLookAndFeel();
 
+    activityManager.registerTaskListener(&notificationArea);
+    activityManager.registerTaskListener(&mixingBus);
+    activityManager.registerTaskListener(&arrangementArea);
+
     // initialize audio app with two outputs
     setAudioChannels(0, 2);
 

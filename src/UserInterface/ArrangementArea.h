@@ -56,7 +56,8 @@ class SampleBorder
 class ArrangementArea : public juce::Component,
                         public juce::FileDragAndDropTarget,
                         public juce::DragAndDropTarget,
-                        public juce::OpenGLRenderer
+                        public juce::OpenGLRenderer,
+                        public TaskListener,
 {
   public:
     //==============================================================================
@@ -64,6 +65,7 @@ class ArrangementArea : public juce::Component,
     ~ArrangementArea();
 
     //==============================================================================
+    bool taskHandler(std::shared_ptr<Task> task);
     void paint(juce::Graphics &) override;
     void resized() override;
     void mouseDown(const juce::MouseEvent &) override;

@@ -125,6 +125,12 @@ void ArrangementArea::paintSelection(juce::Graphics &g)
     selectedSamplesCoords.swap(selectedSamplesCoordsBuffer);
 }
 
+bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
+{
+    // TODO
+    return false;
+}
+
 void ArrangementArea::paintSplitLocation(juce::Graphics &g)
 {
     // the split location is only displayed in these ui states
@@ -746,7 +752,7 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
                 // create a track duplicate from the sample id at *it
                 std::cout << freq << std::endl;
                 SampleCreateTask task(freq, *it);
-                mixingBus.addSample(task);
+                activityManager.broadcastTask(task);
             }
             else
             {
@@ -756,7 +762,7 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
                 {
                     int frameSplitPosition = (lastMouseX - xSampleLocations[0].getX()) * viewScale;
                     SampleCreateTask task(frameSplitPosition, *it, DUPLICATION_TYPE_SPLIT_AT_POSITION);
-                    mixingBus.addSample(task);
+                    activityManager.broadcastTask(task);
                 }
             }
             it++;
@@ -1319,7 +1325,7 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key)
                     int pos = mixingBus.getTrack(*it)->getEditingPosition();
                     newPosition = (viewPosition + (lastMouseX * viewScale)) + (pos - selectionBeginPos);
                     SampleCreateTask task(newPosition, *it, DUPLICATION_TYPE_COPY_AT_POSITION);
-                    mixingBus.addSample(task);
+                    activityManager.broadcastTask(task);
                     it++;
                 }
             }
@@ -1495,7 +1501,7 @@ void ArrangementArea::filesDropped(const juce::StringArray &files, int x, int y)
     for (int i = 0; i < files.size(); i++)
     {
         SampleCreateTask task(files[i].toStdString(), framePos);
-        mixingBus.addSample(task);
+        activityManager.broadcastTask(task);
     }
 }
 
@@ -1507,5 +1513,5 @@ void ArrangementArea::itemDropped(const SourceDetails &dragSourceDetails)
     // we try to load the sample
     juce::String filename = dragSourceDetails.description.toString().replaceFirstOccurrenceOf("file:", "");
     SampleCreateTask task(filename.toStdString(), framePos);
-    mixingBus.addSample(task);
+    activityManager.broadcastTask(task);
 }

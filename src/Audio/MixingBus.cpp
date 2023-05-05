@@ -66,6 +66,19 @@ MixingBus::~MixingBus()
     delete backgroundNearTrackBitmask;
 }
 
+bool MixingBus::taskHandler(std::shared_ptr<Task> task)
+{
+    std::shared_ptr<SampleCreateTask> sc = std::dynamic_pointer_cast<SampleCreateTask>(task);
+
+    if (sc != nullptr && !sc->isCompleted()) 
+    {
+        addSample(*sc);
+        return true;
+    }
+
+    return false;
+}
+
 bool MixingBus::filePathsValid(const juce::StringArray &files)
 {
     // TODO: implement this
