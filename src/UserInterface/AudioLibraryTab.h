@@ -3,6 +3,7 @@
 
 #include <functional>
 
+#include "../Arrangement/ActivityManager.h"
 #include "../Config.h"
 #include "../Library/AudioLibraryManager.h"
 #include "AudioLibTreeItem.h"
@@ -10,7 +11,7 @@
 #include "ResultList.h"
 #include "Section.h"
 
-class AudioLibraryTab : public juce::Component
+class AudioLibraryTab : public juce::Component, public TaskListener
 {
   public:
     AudioLibraryTab();
@@ -18,9 +19,10 @@ class AudioLibraryTab : public juce::Component
 
     void initAudioLibrary(Config &config);
 
+    bool taskHandler(std::shared_ptr<Task> task) override;
+
     void paint(juce::Graphics &) override;
     void resized() override;
-    std::function<void(std::string)> fileWasImported;
 
   private:
     AudioLibraryManager *_audioLibraries;

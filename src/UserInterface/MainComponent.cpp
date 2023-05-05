@@ -16,6 +16,7 @@ MainComponent::MainComponent()
     activityManager.registerTaskListener(&mixingBus);
     activityManager.registerTaskListener(&arrangementArea);
     activityManager.registerTaskListener(&notificationArea);
+    activityManager.registerTaskListener(&audioLibraryTab);
 
     // initialize audio app with two outputs
     setAudioChannels(0, 2);
@@ -28,9 +29,6 @@ MainComponent::MainComponent()
     actionTabs.addTab("Audio Library", juce::Colour(25, 24, 24), &audioLibraryTab, false);
     actionTabs.addTab("Sample Processing", juce::Colour(25, 24, 24), &sampleProcessingTab, false);
     actionTabs.addTab("Mastering", juce::Colour(25, 24, 24), &masteringTab, false);
-
-    // tells the sample player where to report file import for count
-    mixingBus.setFileImportedCallback(audioLibraryTab.fileWasImported);
 
     // make subwidgets visible
     addAndMakeVisible(arrangementArea);

@@ -32,10 +32,9 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     ~MixingBus();
 
     // this is the handler for the app's broadcasted tasks
-    bool taskHandler(std::shared_ptr<Task> task);
+    bool taskHandler(std::shared_ptr<Task> task) override;
 
     // when called, add sample from file path with position
-    void addSample(std::shared_ptr<SampleCreateTask> import);
     bool filePathsValid(const juce::StringArray &);
 
     // inherited from audio source
@@ -58,16 +57,10 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     // access tracks from gui's MessageThread
     size_t getNumTracks() const;
     SamplePlayer *getTrack(int index) const;
-    SamplePlayer *deleteTrack(int index);
-    void restoreDeletedTrack(SamplePlayer *sp, int index);
 
     // set callback to safely access gui's
     // MessageThread to repaint tracks
     void setTrackRepaintCallback(std::function<void()>);
-    void setFileImportedCallback(std::function<void(std::string)>);
-
-    // callback to add new samples to the user interface
-    std::function<void(int)> disableUiSampleCallback;
 
   private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MixingBus)
@@ -119,8 +112,6 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     juce::Array<SamplePlayer *> tracks;
     // callback to repaint when tracks were updated
     std::function<void()> trackRepaintCallback;
-    // callback to report the file was imported to audio library
-    std::function<void(std::string)> fileImportedCallback;
 
     // helps deciding on notifying ArrangementArea for redraw
     int64_t lastDrawnCursor;
@@ -178,6 +169,9 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     // used to manage background thread allocations
     void checkForFileToImport();
     void checkForBuffersToFree();
+
+    void addSample(std::shared_ptr<SampleCreateTask> import);
+    void deleteTrack(int index);
 };
 //==============================================================================
 

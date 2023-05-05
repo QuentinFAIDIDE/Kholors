@@ -1,4 +1,5 @@
 #include "Task.h"
+#include <memory>
 
 Task::Task()
 {
@@ -126,4 +127,25 @@ SampleDisplayTask::SampleDisplayTask(SamplePlayer *sp, std::shared_ptr<SampleCre
 {
     sample = sp;
     creationTask = crTask;
+}
+
+/////////////////////////////////////////////////
+
+ImportFileCountTask::ImportFileCountTask(std::string p)
+{
+    path = p;
+}
+
+/////////////////////////////////////////////////
+
+SampleDeletionDisplayTask::SampleDeletionDisplayTask(int i)
+{
+    id = i;
+}
+
+/////////////////////////////////////////////////
+
+SampleDeletionTask::SampleDeletionTask(int i)
+{
+    id = i;
 }

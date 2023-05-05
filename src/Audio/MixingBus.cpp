@@ -1,4 +1,5 @@
 #include "MixingBus.h"
+#include "SamplePlayer.h"
 
 #include <cstdint>
 #include <iostream>
@@ -74,6 +75,14 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
     if (sc != nullptr && !sc->isCompleted() && !sc->hasFailed())
     {
         addSample(sc);
+        return true;
+    }
+
+    std::shared_ptr<SampleDeletionTask> sd = std::dynamic_pointer_cast<SampleDeletionTask>(task);
+
+    if (sd != nullptr && !sd->isCompleted() && !sd->hasFailed())
+    {
+        deleteTrack(sd->id);
         return true;
     }
 
@@ -401,7 +410,9 @@ void MixingBus::importNewFile(std::shared_ptr<SampleCreateTask> task)
             std::shared_ptr<SampleDisplayTask> displayTask = std::make_shared<SampleDisplayTask>(newSample, task);
             activityManager.broadcastNestedTaskNow(displayTask);
 
-            fileImportedCallback(pathToOpen);
+            std::shared_ptr<ImportFileCountTask> fcTask = std::make_shared<ImportFileCountTask>(pathToOpen);
+            activityManager.broadcastNestedTaskNow(fcTask);
+
             trackRepaintCallback();
         }
         else
@@ -506,29 +517,19 @@ void MixingBus::setTrackRepaintCallback(std::function<void()> f)
     trackRepaintCallback = f;
 }
 
-void MixingBus::setFileImportedCallback(std::function<void(std::string)> c)
+void MixingBus::deleteTrack(int index)
 {
-    fileImportedCallback = c;
-}
-
-// delete track from list by setting it to nullptr and return point to track.
-// ArrangementArea is in charge of deleting the SamplePlayer instance or
-// putting it back with restoreDeletedTrack if usert hit ctrl+Z.
-SamplePlayer *MixingBus::deleteTrack(int index)
-{
-    tracks.set(index, nullptr);
-    disableUiSampleCallback(index);
-}
-
-void MixingBus::restoreDeletedTrack(SamplePlayer *sp, int index)
-{
-    // only do it if no track at that index exists
-    if (tracks.getUnchecked(index) != nullptr)
+    if (index < 0 || index >= tracks.size() || tracks[index] == nullptr)
     {
-        std::cout << "Warning: ArrangementArea is trying to restore an existing track" << std::endl;
         return;
     }
-    tracks.set(index, sp);
+
+    SamplePlayer *track = tracks[index];
+    tracks.set(index, nullptr);
+    delete track;
+
+    std::shared_ptr<SampleDeletionDisplayTask> displayTask = std::make_shared<SampleDeletionDisplayTask>(index);
+    activityManager.broadcastNestedTaskNow(displayTask);
 }
 
 void MixingBus::duplicateTrack(std::shared_ptr<SampleCreateTask> task)

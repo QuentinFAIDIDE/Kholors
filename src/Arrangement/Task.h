@@ -75,6 +75,20 @@ class SampleDisplayTask : public Task
     std::shared_ptr<SampleCreateTask> creationTask;
 };
 
+class SampleDeletionTask : public Task
+{
+  public:
+    SampleDeletionTask(int);
+    int id;
+};
+
+class SampleDeletionDisplayTask : public Task
+{
+  public:
+    SampleDeletionDisplayTask(int);
+    int id;
+};
+
 class NotificationTask : public Task
 {
   public:
@@ -84,6 +98,13 @@ class NotificationTask : public Task
 
   private:
     std::string message;
+};
+
+class ImportFileCountTask : public Task
+{
+  public:
+    ImportFileCountTask(std::string);
+    std::string path;
 };
 
 #endif // DEF_ACTION_HPP

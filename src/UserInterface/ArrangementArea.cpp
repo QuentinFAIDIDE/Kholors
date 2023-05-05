@@ -52,8 +52,6 @@ ArrangementArea::ArrangementArea(MixingBus &mb, ActivityManager &am)
     openGLContext.setRenderer(this);
     openGLContext.setContinuousRepainting(false);
     openGLContext.attachTo(*this);
-
-    mixingBus.disableUiSampleCallback = [this](int index) { samples[index]->disable(); };
 }
 
 ArrangementArea::~ArrangementArea()
@@ -131,6 +129,14 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
     if (sc != nullptr && !sc->isCompleted() && !sc->hasFailed())
     {
         displaySample(sc->sample, sc->creationTask);
+        return true;
+    }
+
+    std::shared_ptr<SampleDeletionDisplayTask> disableTask = std::dynamic_pointer_cast<SampleDeletionDisplayTask>(task);
+
+    if (disableTask != nullptr && !disableTask->isCompleted() && !disableTask->hasFailed())
+    {
+        samples[disableTask->id]->disable();
         return true;
     }
 
@@ -1409,9 +1415,9 @@ void ArrangementArea::deleteSelectedTracks()
     std::set<std::size_t>::iterator it = selectedTracks.begin();
     while (it != selectedTracks.end())
     {
-        // delete it
-        SamplePlayer *deletedSp = mixingBus.deleteTrack(*it);
-        delete deletedSp;
+        std::shared_ptr<SampleDeletionTask> delTask = std::make_shared<SampleDeletionTask>(*it);
+        activityManager.broadcastTask(delTask);
+
         it++;
     }
     // clear selection and redraw

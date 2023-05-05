@@ -1,5 +1,6 @@
 #include "AudioLibraryTab.h"
 
+#include <memory>
 #include <stdexcept>
 
 #include "Section.h"
@@ -28,13 +29,22 @@ AudioLibraryTab::AudioLibraryTab() : _resultList("Results", &_resultListContent)
     addAndMakeVisible(_searchBar);
     addAndMakeVisible(_resultList);
 
-    // callback to pass to sampleManager to report file import
-    fileWasImported = [this](std::string s) {
+    // tell the result list where where to call for element focus
+    _resultListContent.focusElementCallback = [this](std::string path) { _audioLibTreeRoot->focusAtPath(path); };
+}
+
+bool AudioLibraryTab::taskHandler(std::shared_ptr<Task> task)
+{
+    std::shared_ptr<ImportFileCountTask> fctask = std::dynamic_pointer_cast<ImportFileCountTask>(task);
+
+    if (fctask != nullptr)
+    {
+
         // this can be called from the SampleManager worker thread, so
         // we need to lock the message/gui thread
         const juce::MessageManagerLock mmLock;
 
-        juce::File f(s);
+        juce::File f(fctask->path);
         while (!_isLibraryPath(f.getFullPathName().toStdString()) && f != juce::File("/home") && f != juce::File("/"))
         {
             _audioLibraries->countAccess(f);
@@ -46,10 +56,11 @@ AudioLibraryTab::AudioLibraryTab() : _resultList("Results", &_resultListContent)
             _audioLibraries->countAccess(f);
         }
         _updateBestEntries();
-    };
 
-    // tell the result list where where to call for element focus
-    _resultListContent.focusElementCallback = [this](std::string path) { _audioLibTreeRoot->focusAtPath(path); };
+        return true;
+    }
+
+    return false;
 }
 
 bool AudioLibraryTab::_isLibraryPath(std::string path)
