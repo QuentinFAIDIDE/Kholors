@@ -104,3 +104,15 @@ int SampleCreateTask::getAllocatedIndex()
 {
     return newIndex;
 }
+
+///////////////////////////////////////////////
+
+NotificationTask::NotificationTask(std::string s): message(s)
+{
+
+}
+
+std::string NotificationTask::getMessage()
+{
+    return message;
+}

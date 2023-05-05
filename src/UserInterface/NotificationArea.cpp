@@ -17,6 +17,19 @@ NotificationArea::~NotificationArea()
 {
 }
 
+bool NotificationArea::taskHandler(std::shared_ptr<Task> task)
+{
+    std::shared_ptr<NotificationTask> notif = std::dynamic_pointer_cast<NotificationTask>(task);
+
+    if (notif != nullptr && !sc->isCompleted() && !sc->hasFailed()) 
+    {
+        notifyError(notif.getMessage());
+        return true;
+    }
+
+    return false;
+}
+
 void NotificationArea::paint(juce::Graphics &g)
 {
     // make sure the notification are filetered to remove old ones
@@ -191,6 +204,7 @@ void NotificationArea::mouseMove(const juce::MouseEvent &me)
 {
 }
 
+// must be called from messagemanager thread
 void NotificationArea::notifyError(const juce::String &msg)
 {
     // get a read lock
@@ -219,10 +233,6 @@ void NotificationArea::notifyError(const juce::String &msg)
 
     std::cerr << "New error notification at " << timestamp << ": " << msg << std::endl;
 
-    // we will let the repaint function starts the animation
-    // call a repaint to get the anim started.
-    // As it's a component function, we need to get the message manager lock.
-    const juce::MessageManagerLock mmLock;
     repaint();
 }
 

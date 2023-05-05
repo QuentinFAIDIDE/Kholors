@@ -70,7 +70,7 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
 {
     std::shared_ptr<SampleCreateTask> sc = std::dynamic_pointer_cast<SampleCreateTask>(task);
 
-    if (sc != nullptr && !sc->isCompleted()) 
+    if (sc != nullptr && !sc->isCompleted() && !sc->hasFailed()) 
     {
         addSample(*sc);
         return true;

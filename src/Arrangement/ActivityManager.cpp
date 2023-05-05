@@ -23,9 +23,6 @@ void ActivityManager::stopTaskBroadcast()
 
 void ActivityManager::broadcastTask(std::shared_ptr<Task> task)
 {
-
-    // TODO: only allow message thread
-
     const juce::SpinLock::ScopedTryLockType lock(broadcastLock);
     if (taskBroadcastStopped)
     {
@@ -52,6 +49,8 @@ void ActivityManager::broadcastTask(std::shared_ptr<Task> task)
         {
             for (size_t i=0; i < taskListeners.size(); i++)
             {
+                // all broadcasted tasks arrive on the message thread
+                const juce::MessageManagerLock mmLock;
                 bool shouldStop = taskListeners[i]->taskHandler(taskToBroadcast);
                 if (shouldStop)
                 {

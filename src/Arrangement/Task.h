@@ -64,4 +64,15 @@ class SampleCreateTask : public Task
     float splitFrequency;
 };
 
+
+class NotificationTask : public Task
+{
+  public:
+    NotificationTask(std::string path);
+    std::string getMessage();
+
+  private:  
+    std::string message;
+};
+
 #endif // DEF_ACTION_HPP

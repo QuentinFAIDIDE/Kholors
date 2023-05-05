@@ -24,7 +24,7 @@ typedef struct
 /*
     This component pops up notifications
 */
-class NotificationArea : public juce::AnimatedAppComponent
+class NotificationArea : public juce::AnimatedAppComponent, public TaskListener
 {
   public:
     //==============================================================================
@@ -33,6 +33,7 @@ class NotificationArea : public juce::AnimatedAppComponent
 
     //==============================================================================
     // Component inherited
+    bool taskHandler(std::shared_ptr<Task> task);
     void paint(juce::Graphics &) override;
     void resized() override;
     void mouseDown(const juce::MouseEvent &) override;
