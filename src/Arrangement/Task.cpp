@@ -163,3 +163,9 @@ SampleFreqCropTask::SampleFreqCropTask(bool isLP, int sampleId, float initialFre
     : isLowPass(isLP), id(sampleId), initialFrequency(initialFreq), finalFrequency(finalFreq)
 {
 }
+
+/////////////////////////////////////////////////
+
+SampleMovingTask::SampleMovingTask(int sampleId, int frameDist) : id(sampleId), dragDistance(frameDist)
+{
+}

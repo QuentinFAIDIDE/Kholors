@@ -137,4 +137,16 @@ class SampleFreqCropTask : public Task
     int isLowPass;
 };
 
+class SampleMovingTask : public Task
+{
+  public:
+    /**
+     * Record when a sample is moved on the
+     * arrangement area.
+     */
+    SampleMovingTask(int sampleId, int frameDist);
+    int id;
+    int dragDistance;
+};
+
 #endif // DEF_ACTION_HPP

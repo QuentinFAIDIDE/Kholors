@@ -1242,6 +1242,7 @@ void ArrangementArea::mouseMove(const juce::MouseEvent &jme)
     case UI_STATE_CURSOR_MOVING:
     case UI_STATE_VIEW_RESIZING:
     case UI_STATE_MOUSE_DRAG_SAMPLE_LENGTH:
+    case UI_STATE_SELECT_AREA_WITH_MOUSE:
     case UI_STATE_DEFAULT:
         break;
     }
@@ -1368,7 +1369,8 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key)
         // if pressing d and not in any mode, start dragging
         if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT)
         {
-            // if ctrl is pressed, duplicate and add to selection
+            // if ctrl is pressed, the user duplicates selected samples
+            // and add them to current selection
             if (key.getModifiers().isCtrlDown())
             {
                 // if nothing is selected, abort
@@ -1394,7 +1396,7 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key)
                     it++;
                 }
             }
-            else
+            else // if ctrl is not pressed the user starts moving selected samples around
             {
                 // start dragging
                 trackMovingInitialPosition = lastMouseX;
@@ -1485,32 +1487,39 @@ bool ArrangementArea::keyStateChanged(bool isKeyDown)
         if (!juce::KeyPress::isKeyCurrentlyDown(juce::KeyPress::createFromDescription(KEYMAP_DRAG_MODE).getKeyCode()))
         {
             // update tracks position, get out of drag mode, and repaint
-            size_t nTracks = mixingBus.getNumTracks();
             SamplePlayer *sp;
             int64_t trackPosition;
             int64_t dragDistance = (lastMouseX - trackMovingInitialPosition) * viewScale;
-            // TODO: iterate over set rather than looping over all tracks
-            // for each track
-            for (size_t i = 0; i < nTracks; i++)
+
+            std::set<size_t>::iterator it;
+            for (it = selectedTracks.begin(); it != selectedTracks.end(); it++)
             {
-                if (auto search = selectedTracks.find(i); search != selectedTracks.end())
+                // get a reference to the sample
+                sp = mixingBus.getTrack(*it);
+                // skip nullptr in tracks list (should not happen)
+                if (sp == nullptr)
                 {
-                    // get a reference to the sample
-                    sp = mixingBus.getTrack(i);
-                    // skip nullptr in tracks list (should not happen)
-                    if (sp == nullptr)
-                    {
-                        continue;
-                    }
+                    continue;
+                }
+
+                {
                     // get its lock
                     const juce::SpinLock::ScopedLockType lock(sp->playerMutex);
-                    // get the old position
+
+                    // get the old position and apply it
                     trackPosition = sp->getEditingPosition();
                     trackPosition += dragDistance;
                     sp->move(trackPosition);
-                    refreshSampleOpenGlView(i);
                 }
+
+                // refresh the openGL data
+                refreshSampleOpenGlView(*it);
+
+                // broadcast a completed task so that it's recorded in history
+                std::shared_ptr<SampleMovingTask> task = std::make_shared<SampleMovingTask>(*it, dragDistance);
+                activityManager.broadcastTask(task);
             }
+
             activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
             repaint();
         }
