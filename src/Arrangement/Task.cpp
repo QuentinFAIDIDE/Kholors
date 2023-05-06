@@ -149,3 +149,10 @@ SampleDeletionTask::SampleDeletionTask(int i)
 {
     id = i;
 }
+
+/////////////////////////////////////////////////
+
+SampleTimeCropTask::SampleTimeCropTask(bool cropBeginning, int sampleId, int frameDist)
+    : movedBeginning(cropBeginning), id(sampleId), dragDistance(frameDist)
+{
+}

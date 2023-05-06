@@ -153,6 +153,8 @@ class ArrangementArea : public juce::Component,
     // buffer and vector for the coordinates of the selected samples on screen
     std::vector<SampleAreaRectangle> selectedSamplesCoordsBuffer, selectedSamplesCoords;
 
+    std::map<int, int> dragDistanceMap;
+
     //==============================================================================
     void paintPlayCursor(juce::Graphics &g);
     void paintSelection(juce::Graphics &g);
@@ -185,6 +187,8 @@ class ArrangementArea : public juce::Component,
     void updateSelectedTracksDrag(int);
 
     void addSelectedSamples();
+
+    void emitStartDragCompletedTasks();
 
     int64_t lowestStartPosInSelection();
 

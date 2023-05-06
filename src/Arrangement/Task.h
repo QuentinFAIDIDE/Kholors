@@ -107,4 +107,19 @@ class ImportFileCountTask : public Task
     std::string path;
 };
 
+class SampleTimeCropTask : public Task
+{
+  public:
+    /**
+     * SampleTimeCropTask constructor to record a task
+     * that either crop the beginning or the end of a sample.
+     * It record the sample index and the distance in frames
+     * it was cropped for.
+     */
+    SampleTimeCropTask(bool cropBeginning, int sampleId, int frameDist);
+    int id;
+    int dragDistance;
+    int movedBeginning;
+};
+
 #endif // DEF_ACTION_HPP

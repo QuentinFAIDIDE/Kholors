@@ -684,6 +684,7 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
             case BORDER_LEFT:
                 activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_SAMPLE_START);
                 dragLastPosition = lastMouseX;
+                dragDistanceMap.clear();
                 break;
             case BORDER_LOWER:
                 if (sampleBorderClicked->direction == LOW_FREQS_TO_BOTTOM)
@@ -901,6 +902,7 @@ void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent &jme)
 
     case UI_STATE_MOUSE_DRAG_SAMPLE_START:
         activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
+        emitStartDragCompletedTasks();
         break;
 
     case UI_STATE_MOUSE_DRAG_SAMPLE_LENGTH:
@@ -923,6 +925,19 @@ void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent &jme)
     case UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION:
     case UI_STATE_DISPLAY_TIME_SPLIT_LOCATION:
         break;
+    }
+}
+
+void ArrangementArea::emitStartDragCompletedTasks()
+{
+    // iterate over map distances and for each push a completed
+    // task to task listeners (to store it in history)
+    std::map<int, int>::iterator it;
+    for (it = dragDistanceMap.begin(); it != dragDistanceMap.end(); it++)
+    {
+        std::shared_ptr<SampleTimeCropTask> task = std::make_shared<SampleTimeCropTask>(true, it->first, it->second);
+        task->setCompleted(true);
+        activityManager.broadcastTask(task);
     }
 }
 
@@ -1197,7 +1212,6 @@ void ArrangementArea::cropSampleEdgeHorizontally(bool cropFront)
     for (itr = selectedTracks.begin(); itr != selectedTracks.end(); itr++)
     {
         currentTrack = mixingBus.getTrack(*itr);
-        // if possible to dra
         if (currentTrack != nullptr)
         {
 
@@ -1212,6 +1226,16 @@ void ArrangementArea::cropSampleEdgeHorizontally(bool cropFront)
 
             if (actualFrameChange != 0)
             {
+
+                if (dragDistanceMap.find(*itr) != dragDistanceMap.end())
+                {
+                    dragDistanceMap[*itr] = dragDistanceMap[*itr] + actualFrameChange;
+                }
+                else
+                {
+                    dragDistanceMap[*itr] = actualFrameChange;
+                }
+
                 refreshSampleOpenGlView(*itr);
             }
         }
