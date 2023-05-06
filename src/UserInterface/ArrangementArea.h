@@ -154,6 +154,7 @@ class ArrangementArea : public juce::Component,
     std::vector<SampleAreaRectangle> selectedSamplesCoordsBuffer, selectedSamplesCoords;
 
     std::map<int, int> dragDistanceMap;
+    std::map<int, float> initFiltersFreqs;
 
     //==============================================================================
     void paintPlayCursor(juce::Graphics &g);
@@ -188,7 +189,14 @@ class ArrangementArea : public juce::Component,
 
     void addSelectedSamples();
 
-    void emitStartDragCompletedTasks();
+    /*
+    Emits the tasks when the beginning or the end of
+    the selected samples were dragged.
+    isBeginning is true if it's the sample start
+    that is shifted (dragging the left edge) and false if it's length
+    that is changed (dragging the right edge).
+     */
+    void emitTimeDragTasks(bool isBeginning);
 
     int64_t lowestStartPosInSelection();
 

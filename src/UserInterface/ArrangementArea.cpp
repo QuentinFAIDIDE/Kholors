@@ -711,6 +711,7 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
             case BORDER_RIGHT:
                 activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_SAMPLE_LENGTH);
                 dragLastPosition = lastMouseX;
+                dragDistanceMap.clear();
                 break;
             }
         }
@@ -902,11 +903,12 @@ void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent &jme)
 
     case UI_STATE_MOUSE_DRAG_SAMPLE_START:
         activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
-        emitStartDragCompletedTasks();
+        emitTimeDragTasks(true);
         break;
 
     case UI_STATE_MOUSE_DRAG_SAMPLE_LENGTH:
         activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
+        emitTimeDragTasks(false);
         break;
 
     case UI_STATE_MOUSE_DRAG_MONO_LOWPASS:
@@ -928,14 +930,15 @@ void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent &jme)
     }
 }
 
-void ArrangementArea::emitStartDragCompletedTasks()
+void ArrangementArea::emitTimeDragTasks(bool cropBeginning)
 {
     // iterate over map distances and for each push a completed
     // task to task listeners (to store it in history)
     std::map<int, int>::iterator it;
     for (it = dragDistanceMap.begin(); it != dragDistanceMap.end(); it++)
     {
-        std::shared_ptr<SampleTimeCropTask> task = std::make_shared<SampleTimeCropTask>(true, it->first, it->second);
+        std::shared_ptr<SampleTimeCropTask> task =
+            std::make_shared<SampleTimeCropTask>(cropBeginning, it->first, it->second);
         task->setCompleted(true);
         activityManager.broadcastTask(task);
     }
