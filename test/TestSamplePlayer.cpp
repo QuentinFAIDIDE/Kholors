@@ -4,8 +4,12 @@ int testSamplePlayerWithSample(std::string path, int blockSize, int offset, int 
 {
     std::cerr << "testing file " << path << " with block size " << blockSize << " and offset " << offset << std::endl;
 
-    // we need an FFT object for the samplePlayer
-    juce::dsp::FFT fft(11);
+    // we need an FFT object for the samplePlayer.
+    // I'm a bad man and I decided to hardcode that one here.
+    // This is because importing config will add this package
+    // to the numerous one that are rebuilt for importing
+    // config.
+    juce::dsp::FFT fft(10);
 
     // load wav file
     juce::File testTonality(path);

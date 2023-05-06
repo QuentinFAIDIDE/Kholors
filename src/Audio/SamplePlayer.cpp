@@ -70,7 +70,6 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
     isSampleSet = true;
 
     // allocate the buffer where the fft result will be stored
-    audioBufferFrequencies.clear();
     audioBufferFrequencies.resize(numChannels * numFft * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
     std::fill(audioBufferFrequencies.begin(), audioBufferFrequencies.end(), 0.0f);
 
