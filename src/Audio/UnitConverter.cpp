@@ -72,12 +72,14 @@ float UnitConverter::sigmoidInv(float val)
 
 float UnitConverter::polylens(float v)
 {
-    return std::pow(v, 2.0f);
+    float res = std::pow(v, 2.0f);
+    return 1.0f - zoomInRangeInv(1.0f - res);
 }
 
 float UnitConverter::polylensInv(float v)
 {
-    return std::pow(v, 0.5f);
+    float ret = 1.0f - zoomInRange(1.0f - v);
+    return std::pow(ret, 0.5f);
 }
 
 float UnitConverter::magnifyIntensity(float input)
@@ -135,4 +137,30 @@ float UnitConverter::freqToPositionRatio(float freq)
     float textureIndex = UnitConverter::magnifyTextureFrequencyIndexInv(storageIndex);
     float ratio = (float(textureIndex) / float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE));
     return juce::jlimit(0.0f, 1.0f, 1.0f - ratio);
+}
+
+float UnitConverter::zoomInRange(float v)
+{
+    if (v <= 0.1)
+    {
+        return v * 0.5f;
+    }
+    if (v <= 0.5)
+    {
+        return 0.05 + ((v - 0.1f) * (0.7f / 0.4f));
+    }
+    return 0.75 + ((v - 0.5f) / 2.0f);
+}
+
+float UnitConverter::zoomInRangeInv(float v)
+{
+    if (v < 0.05f)
+    {
+        return v * 2.0f;
+    }
+    if (v < 0.75f)
+    {
+        return 0.1f + ((v - 0.05f) * (0.4f / 0.7f));
+    }
+    return 0.5f + ((v - 0.75f) * 2.0f);
 }

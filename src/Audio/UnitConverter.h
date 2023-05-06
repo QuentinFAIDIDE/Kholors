@@ -67,7 +67,7 @@ class UnitConverter
      */
     static float sigmoid(float val);
     /**
-     * Sigmoid activation function to try to increase contrast in fft intensities.
+     * Invert of sigmoid activation function to try to increase contrast in fft intensities.
      */
     static float sigmoidInv(float val);
 
@@ -84,6 +84,16 @@ class UnitConverter
      * @return      Ratio of texture displayed position between 0 and 1.
      */
     static float freqToPositionRatio(float freq);
+
+    /**
+     * Maps a float from 0 to 1 to the same range, squeezing by a factor of two
+     * below 0.01 and above 0.5, and enlarging the range in the middle.
+     */
+    static float zoomInRange(float);
+    /**
+     * Invert of humanize range.
+     */
+    static float zoomInRangeInv(float);
 
   private:
     static float magnifyFftPrecomputedFactor1;

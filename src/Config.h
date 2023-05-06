@@ -106,7 +106,7 @@
 #define KEYMAP_SPLIT_SAMPLE_AT_FREQUENCY "s"
 #define KEYMAP_SPLIT_SAMPLE_AT_TIME "shift + s"
 
-#define FREQVIEW_SAMPLE_FFT_ORDER 11
+#define FREQVIEW_SAMPLE_FFT_ORDER 10
 // total number of fft frequency values. Given that the real part of the result is half of it
 // the effective number of frequency bins from 1 to AUDIO_FRAMERATE (samplerate)
 // is half that.
