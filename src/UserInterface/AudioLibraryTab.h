@@ -25,22 +25,22 @@ class AudioLibraryTab : public juce::Component, public TaskListener
     void resized() override;
 
   private:
-    AudioLibraryManager *_audioLibraries;
-    std::vector<std::string> _audioLibPathsCopy;
-    ColouredTreeView _treeView;
-    AudioLibTreeRoot *_audioLibTreeRoot;
+    AudioLibraryManager *audioLibraries;
+    std::vector<std::string> audioLibPathsCopy;
+    ColouredTreeView treeView;
+    AudioLibTreeRoot *audioLibTreeRoot;
 
-    juce::TextEditor _searchBar;
+    juce::TextEditor searchBar;
 
-    ResultList _resultListContent;
-    juce::ListBox _resultList;
+    ResultList resultListContent;
+    juce::ListBox resultList;
 
-    juce::Rectangle<int> _findLocation;
-    juce::Rectangle<int> _librariesSectionLocation;
+    juce::Rectangle<int> findLocation;
+    juce::Rectangle<int> librariesSectionLocation;
 
-    void _addAudioLibrary(std::string path);
-    void _updateBestEntries();
-    bool _isLibraryPath(std::string path);
+    void addAudioLibrary(std::string path);
+    void updateBestEntries();
+    bool isLibraryPath(std::string path);
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioLibraryTab)

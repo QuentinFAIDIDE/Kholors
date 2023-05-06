@@ -5,32 +5,32 @@
 
 #include "Section.h"
 
-AudioLibraryTab::AudioLibraryTab() : _resultList("Results", &_resultListContent)
+AudioLibraryTab::AudioLibraryTab() : resultList("Results", &resultListContent)
 {
-    _searchBar.setCaretVisible(true);
-    _searchBar.setScrollbarsShown(false);
-    _searchBar.setJustification(juce::Justification::left);
-    _searchBar.setDescription("Search for files here");
-    _searchBar.setMultiLine(false);
-    _searchBar.setColour(juce::TextEditor::backgroundColourId, juce::Colour(COLOR_APP_BACKGROUND));
-    _searchBar.setColour(juce::TextEditor::outlineColourId, juce::Colour::fromRGBA(255, 255, 255, 100));
-    _searchBar.setColour(juce::TextEditor::focusedOutlineColourId, juce::Colour::fromRGBA(255, 255, 255, 125));
-    _searchBar.setColour(juce::TextEditor::textColourId, COLOR_NOTIF_TEXT);
-    _searchBar.setMouseCursor(juce::MouseCursor::IBeamCursor);
+    searchBar.setCaretVisible(true);
+    searchBar.setScrollbarsShown(false);
+    searchBar.setJustification(juce::Justification::left);
+    searchBar.setDescription("Search for files here");
+    searchBar.setMultiLine(false);
+    searchBar.setColour(juce::TextEditor::backgroundColourId, juce::Colour(COLOR_APP_BACKGROUND));
+    searchBar.setColour(juce::TextEditor::outlineColourId, juce::Colour::fromRGBA(255, 255, 255, 100));
+    searchBar.setColour(juce::TextEditor::focusedOutlineColourId, juce::Colour::fromRGBA(255, 255, 255, 125));
+    searchBar.setColour(juce::TextEditor::textColourId, COLOR_NOTIF_TEXT);
+    searchBar.setMouseCursor(juce::MouseCursor::IBeamCursor);
 
-    _audioLibTreeRoot = new AudioLibTreeRoot();
-    _treeView.setRootItem(_audioLibTreeRoot);
-    _treeView.setRootItemVisible(false);
-    _treeView.setRepaintsOnMouseActivity(false);
+    audioLibTreeRoot = new AudioLibTreeRoot();
+    treeView.setRootItem(audioLibTreeRoot);
+    treeView.setRootItemVisible(false);
+    treeView.setRepaintsOnMouseActivity(false);
 
-    _resultList.setColour(juce::ListBox::backgroundColourId, juce::Colour::fromFloatRGBA(0, 0, 0, 0));
+    resultList.setColour(juce::ListBox::backgroundColourId, juce::Colour::fromFloatRGBA(0, 0, 0, 0));
 
-    addAndMakeVisible(_treeView);
-    addAndMakeVisible(_searchBar);
-    addAndMakeVisible(_resultList);
+    addAndMakeVisible(treeView);
+    addAndMakeVisible(searchBar);
+    addAndMakeVisible(resultList);
 
     // tell the result list where where to call for element focus
-    _resultListContent.focusElementCallback = [this](std::string path) { _audioLibTreeRoot->focusAtPath(path); };
+    resultListContent.focusElementCallback = [this](std::string path) { audioLibTreeRoot->focusAtPath(path); };
 }
 
 bool AudioLibraryTab::taskHandler(std::shared_ptr<Task> task)
@@ -45,17 +45,17 @@ bool AudioLibraryTab::taskHandler(std::shared_ptr<Task> task)
         const juce::MessageManagerLock mmLock;
 
         juce::File f(fctask->path);
-        while (!_isLibraryPath(f.getFullPathName().toStdString()) && f != juce::File("/home") && f != juce::File("/"))
+        while (!isLibraryPath(f.getFullPathName().toStdString()) && f != juce::File("/home") && f != juce::File("/"))
         {
-            _audioLibraries->countAccess(f);
+            audioLibraries->countAccess(f);
             f = f.getParentDirectory();
         }
         // count the raw libraries (make sense for sorting em !)
-        if (_isLibraryPath(f.getFullPathName().toStdString()))
+        if (isLibraryPath(f.getFullPathName().toStdString()))
         {
-            _audioLibraries->countAccess(f);
+            audioLibraries->countAccess(f);
         }
-        _updateBestEntries();
+        updateBestEntries();
 
         return true;
     }
@@ -63,7 +63,7 @@ bool AudioLibraryTab::taskHandler(std::shared_ptr<Task> task)
     return false;
 }
 
-bool AudioLibraryTab::_isLibraryPath(std::string path)
+bool AudioLibraryTab::isLibraryPath(std::string path)
 {
     std::string pathWithoutLastSlash = path;
     if (path.find_last_of("/") == path.size() - 1)
@@ -71,9 +71,9 @@ bool AudioLibraryTab::_isLibraryPath(std::string path)
         pathWithoutLastSlash = path.substr(0, path.size() - 1);
     }
 
-    for (int i = 0; i < _audioLibPathsCopy.size(); i++)
+    for (int i = 0; i < audioLibPathsCopy.size(); i++)
     {
-        if (pathWithoutLastSlash == _audioLibPathsCopy[i])
+        if (pathWithoutLastSlash == audioLibPathsCopy[i])
         {
             return true;
         }
@@ -84,39 +84,38 @@ bool AudioLibraryTab::_isLibraryPath(std::string path)
 
 AudioLibraryTab::~AudioLibraryTab()
 {
-    delete _audioLibTreeRoot;
-    if (_audioLibraries != nullptr)
+    delete audioLibTreeRoot;
+    if (audioLibraries != nullptr)
     {
-        delete _audioLibraries;
+        delete audioLibraries;
     }
 }
 
 void AudioLibraryTab::initAudioLibrary(Config &conf)
 {
-    _audioLibraries = new AudioLibraryManager(conf.getDataFolderPath(), conf.getProfileName());
+    audioLibraries = new AudioLibraryManager(conf.getDataFolderPath(), conf.getProfileName());
     for (int i = 0; i < conf.getNumAudioLibs(); i++)
     {
-        _addAudioLibrary(conf.getAudioLibPath(i));
+        addAudioLibrary(conf.getAudioLibPath(i));
     }
-    _updateBestEntries();
+    updateBestEntries();
 }
 
-void AudioLibraryTab::_updateBestEntries()
+void AudioLibraryTab::updateBestEntries()
 {
-    std::vector<std::string> bestEntries = _audioLibraries->getTopEntries(100);
-    std::cerr << "Got " << bestEntries.size() << " top entries" << std::endl;
-    _resultListContent.setContent(bestEntries);
-    _resultList.updateContent();
+    std::vector<std::string> bestEntries = audioLibraries->getTopEntries(100);
+    resultListContent.setContent(bestEntries);
+    resultList.updateContent();
 }
 
-void AudioLibraryTab::_addAudioLibrary(std::string path)
+void AudioLibraryTab::addAudioLibrary(std::string path)
 {
-    if (_audioLibraries != nullptr)
+    if (audioLibraries != nullptr)
     {
         try
         {
-            _audioLibraries->addAudioLibrary(path);
-            _audioLibTreeRoot->addAudioLibrary(path);
+            audioLibraries->addAudioLibrary(path);
+            audioLibTreeRoot->addAudioLibrary(path);
 
             // do not keep trailing slash in the copy list.
             // note that this list is used to stop at library
@@ -126,7 +125,7 @@ void AudioLibraryTab::_addAudioLibrary(std::string path)
             {
                 pathWithoutLastSlash = path.substr(0, path.size() - 1);
             }
-            _audioLibPathsCopy.push_back(pathWithoutLastSlash);
+            audioLibPathsCopy.push_back(pathWithoutLastSlash);
         }
         catch (std::runtime_error err)
         {
@@ -139,8 +138,8 @@ void AudioLibraryTab::paint(juce::Graphics &g)
 {
     juce::Colour bgColor(30, 29, 29);
 
-    drawSection(g, _findLocation, "Find", bgColor);
-    drawSection(g, _librariesSectionLocation, "Libraries", bgColor);
+    drawSection(g, findLocation, "Find", bgColor);
+    drawSection(g, librariesSectionLocation, "Libraries", bgColor);
 }
 
 void AudioLibraryTab::resized()
@@ -152,23 +151,23 @@ void AudioLibraryTab::resized()
     // set position of the Find section
     int idealProportion = LIBRARY_IDEAL_SEARCH_SIZE_PROPORTION * localBounds.getWidth();
     localBounds.setWidth(juce::jmax(idealProportion, LIBRARY_MIN_SEARCH_SIZE));
-    _findLocation = localBounds.reduced(5, 5);
+    findLocation = localBounds.reduced(5, 5);
 
     // set the position of the library files section
     localBounds.setX(localBounds.getX() + localBounds.getWidth());
     localBounds.setWidth(getLocalBounds().reduced(6, 6).getWidth() - localBounds.getWidth());
-    _librariesSectionLocation = localBounds.reduced(5, 5);
+    librariesSectionLocation = localBounds.reduced(5, 5);
 
     // set the position of the file browser
     localBounds.reduce(5, 5);
     localBounds.setY(localBounds.getY() + 22);
     localBounds.setHeight(localBounds.getHeight() - 25);
-    _treeView.setBounds(localBounds.reduced(2));
+    treeView.setBounds(localBounds.reduced(2));
 
     // positionate the searchbar
-    _searchBar.setBounds(_findLocation.reduced(5, 5).withHeight(26).withY(_findLocation.getY() + 24).reduced(2));
-    _resultList.setBounds(_findLocation.reduced(5, 5)
-                              .withHeight(_findLocation.reduced(5, 5).getHeight() - 26 - 24 + 1)
-                              .withY(_findLocation.getY() + 24 + 26 + 3)
-                              .reduced(2));
+    searchBar.setBounds(findLocation.reduced(5, 5).withHeight(26).withY(findLocation.getY() + 24).reduced(2));
+    resultList.setBounds(findLocation.reduced(5, 5)
+                             .withHeight(findLocation.reduced(5, 5).getHeight() - 26 - 24 + 1)
+                             .withY(findLocation.getY() + 24 + 26 + 3)
+                             .reduced(2));
 }

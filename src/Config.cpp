@@ -41,31 +41,31 @@ Config::Config(std::string configFilePath)
 
         YAML::Node config = YAML::LoadFile(configFilePath);
 
-        _checkMandatoryParameters(config);
+        checkMandatoryParameters(config);
 
-        _checkApiVersion(config);
+        checkApiVersion(config);
 
-        _parseAudioLibraryLocations(config);
+        parseAudioLibraryLocations(config);
 
-        _parseProfileName(config);
+        parseProfileName(config);
 
-        _getConfigDirectory(config);
+        getConfigDirectory(config);
 
-        _getDataDirectory(config);
+        getDataDirectory(config);
 
-        _parseBufferSize(config);
+        parseBufferSize(config);
 
-        _invalid = false;
+        invalid = false;
     }
     catch (std::runtime_error err)
     {
         std::cerr << "Error while parsing file: " << err.what() << std::endl;
-        _errMsg = err.what();
-        _invalid = true;
+        errMsg = err.what();
+        invalid = true;
     }
 }
 
-void Config::_checkMandatoryParameters(YAML::Node &config)
+void Config::checkMandatoryParameters(YAML::Node &config)
 {
     for (size_t i = 0; i < mandatoryParameters.size(); i++)
     {
@@ -76,7 +76,7 @@ void Config::_checkMandatoryParameters(YAML::Node &config)
     }
 }
 
-void Config::_checkApiVersion(YAML::Node &config)
+void Config::checkApiVersion(YAML::Node &config)
 {
     std::string apiVersion = config["apiVersion"].as<std::string>();
     if (apiVersion != "v0")
@@ -85,7 +85,7 @@ void Config::_checkApiVersion(YAML::Node &config)
     }
 }
 
-void Config::_parseAudioLibraryLocations(YAML::Node &config)
+void Config::parseAudioLibraryLocations(YAML::Node &config)
 {
     if (!config["AudioLibraryLocations"].IsSequence())
     {
@@ -106,15 +106,15 @@ void Config::_parseAudioLibraryLocations(YAML::Node &config)
             throw std::runtime_error("Audio library entry must be a map");
         }
 
-        _parseAudioLibLocationPath(audioLibLocEntry);
-        _parseAudioLibLocationName(audioLibLocEntry);
-        _parseAudioLibLocationIgnoreCount(audioLibLocEntry);
+        parseAudioLibLocationPath(audioLibLocEntry);
+        parseAudioLibLocationName(audioLibLocEntry);
+        parseAudioLibLocationIgnoreCount(audioLibLocEntry);
     }
 }
 
-void Config::_parseAudioLibLocationPath(YAML::Node &audioLibLocEntry)
+void Config::parseAudioLibLocationPath(YAML::Node &audioLibLocEntry)
 {
-    _checkIfFieldScalarAndExists(audioLibLocEntry, "path");
+    checkIfFieldScalarAndExists(audioLibLocEntry, "path");
 
     // remove trailing / if they exists as a convention
     std::string trimmedPathName = audioLibLocEntry["path"].as<std::string>();
@@ -122,10 +122,10 @@ void Config::_parseAudioLibLocationPath(YAML::Node &audioLibLocEntry)
     {
         trimmedPathName.pop_back();
     }
-    _audioLibPaths.push_back(trimmedPathName);
+    audioLibPaths.push_back(trimmedPathName);
 }
 
-void Config::_parseAudioLibLocationName(YAML::Node &audioLibLocEntry)
+void Config::parseAudioLibLocationName(YAML::Node &audioLibLocEntry)
 {
     std::string trimmedPathName = audioLibLocEntry["path"].as<std::string>();
     // abort if path is empty or in root folder
@@ -141,7 +141,7 @@ void Config::_parseAudioLibLocationName(YAML::Node &audioLibLocEntry)
     bool hasName = true;
     try
     {
-        _checkIfFieldScalarAndExists(audioLibLocEntry, "name");
+        checkIfFieldScalarAndExists(audioLibLocEntry, "name");
     }
     catch (std::exception)
     {
@@ -151,24 +151,24 @@ void Config::_parseAudioLibLocationName(YAML::Node &audioLibLocEntry)
     {
         folderName = audioLibLocEntry["name"].as<std::string>();
     }
-    _audioLibNames.push_back(folderName);
+    audioLibNames.push_back(folderName);
 }
 
-void Config::_parseAudioLibLocationIgnoreCount(YAML::Node &audioLibLocEntry)
+void Config::parseAudioLibLocationIgnoreCount(YAML::Node &audioLibLocEntry)
 {
     try
     {
-        _checkIfFieldScalarAndExists(audioLibLocEntry, "ignoreUseCount");
+        checkIfFieldScalarAndExists(audioLibLocEntry, "ignoreUseCount");
     }
     catch (std::exception)
     {
-        _audioLibIgnoreCounts.push_back(false);
+        audioLibIgnoreCounts.push_back(false);
         return;
     }
-    _audioLibIgnoreCounts.push_back(audioLibLocEntry["ignoreUseCount"].as<bool>());
+    audioLibIgnoreCounts.push_back(audioLibLocEntry["ignoreUseCount"].as<bool>());
 }
 
-void Config::_checkIfFieldScalarAndExists(YAML::Node &node, std::string field)
+void Config::checkIfFieldScalarAndExists(YAML::Node &node, std::string field)
 {
     if (!node[field])
     {
@@ -180,83 +180,82 @@ void Config::_checkIfFieldScalarAndExists(YAML::Node &node, std::string field)
     }
 }
 
-void Config::_parseProfileName(YAML::Node &config)
+void Config::parseProfileName(YAML::Node &config)
 {
     if (!config["profile"] || !config["profile"].IsScalar())
     {
-        _profile = "default";
+        profile = "default";
     }
     else
     {
-        _profile = config["profile"].as<std::string>();
+        profile = config["profile"].as<std::string>();
     }
 }
 
 bool Config::isInvalid() const
 {
-    return _invalid;
+    return invalid;
 }
 
 std::string Config::getProfileName() const
 {
-    return _profile;
+    return profile;
 }
 
 int Config::getNumAudioLibs() const
 {
-    return _audioLibNames.size();
+    return audioLibNames.size();
 }
 
 std::string Config::getAudioLibName(unsigned long i) const
 {
-    if (i >= _audioLibNames.size())
+    if (i >= audioLibNames.size())
     {
         throw std::runtime_error("index out of bounds");
     }
-    return _audioLibNames[i];
+    return audioLibNames[i];
 }
 
 std::string Config::getAudioLibPath(unsigned long i) const
 {
-    if (i >= _audioLibNames.size())
+    if (i >= audioLibNames.size())
     {
         throw std::runtime_error("index out of bounds");
     }
-    return _audioLibPaths[i];
+    return audioLibPaths[i];
 }
 
 bool Config::audioLibIgnoreCount(unsigned long i) const
 {
-    if (i >= _audioLibNames.size())
+    if (i >= audioLibNames.size())
     {
         throw std::runtime_error("index out of bounds");
     }
-    return _audioLibIgnoreCounts[i];
+    return audioLibIgnoreCounts[i];
 }
 
 std::string Config::getErrMessage() const
 {
-    return _errMsg;
+    return errMsg;
 }
 
-void Config::_getConfigDirectory(YAML::Node &config)
+void Config::getConfigDirectory(YAML::Node &config)
 {
-    std::string path = _getProvidedOrDefaultPath(config, "configDirectory", ".kholors");
-    _createFolderIfNotExists(path);
-    _configDirectoryPath = path;
+    std::string path = getProvidedOrDefaultPath(config, "configDirectory", ".kholors");
+    createFolderIfNotExists(path);
+    configDirectoryPath = path;
 }
 
-void Config::_getDataDirectory(YAML::Node &config)
+void Config::getDataDirectory(YAML::Node &config)
 {
-    std::string path = _getProvidedOrDefaultPath(config, "dataDirectory", "Kholors");
-    _createFolderIfNotExists(path);
-    _dataLibraryPath = path;
+    std::string path = getProvidedOrDefaultPath(config, "dataDirectory", "Kholors");
+    createFolderIfNotExists(path);
+    dataLibraryPath = path;
 }
 
 // defaultPathFromHome must not begin with a slash or dot, use raw folder
 // name eg. "Data" or ".datadir"
-std::string Config::_getProvidedOrDefaultPath(YAML::Node &config, std::string paramName,
-                                              std::string defaultPathFromHome)
+std::string Config::getProvidedOrDefaultPath(YAML::Node &config, std::string paramName, std::string defaultPathFromHome)
 {
     // if the directory path config is set, use this dir
     if (config[paramName])
@@ -289,7 +288,7 @@ std::string Config::_getProvidedOrDefaultPath(YAML::Node &config, std::string pa
                              std::string(" or to find HOME envar to use default location"));
 }
 
-void Config::_createFolderIfNotExists(std::string path)
+void Config::createFolderIfNotExists(std::string path)
 {
     struct stat st;
     if (stat(path.c_str(), &st) == -1)
@@ -324,22 +323,22 @@ void Config::_createFolderIfNotExists(std::string path)
 
 std::string Config::getDataFolderPath() const
 {
-    return _dataLibraryPath;
+    return dataLibraryPath;
 };
 
-void Config::_parseBufferSize(YAML::Node &n)
+void Config::parseBufferSize(YAML::Node &n)
 {
-    _bufferSize = 0;
+    bufferSize = 0;
 
     if (n["AudioSettings"] && n["AudioSettings"].IsMap())
     {
         YAML::Node audioParams = n["AudioSettings"];
         if (audioParams["bufferSize"] && audioParams["bufferSize"].IsScalar())
         {
-            _bufferSize = audioParams["bufferSize"].as<int>();
+            bufferSize = audioParams["bufferSize"].as<int>();
 
             // abort if buffer size is invalid
-            if (_bufferSize <= 0)
+            if (bufferSize <= 0)
             {
                 throw std::runtime_error("invalid buffer size");
             }
@@ -349,5 +348,5 @@ void Config::_parseBufferSize(YAML::Node &n)
 
 int Config::getBufferSize() const
 {
-    return _bufferSize;
+    return bufferSize;
 }

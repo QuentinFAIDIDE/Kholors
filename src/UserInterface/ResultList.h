@@ -10,18 +10,18 @@
 class ResultList : public juce::ListBoxModel
 {
   public:
-    ResultList() : _currentSelection(-1)
+    ResultList() : currentSelection(-1)
     {
     }
 
     int getNumRows() override
     {
-        return _content.size();
+        return content.size();
     }
 
     void resetSelect()
     {
-        _currentSelection = -1;
+        currentSelection = -1;
     }
 
     void paintListBoxItem(int rowNumber, juce::Graphics &g, int widtht, int height, bool selected) override
@@ -43,10 +43,10 @@ class ResultList : public juce::ListBoxModel
             g.drawRect(g.getClipBounds(), 1);
         }
 
-        std::string shortedName = _content[rowNumber];
+        std::string shortedName = content[rowNumber];
 
         bool nameShortened = false;
-        while (_defaultFont.getStringWidth("..." + shortedName) >= widtht - 10)
+        while (defaultFont.getStringWidth("..." + shortedName) >= widtht - 10)
         {
             shortedName = shortedName.substr(4, shortedName.size() - 4);
             nameShortened = true;
@@ -62,30 +62,30 @@ class ResultList : public juce::ListBoxModel
 
     void setContent(std::vector<std::string> newContent)
     {
-        _content = newContent;
+        content = newContent;
     }
 
     void listBoxItemClicked(int row, const juce::MouseEvent &me) override
     {
-        _currentSelection = row;
+        currentSelection = row;
     }
 
     void listBoxItemDoubleClicked(int row, const juce::MouseEvent &me) override
     {
-        focusElementCallback(_content[row]);
+        focusElementCallback(content[row]);
     }
 
     void backgroundClicked(const juce::MouseEvent &) override
     {
-        _currentSelection = -1;
+        currentSelection = -1;
     }
 
     std::function<void(std::string)> focusElementCallback;
 
   private:
-    std::vector<std::string> _content;
-    int _currentSelection;
-    juce::Font _defaultFont;
+    std::vector<std::string> content;
+    int currentSelection;
+    juce::Font defaultFont;
 };
 
 #endif // RESULT_LIST_HPP

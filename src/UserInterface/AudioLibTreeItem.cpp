@@ -56,11 +56,11 @@ void AudioLibTreeRoot::focusAtPath(std::string path)
 }
 
 // ============ Audio Lib File =====================
-AudioLibFile::AudioLibFile(std::string path) : _file(path)
+AudioLibFile::AudioLibFile(std::string path) : file(path)
 {
-    _isFolder = _file.isDirectory();
-    _name = _file.getFileName();
-    _hasLoadedChildren = false;
+    isFolder = file.isDirectory();
+    name = file.getFileName();
+    hasLoadedChildren = false;
     // OPTIMISATION: load items from here if UI is too laggy at the price
     // of tons of disk I/O at startup
 }
@@ -72,7 +72,7 @@ AudioLibFile::~AudioLibFile()
 
 bool AudioLibFile::mightContainSubItems()
 {
-    return _isFolder;
+    return isFolder;
 }
 
 bool AudioLibFile::canBeSelected() const
@@ -82,15 +82,15 @@ bool AudioLibFile::canBeSelected() const
 
 juce::String AudioLibFile::getUniqueName() const
 {
-    return _name;
+    return name;
 }
 
 void AudioLibFile::itemOpennessChanged(bool isNowOpen)
 {
-    if (isNowOpen && !_hasLoadedChildren)
+    if (isNowOpen && !hasLoadedChildren)
     {
-        juce::Array<juce::File> children = _file.findChildFiles(juce::File::TypesOfFileToFind::findFilesAndDirectories,
-                                                                false, "*", juce::File::FollowSymlinks::no);
+        juce::Array<juce::File> children = file.findChildFiles(juce::File::TypesOfFileToFind::findFilesAndDirectories,
+                                                               false, "*", juce::File::FollowSymlinks::no);
 
         std::sort(children.begin(), children.end(), [](const juce::File &a, const juce::File &b) {
             if (a.isDirectory() != b.isDirectory())
@@ -108,7 +108,7 @@ void AudioLibFile::itemOpennessChanged(bool isNowOpen)
                 addSubItem((juce::TreeViewItem *)new AudioLibFile(children[i].getFullPathName().toStdString()));
             }
         }
-        _hasLoadedChildren = true;
+        hasLoadedChildren = true;
     }
 }
 
@@ -120,7 +120,7 @@ void AudioLibFile::paintItem(juce::Graphics &g, int width, int height)
         g.fillAll();
     }
     g.setColour(juce::Colour(220, 220, 220));
-    g.drawText(_name, 0, 0, width, height, juce::Justification::left);
+    g.drawText(name, 0, 0, width, height, juce::Justification::left);
 }
 
 void AudioLibFile::paintOpenCloseButton(juce::Graphics &g, const juce::Rectangle<float> &area,
@@ -139,7 +139,7 @@ void AudioLibFile::paintOpenCloseButton(juce::Graphics &g, const juce::Rectangle
 
 juce::var AudioLibFile::getDragSourceDescription()
 {
-    return juce::var("file:" + std::string(_file.getFullPathName().toStdString()));
+    return juce::var("file:" + std::string(file.getFullPathName().toStdString()));
 }
 
 bool AudioLibFile::customComponentUsesTreeViewMouseHandler() const
@@ -149,7 +149,7 @@ bool AudioLibFile::customComponentUsesTreeViewMouseHandler() const
 
 juce::File &AudioLibFile::getJuceFile()
 {
-    return _file;
+    return file;
 }
 
 void AudioLibFile::focusAtPath(std::string path)
@@ -158,10 +158,10 @@ void AudioLibFile::focusAtPath(std::string path)
     juce::File destFile(path);
 
     // if we are the file, stop and select ourselves
-    if (destFile.getFullPathName() == _file.getFullPathName())
+    if (destFile.getFullPathName() == file.getFullPathName())
     {
         setSelected(true, true);
-        if (_file.isDirectory())
+        if (file.isDirectory())
         {
             setOpen(true);
         }
@@ -171,7 +171,7 @@ void AudioLibFile::focusAtPath(std::string path)
 
     // buggy situation where we are not the file and we're not
     // a directory.
-    if (!_file.isDirectory())
+    if (!file.isDirectory())
     {
         return;
     }

@@ -153,31 +153,31 @@ class Config
     int getBufferSize() const;
 
   private:
-    bool _invalid;
-    std::string _errMsg;
-    std::string _profile;
-    std::vector<std::string> _audioLibNames;
-    std::vector<std::string> _audioLibPaths;
-    std::vector<bool> _audioLibIgnoreCounts;
-    std::string _configDirectoryPath;
-    std::string _dataLibraryPath;
-    int _bufferSize;
+    bool invalid;
+    std::string errMsg;
+    std::string profile;
+    std::vector<std::string> audioLibNames;
+    std::vector<std::string> audioLibPaths;
+    std::vector<bool> audioLibIgnoreCounts;
+    std::string configDirectoryPath;
+    std::string dataLibraryPath;
+    int bufferSize;
 
-    void _checkMandatoryParameters(YAML::Node &);
-    void _checkApiVersion(YAML::Node &);
-    void _checkIfFieldScalarAndExists(YAML::Node &, std::string);
-    void _parseAudioLibraryLocations(YAML::Node &);
-    void _parseAudioLibLocationPath(YAML::Node &);
-    void _parseAudioLibLocationName(YAML::Node &);
-    void _parseAudioLibLocationIgnoreCount(YAML::Node &);
-    void _parseProfileName(YAML::Node &);
-    void _parseBufferSize(YAML::Node &);
+    void checkMandatoryParameters(YAML::Node &);
+    void checkApiVersion(YAML::Node &);
+    void checkIfFieldScalarAndExists(YAML::Node &, std::string);
+    void parseAudioLibraryLocations(YAML::Node &);
+    void parseAudioLibLocationPath(YAML::Node &);
+    void parseAudioLibLocationName(YAML::Node &);
+    void parseAudioLibLocationIgnoreCount(YAML::Node &);
+    void parseProfileName(YAML::Node &);
+    void parseBufferSize(YAML::Node &);
 
-    void _getConfigDirectory(YAML::Node &);
-    void _getDataDirectory(YAML::Node &);
-    std::string _getProvidedOrDefaultPath(YAML::Node &, std::string, std::string);
+    void getConfigDirectory(YAML::Node &);
+    void getDataDirectory(YAML::Node &);
+    std::string getProvidedOrDefaultPath(YAML::Node &, std::string, std::string);
 
-    void _createFolderIfNotExists(std::string);
+    void createFolderIfNotExists(std::string);
 
     static std::vector<std::string> mandatoryParameters;
 };

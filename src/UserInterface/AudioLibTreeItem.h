@@ -37,10 +37,10 @@ class AudioLibFile : public juce::TreeViewItem
     void focusAtPath(std::string);
 
   private:
-    juce::File _file;
-    bool _isFolder;
-    juce::String _name;
-    bool _hasLoadedChildren;
+    juce::File file;
+    bool isFolder;
+    juce::String name;
+    bool hasLoadedChildren;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioLibFile)
