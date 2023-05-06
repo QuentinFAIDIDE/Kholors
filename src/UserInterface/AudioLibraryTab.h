@@ -12,7 +12,10 @@
 #include "ResultList.h"
 #include "Section.h"
 
-class AudioLibraryTab : public juce::Component, public TaskListener, public juce::TextEditor::Listener
+class AudioLibraryTab : public juce::Component,
+                        public TaskListener,
+                        public juce::TextEditor::Listener,
+                        private juce::Thread
 {
   public:
     AudioLibraryTab();
@@ -54,6 +57,9 @@ class AudioLibraryTab : public juce::Component, public TaskListener, public juce
     ColouredTreeView treeView;
     AudioLibTreeRoot *audioLibTreeRoot;
 
+    juce::SpinLock searchTextLock;
+    juce::String searchText;
+
     LibrarySearchBar searchBar;
 
     ResultList resultListContent;
@@ -81,8 +87,10 @@ class AudioLibraryTab : public juce::Component, public TaskListener, public juce
     void emptyResultEntries();
 
     /**
-     * Fetch the search result from audio library and set
-     * them in the result list.
+     * Fetch from the background thread the search results from
+     * audio libraries and set them in the result list widget from the
+     * message thread (get message thread lock).
+     * Make sure to call it from the background thread.
      * @param searchtxt text to search samples after.
      */
     void populateSearchContent(std::string searchtxt);
@@ -93,6 +101,14 @@ class AudioLibraryTab : public juce::Component, public TaskListener, public juce
      * @return      true if it is, false if not.
      */
     bool isLibraryPath(std::string path);
+
+    /**
+     * Main loop of the background thread that gets called regularly or
+     * when we call notify (when text is updated in search bar).
+     * Responsible for conducting file searches for the string
+     * in searchText untill it's empty (swapping it everytime).
+     */
+    void run() override;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioLibraryTab)

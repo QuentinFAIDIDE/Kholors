@@ -8,7 +8,7 @@
 // initialize the MixingBus, as well as Thread and audio inherited
 // behaviours.
 MixingBus::MixingBus(ActivityManager &am)
-    : activityManager(am), playCursor(0), Thread("Background Thread"), totalFrameLength(0), numChannels(2),
+    : activityManager(am), playCursor(0), Thread("Mixbus Loader Thread"), totalFrameLength(0), numChannels(2),
       isPlaying(false), uiState(am.getAppState().getUiState()), forwardFFT(FREQVIEW_SAMPLE_FFT_ORDER)
 {
     // initialize format manager

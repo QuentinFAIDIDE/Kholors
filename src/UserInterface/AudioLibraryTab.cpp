@@ -5,8 +5,9 @@
 
 #include "Section.h"
 
-AudioLibraryTab::AudioLibraryTab() : resultList("Results", &resultListContent)
+AudioLibraryTab::AudioLibraryTab() : Thread("File Search Thread"), resultList("Results", &resultListContent)
 {
+    startThread();
 
     audioLibTreeRoot = new AudioLibTreeRoot();
     treeView.setRootItem(audioLibTreeRoot);
@@ -76,6 +77,9 @@ bool AudioLibraryTab::isLibraryPath(std::string path)
 
 AudioLibraryTab::~AudioLibraryTab()
 {
+    // stop thread with a 4sec timeout to kill it
+    stopThread(4000);
+
     delete audioLibTreeRoot;
     if (audioLibraries != nullptr)
     {
@@ -165,15 +169,31 @@ void AudioLibraryTab::textEditorTextChanged(juce::TextEditor &te)
     if (txt.isEmpty())
     {
         updateBestEntries();
+        {
+            const juce::SpinLock::ScopedLockType lock(searchTextLock);
+            searchText.clear();
+        }
         return;
     }
 
+    // if less than 3 character, do no search and display nothing
     if (txt.length() < 3)
     {
         emptyResultEntries();
+        {
+            const juce::SpinLock::ScopedLockType lock(searchTextLock);
+            searchText.clear();
+        }
+        return;
     }
 
-    populateSearchContent(txt.toStdString());
+    // if >= 3 characters, swap the string and notifies the background thread
+    {
+        const juce::SpinLock::ScopedLockType lock(searchTextLock);
+        searchText.swapWith(txt);
+    }
+
+    notify();
 }
 
 void AudioLibraryTab::updateBestEntries()
@@ -189,10 +209,38 @@ void AudioLibraryTab::emptyResultEntries()
     resultList.updateContent();
 }
 
+// Reminder: only call from this class background thread
 void AudioLibraryTab::populateSearchContent(std::string txt)
 {
-    // let's only fetch 300 results
+    // let's only fetch a few results
     auto res = audioLibraries->getSearchResults(txt, 200);
+
+    // lock the message thread and update the widget with the results
+    const juce::MessageManagerLock mmLock;
     resultListContent.setContent(res);
     resultList.updateContent();
+}
+
+void AudioLibraryTab::run()
+{
+    std::cout << "File search thread running" << std::endl;
+    while (!threadShouldExit())
+    {
+
+        juce::String stringToSearch = "";
+        {
+            const juce::SpinLock::ScopedLockType lock(searchTextLock);
+            stringToSearch.swapWith(searchText);
+        }
+
+        if (stringToSearch.isNotEmpty())
+        {
+            populateSearchContent(stringToSearch.toStdString());
+        }
+
+        // wait 1000ms or untill notify() is called
+        wait(1000);
+    }
+
+    std::cout << "File search thread stopping" << std::endl;
 }

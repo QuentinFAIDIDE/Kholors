@@ -115,7 +115,6 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
 
     // helps deciding on notifying ArrangementArea for redraw
     int64_t lastDrawnCursor;
-    void checkForCursorRedraw();
 
     // list of ReferenceCountedBuffer that are holding sample data
     juce::ReferenceCountedArray<ReferenceCountedBuffer> buffers;
@@ -162,6 +161,7 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     // this stop the cursor from moving forward an cuts audio when nothing is
     // playing anymore
     void pauseIfCursorNotInBound();
+    void checkForCursorRedraw();
 
     void importNewFile(std::shared_ptr<SampleCreateTask> task);
     void duplicateTrack(std::shared_ptr<SampleCreateTask> task);
