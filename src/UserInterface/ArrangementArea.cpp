@@ -686,6 +686,7 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
                 dragLastPosition = lastMouseX;
                 dragDistanceMap.clear();
                 break;
+
             case BORDER_LOWER:
                 if (sampleBorderClicked->direction == LOW_FREQS_TO_BOTTOM)
                 {
@@ -696,7 +697,9 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
                     activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_MONO_LOWPASS);
                 }
                 dragLastPosition = lastMouseY;
+                initFiltersFreqs.clear();
                 break;
+
             case BORDER_UPPER:
                 if (sampleBorderClicked->direction == LOW_FREQS_TO_BOTTOM)
                 {
@@ -707,7 +710,9 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
                     activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_MONO_HIGHPASS);
                 }
                 dragLastPosition = lastMouseY;
+                initFiltersFreqs.clear();
                 break;
+
             case BORDER_RIGHT:
                 activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_SAMPLE_LENGTH);
                 dragLastPosition = lastMouseX;
@@ -912,8 +917,13 @@ void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent &jme)
         break;
 
     case UI_STATE_MOUSE_DRAG_MONO_LOWPASS:
+        activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
+        emitFilterDragTasks(false);
+        break;
+
     case UI_STATE_MOUSE_DRAG_MONO_HIGHPASS:
         activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
+        emitFilterDragTasks(true);
         break;
 
     case UI_STATE_SELECT_AREA_WITH_MOUSE:
@@ -939,6 +949,30 @@ void ArrangementArea::emitTimeDragTasks(bool cropBeginning)
     {
         std::shared_ptr<SampleTimeCropTask> task =
             std::make_shared<SampleTimeCropTask>(cropBeginning, it->first, it->second);
+        task->setCompleted(true);
+        activityManager.broadcastTask(task);
+    }
+}
+
+void ArrangementArea::emitFilterDragTasks(bool isLowPass)
+{
+    // iterate over map distances and for each push a completed
+    // task to task listeners (to store it in history)
+    std::map<int, int>::iterator it;
+    for (it = dragDistanceMap.begin(); it != dragDistanceMap.end(); it++)
+    {
+        float finalFreq;
+        if (isLowPass)
+        {
+            finalFreq = mixingBus.getTrack(it->first)->getLowPassFreq();
+        }
+        else
+        {
+            finalFreq = mixingBus.getTrack(it->first)->getHighPassFreq();
+        }
+
+        std::shared_ptr<SampleFreqCropTask> task =
+            std::make_shared<SampleFreqCropTask>(isLowPass, it->first, it->second, finalFreq);
         task->setCompleted(true);
         activityManager.broadcastTask(task);
     }
@@ -1081,6 +1115,24 @@ void ArrangementArea::cropSampleBordersVertically(bool innerBorders)
         currentSample = mixingBus.getTrack(*itr);
         if (currentSample != nullptr)
         {
+
+            // if it's the first time it's being moved,
+            // record its initial freq
+            if (initFiltersFreqs.find(*itr) == initFiltersFreqs.end())
+            {
+                float freq;
+                if (innerBorders)
+                {
+                    freq = currentSample->getHighPassFreq();
+                }
+                else
+                {
+                    freq = currentSample->getLowPassFreq();
+                }
+
+                initFiltersFreqs[*itr] = freq;
+            }
+
             changedSomething = true;
             if (innerBorders)
             {

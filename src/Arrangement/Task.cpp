@@ -156,3 +156,10 @@ SampleTimeCropTask::SampleTimeCropTask(bool cropBeginning, int sampleId, int fra
     : movedBeginning(cropBeginning), id(sampleId), dragDistance(frameDist)
 {
 }
+
+/////////////////////////////////////////////////
+
+SampleFreqCropTask::SampleFreqCropTask(bool isLP, int sampleId, float initialFreq, float finalFreq)
+    : isLowPass(isLP), id(sampleId), initialFrequency(initialFreq), finalFrequency(finalFreq)
+{
+}

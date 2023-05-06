@@ -122,4 +122,19 @@ class SampleTimeCropTask : public Task
     int movedBeginning;
 };
 
+class SampleFreqCropTask : public Task
+{
+  public:
+    /**
+     * Constructor to record a task
+     * that either change the lowPass or highPass
+     * filter frequency of a sample.
+     */
+    SampleFreqCropTask(bool isLP, int sampleId, float initialFreq, float finalFreq);
+    int id;
+    int initialFrequency;
+    int finalFrequency;
+    int isLowPass;
+};
+
 #endif // DEF_ACTION_HPP

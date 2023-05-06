@@ -190,13 +190,22 @@ class ArrangementArea : public juce::Component,
     void addSelectedSamples();
 
     /*
-    Emits the tasks when the beginning or the end of
+    Emits tasks when the beginning or the end of
     the selected samples were dragged.
     isBeginning is true if it's the sample start
     that is shifted (dragging the left edge) and false if it's length
     that is changed (dragging the right edge).
      */
     void emitTimeDragTasks(bool isBeginning);
+
+    /*
+    Emits tasks when the low pass or the high pass
+    filter freqs of selected samples were dragged.
+    isBeginning is true if it's the low pass
+    that is shifted (dragging the top edge) and false if it's
+    the high pass (dragging the bottom edge).
+     */
+    void emitFilterDragTasks(bool isLowPass);
 
     int64_t lowestStartPosInSelection();
 
