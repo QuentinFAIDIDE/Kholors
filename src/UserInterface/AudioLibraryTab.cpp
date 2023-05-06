@@ -7,16 +7,6 @@
 
 AudioLibraryTab::AudioLibraryTab() : resultList("Results", &resultListContent)
 {
-    searchBar.setCaretVisible(true);
-    searchBar.setScrollbarsShown(false);
-    searchBar.setJustification(juce::Justification::left);
-    searchBar.setDescription("Search for files here");
-    searchBar.setMultiLine(false);
-    searchBar.setColour(juce::TextEditor::backgroundColourId, juce::Colour(COLOR_APP_BACKGROUND));
-    searchBar.setColour(juce::TextEditor::outlineColourId, juce::Colour::fromRGBA(255, 255, 255, 100));
-    searchBar.setColour(juce::TextEditor::focusedOutlineColourId, juce::Colour::fromRGBA(255, 255, 255, 125));
-    searchBar.setColour(juce::TextEditor::textColourId, COLOR_NOTIF_TEXT);
-    searchBar.setMouseCursor(juce::MouseCursor::IBeamCursor);
 
     audioLibTreeRoot = new AudioLibTreeRoot();
     treeView.setRootItem(audioLibTreeRoot);
@@ -31,6 +21,8 @@ AudioLibraryTab::AudioLibraryTab() : resultList("Results", &resultListContent)
 
     // tell the result list where where to call for element focus
     resultListContent.focusElementCallback = [this](std::string path) { audioLibTreeRoot->focusAtPath(path); };
+
+    searchBar.addListener(this);
 }
 
 bool AudioLibraryTab::taskHandler(std::shared_ptr<Task> task)
@@ -101,13 +93,6 @@ void AudioLibraryTab::initAudioLibrary(Config &conf)
     updateBestEntries();
 }
 
-void AudioLibraryTab::updateBestEntries()
-{
-    std::vector<std::string> bestEntries = audioLibraries->getTopEntries(100);
-    resultListContent.setContent(bestEntries);
-    resultList.updateContent();
-}
-
 void AudioLibraryTab::addAudioLibrary(std::string path)
 {
     if (audioLibraries != nullptr)
@@ -170,4 +155,44 @@ void AudioLibraryTab::resized()
                              .withHeight(findLocation.reduced(5, 5).getHeight() - 26 - 24 + 1)
                              .withY(findLocation.getY() + 24 + 26 + 3)
                              .reduced(2));
+}
+
+void AudioLibraryTab::textEditorTextChanged(juce::TextEditor &te)
+{
+    juce::String txt = te.getText();
+
+    // if text was just deleted, reset the result list
+    if (txt.isEmpty())
+    {
+        updateBestEntries();
+        return;
+    }
+
+    if (txt.length() < 3)
+    {
+        emptyResultEntries();
+    }
+
+    populateSearchContent(txt.toStdString());
+}
+
+void AudioLibraryTab::updateBestEntries()
+{
+    std::vector<std::string> bestEntries = audioLibraries->getTopEntries(100);
+    resultListContent.setContent(bestEntries);
+    resultList.updateContent();
+}
+
+void AudioLibraryTab::emptyResultEntries()
+{
+    resultListContent.emptyContent();
+    resultList.updateContent();
+}
+
+void AudioLibraryTab::populateSearchContent(std::string txt)
+{
+    // let's only fetch 300 results
+    auto res = audioLibraries->getSearchResults(txt, 200);
+    resultListContent.setContent(res);
+    resultList.updateContent();
 }

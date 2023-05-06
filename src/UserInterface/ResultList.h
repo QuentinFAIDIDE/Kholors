@@ -65,6 +65,11 @@ class ResultList : public juce::ListBoxModel
         content = newContent;
     }
 
+    void emptyContent()
+    {
+        content.clear();
+    }
+
     void listBoxItemClicked(int row, const juce::MouseEvent &me) override
     {
         currentSelection = row;

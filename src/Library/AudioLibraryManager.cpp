@@ -9,36 +9,36 @@
 
 AudioLibraryManager::AudioLibraryManager(std::string dataFolderAbsolutePath, std::string profile)
 {
-    _profileName = profile;
+    profileName = profile;
 
     // make sure the data folder exists
     juce::File dataFolder = juce::File(juce::String(dataFolderAbsolutePath));
-    _existsOrCreateFolder(dataFolder);
+    existsOrCreateFolder(dataFolder);
 
     // make sure that inside the data folder folder, there is a Library folder
     juce::File libraryFolder = dataFolder.getChildFile("Library");
-    _existsOrCreateFolder(libraryFolder);
+    existsOrCreateFolder(libraryFolder);
 
     // make sure that the AudioAccessCounts exists
     juce::File accessCountFolder = libraryFolder.getChildFile("AudioAccessCounts");
-    _existsOrCreateFolder(accessCountFolder);
+    existsOrCreateFolder(accessCountFolder);
 
     // do we have a count file for this profile ?
-    _profileCountFile = accessCountFolder.getChildFile(profile + "_profile");
+    profileCountFile = accessCountFolder.getChildFile(profile + "_profile");
 
     // initialize the data structure to sort most accessed entries
-    _minMostUsed = 0;
-    _nSortedMostUsed = 0;
-    _topAccessedEntry = nullptr;
+    minMostUsed = 0;
+    nSortedMostUsed = 0;
+    topAccessedEntry = nullptr;
 
     // if it exists load the count of file accesses for the profile
-    if (_profileCountFile.existsAsFile())
+    if (profileCountFile.existsAsFile())
     {
-        _loadProfileCount();
+        loadProfileCount();
     }
 }
 
-void AudioLibraryManager::_existsOrCreateFolder(juce::File folder)
+void AudioLibraryManager::existsOrCreateFolder(juce::File folder)
 {
     if (!folder.isDirectory())
     {
@@ -61,16 +61,16 @@ AudioLibraryManager::~AudioLibraryManager()
     // free all SortedAccessCountEntry
     SortedAccessCountEntry *currentEntry;
     SortedAccessCountEntry *previousEntry;
-    currentEntry = _topAccessedEntry;
+    currentEntry = topAccessedEntry;
     while (currentEntry != nullptr)
     {
         previousEntry = currentEntry;
         currentEntry = previousEntry->next;
-        _nSortedMostUsed--;
+        nSortedMostUsed--;
         delete (previousEntry);
     }
     // persists profile to disk
-    _saveProfileCount();
+    saveProfileCount();
 }
 
 void AudioLibraryManager::addAudioLibrary(std::string path)
@@ -82,31 +82,31 @@ void AudioLibraryManager::addAudioLibrary(std::string path)
     }
 
     // abort if user is trying to add a path that already exists
-    if (_audioLibrariesRootFiles.find(dir.getFullPathName().toStdString()) != _audioLibrariesRootFiles.end())
+    if (audioLibrariesRootFiles.find(dir.getFullPathName().toStdString()) != audioLibrariesRootFiles.end())
     {
         throw std::runtime_error("Trying to add a library that already exists");
     }
 
-    _searchIndex.addIfNotAlreadyThere(dir);
+    searchIndex.addIfNotAlreadyThere(dir);
     juce::String folderName = dir.getFileName();
-    _audioLibrariesRootFiles.insert(std::pair<std::string, juce::File>(dir.getFullPathName().toStdString(), dir));
-    _audioLibNamesAndPaths.push_back(
+    audioLibrariesRootFiles.insert(std::pair<std::string, juce::File>(dir.getFullPathName().toStdString(), dir));
+    audioLibNamesAndPaths.push_back(
         std::pair<std::string, std::string>(folderName.toStdString(), dir.getFullPathName().toStdString()));
 }
 
 std::vector<std::pair<std::string, juce::File>> AudioLibraryManager::getLibraries()
 {
     std::vector<std::pair<std::string, juce::File>> response;
-    for (size_t i = 0; i < _audioLibNamesAndPaths.size(); i++)
+    for (size_t i = 0; i < audioLibNamesAndPaths.size(); i++)
     {
-        if (_audioLibrariesRootFiles.find(_audioLibNamesAndPaths[i].second) == _audioLibrariesRootFiles.end())
+        if (audioLibrariesRootFiles.find(audioLibNamesAndPaths[i].second) == audioLibrariesRootFiles.end())
         {
             throw std::runtime_error("unable to locate supposedly existing library");
         }
 
-        juce::File libraryRootFile = _audioLibrariesRootFiles[_audioLibNamesAndPaths[i].second];
+        juce::File libraryRootFile = audioLibrariesRootFiles[audioLibNamesAndPaths[i].second];
 
-        response.push_back(std::pair<std::string, juce::File>(_audioLibNamesAndPaths[i].first, libraryRootFile));
+        response.push_back(std::pair<std::string, juce::File>(audioLibNamesAndPaths[i].first, libraryRootFile));
     }
     return response;
 }
@@ -123,23 +123,23 @@ void AudioLibraryManager::countAccess(juce::File &file)
         return;
     }
     // count access
-    if (_accessCounts.find(file.getFullPathName().toStdString()) != _accessCounts.end())
+    if (accessCounts.find(file.getFullPathName().toStdString()) != accessCounts.end())
     {
-        _accessCounts[file.getFullPathName().toStdString()]++;
+        accessCounts[file.getFullPathName().toStdString()]++;
     }
     else
     {
-        _accessCounts[file.getFullPathName().toStdString()] = 1;
+        accessCounts[file.getFullPathName().toStdString()] = 1;
     }
     // update the top MAX_TOP_ACCESS_SIZE first most accessed entries
-    _updateMostUsed(file.getFullPathName().toStdString());
+    updateMostUsed(file.getFullPathName().toStdString());
     // TODO: once in a while, save it (use timer or count of new entries)
 }
 
-void AudioLibraryManager::_saveProfileCount()
+void AudioLibraryManager::saveProfileCount()
 {
     // save file on disk for the given profile
-    juce::FileOutputStream output(_profileCountFile);
+    juce::FileOutputStream output(profileCountFile);
     if (output.failedToOpen())
     {
         throw std::runtime_error("Unable to open profile access count file");
@@ -156,7 +156,7 @@ void AudioLibraryManager::_saveProfileCount()
     }
     output.setNewLineString("\n");
     // for each count item, save it
-    for (auto i : _accessCounts)
+    for (auto i : accessCounts)
     {
         output << juce::String(i.first) << COUNT_FILE_SEPARATOR << i.second << "\n";
     }
@@ -169,9 +169,9 @@ void AudioLibraryManager::_saveProfileCount()
     }
 }
 
-void AudioLibraryManager::_loadProfileCount()
+void AudioLibraryManager::loadProfileCount()
 {
-    juce::FileInputStream input(_profileCountFile);
+    juce::FileInputStream input(profileCountFile);
     if (input.failedToOpen())
     {
         throw std::runtime_error("Unable to open profile access count file");
@@ -180,7 +180,7 @@ void AudioLibraryManager::_loadProfileCount()
     {
         throw std::runtime_error("Unable to seek in profile access count file");
     }
-    _accessCounts.clear();
+    accessCounts.clear();
     std::string content = input.readString().toStdString();
     if (content == "")
     {
@@ -221,8 +221,8 @@ void AudioLibraryManager::_loadProfileCount()
         juce::File fileEntry(linePath);
         if (fileEntry.exists() && count != 0)
         {
-            _accessCounts.insert(std::pair<std::string, int>(linePath, count));
-            _updateMostUsed(linePath);
+            accessCounts.insert(std::pair<std::string, int>(linePath, count));
+            updateMostUsed(linePath);
         }
         else
         {
@@ -233,20 +233,20 @@ void AudioLibraryManager::_loadProfileCount()
     }
 }
 
-void AudioLibraryManager::_updateMostUsed(std::string entry)
+void AudioLibraryManager::updateMostUsed(std::string entry)
 {
     if (entry == "")
     {
         throw std::runtime_error("received empty entry");
     }
 
-    if (_topAccessedEntry == nullptr)
+    if (topAccessedEntry == nullptr)
     {
-        _topAccessedEntry = new SortedAccessCountEntry(entry, nullptr, nullptr);
+        topAccessedEntry = new SortedAccessCountEntry(entry, nullptr, nullptr);
         return;
     }
 
-    SortedAccessCountEntry *currentEntry = _topAccessedEntry;
+    SortedAccessCountEntry *currentEntry = topAccessedEntry;
     SortedAccessCountEntry *previousEntry = nullptr;
     bool entryInserted = false;
     for (size_t i = 0; i < MAX_TOP_ACCESS_SIZE; i++)
@@ -267,13 +267,13 @@ void AudioLibraryManager::_updateMostUsed(std::string entry)
                     return;
                 }
                 // if it exists, and count is below new one, insert in it instead
-                if (_accessCounts[entry] > _accessCounts[currentEntry->name])
+                if (accessCounts[entry] > accessCounts[currentEntry->name])
                 {
                     if (previousEntry == nullptr)
                     {
                         currentEntry->previous = new SortedAccessCountEntry(entry, previousEntry, currentEntry);
-                        _topAccessedEntry = currentEntry->previous;
-                        currentEntry = _topAccessedEntry;
+                        topAccessedEntry = currentEntry->previous;
+                        currentEntry = topAccessedEntry;
                     }
                     else
                     {
@@ -321,7 +321,7 @@ std::vector<std::string> AudioLibraryManager::getTopEntries(size_t n)
 {
     std::vector<std::string> paths;
     paths.reserve(n);
-    SortedAccessCountEntry *currentPath = _topAccessedEntry;
+    SortedAccessCountEntry *currentPath = topAccessedEntry;
     size_t i = 0;
     while (i < n && currentPath != nullptr)
     {
@@ -334,13 +334,28 @@ std::vector<std::string> AudioLibraryManager::getTopEntries(size_t n)
 
 int AudioLibraryManager::getFileAccessCount(std::string path)
 {
-    auto val = _accessCounts.find(path);
-    if (val == _accessCounts.end())
+    auto val = accessCounts.find(path);
+    if (val == accessCounts.end())
     {
         return 0;
     }
     else
     {
-        return _accessCounts[path];
+        return accessCounts[path];
     }
+}
+
+std::vector<std::string> AudioLibraryManager::getSearchResults(std::string search, int count)
+{
+    juce::Array<juce::File> results =
+        searchIndex.findChildFiles(juce::File::TypesOfFileToFind::findFilesAndDirectories, true, "*" + search + "*");
+
+    std::vector<std::string> resultLocations;
+    resultLocations.reserve(count);
+    int max = juce::jmin(results.size(), count);
+    for (int i = 0; i < max; i++)
+    {
+        resultLocations.push_back(results[i].getFullPathName().toStdString());
+    }
+    return resultLocations;
 }

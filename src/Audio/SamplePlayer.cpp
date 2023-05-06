@@ -141,7 +141,6 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, std::vector<float> &fftData
     const juce::SpinLock::ScopedLockType lock(playerMutex);
     audioBufferRef = targetBuffer;
 
-    int numChannels = targetBuffer->getAudioSampleBuffer()->getNumChannels();
     int numSamples = targetBuffer->getAudioSampleBuffer()->getNumSamples();
     numFft = numSamples / (FREQVIEW_SAMPLE_FFT_SIZE);
 

@@ -8,20 +8,44 @@
 #include "../Library/AudioLibraryManager.h"
 #include "AudioLibTreeItem.h"
 #include "ColouredTreeView.h"
+#include "LibrarySearchBar.h"
 #include "ResultList.h"
 #include "Section.h"
 
-class AudioLibraryTab : public juce::Component, public TaskListener
+class AudioLibraryTab : public juce::Component, public TaskListener, public juce::TextEditor::Listener
 {
   public:
     AudioLibraryTab();
     ~AudioLibraryTab();
 
+    /**
+     * Instanciate the audio library manager with the given configuration.
+     * @param config Config object that tells things like library locations.
+     */
     void initAudioLibrary(Config &config);
 
+    /**
+     * Callback where task are broadcasted. We are listening
+     * to Audio Library Count tasks that pops when user imports something.
+     * @param  task the task going down the list of listeners.
+     * @return      true if we are stopping it from going to further listeners, false if not.
+     */
     bool taskHandler(std::shared_ptr<Task> task) override;
 
+    /**
+     * Called whenever the search bar text gets updated.
+     * @param te The text editor widget object that has the text within it.
+     */
+    void textEditorTextChanged(juce::TextEditor &te) override;
+
+    /**
+     * Repaint the ui widgets.
+     */
     void paint(juce::Graphics &) override;
+
+    /**
+     * called when the window/widget is resized.
+     */
     void resized() override;
 
   private:
@@ -30,7 +54,7 @@ class AudioLibraryTab : public juce::Component, public TaskListener
     ColouredTreeView treeView;
     AudioLibTreeRoot *audioLibTreeRoot;
 
-    juce::TextEditor searchBar;
+    LibrarySearchBar searchBar;
 
     ResultList resultListContent;
     juce::ListBox resultList;
@@ -38,8 +62,36 @@ class AudioLibraryTab : public juce::Component, public TaskListener
     juce::Rectangle<int> findLocation;
     juce::Rectangle<int> librariesSectionLocation;
 
+    /**
+     * This add an audio library to the audio library manager.
+     * @param path path to audio library on disk
+     */
     void addAudioLibrary(std::string path);
+
+    /**
+     * Get from the audio library maanger the list of top most
+     * used entries and set the list content. This is
+     * called when no text is in the search bar.
+     */
     void updateBestEntries();
+
+    /**
+     * Set the content of the result list to nothing.
+     */
+    void emptyResultEntries();
+
+    /**
+     * Fetch the search result from audio library and set
+     * them in the result list.
+     * @param searchtxt text to search samples after.
+     */
+    void populateSearchContent(std::string searchtxt);
+
+    /**
+     * Sanitize path and tests if it's one of the library paths.
+     * @param  path audio library disk path.
+     * @return      true if it is, false if not.
+     */
     bool isLibraryPath(std::string path);
 
     //==============================================================================
