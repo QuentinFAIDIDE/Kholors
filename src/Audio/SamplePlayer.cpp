@@ -334,6 +334,24 @@ SamplePlayer *SamplePlayer::splitAtFrequency(float frequencyLimitHz)
     float minFreq = addOnScreenAmountToFreq(highPassFreq, SAMPLEPLAYER_MIN_FREQ_DISTANCE_FACTOR);
     float maxFreq = addOnScreenAmountToFreq(lowPassFreq, -SAMPLEPLAYER_MIN_FREQ_DISTANCE_FACTOR);
 
+    // check that lower part is large enought
+    float highPassPositionRatio = UnitConverter::freqToPositionRatio(highPassFreq);
+    float lowPassPositionRatio = UnitConverter::freqToPositionRatio(frequencyLimitHz);
+    float diff = lowPassPositionRatio - highPassPositionRatio;
+    if (diff < SAMPLEPLAYER_MIN_FREQ_DISTANCE_FACTOR)
+    {
+        return nullptr;
+    }
+
+    // same for top part
+    highPassPositionRatio = UnitConverter::freqToPositionRatio(frequencyLimitHz);
+    lowPassPositionRatio = UnitConverter::freqToPositionRatio(lowPassFreq);
+    diff = lowPassPositionRatio - highPassPositionRatio;
+    if (diff < SAMPLEPLAYER_MIN_FREQ_DISTANCE_FACTOR)
+    {
+        return nullptr;
+    }
+
     if (frequencyLimitHz < minFreq || frequencyLimitHz > maxFreq)
     {
         return nullptr;
@@ -576,11 +594,22 @@ int64_t SamplePlayer::getEditingPosition() const
 
 void SamplePlayer::setLowPassFreq(int freq)
 {
+
+    // check that it doesn't make us the sample too small
+    float highPassPositionRatio = UnitConverter::freqToPositionRatio(highPassFreq);
+    float lowPassPositionRatio = UnitConverter::freqToPositionRatio(freq);
+    float diff = lowPassPositionRatio - highPassPositionRatio;
+
+    if (diff < SAMPLEPLAYER_MIN_FREQ_DISTANCE_FACTOR)
+    {
+        return;
+    }
+
     lowPassFreq = freq;
 
-    if (lowPassFreq < highPassFreq / SAMPLEPLAYER_FILTER_SNAP_RATIO)
+    if (lowPassFreq < highPassFreq)
     {
-        lowPassFreq = highPassFreq / SAMPLEPLAYER_FILTER_SNAP_RATIO;
+        lowPassFreq = highPassFreq;
     }
 
     if (lowPassFreq < SAMPLEPLAYER_MIN_FILTER_FREQ)
@@ -588,7 +617,7 @@ void SamplePlayer::setLowPassFreq(int freq)
         lowPassFreq = 0;
     }
 
-    if (lowPassFreq >= maxFilterFreq * SAMPLEPLAYER_FILTER_SNAP_RATIO)
+    if (lowPassFreq >= maxFilterFreq)
     {
         lowPassFreq = maxFilterFreq;
         for (size_t i = 0; i < SAMPLEPLAYER_MAX_FILTER_REPEAT; i++)
@@ -609,16 +638,27 @@ void SamplePlayer::setLowPassFreq(int freq)
 
 void SamplePlayer::setHighPassFreq(int freq)
 {
+
+    // check that it doesn't make us the sample too small
+    float highPassPositionRatio = UnitConverter::freqToPositionRatio(freq);
+    float lowPassPositionRatio = UnitConverter::freqToPositionRatio(lowPassFreq);
+    float diff = lowPassPositionRatio - highPassPositionRatio;
+
+    if (diff < SAMPLEPLAYER_MIN_FREQ_DISTANCE_FACTOR)
+    {
+        return;
+    }
+
     highPassFreq = freq;
 
-    if (highPassFreq > maxFilterFreq * SAMPLEPLAYER_FILTER_SNAP_RATIO)
+    if (highPassFreq > maxFilterFreq)
     {
         highPassFreq = maxFilterFreq;
     }
 
-    if (highPassFreq > lowPassFreq * SAMPLEPLAYER_FILTER_SNAP_RATIO)
+    if (highPassFreq > lowPassFreq)
     {
-        highPassFreq = lowPassFreq * SAMPLEPLAYER_FILTER_SNAP_RATIO;
+        highPassFreq = lowPassFreq;
     }
 
     if (highPassFreq <= SAMPLEPLAYER_MIN_FILTER_FREQ)
