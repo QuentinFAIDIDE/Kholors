@@ -3,7 +3,7 @@
 #include <memory>
 #include <stdexcept>
 
-#include "Section.h"
+#include "../Section.h"
 
 AudioLibraryTab::AudioLibraryTab() : Thread("File Search Thread"), resultList("Results", &resultListContent)
 {

@@ -11,10 +11,10 @@
 #include <mutex>
 #include <thread>
 
-#include "../Arrangement/ActivityManager.h"
-#include "../Arrangement/Task.h"
-#include "../Config.h"
-#include "LogoDarkPng.h"
+#include "../../Arrangement/ActivityManager.h"
+#include "../../Arrangement/Task.h"
+#include "../../Config.h"
+#include "../LogoDarkPng.h"
 
 typedef struct
 {

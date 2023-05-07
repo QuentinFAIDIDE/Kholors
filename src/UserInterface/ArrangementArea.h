@@ -19,7 +19,6 @@
 #include "../Config.h"
 #include "../OpenGL/BackgroundModel.h"
 #include "../OpenGL/SampleGraphicModel.h"
-#include "GridLevel.h"
 #include "juce_opengl/opengl/juce_gl.h"
 
 enum Border

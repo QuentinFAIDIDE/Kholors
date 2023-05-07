@@ -77,8 +77,9 @@ juce_add_gui_app(TestUnitConverter PRODUCT_NAME "TestUnitConverter")
 # CMake command.
 file(GLOB_RECURSE ROOT_SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*.cpp")
 file(GLOB_RECURSE SUBDIR_SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*/*.cpp")
+file(GLOB_RECURSE SUBSUBDIR_SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "src/*/*/*.cpp")
 
-target_sources(Kholors PRIVATE ${ROOT_SOURCES} ${SUBDIR_SOURCES})
+target_sources(Kholors PRIVATE ${ROOT_SOURCES} ${SUBDIR_SOURCES} ${SUBSUBDIR_SOURCES})
 
 target_sources(TestConfig
     PRIVATE

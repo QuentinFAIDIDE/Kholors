@@ -3,7 +3,7 @@
 
 #include <juce_gui_extra/juce_gui_extra.h>
 
-#include "../Config.h"
+#include "../../Config.h"
 
 #define MAX_RESULT_ENTRY_NAME_SIZE 50
 

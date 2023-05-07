@@ -1,8 +1,8 @@
 #ifndef DEF_LIBSEARCHBAR_HPP
 #define DEF_LIBSEARCHBAR_HPP
 
-#include "../Config.h"
-#include "../Library/AudioLibraryManager.h"
+#include "../../Config.h"
+#include "../../Library/AudioLibraryManager.h"
 #include "ResultList.h"
 #include <juce_gui_extra/juce_gui_extra.h>
 

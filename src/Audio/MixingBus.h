@@ -18,7 +18,6 @@
 #include <memory>
 
 #include "../Arrangement/ActivityManager.h"
-#include "../UserInterface/NotificationArea.h"
 #include "ReferenceCountedBuffer.h"
 #include "SamplePlayer.h"
 
