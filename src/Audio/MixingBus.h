@@ -165,7 +165,8 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     void checkForBuffersToFree();
 
     void addSample(std::shared_ptr<SampleCreateTask> import);
-    void deleteTrack(int index, std::shared_ptr<SampleDeletionTask> task);
+    void deleteSample(std::shared_ptr<SampleDeletionTask> task);
+    void restoreSample(std::shared_ptr<SampleRestoreTask> task);
 };
 //==============================================================================
 

@@ -125,7 +125,6 @@ void ArrangementArea::paintSelection(juce::Graphics &g)
 bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
 {
     std::shared_ptr<SampleDisplayTask> sc = std::dynamic_pointer_cast<SampleDisplayTask>(task);
-
     if (sc != nullptr && !sc->isCompleted() && !sc->hasFailed())
     {
         displaySample(sc->sample, sc->creationTask);
@@ -133,10 +132,30 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
     }
 
     std::shared_ptr<SampleDeletionDisplayTask> disableTask = std::dynamic_pointer_cast<SampleDeletionDisplayTask>(task);
-
     if (disableTask != nullptr && !disableTask->isCompleted() && !disableTask->hasFailed())
     {
         samples[disableTask->id]->disable();
+        disableTask->setCompleted(true);
+        disableTask->setFailed(false);
+        return true;
+    }
+
+    std::shared_ptr<SampleRestoreDisplayTask> restoreTask = std::dynamic_pointer_cast<SampleRestoreDisplayTask>(task);
+    if (disableTask != nullptr && !disableTask->isCompleted() && !disableTask->hasFailed())
+    {
+        samples[disableTask->id].reset();
+
+        samples[disableTask->id] = std::make_shared<SampleGraphicModel>(
+            restoreTask->restoredSample, taxonomyManager.getSampleColor(restoreTask->id));
+
+        // when a sample openGL model is created it doesn't allocate the GPU
+        // data unless we ask for it.
+        openGLContext.executeOnGLThread(
+            [this, disableTask](juce::OpenGLContext &c) { samples[disableTask->id]->registerGlObjects(); }, true);
+
+        // we will repaint to display the sample again
+        repaint();
+
         return true;
     }
 
@@ -584,8 +603,8 @@ void ArrangementArea::openGLContextClosing()
 void ArrangementArea::displaySample(std::shared_ptr<SamplePlayer> sp, std::shared_ptr<SampleCreateTask> task)
 {
     // create graphic objects from the sample
-    SampleGraphicModel *sampleRef =
-        new SampleGraphicModel(sp, taxonomyManager.getSampleColor(task->getAllocatedIndex()));
+    std::shared_ptr<SampleGraphicModel> sampleRef =
+        std::make_shared<SampleGraphicModel>(sp, taxonomyManager.getSampleColor(task->getAllocatedIndex()));
     samples.push_back(sampleRef);
     // fatal error if sample ids are different
     if ((samples.size() - 1) != task->getAllocatedIndex())
@@ -612,6 +631,9 @@ void ArrangementArea::displaySample(std::shared_ptr<SamplePlayer> sp, std::share
 
         selectedTracks.insert(task->getAllocatedIndex());
     }
+
+    task->setCompleted(true);
+    task->setFailed(false);
 }
 
 void ArrangementArea::paintPlayCursor(juce::Graphics &g)

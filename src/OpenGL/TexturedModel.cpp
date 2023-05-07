@@ -95,6 +95,7 @@ void TexturedModel::disable()
 {
     if (!disabled && loaded)
     {
+        const juce::ScopedLock lock(loadingMutex);
         disabled = true;
         glDeleteVertexArrays(1, &vao);
         glDeleteBuffers(1, &vbo);

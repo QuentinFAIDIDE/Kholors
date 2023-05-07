@@ -60,7 +60,6 @@ MixingBus::~MixingBus()
 bool MixingBus::taskHandler(std::shared_ptr<Task> task)
 {
     std::shared_ptr<SampleCreateTask> sc = std::dynamic_pointer_cast<SampleCreateTask>(task);
-
     if (sc != nullptr && !sc->isCompleted() && !sc->hasFailed())
     {
         addSample(sc);
@@ -68,10 +67,16 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
     }
 
     std::shared_ptr<SampleDeletionTask> sd = std::dynamic_pointer_cast<SampleDeletionTask>(task);
-
     if (sd != nullptr && !sd->isCompleted() && !sd->hasFailed())
     {
-        deleteTrack(sd->id, sd);
+        deleteSample(sd);
+        return true;
+    }
+
+    std::shared_ptr<SampleRestoreTask> restoreTask = std::dynamic_pointer_cast<SampleRestoreTask>(task);
+    if (sd != nullptr && !sd->isCompleted() && !sd->hasFailed())
+    {
+        restoreSample(restoreTask);
         return true;
     }
 
@@ -507,23 +512,48 @@ void MixingBus::setTrackRepaintCallback(std::function<void()> f)
     trackRepaintCallback = f;
 }
 
-void MixingBus::deleteTrack(int index, std::shared_ptr<SampleDeletionTask> deletionTask)
+void MixingBus::deleteSample(std::shared_ptr<SampleDeletionTask> deletionTask)
 {
-    if (index < 0 || index >= tracks.size() || tracks[index] == nullptr)
+    if (deletionTask->id < 0 || deletionTask->id >= tracks.size() || tracks[deletionTask->id] == nullptr)
     {
+        deletionTask->setCompleted(true);
+        deletionTask->setFailed(true);
         return;
     }
 
     // we save a reference to this sample in the tasks list to restore it if
     // users wants to.
-    deletionTask->deletedSample = tracks[index];
+    deletionTask->deletedSample = tracks[deletionTask->id];
 
     // clear this sample
-    tracks.set(index, nullptr);
+    tracks.set(deletionTask->id, nullptr);
 
     // clear the activityManager view
-    std::shared_ptr<SampleDeletionDisplayTask> displayTask = std::make_shared<SampleDeletionDisplayTask>(index);
+    std::shared_ptr<SampleDeletionDisplayTask> displayTask =
+        std::make_shared<SampleDeletionDisplayTask>(deletionTask->id);
     activityManager.broadcastNestedTaskNow(displayTask);
+
+    deletionTask->setCompleted(true);
+    deletionTask->setFailed(false);
+}
+
+void MixingBus::restoreSample(std::shared_ptr<SampleRestoreTask> task)
+{
+    if (task->id < 0 || task->id >= tracks.size() || tracks[task->id] != nullptr)
+    {
+        task->setCompleted(true);
+        task->setFailed(true);
+        return;
+    }
+
+    tracks[task->id] = task->sampleToRestore;
+
+    std::shared_ptr<SampleRestoreDisplayTask> displayTask =
+        std::make_shared<SampleRestoreDisplayTask>(task->id, task->sampleToRestore);
+    activityManager.broadcastNestedTaskNow(displayTask);
+
+    task->setCompleted(true);
+    task->setFailed(false);
 }
 
 void MixingBus::duplicateTrack(std::shared_ptr<SampleCreateTask> task)

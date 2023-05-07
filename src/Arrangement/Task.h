@@ -231,8 +231,27 @@ class SampleDeletionTask : public Task
       Create a sample deletion task by passing the sample id.
      */
     SampleDeletionTask(int);
-    int id; // the sample id to delete
-    std::shared_ptr<SamplePlayer> deletedSample;
+
+    /**
+      Get the list of tasks that will revert the current task.
+      This one just spawns a SampleRestoreTask.
+     */
+    std::vector<std::shared_ptr<Task>> getReversed() override;
+
+    int id;                                      // the sample id to delete
+    std::shared_ptr<SamplePlayer> deletedSample; // the sample we just deleted
+};
+
+class SampleRestoreTask : public Task
+{
+  public:
+    /**
+     Create a task that will reset the sample at given id after it has been deleted.
+     */
+    SampleRestoreTask(int index, std::shared_ptr<SamplePlayer> sampleToRestore);
+
+    int id;                                        // id of the previously deleted sample where we need to restore
+    std::shared_ptr<SamplePlayer> sampleToRestore; // reference to the deleted sample to restore
 };
 
 class SampleDeletionDisplayTask : public Task
@@ -240,6 +259,14 @@ class SampleDeletionDisplayTask : public Task
   public:
     SampleDeletionDisplayTask(int);
     int id;
+};
+
+class SampleRestoreDisplayTask : public Task
+{
+  public:
+    SampleRestoreDisplayTask(int, std::shared_ptr<SamplePlayer>);
+    int id;
+    std::shared_ptr<SamplePlayer> restoredSample;
 };
 
 class NotificationTask : public Task
@@ -264,10 +291,10 @@ class SampleTimeCropTask : public Task
 {
   public:
     /**
-     * SampleTimeCropTask constructor to record a task
-     * that either crop the beginning or the end of a sample.
-     * It record the sample index and the distance in frames
-     * it was cropped for.
+      SampleTimeCropTask constructor to record a task
+      that either crop the beginning or the end of a sample.
+      It record the sample index and the distance in frames
+      it was cropped for.
      */
     SampleTimeCropTask(bool cropBeginning, int sampleId, int frameDist);
     int id;

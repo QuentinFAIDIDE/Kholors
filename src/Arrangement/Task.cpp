@@ -219,6 +219,32 @@ SampleDeletionTask::SampleDeletionTask(int i)
     recordableInHistory = true;
 }
 
+std::vector<std::shared_ptr<Task>> SampleDeletionTask::getReversed()
+{
+    std::vector<std::shared_ptr<Task>> response;
+    std::shared_ptr<SampleRestoreTask> restoreTask = std::make_shared<SampleRestoreTask>(id, deletedSample);
+    response.push_back(restoreTask);
+    return response;
+}
+
+/////////////////////////////////////////////////
+
+SampleRestoreTask::SampleRestoreTask(int i, std::shared_ptr<SamplePlayer> sample)
+{
+    id = i;
+    sampleToRestore = sample;
+    recordableInHistory = true;
+}
+
+/////////////////////////////////////////////////
+
+SampleRestoreDisplayTask::SampleRestoreDisplayTask(int i, std::shared_ptr<SamplePlayer> sample)
+{
+    id = i;
+    restoredSample = sample;
+    recordableInHistory = false;
+}
+
 /////////////////////////////////////////////////
 
 SampleTimeCropTask::SampleTimeCropTask(bool cropBeginning, int sampleId, int frameDist)
