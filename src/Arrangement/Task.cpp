@@ -148,7 +148,7 @@ std::string NotificationTask::getMessage()
 
 /////////////////////////////////////////////////
 
-SampleDisplayTask::SampleDisplayTask(SamplePlayer *sp, std::shared_ptr<SampleCreateTask> crTask)
+SampleDisplayTask::SampleDisplayTask(std::shared_ptr<SamplePlayer> sp, std::shared_ptr<SampleCreateTask> crTask)
 {
     sample = sp;
     creationTask = crTask;
@@ -179,7 +179,6 @@ SampleDeletionDisplayTask::SampleDeletionDisplayTask(int i)
 SampleDeletionTask::SampleDeletionTask(int i)
 {
     id = i;
-
     recordableInHistory = true;
 }
 

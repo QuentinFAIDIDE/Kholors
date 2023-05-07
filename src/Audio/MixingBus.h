@@ -55,7 +55,7 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
 
     // access tracks from gui's MessageThread
     size_t getNumTracks() const;
-    SamplePlayer *getTrack(int index) const;
+    std::shared_ptr<SamplePlayer> getTrack(int index) const;
 
     // set callback to safely access gui's
     // MessageThread to repaint tracks
@@ -108,7 +108,7 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
 
     // A list of SamplePlayer objects that inherits PositionableAudioSource
     // and are objects that play buffers at some position
-    juce::Array<SamplePlayer *> tracks;
+    juce::Array<std::shared_ptr<SamplePlayer>> tracks;
     // callback to repaint when tracks were updated
     std::function<void()> trackRepaintCallback;
 
@@ -117,11 +117,6 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
 
     // list of ReferenceCountedBuffer that are holding sample data
     juce::ReferenceCountedArray<ReferenceCountedBuffer> buffers;
-
-    // here is bitmask to identify which tracks are nearby the play cursor
-    int64_t *nearTracksBitmask;
-    // the one we fill before swapping pointers
-    int64_t *backgroundNearTrackBitmask;
 
     // mutex to swap the path and access tracks
     juce::CriticalSection pathMutex, mixbusMutex;
@@ -170,7 +165,7 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     void checkForBuffersToFree();
 
     void addSample(std::shared_ptr<SampleCreateTask> import);
-    void deleteTrack(int index);
+    void deleteTrack(int index, std::shared_ptr<SampleDeletionTask> task);
 };
 //==============================================================================
 

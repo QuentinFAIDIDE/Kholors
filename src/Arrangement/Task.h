@@ -196,12 +196,12 @@ class SampleDisplayTask : public Task
        Create a SampleDisplayTask with a ref to the newly created
        SamplePlayer and a shared pointer to the task which created it.
        The task shared ptr allow for the arrangement area to edit the
-       taxonomy based on duplication type, and take acurate updating
+       taxonomy based on duplication type, and take apropriate updating
        decisions.
      */
-    SampleDisplayTask(SamplePlayer *, std::shared_ptr<SampleCreateTask>);
+    SampleDisplayTask(std::shared_ptr<SamplePlayer>, std::shared_ptr<SampleCreateTask>);
 
-    SamplePlayer *sample;                           // ref to the newly created sample
+    std::shared_ptr<SamplePlayer> sample;           // ref to the newly created sample
     std::shared_ptr<SampleCreateTask> creationTask; // the task that created it
 };
 
@@ -216,7 +216,7 @@ class SampleDeletionTask : public Task
      */
     SampleDeletionTask(int);
     int id; // the sample id to delete
-    // TODO: store the sahred_ptr of sample and allow to restore it
+    std::shared_ptr<SamplePlayer> deletedSample;
 };
 
 class SampleDeletionDisplayTask : public Task

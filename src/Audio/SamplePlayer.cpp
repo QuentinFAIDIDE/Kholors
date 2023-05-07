@@ -19,11 +19,11 @@ SamplePlayer::SamplePlayer(int64_t position)
 
 SamplePlayer::~SamplePlayer()
 {
-    // TODO
 }
 
 void SamplePlayer::setGainRamp(float ms)
 {
+    // TODO: this should get the sample player lock as well as other functions in this class.
     int frameLength = ms * (float(AUDIO_FRAMERATE) / 1000.0);
     if (frameLength <= 0)
     {
@@ -198,6 +198,10 @@ void SamplePlayer::setNextReadPosition(juce::int64 p)
 // length of entire buffer
 juce::int64 SamplePlayer::getTotalLength() const
 {
+    if (!isSampleSet || audioBufferRef == nullptr)
+    {
+        return 0;
+    }
     return audioBufferRef->getAudioSampleBuffer()->getNumSamples();
 }
 
@@ -210,12 +214,21 @@ bool SamplePlayer::isLooping() const
 // move the sample to a new track position
 void SamplePlayer::move(juce::int64 newPosition)
 {
+    if (!isSampleSet || audioBufferRef == nullptr)
+    {
+        return;
+    }
     editingPosition = newPosition;
 }
 
 // set the length up to which reading the buffer
 void SamplePlayer::setLength(juce::int64 length)
 {
+
+    if (!isSampleSet || audioBufferRef == nullptr)
+    {
+        return;
+    }
 
     if (length < SAMPLE_MIN_DURATION_FRAMES)
     {
@@ -236,16 +249,32 @@ void SamplePlayer::setLength(juce::int64 length)
 // get the length up to which the buffer is readead
 juce::int64 SamplePlayer::getLength() const
 {
+
+    if (!isSampleSet || audioBufferRef == nullptr)
+    {
+        return 0;
+    }
+
     return (bufferEnd - bufferStart) + 1;
 }
 
 int SamplePlayer::getBufferStart() const
 {
+    if (!isSampleSet || audioBufferRef == nullptr)
+    {
+        return 0;
+    }
+
     return bufferStart;
 }
 
 int SamplePlayer::getBufferEnd() const
 {
+    if (!isSampleSet || audioBufferRef == nullptr)
+    {
+        return 0;
+    }
+
     return bufferEnd;
 }
 
@@ -253,6 +282,12 @@ int SamplePlayer::getBufferEnd() const
 // desired number of frames. It return the actual shift performed.
 int SamplePlayer::tryMovingStart(int desiredShift)
 {
+
+    if (!isSampleSet || audioBufferRef == nullptr)
+    {
+        return 0;
+    }
+
     if (desiredShift == 0)
     {
         return 0;
@@ -277,6 +312,12 @@ int SamplePlayer::tryMovingStart(int desiredShift)
 // desired number of frames. It return the actual shift performed.
 int SamplePlayer::tryMovingEnd(int desiredShift)
 {
+
+    if (!isSampleSet || audioBufferRef == nullptr)
+    {
+        return 0;
+    }
+
     if (desiredShift == 0)
     {
         return 0;
@@ -301,6 +342,12 @@ int SamplePlayer::tryMovingEnd(int desiredShift)
 // Shift parameter is the shift from audio buffer beginning.
 void SamplePlayer::setBufferShift(juce::int64 shift)
 {
+
+    if (!isSampleSet || audioBufferRef == nullptr)
+    {
+        return;
+    }
+
     const juce::SpinLock::ScopedLockType lock(playerMutex);
     // only change if the buffer can actuallydo it
     if (shift < bufferEnd - SAMPLE_MIN_DURATION_FRAMES)
@@ -312,13 +359,24 @@ void SamplePlayer::setBufferShift(juce::int64 shift)
 // get the shift of the buffer shift
 juce::int64 SamplePlayer::getBufferShift() const
 {
+    if (!isSampleSet || audioBufferRef == nullptr)
+    {
+        return 0;
+    }
+
     return bufferStart;
 }
 
 // create and move a duplicate (uses same underlying audio buffer)
-SamplePlayer *SamplePlayer::createDuplicate(juce::int64 newPosition)
+std::shared_ptr<SamplePlayer> SamplePlayer::createDuplicate(juce::int64 newPosition)
 {
-    SamplePlayer *duplicate = new SamplePlayer(newPosition);
+
+    if (!isSampleSet || audioBufferRef == nullptr)
+    {
+        return nullptr;
+    }
+
+    std::shared_ptr<SamplePlayer> duplicate = std::make_shared<SamplePlayer>(newPosition);
     duplicate->setBuffer(audioBufferRef, audioBufferFrequencies);
     duplicate->setBufferShift(bufferStart);
     duplicate->setLength(getLength());
@@ -327,8 +385,14 @@ SamplePlayer *SamplePlayer::createDuplicate(juce::int64 newPosition)
     return duplicate;
 }
 
-SamplePlayer *SamplePlayer::splitAtFrequency(float frequencyLimitHz)
+std::shared_ptr<SamplePlayer> SamplePlayer::splitAtFrequency(float frequencyLimitHz)
 {
+
+    if (!isSampleSet || audioBufferRef == nullptr)
+    {
+        return nullptr;
+    }
+
     float minFreq = addOnScreenAmountToFreq(highPassFreq, SAMPLEPLAYER_MIN_FREQ_DISTANCE_FACTOR);
     float maxFreq = addOnScreenAmountToFreq(lowPassFreq, -SAMPLEPLAYER_MIN_FREQ_DISTANCE_FACTOR);
 
@@ -356,7 +420,7 @@ SamplePlayer *SamplePlayer::splitAtFrequency(float frequencyLimitHz)
     }
 
     // we make a new sample that will be the low end part
-    SamplePlayer *duplicate = new SamplePlayer(editingPosition);
+    std::shared_ptr<SamplePlayer> duplicate = std::make_shared<SamplePlayer>(editingPosition);
     duplicate->setBuffer(audioBufferRef, audioBufferFrequencies);
     duplicate->setBufferShift(bufferStart);
     duplicate->setLength(getLength());
@@ -369,8 +433,13 @@ SamplePlayer *SamplePlayer::splitAtFrequency(float frequencyLimitHz)
     return duplicate;
 }
 
-SamplePlayer *SamplePlayer::splitAtPosition(juce::int64 positionLimit)
+std::shared_ptr<SamplePlayer> SamplePlayer::splitAtPosition(juce::int64 positionLimit)
 {
+
+    if (!isSampleSet || audioBufferRef == nullptr)
+    {
+        return nullptr;
+    }
 
     if (positionLimit > getLength() - SAMPLE_MIN_DURATION_FRAMES)
     {
@@ -383,7 +452,7 @@ SamplePlayer *SamplePlayer::splitAtPosition(juce::int64 positionLimit)
     }
 
     // we make a new sample that will be the last part
-    SamplePlayer *duplicate = new SamplePlayer(editingPosition + positionLimit);
+    std::shared_ptr<SamplePlayer> duplicate = std::make_shared<SamplePlayer>(editingPosition + positionLimit);
     duplicate->setBuffer(audioBufferRef, audioBufferFrequencies);
     duplicate->setBufferShift(bufferStart + positionLimit);
     duplicate->setLength(getLength() - positionLimit);

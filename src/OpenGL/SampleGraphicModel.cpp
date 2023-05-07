@@ -8,7 +8,7 @@ using namespace juce::gl;
 
 #include "../Audio/UnitConverter.h"
 
-SampleGraphicModel::SampleGraphicModel(SamplePlayer *sp, juce::Colour col)
+SampleGraphicModel::SampleGraphicModel(std::shared_ptr<SamplePlayer> sp, juce::Colour col)
 {
     if (sp == nullptr || !sp->hasBeenInitialized())
     {
@@ -125,7 +125,7 @@ void SampleGraphicModel::loadFftDataToTexture(std::vector<float> &ffts, int fftC
     }
 }
 
-void SampleGraphicModel::updatePropertiesAndUploadToGpu(SamplePlayer *sp)
+void SampleGraphicModel::updatePropertiesAndUploadToGpu(std::shared_ptr<SamplePlayer> sp)
 {
 
     startPositionNormalized = float(sp->getBufferStart()) / float(sp->getTotalLength());

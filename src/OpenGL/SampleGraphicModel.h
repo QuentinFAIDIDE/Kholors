@@ -12,14 +12,14 @@
 class SampleGraphicModel : public TexturedModel
 {
   public:
-    SampleGraphicModel(SamplePlayer *, juce::Colour);
+    SampleGraphicModel(std::shared_ptr<SamplePlayer>, juce::Colour);
     void initDrag();
     void updateDrag(int);
     float textureIntensity(float x, float y);
     juce::int64 getFramePosition();
     juce::int64 getFrameLength();
     void setColor(juce::Colour &);
-    void updatePropertiesAndUploadToGpu(SamplePlayer *sp);
+    void updatePropertiesAndUploadToGpu(std::shared_ptr<SamplePlayer> sp);
     std::vector<juce::Rectangle<float>> getPixelBounds(float viewPosition, float viewScale, float viewHeight);
 
   private:

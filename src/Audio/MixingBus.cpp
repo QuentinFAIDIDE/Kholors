@@ -28,17 +28,6 @@ MixingBus::MixingBus(ActivityManager &am)
     masterLimiter.setThreshold(-DSP_DEFAULT_MASTER_LIMITER_HEADROOM_DB);
     masterLimiter.setRelease(DSP_DEFAULT_MASTER_LIMITER_RELEASE_MS);
 
-    // allocate bitmask for tracks
-    nearTracksBitmask = new int64_t[SAMPLE_BITMASK_SIZE];
-    backgroundNearTrackBitmask = new int64_t[SAMPLE_BITMASK_SIZE];
-
-    // set the nearby samplePlayer/tracks bitmask to 0
-    for (size_t i = 0; i < SAMPLE_BITMASK_SIZE; i++)
-    {
-        *(nearTracksBitmask + i) = 0;
-        *(backgroundNearTrackBitmask + i) = 0;
-    }
-
     lastDrawnCursor = 0;
 
     // start the background thread that makes malloc/frees
@@ -56,16 +45,22 @@ MixingBus::~MixingBus()
         auto track = tracks.getUnchecked(i);
         if (track != nullptr)
         {
-            delete track;
+            if (!track.unique())
+            {
+                std::cerr << "DEBUG: A sample had remaining references when deleting MixingBus, it has id: " << i
+                          << std::endl;
+            }
+
+            // this will unset the buffer
+            track->releaseResources();
+
+            // this will delete the sample if we're the only holder
+            track.reset();
         }
     }
 
     // delete all buffers
     checkForBuffersToFree();
-
-    // free manually allocated arrays
-    delete nearTracksBitmask;
-    delete backgroundNearTrackBitmask;
 }
 
 bool MixingBus::taskHandler(std::shared_ptr<Task> task)
@@ -82,7 +77,7 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
 
     if (sd != nullptr && !sd->isCompleted() && !sd->hasFailed())
     {
-        deleteTrack(sd->id);
+        deleteTrack(sd->id, sd);
         return true;
     }
 
@@ -373,7 +368,7 @@ void MixingBus::importNewFile(std::shared_ptr<SampleCreateTask> task)
             // HINT: File class can give us a hash already ! :)
 
             // create a new sample player
-            SamplePlayer *newSample = new SamplePlayer(desiredPosition);
+            std::shared_ptr<SamplePlayer> newSample = std::make_shared<SamplePlayer>(desiredPosition);
             try
             {
                 // assign buffer to the new SamplePlayer
@@ -386,7 +381,7 @@ void MixingBus::importNewFile(std::shared_ptr<SampleCreateTask> task)
                 std::shared_ptr<NotificationTask> notif = std::make_shared<NotificationTask>(
                     juce::String("Unable to allocate memory to load: ") + pathToOpen);
                 activityManager.broadcastTask(notif);
-                delete newSample;
+                newSample.reset();
                 task->setFailed(true);
                 return;
             }
@@ -498,12 +493,13 @@ void MixingBus::pauseIfCursorNotInBound()
     // TODO
 }
 
+// note that it includes deleted tracks in the count
 size_t MixingBus::getNumTracks() const
 {
     return tracks.size();
 }
 
-SamplePlayer *MixingBus::getTrack(int index) const
+std::shared_ptr<SamplePlayer> MixingBus::getTrack(int index) const
 {
     // NOTE: We never delete SamplePlayers in the tracks array or insert mid-array
     // to prevent using a lock when reading.
@@ -517,17 +513,21 @@ void MixingBus::setTrackRepaintCallback(std::function<void()> f)
     trackRepaintCallback = f;
 }
 
-void MixingBus::deleteTrack(int index)
+void MixingBus::deleteTrack(int index, std::shared_ptr<SampleDeletionTask> deletionTask)
 {
     if (index < 0 || index >= tracks.size() || tracks[index] == nullptr)
     {
         return;
     }
 
-    SamplePlayer *track = tracks[index];
-    tracks.set(index, nullptr);
-    delete track;
+    // we save a reference to this sample in the tasks list to restore it if
+    // users wants to.
+    deletionTask->deletedSample = tracks[index];
 
+    // clear this sample
+    tracks.set(index, nullptr);
+
+    // clear the activityManager view
     std::shared_ptr<SampleDeletionDisplayTask> displayTask = std::make_shared<SampleDeletionDisplayTask>(index);
     activityManager.broadcastNestedTaskNow(displayTask);
 }
@@ -536,7 +536,7 @@ void MixingBus::duplicateTrack(std::shared_ptr<SampleCreateTask> task)
 {
     // Note: this runs from the background thread
 
-    SamplePlayer *newSample = nullptr;
+    std::shared_ptr<SamplePlayer> newSample = nullptr;
     int newTrackIndex = -1;
 
     if (task->getDuplicationType() == DUPLICATION_TYPE_COPY_AT_POSITION)

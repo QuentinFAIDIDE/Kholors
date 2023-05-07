@@ -581,7 +581,7 @@ void ArrangementArea::openGLContextClosing()
 {
 }
 
-void ArrangementArea::displaySample(SamplePlayer *sp, std::shared_ptr<SampleCreateTask> task)
+void ArrangementArea::displaySample(std::shared_ptr<SamplePlayer> sp, std::shared_ptr<SampleCreateTask> task)
 {
     // create graphic objects from the sample
     SampleGraphicModel *sampleRef =
@@ -1106,7 +1106,7 @@ void ArrangementArea::cropSampleBordersVertically(bool innerBorders)
     // set the filter frequency for each sample
     std::set<size_t>::iterator itr;
 
-    SamplePlayer *currentSample;
+    std::shared_ptr<SamplePlayer> currentSample;
 
     bool changedSomething = false;
 
@@ -1154,7 +1154,7 @@ void ArrangementArea::cropSampleBordersVertically(bool innerBorders)
 
 void ArrangementArea::refreshSampleOpenGlView(int index)
 {
-    SamplePlayer *sp = mixingBus.getTrack(index);
+    std::shared_ptr<SamplePlayer> sp = mixingBus.getTrack(index);
     if (sp == nullptr)
     {
         return;
@@ -1260,7 +1260,7 @@ void ArrangementArea::cropSampleEdgeHorizontally(bool cropFront)
     }
     dragLastPosition = lastMouseX;
     // current track to be edited
-    SamplePlayer *currentTrack;
+    std::shared_ptr<SamplePlayer> currentTrack;
     // for each track in the selection
     std::set<size_t>::iterator itr;
     int actualFrameChange;
@@ -1487,7 +1487,7 @@ bool ArrangementArea::keyStateChanged(bool isKeyDown)
         if (!juce::KeyPress::isKeyCurrentlyDown(juce::KeyPress::createFromDescription(KEYMAP_DRAG_MODE).getKeyCode()))
         {
             // update tracks position, get out of drag mode, and repaint
-            SamplePlayer *sp;
+            std::shared_ptr<SamplePlayer> sp;
             int64_t trackPosition;
             int64_t dragDistance = (lastMouseX - trackMovingInitialPosition) * viewScale;
 

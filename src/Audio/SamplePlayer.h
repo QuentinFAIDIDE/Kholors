@@ -47,12 +47,12 @@ class SamplePlayer : public juce::PositionableAudioSource
     int getBufferNumChannels() const;
 
     // create and move a duplicate (uses same underlying audio buffer)
-    SamplePlayer *createDuplicate(juce::int64);
+    std::shared_ptr<SamplePlayer> createDuplicate(juce::int64);
 
     /**
      * will split the sample in two at a frequency provided (returns new other half)
      */
-    SamplePlayer *splitAtFrequency(float frequencyLimitHz);
+    std::shared_ptr<SamplePlayer> splitAtFrequency(float frequencyLimitHz);
 
     /**
      * will split the sample in two at a time provided (returns new other half).
@@ -62,7 +62,7 @@ class SamplePlayer : public juce::PositionableAudioSource
      * the current sample will play. Then the new play from bufferStart+10 (10th)
      * to bufferEnd included (= bufferStart + (getLength()-1)).
      */
-    SamplePlayer *splitAtPosition(juce::int64 positionLimit);
+    std::shared_ptr<SamplePlayer> splitAtPosition(juce::int64 positionLimit);
 
     int tryMovingStart(int desiredShift);
     int tryMovingEnd(int desiredShift);
