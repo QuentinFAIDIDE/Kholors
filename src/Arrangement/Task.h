@@ -174,6 +174,19 @@ class SampleCreateTask : public Task
      */
     std::vector<std::shared_ptr<Task>> getReversed() override;
 
+    /**
+     Set the low pass and high pass filter frequencies. This is
+     import for the getReversed to be able to restore them
+     with new filtering tasks.
+     */
+    void setFilterInitialFrequencies(float highPass, float lowPass);
+
+    /**
+     Save the duplicated sample original length in audio frames.
+     This is used to reverse the duplication task (where the length is changed)
+     */
+    void setSampleInitialLength(int);
+
   private:
     DuplicationType duplicationType; // is this a new sample, duplication at position, split at freq, or split at pos
     std::string filePath;            // the path to the file if it's a new sample
@@ -182,6 +195,9 @@ class SampleCreateTask : public Task
     int duplicatedSampleId;          // the identifier of the duplicated sample
     int newIndex;                    // the index of the newly created sample
     float splitFrequency;            // the frequency where it's split
+    float lowPassFreq;               // frequency of the original sample low pass filter
+    float highPassFreq;              // frequency of the original high pass filter
+    int originalLength;              // the length of the sample before it was duplicated / splitted
 };
 
 /**

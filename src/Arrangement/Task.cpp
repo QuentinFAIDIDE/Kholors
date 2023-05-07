@@ -122,11 +122,48 @@ int SampleCreateTask::getAllocatedIndex()
     return newIndex;
 }
 
+void SampleCreateTask::setSampleInitialLength(int len)
+{
+    originalLength = len;
+}
+
 std::vector<std::shared_ptr<Task>> SampleCreateTask::getReversed()
 {
-    // TODO: return a set of tasks that are reverting this
-    std::vector<std::shared_ptr<Task>> emptyReversionTasks;
-    return emptyReversionTasks;
+    std::vector<std::shared_ptr<Task>> reversionTasks;
+
+    // delete the new track
+    std::shared_ptr<SampleDeletionTask> deletionTask = std::make_shared<SampleDeletionTask>(newIndex);
+    reversionTasks.push_back(deletionTask);
+
+    // depending on duplication we post a second task or not.
+    // Split tasks require resetting original sample.
+    switch (duplicationType)
+    {
+    case DUPLICATION_TYPE_NO_DUPLICATION:
+    case DUPLICATION_TYPE_COPY_AT_POSITION:
+        break;
+
+    case DUPLICATION_TYPE_SPLIT_AT_FREQUENCY: {
+        std::shared_ptr<SampleFreqCropTask> filterRestoreTask =
+            std::make_shared<SampleFreqCropTask>(false, duplicatedSampleId, splitFrequency, highPassFreq);
+        reversionTasks.push_back(filterRestoreTask);
+        break;
+    }
+
+    case DUPLICATION_TYPE_SPLIT_AT_POSITION:
+        std::shared_ptr<SampleTimeCropTask> lengthRestoreTask =
+            std::make_shared<SampleTimeCropTask>(editingPosition, duplicatedSampleId, originalLength - editingPosition);
+        reversionTasks.push_back(lengthRestoreTask);
+        break;
+    }
+
+    return reversionTasks;
+}
+
+void SampleCreateTask::setFilterInitialFrequencies(float highPass, float lowPass)
+{
+    lowPassFreq = lowPass;
+    highPassFreq = highPass;
 }
 
 ///////////////////////////////////////////////

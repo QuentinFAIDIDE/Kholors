@@ -45,12 +45,6 @@ MixingBus::~MixingBus()
         auto track = tracks.getUnchecked(i);
         if (track != nullptr)
         {
-            if (!track.unique())
-            {
-                std::cerr << "DEBUG: A sample had remaining references when deleting MixingBus, it has id: " << i
-                          << std::endl;
-            }
-
             // this will unset the buffer
             track->releaseResources();
 
@@ -536,20 +530,44 @@ void MixingBus::duplicateTrack(std::shared_ptr<SampleCreateTask> task)
 {
     // Note: this runs from the background thread
 
+    if (task->getDuplicateTargetId() < 0 || task->getDuplicateTargetId() >= tracks.size())
+    {
+
+        task->setFailed(true);
+        return;
+    }
+
+    // get a reference to the buffer to duplicate
+    std::shared_ptr<SamplePlayer> targetToDuplicate = tracks[task->getDuplicateTargetId()];
+
+    if (targetToDuplicate == nullptr)
+    {
+        task->setFailed(true);
+        return;
+    }
+
+    // we first backup the original sample high and low pass freqs for return feature to reverse the task
+    float lowPassFreq = targetToDuplicate->getLowPassFreq();
+    float highPassFreq = targetToDuplicate->getHighPassFreq();
+    task->setFilterInitialFrequencies(highPassFreq, lowPassFreq);
+
+    // we also save the original length
+    task->setSampleInitialLength(targetToDuplicate->getLength());
+
     std::shared_ptr<SamplePlayer> newSample = nullptr;
     int newTrackIndex = -1;
 
     if (task->getDuplicationType() == DUPLICATION_TYPE_COPY_AT_POSITION)
     {
-        newSample = tracks[task->getDuplicateTargetId()]->createDuplicate(task->getPosition());
+        newSample = targetToDuplicate->createDuplicate(task->getPosition());
     }
     else if (task->getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_FREQUENCY)
     {
-        newSample = tracks[task->getDuplicateTargetId()]->splitAtFrequency(task->getSplitFrequency());
+        newSample = targetToDuplicate->splitAtFrequency(task->getSplitFrequency());
     }
     else if (task->getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_POSITION)
     {
-        newSample = tracks[task->getDuplicateTargetId()]->splitAtPosition((int)task->getPosition());
+        newSample = targetToDuplicate->splitAtPosition((int)task->getPosition());
     }
 
     if (newSample == nullptr)
