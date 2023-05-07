@@ -119,6 +119,11 @@ void MixingBus::addSample(std::shared_ptr<SampleCreateTask> import)
         const juce::ScopedLock lock(pathMutex);
         importTaskQueue.push_back(import);
     }
+
+    // NOTE: we don't set the task to completed, a new completed
+    // one will be re-emmited after the sample is succesfully imported
+    // from the background thread.
+
     // notify the thread so it's triggered
     notify();
 }
@@ -399,14 +404,22 @@ void MixingBus::importNewFile(std::shared_ptr<SampleCreateTask> task)
             }
 
             task->setAllocatedIndex(newTrackIndex);
-
             task->setCompleted(true);
+            task->setFailed(false);
+
+            // we re-push the completed task to the stack so that it
+            // can be recorded in history with the necessary data
+            activityManager.broadcastTask(task);
+
+            // this is instructing to update the view
             std::shared_ptr<SampleDisplayTask> displayTask = std::make_shared<SampleDisplayTask>(newSample, task);
             activityManager.broadcastNestedTaskNow(displayTask);
 
+            // this is instructing to record a count for file import
             std::shared_ptr<ImportFileCountTask> fcTask = std::make_shared<ImportFileCountTask>(pathToOpen);
             activityManager.broadcastNestedTaskNow(fcTask);
 
+            // this make the arrangement area widget repaint
             trackRepaintCallback();
         }
         else

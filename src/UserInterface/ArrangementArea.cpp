@@ -940,12 +940,12 @@ void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent &jme)
 
     case UI_STATE_MOUSE_DRAG_MONO_LOWPASS:
         activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
-        emitFilterDragTasks(false);
+        emitFilterDragTasks(true);
         break;
 
     case UI_STATE_MOUSE_DRAG_MONO_HIGHPASS:
         activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
-        emitFilterDragTasks(true);
+        emitFilterDragTasks(false);
         break;
 
     case UI_STATE_SELECT_AREA_WITH_MOUSE:
@@ -972,6 +972,7 @@ void ArrangementArea::emitTimeDragTasks(bool cropBeginning)
         std::shared_ptr<SampleTimeCropTask> task =
             std::make_shared<SampleTimeCropTask>(cropBeginning, it->first, it->second);
         task->setCompleted(true);
+        task->setFailed(false);
         activityManager.broadcastTask(task);
     }
 }
@@ -980,8 +981,8 @@ void ArrangementArea::emitFilterDragTasks(bool isLowPass)
 {
     // iterate over map distances and for each push a completed
     // task to task listeners (to store it in history)
-    std::map<int, int>::iterator it;
-    for (it = dragDistanceMap.begin(); it != dragDistanceMap.end(); it++)
+    std::map<int, float>::iterator it;
+    for (it = initFiltersFreqs.begin(); it != initFiltersFreqs.end(); it++)
     {
         float finalFreq;
         if (isLowPass)
@@ -1539,6 +1540,8 @@ bool ArrangementArea::keyStateChanged(bool isKeyDown)
 
                 // broadcast a completed task so that it's recorded in history
                 std::shared_ptr<SampleMovingTask> task = std::make_shared<SampleMovingTask>(*it, dragDistance);
+                task->setCompleted(true);
+                task->setFailed(false);
                 activityManager.broadcastTask(task);
             }
 

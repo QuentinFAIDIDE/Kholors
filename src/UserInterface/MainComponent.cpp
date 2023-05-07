@@ -52,6 +52,7 @@ void MainComponent::printAudioDeviceSettings()
 
 MainComponent::~MainComponent()
 {
+    activityManager.stopTaskBroadcast();
     setLookAndFeel(nullptr);
     // shutdown the audio
     shutdownAudio();

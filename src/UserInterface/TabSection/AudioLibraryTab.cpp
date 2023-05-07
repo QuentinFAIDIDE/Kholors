@@ -223,7 +223,6 @@ void AudioLibraryTab::populateSearchContent(std::string txt)
 
 void AudioLibraryTab::run()
 {
-    std::cout << "File search thread running" << std::endl;
     while (!threadShouldExit())
     {
 
@@ -241,6 +240,4 @@ void AudioLibraryTab::run()
         // wait 1000ms or untill notify() is called
         wait(1000);
     }
-
-    std::cout << "File search thread stopping" << std::endl;
 }

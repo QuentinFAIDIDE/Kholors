@@ -13,23 +13,18 @@ AppState::~AppState()
 {
 }
 
-void setSample(int id, SampleState *)
-{
-    // TODO
-}
-
 TaxonomyManager &AppState::getTaxonomy()
 {
     return taxonomy;
 }
 
-std::string AppState::Marshal()
+std::string AppState::marshal()
 {
     // TODO
     return "none";
 }
 
-Marshalable *AppState::Unmarshal(std::string &s)
+Marshalable *AppState::unmarshal(std::string &s)
 {
     return nullptr;
 }

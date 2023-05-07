@@ -1,8 +1,10 @@
 #include "ActivityManager.h"
+#include <memory>
 
 ActivityManager::ActivityManager()
 {
     taskBroadcastStopped = false;
+    historyNextIndex = 0;
 }
 
 ActivityManager::~ActivityManager()
@@ -21,7 +23,7 @@ void ActivityManager::stopTaskBroadcast()
     taskBroadcastStopped = true;
 }
 
-void ActivityManager::broadcastTask(std::shared_ptr<Task> task)
+void ActivityManager::broadcastTask(std::shared_ptr<Task> submittedTask)
 {
     const juce::SpinLock::ScopedTryLockType lock(broadcastLock);
     if (taskBroadcastStopped)
@@ -31,7 +33,7 @@ void ActivityManager::broadcastTask(std::shared_ptr<Task> task)
 
     {
         const juce::SpinLock::ScopedLockType queueLock(taskQueueLock);
-        taskQueue.push(task);
+        taskQueue.push(submittedTask);
     }
 
     if (!lock.isLocked())
@@ -61,6 +63,15 @@ void ActivityManager::broadcastTask(std::shared_ptr<Task> task)
             }
         }
 
+        if (taskToBroadcast->goesInTaskHistory() && taskToBroadcast->isCompleted() && !taskToBroadcast->hasFailed())
+        {
+            recordTaskInHistory(taskToBroadcast);
+        }
+        else
+        {
+            std::cout << "Unrecorded task: " << taskToBroadcast->marshal() << std::endl;
+        }
+
         taskToBroadcast = std::shared_ptr<Task>(nullptr);
         {
             const juce::SpinLock::ScopedLockType queueLock(taskQueueLock);
@@ -84,6 +95,8 @@ void ActivityManager::broadcastNestedTaskNow(std::shared_ptr<Task> priorityTask)
     // yet another warning: don't call this function from anything else
     // than an already running taskHandler !
 
+    // NOTE: we don't record nested tasks in history
+
     for (size_t i = 0; i < taskListeners.size(); i++)
     {
         bool shouldStop = taskListeners[i]->taskHandler(priorityTask);
@@ -92,4 +105,21 @@ void ActivityManager::broadcastNestedTaskNow(std::shared_ptr<Task> priorityTask)
             break;
         }
     }
+}
+
+void ActivityManager::recordTaskInHistory(std::shared_ptr<Task> taskToRecord)
+{
+    // This should only be called by the broadcastTask function
+    // when it has lock message thread and broadcasting lock.
+
+    // we always empty the canceled task stack
+    // after a new task is performed to
+    // we ensure "ctrl + shift + z" type calls
+    // won't restore past activity
+    canceledTasks.clear();
+
+    history[historyNextIndex] = taskToRecord;
+    historyNextIndex = (historyNextIndex + 1) % ACTIVITY_HISTORY_RING_BUFFER_SIZE;
+
+    std::cout << "Recorded task: " << taskToRecord->marshal() << std::endl;
 }

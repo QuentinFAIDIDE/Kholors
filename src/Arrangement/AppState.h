@@ -11,11 +11,9 @@ class AppState : public Marshalable
   public:
     AppState();
     ~AppState();
-    void setSample(int id, SampleState *);
-    SampleState *getSample(int id);
     TaxonomyManager &getTaxonomy();
-    std::string Marshal() override final;
-    Marshalable *Unmarshal(std::string &) override final;
+    std::string marshal() override final;
+    Marshalable *unmarshal(std::string &) override final;
     UserInterfaceState &getUiState();
     void setUiState(UserInterfaceState);
 

@@ -5,6 +5,8 @@
 #include "Marshalable.h"
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <memory>
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 
 /**
   Unused as of now.
@@ -53,12 +55,12 @@ class Task : public Marshalable
     /**
       Convert the task into a string.
      */
-    std::string Marshal() override;
+    std::string marshal() override;
 
     /**
       Parse the task from a string.
      */
-    Marshalable *Unmarshal(std::string &) override;
+    Marshalable *unmarshal(std::string &) override;
 
     /**
       Has the task been completed already ?
@@ -187,10 +189,14 @@ class SampleCreateTask : public Task
      */
     void setSampleInitialLength(int);
 
-  private:
+    /**
+     Dumps the task data to a string as json
+     */
+    std::string marshal() override;
+
     DuplicationType duplicationType; // is this a new sample, duplication at position, split at freq, or split at pos
     std::string filePath;            // the path to the file if it's a new sample
-    int editingPosition;             // the position of import or split
+    int position;                    // the position of import or split
     bool isCopy;                     // is this a duplication ?
     int duplicatedSampleId;          // the identifier of the duplicated sample
     int newIndex;                    // the index of the newly created sample
@@ -217,6 +223,11 @@ class SampleDisplayTask : public Task
      */
     SampleDisplayTask(std::shared_ptr<SamplePlayer>, std::shared_ptr<SampleCreateTask>);
 
+    /**
+     Dumps the task data to a string as json
+     */
+    std::string marshal() override;
+
     std::shared_ptr<SamplePlayer> sample;           // ref to the newly created sample
     std::shared_ptr<SampleCreateTask> creationTask; // the task that created it
 };
@@ -238,10 +249,18 @@ class SampleDeletionTask : public Task
      */
     std::vector<std::shared_ptr<Task>> getReversed() override;
 
+    /**
+     Dumps the task data to a string as json
+     */
+    std::string marshal() override;
+
     int id;                                      // the sample id to delete
     std::shared_ptr<SamplePlayer> deletedSample; // the sample we just deleted
 };
 
+/**
+  Task to restore a sample after it was previously deleted.
+ */
 class SampleRestoreTask : public Task
 {
   public:
@@ -250,43 +269,97 @@ class SampleRestoreTask : public Task
      */
     SampleRestoreTask(int index, std::shared_ptr<SamplePlayer> sampleToRestore);
 
+    /**
+     Dumps the task data to a string as json
+     */
+    std::string marshal() override;
+
     int id;                                        // id of the previously deleted sample where we need to restore
     std::shared_ptr<SamplePlayer> sampleToRestore; // reference to the deleted sample to restore
 };
 
+/**
+  Task to display a deleted sample.
+ */
 class SampleDeletionDisplayTask : public Task
 {
   public:
+    /**
+    Creates a task to display the sample with this id.
+     */
     SampleDeletionDisplayTask(int);
-    int id;
+
+    int id; // the id of the sample to hide
 };
 
+/**
+ Task to display this sample that was previously deleted.
+ */
 class SampleRestoreDisplayTask : public Task
 {
   public:
+    /**
+     Display the sample at the id again, using the reference
+     to its SamplePlayer.
+     */
     SampleRestoreDisplayTask(int, std::shared_ptr<SamplePlayer>);
-    int id;
-    std::shared_ptr<SamplePlayer> restoredSample;
+
+    int id;                                       // id of the sample to restore
+    std::shared_ptr<SamplePlayer> restoredSample; // object that holds the sample data
 };
 
+/**
+ Task to pop a notification.
+ */
 class NotificationTask : public Task
 {
   public:
+    /**
+     Task to pop a notif from a std string.
+     */
     NotificationTask(std::string path);
+    /**
+     Task to pop a notif from a juce string
+     */
     NotificationTask(juce::String path);
+
+    /**
+     Return the string message that belongs in the notif.
+     * @return text of the notification
+     */
     std::string getMessage();
 
+    /**
+     Dumps the task data to a string as json
+     */
+    std::string marshal() override;
+
   private:
-    std::string message;
+    std::string message; // notification text message
 };
 
+/**
+ Task to increment the count of usage of this
+ audio file.
+ */
 class ImportFileCountTask : public Task
 {
   public:
-    ImportFileCountTask(std::string);
-    std::string path;
+    /**
+     Create the task to increment the usage count for
+     this file path.
+     */
+    ImportFileCountTask(std::string fileFullPath);
+
+    std::string path; // path to the file to increment import count for
 };
 
+/**
+ Task to move an edge of the audio sample on the arrangement area.
+ If it's the left edge, it will shift the beginning in audio file and the position
+ of the sample. If it's the right edge, it will just change its length its read
+ up to.
+ */
 class SampleTimeCropTask : public Task
 {
   public:
@@ -297,11 +370,20 @@ class SampleTimeCropTask : public Task
       it was cropped for.
      */
     SampleTimeCropTask(bool cropBeginning, int sampleId, int frameDist);
-    int id;
-    int dragDistance;
-    int movedBeginning;
+
+    /**
+     Dumps the task data to a string as json
+     */
+    std::string marshal() override;
+
+    int id;               // id of sample to crop
+    int dragDistance;     // the distance in audio frame to move from
+    bool movingBeginning; // are we moving the left edge (beginning) or the right one (end)
 };
 
+/**
+ Task to move the high pass or low pass filter of a sample.
+ */
 class SampleFreqCropTask : public Task
 {
   public:
@@ -311,12 +393,21 @@ class SampleFreqCropTask : public Task
      * filter frequency of a sample.
      */
     SampleFreqCropTask(bool isLP, int sampleId, float initialFreq, float finalFreq);
-    int id;
-    int initialFrequency;
-    int finalFrequency;
-    int isLowPass;
+
+    /**
+     Dumps the task data to a string as json
+     */
+    std::string marshal() override;
+
+    int id;                 // id of sample to edit
+    float initialFrequency; // the frenquency before crop
+    float finalFrequency;   // the frequency after crop
+    bool isLowPass;         // is this the low pass or the high pass filter ?
 };
 
+/**
+ Task to move a sample.
+ */
 class SampleMovingTask : public Task
 {
   public:
@@ -325,8 +416,14 @@ class SampleMovingTask : public Task
      * arrangement area.
      */
     SampleMovingTask(int sampleId, int frameDist);
-    int id;
-    int dragDistance;
+
+    /**
+     Dumps the task data to a string as json
+     */
+    std::string marshal() override;
+
+    int id;           // sample to be moved
+    int dragDistance; // distanced it's moved by (can be negative)
 };
 
 #endif // DEF_ACTION_HPP

@@ -13,12 +13,20 @@ Task::~Task()
 {
 }
 
-std::string Task::Marshal()
+std::string Task::marshal()
 {
-    return "none";
+    json taskj = {
+        {"object", "task"},
+        {"task", "generic_task"},
+        {"is_completed", completed},
+        {"failed", failed},
+        {"recordable_in_history", recordableInHistory},
+        {"reversed", false},
+    };
+    return taskj.dump();
 }
 
-Marshalable *Task::Unmarshal(std::string &)
+Marshalable *Task::unmarshal(std::string &)
 {
     return nullptr;
 }
@@ -56,22 +64,41 @@ std::vector<std::shared_ptr<Task>> Task::getReversed()
 
 // ============================
 
-SampleCreateTask::SampleCreateTask(std::string path, int position)
-    : filePath(path), editingPosition(position), isCopy(false), duplicationType(DUPLICATION_TYPE_NO_DUPLICATION)
+SampleCreateTask::SampleCreateTask(std::string path, int pos)
+    : duplicationType(DUPLICATION_TYPE_NO_DUPLICATION), filePath(path), position(pos), isCopy(false)
 {
+    duplicatedSampleId = -1;
+    highPassFreq = 0.0f;
+    lowPassFreq = 0.0f;
+    newIndex = -1;
+    splitFrequency = 0.0f;
+    originalLength = 0;
+
     recordableInHistory = true;
 }
 
-SampleCreateTask::SampleCreateTask(int position, int sampleCopyIndex, DuplicationType d)
-    : editingPosition(position), isCopy(true), duplicatedSampleId(sampleCopyIndex), duplicationType(d)
+SampleCreateTask::SampleCreateTask(int pos, int sampleCopyIndex, DuplicationType d)
+    : duplicationType(d), position(pos), isCopy(true), duplicatedSampleId(sampleCopyIndex)
 {
+    highPassFreq = 0.0f;
+    lowPassFreq = 0.0f;
+    newIndex = -1;
+    splitFrequency = 0.0f;
+    originalLength = 0;
+
     recordableInHistory = true;
 }
 
 SampleCreateTask::SampleCreateTask(float frequency, int sampleCopyIndex)
-    : splitFrequency(frequency), isCopy(true), duplicatedSampleId(sampleCopyIndex),
-      duplicationType(DUPLICATION_TYPE_SPLIT_AT_FREQUENCY)
+    : duplicationType(DUPLICATION_TYPE_SPLIT_AT_FREQUENCY), isCopy(true), duplicatedSampleId(sampleCopyIndex),
+      splitFrequency(frequency)
 {
+
+    highPassFreq = 0.0f;
+    lowPassFreq = 0.0f;
+    newIndex = -1;
+    originalLength = 0;
+
     recordableInHistory = true;
 }
 
@@ -109,7 +136,7 @@ std::string SampleCreateTask::getFilePath()
 
 int64_t SampleCreateTask::getPosition()
 {
-    return editingPosition;
+    return position;
 }
 
 void SampleCreateTask::setAllocatedIndex(int i)
@@ -152,7 +179,7 @@ std::vector<std::shared_ptr<Task>> SampleCreateTask::getReversed()
 
     case DUPLICATION_TYPE_SPLIT_AT_POSITION:
         std::shared_ptr<SampleTimeCropTask> lengthRestoreTask =
-            std::make_shared<SampleTimeCropTask>(editingPosition, duplicatedSampleId, originalLength - editingPosition);
+            std::make_shared<SampleTimeCropTask>(position, duplicatedSampleId, originalLength - position);
         reversionTasks.push_back(lengthRestoreTask);
         break;
     }
@@ -164,6 +191,27 @@ void SampleCreateTask::setFilterInitialFrequencies(float highPass, float lowPass
 {
     lowPassFreq = lowPass;
     highPassFreq = highPass;
+}
+
+std::string SampleCreateTask::marshal()
+{
+    json taskj = {{"object", "task"},
+                  {"task", "sample_create_task"},
+                  {"duplication_type", duplicationType},
+                  {"filePath", filePath},
+                  {"position", position},
+                  {"is_copy", isCopy},
+                  {"duplicated_sample_id", duplicatedSampleId},
+                  {"new_index", newIndex},
+                  {"split_frequency", splitFrequency},
+                  {"low_pass_freq", lowPassFreq},
+                  {"high_pass_freq", highPassFreq},
+                  {"original_length", originalLength},
+                  {"is_completed", isCompleted()},
+                  {"failed", hasFailed()},
+                  {"recordable_in_history", recordableInHistory},
+                  {"reversed", reversed}};
+    return taskj.dump();
 }
 
 ///////////////////////////////////////////////
@@ -183,6 +231,15 @@ std::string NotificationTask::getMessage()
     return message;
 }
 
+std::string NotificationTask::marshal()
+{
+    json taskj = {{"object", "task"},      {"task", "notification"},
+                  {"message", message},    {"is_completed", isCompleted()},
+                  {"failed", hasFailed()}, {"recordable_in_history", recordableInHistory},
+                  {"reversed", reversed}};
+    return taskj.dump();
+}
+
 /////////////////////////////////////////////////
 
 SampleDisplayTask::SampleDisplayTask(std::shared_ptr<SamplePlayer> sp, std::shared_ptr<SampleCreateTask> crTask)
@@ -191,6 +248,17 @@ SampleDisplayTask::SampleDisplayTask(std::shared_ptr<SamplePlayer> sp, std::shar
     creationTask = crTask;
 
     recordableInHistory = false;
+}
+
+std::string SampleDisplayTask::marshal()
+{
+    json taskj = {{"object", "task"},
+                  {"task", "sample_display_task"},
+                  {"is_completed", isCompleted()},
+                  {"failed", hasFailed()},
+                  {"recordable_in_history", recordableInHistory},
+                  {"reversed", reversed}};
+    return taskj.dump();
 }
 
 /////////////////////////////////////////////////
@@ -227,6 +295,15 @@ std::vector<std::shared_ptr<Task>> SampleDeletionTask::getReversed()
     return response;
 }
 
+std::string SampleDeletionTask::marshal()
+{
+    json taskj = {{"object", "task"},      {"task", "sample_deletion"},
+                  {"id_to_delete", id},    {"is_completed", isCompleted()},
+                  {"failed", hasFailed()}, {"recordable_in_history", recordableInHistory},
+                  {"reversed", reversed}};
+    return taskj.dump();
+}
+
 /////////////////////////////////////////////////
 
 SampleRestoreTask::SampleRestoreTask(int i, std::shared_ptr<SamplePlayer> sample)
@@ -234,6 +311,15 @@ SampleRestoreTask::SampleRestoreTask(int i, std::shared_ptr<SamplePlayer> sample
     id = i;
     sampleToRestore = sample;
     recordableInHistory = true;
+}
+
+std::string SampleRestoreTask::marshal()
+{
+    json taskj = {{"object", "task"},      {"task", "sample_restore"},
+                  {"id_to_restore", id},   {"is_completed", isCompleted()},
+                  {"failed", hasFailed()}, {"recordable_in_history", recordableInHistory},
+                  {"reversed", reversed}};
+    return taskj.dump();
 }
 
 /////////////////////////////////////////////////
@@ -248,17 +334,46 @@ SampleRestoreDisplayTask::SampleRestoreDisplayTask(int i, std::shared_ptr<Sample
 /////////////////////////////////////////////////
 
 SampleTimeCropTask::SampleTimeCropTask(bool cropBeginning, int sampleId, int frameDist)
-    : movedBeginning(cropBeginning), id(sampleId), dragDistance(frameDist)
+    : id(sampleId), dragDistance(frameDist), movingBeginning(cropBeginning)
 {
     recordableInHistory = true;
+}
+
+std::string SampleTimeCropTask::marshal()
+{
+    json taskj = {{"object", "task"},
+                  {"task", "sample_time_crop"},
+                  {"id", id},
+                  {"drag_distance", dragDistance},
+                  {"moving_start", movingBeginning},
+                  {"is_completed", isCompleted()},
+                  {"failed", hasFailed()},
+                  {"recordable_in_history", recordableInHistory},
+                  {"reversed", reversed}};
+    return taskj.dump();
 }
 
 /////////////////////////////////////////////////
 
 SampleFreqCropTask::SampleFreqCropTask(bool isLP, int sampleId, float initialFreq, float finalFreq)
-    : isLowPass(isLP), id(sampleId), initialFrequency(initialFreq), finalFrequency(finalFreq)
+    : id(sampleId), initialFrequency(initialFreq), finalFrequency(finalFreq), isLowPass(isLP)
 {
     recordableInHistory = true;
+}
+
+std::string SampleFreqCropTask::marshal()
+{
+    json taskj = {{"object", "task"},
+                  {"task", "sample_freq_crop"},
+                  {"id", id},
+                  {"is_low_pass", isLowPass},
+                  {"initial_freq", initialFrequency},
+                  {"final_freq", finalFrequency},
+                  {"is_completed", isCompleted()},
+                  {"failed", hasFailed()},
+                  {"recordable_in_history", recordableInHistory},
+                  {"reversed", reversed}};
+    return taskj.dump();
 }
 
 /////////////////////////////////////////////////
@@ -266,4 +381,17 @@ SampleFreqCropTask::SampleFreqCropTask(bool isLP, int sampleId, float initialFre
 SampleMovingTask::SampleMovingTask(int sampleId, int frameDist) : id(sampleId), dragDistance(frameDist)
 {
     recordableInHistory = true;
+}
+
+std::string SampleMovingTask::marshal()
+{
+    json taskj = {{"object", "task"},
+                  {"task", "sample_moving"},
+                  {"id", id},
+                  {"drag_distance", dragDistance},
+                  {"is_completed", isCompleted()},
+                  {"failed", hasFailed()},
+                  {"recordable_in_history", recordableInHistory},
+                  {"reversed", reversed}};
+    return taskj.dump();
 }
