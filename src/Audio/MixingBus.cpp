@@ -413,11 +413,11 @@ void MixingBus::importNewFile(std::shared_ptr<SampleCreateTask> task)
 
             // this is instructing to update the view
             std::shared_ptr<SampleDisplayTask> displayTask = std::make_shared<SampleDisplayTask>(newSample, task);
-            activityManager.broadcastNestedTaskNow(displayTask);
+            activityManager.broadcastTask(displayTask);
 
             // this is instructing to record a count for file import
             std::shared_ptr<ImportFileCountTask> fcTask = std::make_shared<ImportFileCountTask>(pathToOpen);
-            activityManager.broadcastNestedTaskNow(fcTask);
+            activityManager.broadcastTask(fcTask);
 
             // this make the arrangement area widget repaint
             trackRepaintCallback();
@@ -630,10 +630,12 @@ void MixingBus::duplicateTrack(std::shared_ptr<SampleCreateTask> task)
     }
 
     task->setAllocatedIndex(newTrackIndex);
-
     task->setCompleted(true);
+
+    activityManager.broadcastTask(task);
+
     std::shared_ptr<SampleDisplayTask> displayTask = std::make_shared<SampleDisplayTask>(newSample, task);
-    activityManager.broadcastNestedTaskNow(displayTask);
+    activityManager.broadcastTask(displayTask);
 
     trackRepaintCallback();
 }

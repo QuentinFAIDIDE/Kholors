@@ -4,7 +4,7 @@ Experimental audio software (alpha).
 ## Building
 Eventually install dependencies first (example is for ArchLinux).
 ```
-sudo pacman -S gcc pkgconfig cmake make alsa-lib freetype2 webkit2gtk git clang yaml-cpp
+sudo pacman -S gcc pkgconfig cmake make alsa-lib freetype2 webkit2gtk git clang yaml-cpp nlohmann-json
 ```
 
 Then build and run.

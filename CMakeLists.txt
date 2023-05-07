@@ -33,6 +33,10 @@ project(Kholors VERSION 0.0.1)
 add_subdirectory(JUCE)                    # If you've put JUCE in a subdirectory called JUCE
 
 
+# ensure the required packages are installed
+find_package(nlohmann_json 3.11.2 REQUIRED)
+find_package(yaml-cpp)
+
 # Include tests and Ctest utility
 include(CTest)
 add_test(NAME TestConfig COMMAND TestConfig)
@@ -172,6 +176,7 @@ target_link_libraries(Kholors
         juce::juce_audio_basics
         juce::juce_opengl
         yaml-cpp
+        nlohmann_json::nlohmann_json
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
