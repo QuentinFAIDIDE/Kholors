@@ -103,8 +103,10 @@
 
 #define KEYMAP_DRAG_MODE "d"
 #define KEYMAP_DELETE_SELECTION "x"
-#define KEYMAP_SPLIT_SAMPLE_AT_FREQUENCY "s"
-#define KEYMAP_SPLIT_SAMPLE_AT_TIME "shift + s"
+#define KEYMAP_SPLIT_SAMPLE_AT_FREQUENCY "shift + s"
+#define KEYMAP_SPLIT_SAMPLE_AT_TIME "s"
+#define KEYMAP_UNDO "ctrl + z"
+#define KEYMAP_REDO "ctrl + shift + z"
 
 #define FREQVIEW_SAMPLE_FFT_ORDER 10
 // total number of fft frequency values. Given that the real part of the result is half of it

@@ -1451,6 +1451,14 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key)
             activityManager.getAppState().setUiState(UI_STATE_DISPLAY_TIME_SPLIT_LOCATION);
         }
     }
+    else if (key == juce::KeyPress::createFromDescription(KEYMAP_UNDO))
+    {
+        if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT)
+        {
+            activityManager.undoLastActivity();
+            repaint();
+        }
+    }
     // do not intercept the signal and pass it around
     return false;
 }

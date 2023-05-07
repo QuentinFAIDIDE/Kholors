@@ -123,3 +123,32 @@ void ActivityManager::recordTaskInHistory(std::shared_ptr<Task> taskToRecord)
 
     std::cout << "Recorded task: " << taskToRecord->marshal() << std::endl;
 }
+
+void ActivityManager::undoLastActivity()
+{
+    juce::SpinLock::ScopedLockType bLock(broadcastLock);
+
+    int lastActivityIndex = (historyNextIndex - 1) % ACTIVITY_HISTORY_RING_BUFFER_SIZE;
+    auto revertedTasks = history[lastActivityIndex]->getReversed();
+
+    if (history[lastActivityIndex] == nullptr || revertedTasks.size() == 0)
+    {
+        return;
+    }
+
+    for (size_t i = 0; i < revertedTasks.size(); i++)
+    {
+        for (size_t j = 0; j < taskListeners.size(); j++)
+        {
+            bool shouldStop = taskListeners[j]->taskHandler(revertedTasks[i]);
+            if (shouldStop)
+            {
+                break;
+            }
+        }
+    }
+
+    canceledTasks.push_back(history[lastActivityIndex]);
+    history[lastActivityIndex] = nullptr;
+    historyNextIndex = lastActivityIndex;
+}

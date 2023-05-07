@@ -63,6 +63,11 @@ class ActivityManager
      */
     void recordTaskInHistory(std::shared_ptr<Task>);
 
+    /**
+     Undo the last activity.
+     */
+    void undoLastActivity();
+
   private:
     std::shared_ptr<Task> history[ACTIVITY_HISTORY_RING_BUFFER_SIZE]; // ring buffer with the last executed tasks
     int historyNextIndex;                                             // the index of the next recorded history entry
