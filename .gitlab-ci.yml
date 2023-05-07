@@ -1,4 +1,4 @@
-image: registry.gitlab.com/faidide/juce-test-01/kholors-builder:v0.1.2
+image: registry.gitlab.com/faidide/juce-test-01/kholors-builder:v1.29.0
 
 cache:
   - key: juce
