@@ -141,17 +141,17 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
     }
 
     std::shared_ptr<SampleRestoreDisplayTask> restoreTask = std::dynamic_pointer_cast<SampleRestoreDisplayTask>(task);
-    if (disableTask != nullptr && !disableTask->isCompleted() && !disableTask->hasFailed())
+    if (restoreTask != nullptr && !restoreTask->isCompleted() && !restoreTask->hasFailed())
     {
-        samples[disableTask->id].reset();
+        samples[restoreTask->id].reset();
 
-        samples[disableTask->id] = std::make_shared<SampleGraphicModel>(
+        samples[restoreTask->id] = std::make_shared<SampleGraphicModel>(
             restoreTask->restoredSample, taxonomyManager.getSampleColor(restoreTask->id));
 
         // when a sample openGL model is created it doesn't allocate the GPU
         // data unless we ask for it.
         openGLContext.executeOnGLThread(
-            [this, disableTask](juce::OpenGLContext &c) { samples[disableTask->id]->registerGlObjects(); }, true);
+            [this, restoreTask](juce::OpenGLContext &c) { samples[restoreTask->id]->registerGlObjects(); }, true);
 
         // we will repaint to display the sample again
         repaint();

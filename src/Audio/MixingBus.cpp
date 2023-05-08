@@ -74,7 +74,7 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
     }
 
     std::shared_ptr<SampleRestoreTask> restoreTask = std::dynamic_pointer_cast<SampleRestoreTask>(task);
-    if (sd != nullptr && !sd->isCompleted() && !sd->hasFailed())
+    if (restoreTask != nullptr && !restoreTask->isCompleted() && !restoreTask->hasFailed())
     {
         restoreSample(restoreTask);
         return true;
@@ -539,7 +539,10 @@ void MixingBus::deleteSample(std::shared_ptr<SampleDeletionTask> deletionTask)
     deletionTask->deletedSample = tracks[deletionTask->id];
 
     // clear this sample
-    tracks.set(deletionTask->id, nullptr);
+    {
+        const juce::ScopedLock lock(mixbusMutex);
+        tracks.set(deletionTask->id, std::shared_ptr<SamplePlayer>(nullptr));
+    }
 
     // clear the activityManager view
     std::shared_ptr<SampleDeletionDisplayTask> displayTask =
@@ -552,14 +555,14 @@ void MixingBus::deleteSample(std::shared_ptr<SampleDeletionTask> deletionTask)
 
 void MixingBus::restoreSample(std::shared_ptr<SampleRestoreTask> task)
 {
-    if (task->id < 0 || task->id >= tracks.size() || tracks[task->id] != nullptr)
+    if (task->id < 0 || task->id >= tracks.size() || tracks[task->id] != nullptr || task->sampleToRestore == nullptr)
     {
         task->setCompleted(true);
         task->setFailed(true);
         return;
     }
 
-    tracks[task->id] = task->sampleToRestore;
+    tracks.set(task->id, task->sampleToRestore);
 
     std::shared_ptr<SampleRestoreDisplayTask> displayTask =
         std::make_shared<SampleRestoreDisplayTask>(task->id, task->sampleToRestore);

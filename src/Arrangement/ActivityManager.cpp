@@ -129,10 +129,17 @@ void ActivityManager::undoLastActivity()
     juce::SpinLock::ScopedLockType bLock(broadcastLock);
 
     int lastActivityIndex = (historyNextIndex - 1) % ACTIVITY_HISTORY_RING_BUFFER_SIZE;
-    auto revertedTasks = history[lastActivityIndex]->getReversed();
 
-    if (history[lastActivityIndex] == nullptr || revertedTasks.size() == 0)
+    if (history[lastActivityIndex] == nullptr)
     {
+        std::cout << "No operation to cancel" << std::endl;
+        return;
+    }
+
+    auto revertedTasks = history[lastActivityIndex]->getReversed();
+    if (revertedTasks.size() == 0)
+    {
+        std::cout << "Operation cannot be canceled" << std::endl;
         return;
     }
 
@@ -146,6 +153,7 @@ void ActivityManager::undoLastActivity()
                 break;
             }
         }
+        std::cout << "Reversion task: " << revertedTasks[i]->marshal() << std::endl;
     }
 
     canceledTasks.push_back(history[lastActivityIndex]);
