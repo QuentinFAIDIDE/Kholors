@@ -1511,15 +1511,26 @@ int64_t ArrangementArea::lowestStartPosInSelection()
 
 void ArrangementArea::deleteSelectedTracks()
 {
-    // for each selected track
-    std::set<std::size_t>::iterator it = selectedTracks.begin();
-    while (it != selectedTracks.end())
-    {
-        std::shared_ptr<SampleDeletionTask> delTask = std::make_shared<SampleDeletionTask>(*it);
-        activityManager.broadcastTask(delTask);
+    // tasks to broadcast
+    std::vector<std::shared_ptr<Task>> tasksToBroadcast;
 
-        it++;
+    // for each selected track
+    std::set<size_t>::iterator it;
+    for (it = selectedTracks.begin(); it != selectedTracks.end(); it++)
+    {
+        if (mixingBus.getTrack(*it) != nullptr)
+        {
+            std::shared_ptr<SampleDeletionTask> delTask = std::make_shared<SampleDeletionTask>(*it);
+            tasksToBroadcast.push_back(delTask);
+        }
     }
+
+    // separetely broadcast to prevent altering selection set during iteration
+    for (size_t i = 0; i < tasksToBroadcast.size(); i++)
+    {
+        activityManager.broadcastTask(tasksToBroadcast[i]);
+    }
+
     // clear selection and redraw
     selectedTracks.clear();
     repaint();
