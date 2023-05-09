@@ -377,6 +377,14 @@ std::string SampleFreqCropTask::marshal()
     return taskj.dump();
 }
 
+std::vector<std::shared_ptr<Task>> SampleMovingTask::getReversed()
+{
+    std::vector<std::shared_ptr<Task>> result;
+    std::shared_ptr<SampleFreqCropTask> task = std::make_shared<SampleFreqCropTask>(isLowPass, id, finalFreq, initialFreq);
+    result.push_back(task);
+    return result;
+}
+
 /////////////////////////////////////////////////
 
 SampleMovingTask::SampleMovingTask(int sampleId, int frameDist) : id(sampleId), dragDistance(frameDist)
@@ -424,3 +432,4 @@ std::string SampleUpdateTask::marshal()
                   {"reversed", reversed}};
     return taskj.dump();
 }
+

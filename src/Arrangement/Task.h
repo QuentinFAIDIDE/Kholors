@@ -399,6 +399,14 @@ class SampleFreqCropTask : public Task
      */
     std::string marshal() override;
 
+
+    /**
+      Get the list of tasks that will revert the current task.
+      This one just spawns a SampleFreqCropTask with and witch initial
+      and final freq.
+     */
+    std::vector<std::shared_ptr<Task>> getReversed() override;
+
     int id;                 // id of sample to edit
     float initialFrequency; // the frenquency before crop
     float finalFrequency;   // the frequency after crop
