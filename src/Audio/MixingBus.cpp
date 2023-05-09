@@ -104,7 +104,84 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
         return true;
     }
 
+
+    std::shared_ptr<SampleTimeCropTask> timeCropTask = std::dynamic_pointer_cast<SampleTimeCropTask>(task);
+    if (timeCropTask != nullptr && !timeCropTask->isCompleted() && !timeCropTask->hasFailed())
+    {
+        cropSample(timeCropTask);
+        return true;
+    }
+
+    std::shared_ptr<SampleFreqCropTask> freqCropTask = std::dynamic_pointer_cast<SampleFreqCropTask>(task);
+    if (freqCropTask != nullptr && !freqCropTask->isCompleted() && !freqCropTask->hasFailed())
+    {
+        cropSample(freqCropTask);
+        return true;
+    }
+
     return false;
+}
+
+
+void MixingBus::cropSample(std::shared_ptr<SampleTimeCropTask> task)
+{
+    if (tracks[task->id] != nullptr)
+    {
+        if (task->movingBeginning)
+        {
+            tracks[task->id]->tryMovingStart(task->dragDistance);
+        }
+        else
+        {
+            tracks[task->id]->tryMovingEnd(task->dragDistance);
+        }
+
+        task->setCompleted(true);
+        task->setFailed(false);
+
+        // we need to tell arrangement are to update
+        std::shared_ptr<SampleUpdateTask> sut =
+            std::make_shared<SampleUpdateTask>(task->id, tracks[task->id]);
+        activityManager.broadcastNestedTaskNow(sut);
+
+        trackRepaintCallback();
+    }
+    else
+    {
+        task->setCompleted(true);
+        task->setFailed(true);
+    }
+}
+
+
+void MixingBus::cropSample(std::shared_ptr<SampleFreqCropTask> task)
+{
+    if (tracks[task->id] != nullptr)
+    {
+        if (task->isLowPass)
+        {
+            tracks[task->id]->setLowPassFreq(task->finalFrequency);
+        }
+        else
+        {
+            tracks[task->id]->setHighPassFreq(task->finalFrequency);
+        }
+
+        task->setCompleted(true);
+        task->setFailed(false);
+
+        // we need to tell arrangement are to update
+        std::shared_ptr<SampleUpdateTask> sut =
+            std::make_shared<SampleUpdateTask>(task->id, tracks[task->id]);
+        activityManager.broadcastNestedTaskNow(sut);
+
+        trackRepaintCallback();
+    }
+    else
+    {
+        task->setCompleted(true);
+        task->setFailed(true);
+    }
 }
 
 bool MixingBus::filePathsValid(const juce::StringArray &files)

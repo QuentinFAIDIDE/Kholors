@@ -167,6 +167,20 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     void addSample(std::shared_ptr<SampleCreateTask> import);
     void deleteSample(std::shared_ptr<SampleDeletionTask> task);
     void restoreSample(std::shared_ptr<SampleRestoreTask> task);
+
+    /**
+    Crop a sample based on a SampleTimeCropTask task received.
+    The task will specify if we're changing time at the beginning
+    or end of sample and by how much.
+    */
+    void cropSample(std::shared_ptr<SampleTimeCropTask>);
+
+    /**
+    Crop a sample based on a SampleFreqCropTask task received.
+    The task will specify if we're changing filter freq at the beginning
+    or end of sample and by how much.
+    */
+    void cropSample(std::shared_ptr<SampleFreqCropTask>);
 };
 //==============================================================================
 
