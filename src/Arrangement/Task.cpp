@@ -1,4 +1,5 @@
 #include "Task.h"
+#include "TaxonomyManager.h"
 #include <memory>
 
 Task::Task()
@@ -389,6 +390,34 @@ std::string SampleMovingTask::marshal()
                   {"task", "sample_moving"},
                   {"id", id},
                   {"drag_distance", dragDistance},
+                  {"is_completed", isCompleted()},
+                  {"failed", hasFailed()},
+                  {"recordable_in_history", recordableInHistory},
+                  {"reversed", reversed}};
+    return taskj.dump();
+}
+
+std::vector<std::shared_ptr<Task>> SampleMovingTask::getReversed()
+{
+    std::vector<std::shared_ptr<Task>> result;
+    std::shared_ptr<SampleMovingTask> task = std::make_shared<SampleMovingTask>(id, -dragDistance);
+    result.push_back(task);
+    return result;
+}
+
+/////////////////////////////////
+SampleUpdateTask::SampleUpdateTask(int sampleId, std::shared_ptr<SamplePlayer> sp)
+{
+    sample = sp;
+    id = sampleId;
+    recordableInHistory = false;
+}
+
+std::string SampleUpdateTask::marshal()
+{
+    json taskj = {{"object", "task"},
+                  {"task", "sample_view_update"},
+                  {"id", id},
                   {"is_completed", isCompleted()},
                   {"failed", hasFailed()},
                   {"recordable_in_history", recordableInHistory},

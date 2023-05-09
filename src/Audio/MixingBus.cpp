@@ -80,6 +80,30 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
         return true;
     }
 
+    std::shared_ptr<SampleMovingTask> moveTask = std::dynamic_pointer_cast<SampleMovingTask>(task);
+    if (moveTask != nullptr && !moveTask->isCompleted() && !moveTask->hasFailed())
+    {
+        if (tracks[moveTask->id] != nullptr)
+        {
+            tracks[moveTask->id]->move(tracks[moveTask->id]->getEditingPosition() + moveTask->dragDistance);
+            moveTask->setCompleted(true);
+            moveTask->setFailed(false);
+
+            // we need to tell arrangement are to update
+            std::shared_ptr<SampleUpdateTask> sut =
+                std::make_shared<SampleUpdateTask>(moveTask->id, tracks[moveTask->id]);
+            activityManager.broadcastNestedTaskNow(sut);
+
+            trackRepaintCallback();
+        }
+        else
+        {
+            moveTask->setCompleted(true);
+            moveTask->setFailed(true);
+        }
+        return true;
+    }
+
     return false;
 }
 

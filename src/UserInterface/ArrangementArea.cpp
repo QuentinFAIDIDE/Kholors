@@ -135,6 +135,7 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
     if (disableTask != nullptr && !disableTask->isCompleted() && !disableTask->hasFailed())
     {
         samples[disableTask->id]->disable();
+        selectedTracks.erase(disableTask->id);
         disableTask->setCompleted(true);
         disableTask->setFailed(false);
         return true;
@@ -155,6 +156,21 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
 
         // we will repaint to display the sample again
         repaint();
+
+        return true;
+    }
+
+    std::shared_ptr<SampleUpdateTask> updateTask = std::dynamic_pointer_cast<SampleUpdateTask>(task);
+    if (updateTask != nullptr && !updateTask->isCompleted() && !updateTask->hasFailed())
+    {
+        openGLContext.executeOnGLThread(
+            [this, updateTask](juce::OpenGLContext &c) {
+                samples[updateTask->id]->updatePropertiesAndUploadToGpu(updateTask->sample);
+            },
+            true);
+
+        updateTask->setCompleted(true);
+        updateTask->setFailed(false);
 
         return true;
     }

@@ -412,8 +412,8 @@ class SampleMovingTask : public Task
 {
   public:
     /**
-     * Record when a sample is moved on the
-     * arrangement area.
+      Record when a sample is moved on the
+      arrangement area.
      */
     SampleMovingTask(int sampleId, int frameDist);
 
@@ -422,8 +422,38 @@ class SampleMovingTask : public Task
      */
     std::string marshal() override;
 
+    /**
+      Get the list of tasks that will revert the current task.
+      This one just spawns a SampleMovingTask with opposite dragDistance.
+     */
+    std::vector<std::shared_ptr<Task>> getReversed() override;
+
     int id;           // sample to be moved
     int dragDistance; // distanced it's moved by (can be negative)
+};
+
+/**
+ Task to update displayed information of sample.
+ */
+class SampleUpdateTask : public Task
+{
+  public:
+    /**
+      Task to update the displayed sample
+      on screen. ArrangementArea will
+      pass the sampleplayer object to
+      the opengl handler that will reload
+      the model.
+     */
+    SampleUpdateTask(int sampleId, std::shared_ptr<SamplePlayer> sp);
+
+    /**
+     Dumps the task data to a string as json
+     */
+    std::string marshal() override;
+
+    int id;                               // sample to be updated
+    std::shared_ptr<SamplePlayer> sample; // reference to SamplePlayer object
 };
 
 #endif // DEF_ACTION_HPP
