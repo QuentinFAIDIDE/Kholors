@@ -376,6 +376,14 @@ class SampleTimeCropTask : public Task
      */
     std::string marshal() override;
 
+
+    /**
+      Get the list of tasks that will revert the current task.
+      This one just spawns a SampleTimeCropTask with opposite
+      dragDisance.
+     */
+    std::vector<std::shared_ptr<Task>> getReversed() override;
+
     int id;               // id of sample to crop
     int dragDistance;     // the distance in audio frame to move from
     bool movingBeginning; // are we moving the left edge (beginning) or the right one (end)
@@ -402,7 +410,7 @@ class SampleFreqCropTask : public Task
 
     /**
       Get the list of tasks that will revert the current task.
-      This one just spawns a SampleFreqCropTask with and witch initial
+      This one just spawns a SampleFreqCropTask with swapped initial
       and final freq.
      */
     std::vector<std::shared_ptr<Task>> getReversed() override;

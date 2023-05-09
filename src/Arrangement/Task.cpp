@@ -354,6 +354,14 @@ std::string SampleTimeCropTask::marshal()
     return taskj.dump();
 }
 
+std::vector<std::shared_ptr<Task>> SampleTimeCropTask::getReversed()
+{
+    std::vector<std::shared_ptr<Task>> result;
+    std::shared_ptr<SampleTimeCropTask> task = std::make_shared<SampleTimeCropTask>(movingBeginning, id, -dragDisance);
+    result.push_back(task);
+    return result;
+}
+
 /////////////////////////////////////////////////
 
 SampleFreqCropTask::SampleFreqCropTask(bool isLP, int sampleId, float initialFreq, float finalFreq)
@@ -377,7 +385,7 @@ std::string SampleFreqCropTask::marshal()
     return taskj.dump();
 }
 
-std::vector<std::shared_ptr<Task>> SampleMovingTask::getReversed()
+std::vector<std::shared_ptr<Task>> SampleFreqCropTask::getReversed()
 {
     std::vector<std::shared_ptr<Task>> result;
     std::shared_ptr<SampleFreqCropTask> task = std::make_shared<SampleFreqCropTask>(isLowPass, id, finalFreq, initialFreq);
