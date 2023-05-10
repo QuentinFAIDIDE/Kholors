@@ -11,6 +11,7 @@ class BackgroundModel : public GraphicModel
     void registerGlObjects() override final;
     void drawGlObjects() override final;
     void disable() override final;
+    void reenable() override final;
 };
 
 #endif // DEF_BACKGROUND_MODEL

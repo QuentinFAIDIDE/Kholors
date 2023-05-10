@@ -9,8 +9,13 @@ using namespace juce::gl;
 // utility for that !
 void TexturedModel::registerGlObjects()
 {
-
     const juce::ScopedLock lock(loadingMutex);
+
+    if (loaded || disabled)
+    {
+        std::cerr << "tried to reallocate gl objects or allocate when disabled !" << std::endl;
+        return;
+    }
 
     // generate objects
     glGenVertexArrays(1, &vao);
@@ -100,7 +105,18 @@ void TexturedModel::disable()
         glDeleteVertexArrays(1, &vao);
         glDeleteBuffers(1, &vbo);
         glDeleteBuffers(1, &ebo);
-        // glDeleteTextures(1, &tbo);
+        glDeleteTextures(1, &tbo);
+    }
+}
+
+void TexturedModel::reenable()
+{
+    const juce::ScopedLock lock(loadingMutex);
+    // only do it if the sample was previously loaded
+    // and later disabled
+    if (loaded && disabled)
+    {
+        disabled = false;
     }
 }
 

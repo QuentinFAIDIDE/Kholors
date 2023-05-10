@@ -2,6 +2,7 @@
 #define DEF_ACTIVITY_MANAGER_HPP
 
 #include <memory>
+#include <stack>
 #include <vector>
 
 #include "./AppState.h"
@@ -68,10 +69,15 @@ class ActivityManager
      */
     void undoLastActivity();
 
+    /**
+     Redo the stored last activities that were undone.
+     */
+    void redoLastActivity();
+
   private:
     std::shared_ptr<Task> history[ACTIVITY_HISTORY_RING_BUFFER_SIZE]; // ring buffer with the last executed tasks
     int historyNextIndex;                                             // the index of the next recorded history entry
-    std::vector<std::shared_ptr<Task>> canceledTasks;                 // stack of canceled tasks
+    std::stack<std::shared_ptr<Task>> canceledTasks;                  // stack of canceled tasks
 
     AppState appState; // an object representing the application state
 

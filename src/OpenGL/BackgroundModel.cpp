@@ -100,13 +100,12 @@ void BackgroundModel::drawGlObjects()
 
 void BackgroundModel::disable()
 {
-    if (!disabled && loaded)
-    {
-        disabled = true;
-        glDeleteVertexArrays(1, &vao);
-        glDeleteBuffers(1, &vbo);
-        glDeleteBuffers(1, &ebo);
-    }
+    std::cerr << "Something is trying to deallocate background gl object !" << std::endl;
+}
+
+void BackgroundModel::reenable()
+{
+    std::cerr << "Something is trying to reallocate background gl object !" << std::endl;
 }
 
 BackgroundModel::~BackgroundModel()

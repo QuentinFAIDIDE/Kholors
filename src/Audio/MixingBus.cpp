@@ -104,7 +104,6 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
         return true;
     }
 
-
     std::shared_ptr<SampleTimeCropTask> timeCropTask = std::dynamic_pointer_cast<SampleTimeCropTask>(task);
     if (timeCropTask != nullptr && !timeCropTask->isCompleted() && !timeCropTask->hasFailed())
     {
@@ -121,7 +120,6 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
 
     return false;
 }
-
 
 void MixingBus::cropSample(std::shared_ptr<SampleTimeCropTask> task)
 {
@@ -140,8 +138,7 @@ void MixingBus::cropSample(std::shared_ptr<SampleTimeCropTask> task)
         task->setFailed(false);
 
         // we need to tell arrangement are to update
-        std::shared_ptr<SampleUpdateTask> sut =
-            std::make_shared<SampleUpdateTask>(task->id, tracks[task->id]);
+        std::shared_ptr<SampleUpdateTask> sut = std::make_shared<SampleUpdateTask>(task->id, tracks[task->id]);
         activityManager.broadcastNestedTaskNow(sut);
 
         trackRepaintCallback();
@@ -152,7 +149,6 @@ void MixingBus::cropSample(std::shared_ptr<SampleTimeCropTask> task)
         task->setFailed(true);
     }
 }
-
 
 void MixingBus::cropSample(std::shared_ptr<SampleFreqCropTask> task)
 {
@@ -171,8 +167,7 @@ void MixingBus::cropSample(std::shared_ptr<SampleFreqCropTask> task)
         task->setFailed(false);
 
         // we need to tell arrangement are to update
-        std::shared_ptr<SampleUpdateTask> sut =
-            std::make_shared<SampleUpdateTask>(task->id, tracks[task->id]);
+        std::shared_ptr<SampleUpdateTask> sut = std::make_shared<SampleUpdateTask>(task->id, tracks[task->id]);
         activityManager.broadcastNestedTaskNow(sut);
 
         trackRepaintCallback();
@@ -212,21 +207,16 @@ bool MixingBus::isCursorPlaying() const
     return isPlaying;
 }
 
-void MixingBus::addSample(std::shared_ptr<SampleCreateTask> import)
+void MixingBus::addSample(std::shared_ptr<SampleCreateTask> importTask)
 {
-    // swap a file to load variable to avoid blocking event thread for disk i/o
+    if (importTask->isDuplication())
     {
-        // get lock for scoped block
-        const juce::ScopedLock lock(pathMutex);
-        importTaskQueue.push_back(import);
+        duplicateTrack(importTask);
     }
-
-    // NOTE: we don't set the task to completed, a new completed
-    // one will be re-emmited after the sample is succesfully imported
-    // from the background thread.
-
-    // notify the thread so it's triggered
-    notify();
+    else
+    {
+        importNewFile(importTask);
+    }
 }
 
 void MixingBus::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
@@ -368,8 +358,6 @@ void MixingBus::run()
     {
         // check if we need to ask for a redraw to move cursor
         checkForCursorRedraw();
-        // check for files to import
-        checkForFileToImport();
         // check for buffers to free
         checkForBuffersToFree();
         // do we need to stop playback because the cursor is not in bounds ?
@@ -407,33 +395,6 @@ void MixingBus::checkForBuffersToFree()
         if (buffer->getReferenceCount() == 2)
             // free it
             buffers.remove(i);
-    }
-}
-
-void MixingBus::checkForFileToImport()
-{
-
-    std::vector<std::shared_ptr<SampleCreateTask>> localTaskQueue;
-    // let's preallocate here to avoid doing it on the message thread
-    localTaskQueue.reserve(TASK_QUEUE_RESERVED_SIZE);
-
-    {
-        const juce::ScopedLock lock(pathMutex);
-        importTaskQueue.swap(localTaskQueue);
-    }
-
-    // if the path is non empty (meaning we're awaiting importing)
-    for (size_t taskIndex = 0; taskIndex < localTaskQueue.size(); taskIndex++)
-    {
-
-        if (localTaskQueue[taskIndex]->isDuplication())
-        {
-            duplicateTrack(localTaskQueue[taskIndex]);
-        }
-        else
-        {
-            importNewFile(localTaskQueue[taskIndex]);
-        }
     }
 }
 
@@ -498,8 +459,16 @@ void MixingBus::importNewFile(std::shared_ptr<SampleCreateTask> task)
 
                 // add new SamplePlayer to the tracks list (positionable audio
                 // sources)
-                tracks.add(newSample);
-                newTrackIndex = tracks.size() - 1;
+                if (task->reuseNewId)
+                {
+                    tracks.set(task->getAllocatedIndex(), newSample);
+                    newTrackIndex = task->getAllocatedIndex();
+                }
+                else
+                {
+                    tracks.add(newSample);
+                    newTrackIndex = tracks.size() - 1;
+                }
                 // add the buffer the array of audio buffers
                 buffers.add(newBuffer);
             }
@@ -508,19 +477,16 @@ void MixingBus::importNewFile(std::shared_ptr<SampleCreateTask> task)
             task->setCompleted(true);
             task->setFailed(false);
 
-            // we re-push the completed task to the stack so that it
-            // can be recorded in history with the necessary data
-            activityManager.broadcastTask(task);
-
             // this is instructing to update the view
             std::shared_ptr<SampleDisplayTask> displayTask = std::make_shared<SampleDisplayTask>(newSample, task);
-            activityManager.broadcastTask(displayTask);
+            activityManager.broadcastNestedTaskNow(displayTask);
 
             // this is instructing to record a count for file import
             std::shared_ptr<ImportFileCountTask> fcTask = std::make_shared<ImportFileCountTask>(pathToOpen);
-            activityManager.broadcastTask(fcTask);
+            activityManager.broadcastNestedTaskNow(fcTask);
 
-            // this make the arrangement area widget repaint
+            // this make the arrangement area widget repaint.
+            // TODO: replace with repaint from SampleDisplayTask
             trackRepaintCallback();
         }
         else
@@ -727,19 +693,28 @@ void MixingBus::duplicateTrack(std::shared_ptr<SampleCreateTask> task)
     {
         const juce::ScopedLock lock(mixbusMutex);
 
-        // add new SamplePlayer to the tracks list (positionable audio
-        // sources)
-        tracks.add(newSample);
-        newTrackIndex = tracks.size() - 1;
+        if (task->reuseNewId)
+        {
+            newTrackIndex = task->getAllocatedIndex();
+            tracks.set(task->getAllocatedIndex(), newSample);
+        }
+        else
+        {
+            // add new SamplePlayer to the tracks list (positionable audio
+            // sources)
+            tracks.add(newSample);
+            newTrackIndex = tracks.size() - 1;
+        }
     }
 
     task->setAllocatedIndex(newTrackIndex);
     task->setCompleted(true);
 
-    activityManager.broadcastTask(task);
-
     std::shared_ptr<SampleDisplayTask> displayTask = std::make_shared<SampleDisplayTask>(newSample, task);
-    activityManager.broadcastTask(displayTask);
+    activityManager.broadcastNestedTaskNow(displayTask);
 
+    // TODO: this date from before tasks were implement.
+    // See if it's not better to repaint directly based
+    // on ArrangementArea receiving SampleDisplayTask
     trackRepaintCallback();
 }

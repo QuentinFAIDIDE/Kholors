@@ -161,7 +161,6 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     void duplicateTrack(std::shared_ptr<SampleCreateTask> task);
 
     // used to manage background thread allocations
-    void checkForFileToImport();
     void checkForBuffersToFree();
 
     void addSample(std::shared_ptr<SampleCreateTask> import);

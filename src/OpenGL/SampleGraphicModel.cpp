@@ -12,6 +12,7 @@ SampleGraphicModel::SampleGraphicModel(std::shared_ptr<SamplePlayer> sp, juce::C
 {
     if (sp == nullptr || !sp->hasBeenInitialized())
     {
+        std::cerr << "Warning: trying to display unitialized sample !" << std::endl;
         return;
     }
 

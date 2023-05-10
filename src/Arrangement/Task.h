@@ -94,16 +94,37 @@ class Task : public Marshalable
       that when performed cancels out this task.
       If this is not possible, the array is empty.
      */
-    virtual std::vector<std::shared_ptr<Task>> getReversed();
+    virtual std::vector<std::shared_ptr<Task>> getOppositeTasks();
+
+    /**
+     Declare this task as part of a reversion (eg obtained with getOppositeTasks).
+     */
+    void declareSelfAsPartOfReversion();
+
+    /**
+     Declare this task as not going into the task history (used for restoring canceled actions mostly)
+     */
+    void preventFromGoingToTaskHistory();
+
+    /**
+     Called when the task is about to be resposted. Example of specific use case: SampleCreateTask to reuse ids.
+     */
+    virtual void prepareForRepost();
 
   protected:
-    bool recordableInHistory; // tell if this task should be saved in history
-    bool reversed;            // tells if this task is the reversed version of some other
+    bool recordableInHistory; // tell if this task should be saved in history. Inherit SilentTask to have it false.
+    bool isPartOfReversion;   // tells if this task was obtained through getOppositeTasks
 
   private:
     bool completed;           // has this task been completed/performed
     bool failed;              // has this task failed
     std::string errorMessage; // an eventual error messaged for the task failure
+};
+
+class SilentTask : public Task
+{
+  public:
+    SilentTask();
 };
 
 class SampleCreateTask : public Task
@@ -174,11 +195,11 @@ class SampleCreateTask : public Task
     /**
       Get the list of tasks that will revert the current task.
      */
-    std::vector<std::shared_ptr<Task>> getReversed() override;
+    std::vector<std::shared_ptr<Task>> getOppositeTasks() override;
 
     /**
      Set the low pass and high pass filter frequencies. This is
-     import for the getReversed to be able to restore them
+     import for the getOppositeTasks to be able to restore them
      with new filtering tasks.
      */
     void setFilterInitialFrequencies(float highPass, float lowPass);
@@ -188,6 +209,12 @@ class SampleCreateTask : public Task
      This is used to reverse the duplication task (where the length is changed)
      */
     void setSampleInitialLength(int);
+
+    /**
+     Tells the tasks executor (MixingBus class) to reuse a previous allocated
+     id and to reset task status to not completed and not failed.
+     */
+    void prepareForRepost() override;
 
     /**
      Dumps the task data to a string as json
@@ -204,6 +231,7 @@ class SampleCreateTask : public Task
     float lowPassFreq;               // frequency of the original sample low pass filter
     float highPassFreq;              // frequency of the original high pass filter
     int originalLength;              // the length of the sample before it was duplicated / splitted
+    bool reuseNewId;                 // this is set when user undo and redo and we reuse index to preserve other tasks
 };
 
 /**
@@ -211,7 +239,7 @@ class SampleCreateTask : public Task
   of passing the info that a new sample was indeed created from the
   mixbus to the ArrangementArea.
  */
-class SampleDisplayTask : public Task
+class SampleDisplayTask : public SilentTask
 {
   public:
     /**
@@ -247,7 +275,7 @@ class SampleDeletionTask : public Task
       Get the list of tasks that will revert the current task.
       This one just spawns a SampleRestoreTask.
      */
-    std::vector<std::shared_ptr<Task>> getReversed() override;
+    std::vector<std::shared_ptr<Task>> getOppositeTasks() override;
 
     /**
      Dumps the task data to a string as json
@@ -281,7 +309,7 @@ class SampleRestoreTask : public Task
 /**
   Task to display a deleted sample.
  */
-class SampleDeletionDisplayTask : public Task
+class SampleDeletionDisplayTask : public SilentTask
 {
   public:
     /**
@@ -295,7 +323,7 @@ class SampleDeletionDisplayTask : public Task
 /**
  Task to display this sample that was previously deleted.
  */
-class SampleRestoreDisplayTask : public Task
+class SampleRestoreDisplayTask : public SilentTask
 {
   public:
     /**
@@ -311,7 +339,7 @@ class SampleRestoreDisplayTask : public Task
 /**
  Task to pop a notification.
  */
-class NotificationTask : public Task
+class NotificationTask : public SilentTask
 {
   public:
     /**
@@ -342,7 +370,7 @@ class NotificationTask : public Task
  Task to increment the count of usage of this
  audio file.
  */
-class ImportFileCountTask : public Task
+class ImportFileCountTask : public SilentTask
 {
   public:
     /**
@@ -376,13 +404,12 @@ class SampleTimeCropTask : public Task
      */
     std::string marshal() override;
 
-
     /**
       Get the list of tasks that will revert the current task.
       This one just spawns a SampleTimeCropTask with opposite
       dragDisance.
      */
-    std::vector<std::shared_ptr<Task>> getReversed() override;
+    std::vector<std::shared_ptr<Task>> getOppositeTasks() override;
 
     int id;               // id of sample to crop
     int dragDistance;     // the distance in audio frame to move from
@@ -407,13 +434,12 @@ class SampleFreqCropTask : public Task
      */
     std::string marshal() override;
 
-
     /**
       Get the list of tasks that will revert the current task.
       This one just spawns a SampleFreqCropTask with swapped initial
       and final freq.
      */
-    std::vector<std::shared_ptr<Task>> getReversed() override;
+    std::vector<std::shared_ptr<Task>> getOppositeTasks() override;
 
     int id;                 // id of sample to edit
     float initialFrequency; // the frenquency before crop
@@ -442,7 +468,7 @@ class SampleMovingTask : public Task
       Get the list of tasks that will revert the current task.
       This one just spawns a SampleMovingTask with opposite dragDistance.
      */
-    std::vector<std::shared_ptr<Task>> getReversed() override;
+    std::vector<std::shared_ptr<Task>> getOppositeTasks() override;
 
     int id;           // sample to be moved
     int dragDistance; // distanced it's moved by (can be negative)
@@ -451,7 +477,7 @@ class SampleMovingTask : public Task
 /**
  Task to update displayed information of sample.
  */
-class SampleUpdateTask : public Task
+class SampleUpdateTask : public SilentTask
 {
   public:
     /**

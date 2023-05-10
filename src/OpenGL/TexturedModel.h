@@ -11,6 +11,15 @@ class TexturedModel : public GraphicModel
     virtual void drawGlObjects() override;
     virtual void disable() override;
 
+    /**
+     Set disabled to false if disable
+     was called before. This requires
+     calling registerGlObjects to reallocate
+     the texture and other gl objects
+     before displaying anything.
+     */
+    virtual void reenable() override;
+
   protected:
     int textureWidth;
     int textureHeight;

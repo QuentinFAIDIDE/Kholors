@@ -114,9 +114,13 @@ void ActivityManager::recordTaskInHistory(std::shared_ptr<Task> taskToRecord)
 
     // we always empty the canceled task stack
     // after a new task is performed to
-    // we ensure "ctrl + shift + z" type calls
-    // won't restore past activity
-    canceledTasks.clear();
+    // ensure "ctrl + shift + z" type calls
+    // won't restore action that came before
+    // new activity
+    while (!canceledTasks.empty())
+    {
+        canceledTasks.pop();
+    }
 
     history[historyNextIndex] = taskToRecord;
     historyNextIndex = (historyNextIndex + 1) % ACTIVITY_HISTORY_RING_BUFFER_SIZE;
@@ -136,27 +140,60 @@ void ActivityManager::undoLastActivity()
         return;
     }
 
-    auto revertedTasks = history[lastActivityIndex]->getReversed();
-    if (revertedTasks.size() == 0)
+    auto tasksToCancel = history[lastActivityIndex]->getOppositeTasks();
+    if (tasksToCancel.size() == 0)
     {
         std::cout << "Operation cannot be canceled" << std::endl;
         return;
     }
 
-    for (size_t i = 0; i < revertedTasks.size(); i++)
+    for (size_t i = 0; i < tasksToCancel.size(); i++)
     {
         for (size_t j = 0; j < taskListeners.size(); j++)
         {
-            bool shouldStop = taskListeners[j]->taskHandler(revertedTasks[i]);
+            bool shouldStop = taskListeners[j]->taskHandler(tasksToCancel[i]);
             if (shouldStop)
             {
                 break;
             }
         }
-        std::cout << "Reversion task: " << revertedTasks[i]->marshal() << std::endl;
+        std::cout << "Reversion task: " << tasksToCancel[i]->marshal() << std::endl;
     }
 
-    canceledTasks.push_back(history[lastActivityIndex]);
+    canceledTasks.push(history[lastActivityIndex]);
+    // TODO: factor out the ringbuffer history structure for cleaner code
     history[lastActivityIndex] = nullptr;
     historyNextIndex = lastActivityIndex;
+}
+
+void ActivityManager::redoLastActivity()
+{
+    // always make sure no other thread is currently broadcasting events
+    // (also prevents calls from task broadcasting loop)
+    juce::SpinLock::ScopedLockType bLock(broadcastLock);
+
+    if (canceledTasks.empty())
+    {
+        return;
+    }
+
+    std::shared_ptr<Task> taskToRestore = canceledTasks.top();
+    canceledTasks.pop();
+
+    taskToRestore->prepareForRepost();
+    taskToRestore->preventFromGoingToTaskHistory();
+
+    for (size_t j = 0; j < taskListeners.size(); j++)
+    {
+        bool shouldStop = taskListeners[j]->taskHandler(taskToRestore);
+        if (shouldStop)
+        {
+            break;
+        }
+    }
+
+    history[historyNextIndex] = taskToRestore;
+    historyNextIndex = (historyNextIndex + 1) % ACTIVITY_HISTORY_RING_BUFFER_SIZE;
+
+    std::cout << "Restored task: " << taskToRestore->marshal() << std::endl;
 }

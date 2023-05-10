@@ -13,6 +13,7 @@ class GraphicModel
     virtual void registerGlObjects() = 0;
     virtual void drawGlObjects() = 0;
     virtual void disable() = 0;
+    virtual void reenable() = 0;
     virtual bool isDisabled()
     {
         return disabled;

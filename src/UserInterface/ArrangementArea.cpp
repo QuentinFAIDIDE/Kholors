@@ -619,26 +619,37 @@ void ArrangementArea::openGLContextClosing()
 void ArrangementArea::displaySample(std::shared_ptr<SamplePlayer> sp, std::shared_ptr<SampleCreateTask> task)
 {
     // create graphic objects from the sample
-    std::shared_ptr<SampleGraphicModel> sampleRef =
-        std::make_shared<SampleGraphicModel>(sp, taxonomyManager.getSampleColor(task->getAllocatedIndex()));
-    samples.push_back(sampleRef);
-    // fatal error if sample ids are different
-    if ((samples.size() - 1) != task->getAllocatedIndex())
+    if (task->reuseNewId)
     {
-        std::cerr << "FATAL: Sample ids don't match in Mixbus and ArrangementArea" << std::endl;
-        juce::JUCEApplicationBase::quit();
+        samples[task->newIndex]->reenable();
     }
+    else
+    {
+        std::shared_ptr<SampleGraphicModel> sampleRef =
+            std::make_shared<SampleGraphicModel>(sp, taxonomyManager.getSampleColor(task->getAllocatedIndex()));
+        samples.push_back(sampleRef);
+
+        // fatal error if sample ids are different
+        if ((samples.size() - 1) != task->getAllocatedIndex())
+        {
+            std::cerr << "FATAL: Sample ids don't match in Mixbus and ArrangementArea" << std::endl;
+            juce::JUCEApplicationBase::quit();
+            return;
+        }
+    }
+
     // assign default name to sample
     taxonomyManager.setSampleName(task->getAllocatedIndex(), sp->getFileName());
     // send the data to the GPUs from the OpenGL thread
     openGLContext.executeOnGLThread(
-        [this](juce::OpenGLContext &c) { samples[samples.size() - 1]->registerGlObjects(); }, true);
+        [this, task](juce::OpenGLContext &c) { samples[task->newIndex]->registerGlObjects(); }, true);
     // if it's a copy, set the group and update the color
     if (task->isDuplication())
     {
         taxonomyManager.copyTaxonomy(task->getDuplicateTargetId(), task->getAllocatedIndex());
         syncSampleColor(task->getAllocatedIndex());
 
+        // refresh properties of the track we just splitted (it changed size of filters)
         if (task->getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_FREQUENCY ||
             task->getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_POSITION)
         {
@@ -1472,6 +1483,14 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key)
         if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT)
         {
             activityManager.undoLastActivity();
+            repaint();
+        }
+    }
+    else if (key == juce::KeyPress::createFromDescription(KEYMAP_REDO))
+    {
+        if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT)
+        {
+            activityManager.redoLastActivity();
             repaint();
         }
     }
