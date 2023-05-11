@@ -15,7 +15,7 @@
 #include "KholorsLookAndFeel.h"
 #include "TabSection/AudioLibraryTab.h"
 #include "TabSection/EmptyTab.h"
-#include "Topbar/NotificationArea.h"
+#include "Topbar/TopbarArea.h"
 
 //==============================================================================
 /*
@@ -50,7 +50,7 @@ class MainComponent : public juce::AudioAppComponent, public juce::DragAndDropCo
     // the object responsible for managing the various samples imported
     MixingBus mixingBus;
     ArrangementArea arrangementArea;
-    NotificationArea notificationArea;
+    TopbarArea notificationArea;
     juce::TabbedComponent actionTabs;
 
     AudioLibraryTab audioLibraryTab;

@@ -1,6 +1,6 @@
-#include "NotificationArea.h"
+#include "TopbarArea.h"
 
-NotificationArea::NotificationArea()
+TopbarArea::TopbarArea()
 {
     isHidden = true;
     isAnimationRunning = false;
@@ -13,11 +13,11 @@ NotificationArea::NotificationArea()
     _logo = juce::ImageFileFormat::loadFrom(LogoDarkPng::logo_dark_png, LogoDarkPng::logo_dark_pngSize);
 }
 
-NotificationArea::~NotificationArea()
+TopbarArea::~TopbarArea()
 {
 }
 
-bool NotificationArea::taskHandler(std::shared_ptr<Task> task)
+bool TopbarArea::taskHandler(std::shared_ptr<Task> task)
 {
     std::shared_ptr<NotificationTask> notif = std::dynamic_pointer_cast<NotificationTask>(task);
 
@@ -30,7 +30,7 @@ bool NotificationArea::taskHandler(std::shared_ptr<Task> task)
     return false;
 }
 
-void NotificationArea::paint(juce::Graphics &g)
+void TopbarArea::paint(juce::Graphics &g)
 {
     // make sure the notification are filetered to remove old ones
     trimNotifications();
@@ -153,7 +153,7 @@ void NotificationArea::paint(juce::Graphics &g)
     queueRwMutex.exitRead();
 }
 
-void NotificationArea::trimNotifications()
+void TopbarArea::trimNotifications()
 {
     // get current timestamp
     uint32_t timestamp = juce::Time::getMillisecondCounter();
@@ -186,26 +186,26 @@ void NotificationArea::trimNotifications()
     queueRwMutex.exitRead();
 }
 
-void NotificationArea::resized(){};
+void TopbarArea::resized(){};
 
-void NotificationArea::mouseDown(const juce::MouseEvent &me)
+void TopbarArea::mouseDown(const juce::MouseEvent &me)
 {
 }
 
-void NotificationArea::mouseUp(const juce::MouseEvent &me)
+void TopbarArea::mouseUp(const juce::MouseEvent &me)
 {
 }
 
-void NotificationArea::mouseDrag(const juce::MouseEvent &me)
+void TopbarArea::mouseDrag(const juce::MouseEvent &me)
 {
 }
 
-void NotificationArea::mouseMove(const juce::MouseEvent &me)
+void TopbarArea::mouseMove(const juce::MouseEvent &me)
 {
 }
 
 // must be called from messagemanager thread
-void NotificationArea::notifyError(const juce::String &msg)
+void TopbarArea::notifyError(const juce::String &msg)
 {
     // get a read lock
     queueRwMutex.enterRead();
@@ -239,7 +239,7 @@ void NotificationArea::notifyError(const juce::String &msg)
 // stolen from here:
 // https://stackoverflow.com/questions/13462001/ease-in-and-ease-out-animation-formula
 // Implements an ease in speed modulation between 0 and 1
-float NotificationArea::easeIn(float t)
+float TopbarArea::easeIn(float t)
 {
     if (t <= 0.5f)
         return 2.0f * t * t;
@@ -254,6 +254,6 @@ float NotificationArea::easeIn(float t)
     }
 }
 
-void NotificationArea::update()
+void TopbarArea::update()
 {
 }

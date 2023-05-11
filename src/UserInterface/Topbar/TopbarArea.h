@@ -1,5 +1,5 @@
-#ifndef DEF_NOTIFICATIONAREA_HPP
-#define DEF_NOTIFICATIONAREA_HPP
+#ifndef DEF_TOPBAR_AREA_HPP
+#define DEF_TOPBAR_AREA_HPP
 
 // CMake builds don't use an AppConfig.h, so it's safe to include juce module
 // headers directly. If you need to remain compatible with Projucer-generated
@@ -26,16 +26,16 @@ typedef struct
 /*
     This component pops up notifications
 */
-class NotificationArea : public juce::AnimatedAppComponent, public TaskListener
+class TopbarArea : public juce::AnimatedAppComponent, public TaskListener
 {
   public:
     //==============================================================================
-    NotificationArea();
-    ~NotificationArea();
+    TopbarArea();
+    ~TopbarArea();
 
     //==============================================================================
     // Component inherited
-    bool taskHandler(std::shared_ptr<Task> task);
+    bool taskHandler(std::shared_ptr<Task> task) override;
     void paint(juce::Graphics &) override;
     void resized() override;
     void mouseDown(const juce::MouseEvent &) override;
@@ -84,7 +84,7 @@ class NotificationArea : public juce::AnimatedAppComponent, public TaskListener
     //==============================================================================
     void trimNotifications();
     float easeIn(float t);
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NotificationArea)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TopbarArea)
 };
 
-#endif // DEF_NOTIFICATIONAREA_HPP
+#endif // DEF_TOPBAR_AREA_HPP
