@@ -1432,10 +1432,13 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key)
                 // get lowest track position is selection
                 int64_t selectionBeginPos = lowestStartPosInSelection();
 
-                // iterate over selected tracks to duplicate everything
-                std::set<std::size_t>::iterator it = selectedTracks.begin();
+                // use a copy of track selection to prevent iterating over newly added items
+                std::set<std::size_t> selectedTrackAtClick = selectedTracks;
 
-                while (it != selectedTracks.end())
+                // iterate over selected tracks to duplicate everything
+                std::set<std::size_t>::iterator it = selectedTrackAtClick.begin();
+
+                while (it != selectedTrackAtClick.end())
                 {
                     // insert selected tracks at the mouse cursor position
                     int pos = mixingBus.getTrack(*it)->getEditingPosition();
