@@ -13,8 +13,9 @@
 
 #include "../../Arrangement/ActivityManager.h"
 #include "../../Arrangement/Task.h"
-#include "../../Config.h"
 #include "../LogoDarkPng.h"
+#include "TopbarLeftArea.h"
+#include "TopbarRightArea.h"
 
 typedef struct
 {
@@ -57,7 +58,7 @@ class TopbarArea : public juce::AnimatedAppComponent, public TaskListener
     // the base position of the notif box, base position does not include
     // outermargins. as we're right aligned it's the widget width minus notif box
     // width.
-    int baseX, baseY;
+    int notifBaseX, notifBaseY;
     // the animation destination relative to base position
     int destinationX, destinationY;
     // Position of the popup including animation movements relative to base
@@ -79,7 +80,12 @@ class TopbarArea : public juce::AnimatedAppComponent, public TaskListener
     // a value that store total width the animation have to move in
     float animationNormalisingFactor;
 
+    // the logo of the app we draw in left corner
     juce::Image _logo;
+
+    // left section with master and track properties
+    TopbarLeftArea leftComponentsContainer;
+    TopbarRightArea rightComponentsContainer;
 
     //==============================================================================
     void trimNotifications();

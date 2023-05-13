@@ -4,8 +4,8 @@ TopbarArea::TopbarArea()
 {
     isHidden = true;
     isAnimationRunning = false;
-    baseX = 0;
-    baseY = 0;
+    notifBaseX = 0;
+    notifBaseY = 0;
     popupY = NOTIF_OUTTER_MARGINS;
     popupX = NOTIF_WIDTH + (2 * NOTIF_OUTTER_MARGINS);
     setFramesPerSecond(NOTIF_ANIM_FPS);
@@ -46,20 +46,28 @@ void TopbarArea::paint(juce::Graphics &g)
 
     // get the window width
     bounds = g.getClipBounds();
-    baseX = bounds.getWidth() - 2 * NOTIF_OUTTER_MARGINS - NOTIF_WIDTH;
+
+    // base location of the notification area
+    notifBaseX = bounds.getWidth() - 2 * NOTIF_OUTTER_MARGINS - NOTIF_WIDTH;
 
     g.setColour(COLOR_APP_BACKGROUND);
     g.fillAll();
 
-    // draw background over bounds
+    // draw background box over bounds
     // paint the background of the area
-    g.setColour(juce::Colour(20, 20, 20));
-    juce::Rectangle<float> innerArea(6, 6, bounds.getWidth() - 12, bounds.getHeight() - 12);
-    g.fillRoundedRectangle(innerArea, 4);
-    g.setColour(juce::Colour(200, 200, 200));
-    g.drawRoundedRectangle(innerArea, 4, 0.4);
+    g.setColour(COLOR_NOTIF_BACKGROUND);
 
-    g.drawImageAt(_logo, 14, 14);
+    // we then draw a card at half the outter margins
+    juce::Rectangle<float> cardInsideArea =
+        bounds.reduced(TOPBAR_OUTTER_MARGINS >> 1, TOPBAR_OUTTER_MARGINS >> 1).toFloat();
+    g.setColour(COLOR_NOTIF_BACKGROUND);
+    g.fillRoundedRectangle(cardInsideArea, TOPBAR_BORDER_RADIUS);
+    g.setColour(COLOR_LABELS_BORDER);
+    g.drawRoundedRectangle(cardInsideArea, TOPBAR_BORDER_RADIUS, 0.4);
+
+    int imageY = (bounds.getHeight() / 2.0) - (_logo.getHeight() / 2.0);
+
+    g.drawImageAt(_logo, TOPBAR_OUTTER_MARGINS, imageY);
 
     // get time of now to reuse it in the animation drawings parts
     now = juce::Time::getMillisecondCounter();
@@ -68,8 +76,6 @@ void TopbarArea::paint(juce::Graphics &g)
     if (isAnimationRunning)
     {
         timeSinceAnimStart = now - animStartTime;
-
-        // TODO: add a formula of distance to smooth animation in and out.
 
         // the distance shift from the beginning of the anim
         int distanceDiff = int(
@@ -131,21 +137,23 @@ void TopbarArea::paint(juce::Graphics &g)
     }
 
     // if the box is in bound, draw it
-    if (baseX + popupX < bounds.getWidth())
+    if (notifBaseX + popupX < bounds.getWidth())
     {
         g.setColour(COLOR_NOTIF_BACKGROUND);
 
         // draw background box
         // font size:
         g.setFont(17); // TODO: Make it an app wide param
-        g.fillRoundedRectangle(baseX + popupX, baseY + popupY, NOTIF_WIDTH, NOTIF_HEIGHT, NOTIF_BORDER_RADIUS);
+        g.fillRoundedRectangle(notifBaseX + popupX, notifBaseY + popupY, NOTIF_WIDTH, NOTIF_HEIGHT,
+                               NOTIF_BORDER_RADIUS);
         // draw text
 
         g.setColour(COLOR_NOTIF_TEXT);
-        g.drawRoundedRectangle(baseX + popupX, baseY + popupY, NOTIF_WIDTH, NOTIF_HEIGHT, NOTIF_BORDER_RADIUS, 1.0);
+        g.drawRoundedRectangle(notifBaseX + popupX, notifBaseY + popupY, NOTIF_WIDTH, NOTIF_HEIGHT, NOTIF_BORDER_RADIUS,
+                               1.0);
 
-        g.drawMultiLineText(lastNotification.message, baseX + popupX + NOTIF_INNER_MARGINS,
-                            baseY + popupY + NOTIF_INNER_MARGINS, NOTIF_WIDTH - NOTIF_INNER_MARGINS * 2,
+        g.drawMultiLineText(lastNotification.message, notifBaseX + popupX + NOTIF_INNER_MARGINS,
+                            notifBaseY + popupY + NOTIF_INNER_MARGINS, NOTIF_WIDTH - NOTIF_INNER_MARGINS * 2,
                             juce::Justification::left, 0.0f);
     }
 
@@ -186,7 +194,19 @@ void TopbarArea::trimNotifications()
     queueRwMutex.exitRead();
 }
 
-void TopbarArea::resized(){};
+void TopbarArea::resized()
+{
+    auto area = getLocalBounds();
+    area.reduce(TOPBAR_OUTTER_MARGINS, TOPBAR_OUTTER_MARGINS);
+    auto leftSection = area.removeFromLeft(TOPBAR_LEFT_SECTION_WIDTH);
+    leftSection.removeFromLeft(_logo.getWidth());
+    leftComponentsContainer.setBounds(leftSection);
+
+    area = getLocalBounds();
+    area.reduce(TOPBAR_OUTTER_MARGINS, TOPBAR_OUTTER_MARGINS);
+    auto rightSection = area.removeFromRight(TOPBAR_RIGHT_SECTION_WIDTH);
+    rightComponentsContainer.setBounds(rightSection);
+};
 
 void TopbarArea::mouseDown(const juce::MouseEvent &me)
 {
