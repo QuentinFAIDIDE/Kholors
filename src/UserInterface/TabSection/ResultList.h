@@ -26,17 +26,10 @@ class ResultList : public juce::ListBoxModel
 
     void paintListBoxItem(int rowNumber, juce::Graphics &g, int widtht, int height, bool selected) override
     {
-        if (rowNumber % 2 == 0)
-        {
-            g.setColour(COLOR_OPAQUE_BICOLOR_LIST_1);
-        }
-        else
-        {
-            g.setColour(COLOR_OPAQUE_BICOLOR_LIST_2);
-        }
+        g.setColour(COLOR_APP_BACKGROUND);
         g.fillAll();
 
-        g.setColour(COLOR_NOTIF_TEXT);
+        g.setColour(COLOR_TEXT);
 
         if (selected)
         {

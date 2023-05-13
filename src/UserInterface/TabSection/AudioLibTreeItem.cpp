@@ -1,5 +1,6 @@
 #include "AudioLibTreeItem.h"
 
+#include "../../Config.h"
 #include <algorithm>
 
 AudioLibTreeRoot::AudioLibTreeRoot()
@@ -116,10 +117,10 @@ void AudioLibFile::paintItem(juce::Graphics &g, int width, int height)
 {
     if (isSelected())
     {
-        g.setColour(juce::Colour::fromFloatRGBA(0.87, 0.8, 0.8, 0.12));
+        g.setColour(juce::Colour::fromFloatRGBA(0.8, 0.8, 0.8, 0.10));
         g.fillAll();
     }
-    g.setColour(juce::Colour(220, 220, 220));
+    g.setColour(COLOR_TEXT);
     g.drawText(name, 0, 0, width, height, juce::Justification::left);
 }
 

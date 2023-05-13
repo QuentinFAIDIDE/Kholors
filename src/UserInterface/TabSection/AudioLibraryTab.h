@@ -6,7 +6,6 @@
 #include "../../Arrangement/ActivityManager.h"
 #include "../../Config.h"
 #include "../../Library/AudioLibraryManager.h"
-#include "../ColouredTreeView.h"
 #include "../Section.h"
 #include "AudioLibTreeItem.h"
 #include "LibrarySearchBar.h"
@@ -54,7 +53,7 @@ class AudioLibraryTab : public juce::Component,
   private:
     AudioLibraryManager *audioLibraries;
     std::vector<std::string> audioLibPathsCopy;
-    ColouredTreeView treeView;
+    juce::TreeView treeView;
     AudioLibTreeRoot *audioLibTreeRoot;
 
     juce::SpinLock searchTextLock;

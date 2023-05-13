@@ -10,7 +10,7 @@ TopbarArea::TopbarArea()
     popupX = NOTIF_WIDTH + (2 * NOTIF_OUTTER_MARGINS);
     setFramesPerSecond(NOTIF_ANIM_FPS);
     animationNormalisingFactor = float(NOTIF_WIDTH + (2.0 * NOTIF_OUTTER_MARGINS));
-    _logo = juce::ImageFileFormat::loadFrom(LogoDarkPng::logo_dark_png, LogoDarkPng::logo_dark_pngSize);
+    logo = juce::ImageFileFormat::loadFrom(LogoDarkPng::logo_dark_png, LogoDarkPng::logo_dark_pngSize);
 }
 
 TopbarArea::~TopbarArea()
@@ -55,19 +55,19 @@ void TopbarArea::paint(juce::Graphics &g)
 
     // draw background box over bounds
     // paint the background of the area
-    g.setColour(COLOR_NOTIF_BACKGROUND);
+    g.setColour(COLOR_BACKGROUND);
 
     // we then draw a card at half the outter margins
     juce::Rectangle<float> cardInsideArea =
         bounds.reduced(TOPBAR_OUTTER_MARGINS >> 1, TOPBAR_OUTTER_MARGINS >> 1).toFloat();
-    g.setColour(COLOR_NOTIF_BACKGROUND);
+    g.setColour(COLOR_BACKGROUND);
     g.fillRoundedRectangle(cardInsideArea, TOPBAR_BORDER_RADIUS);
     g.setColour(COLOR_LABELS_BORDER);
     g.drawRoundedRectangle(cardInsideArea, TOPBAR_BORDER_RADIUS, 0.4);
 
-    int imageY = (bounds.getHeight() / 2.0) - (_logo.getHeight() / 2.0);
+    int imageY = (bounds.getHeight() / 2.0) - (logo.getHeight() / 2.0);
 
-    g.drawImageAt(_logo, TOPBAR_OUTTER_MARGINS, imageY);
+    g.drawImageAt(logo, TOPBAR_OUTTER_MARGINS, imageY);
 
     // get time of now to reuse it in the animation drawings parts
     now = juce::Time::getMillisecondCounter();
@@ -139,7 +139,7 @@ void TopbarArea::paint(juce::Graphics &g)
     // if the box is in bound, draw it
     if (notifBaseX + popupX < bounds.getWidth())
     {
-        g.setColour(COLOR_NOTIF_BACKGROUND);
+        g.setColour(COLOR_BACKGROUND);
 
         // draw background box
         // font size:
@@ -148,7 +148,7 @@ void TopbarArea::paint(juce::Graphics &g)
                                NOTIF_BORDER_RADIUS);
         // draw text
 
-        g.setColour(COLOR_NOTIF_TEXT);
+        g.setColour(COLOR_TEXT);
         g.drawRoundedRectangle(notifBaseX + popupX, notifBaseY + popupY, NOTIF_WIDTH, NOTIF_HEIGHT, NOTIF_BORDER_RADIUS,
                                1.0);
 
@@ -199,7 +199,7 @@ void TopbarArea::resized()
     auto area = getLocalBounds();
     area.reduce(TOPBAR_OUTTER_MARGINS, TOPBAR_OUTTER_MARGINS);
     auto leftSection = area.removeFromLeft(TOPBAR_LEFT_SECTION_WIDTH);
-    leftSection.removeFromLeft(_logo.getWidth());
+    leftSection.removeFromLeft(logo.getWidth());
     leftComponentsContainer.setBounds(leftSection);
 
     area = getLocalBounds();

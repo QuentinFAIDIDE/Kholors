@@ -81,7 +81,7 @@ class TopbarArea : public juce::AnimatedAppComponent, public TaskListener
     float animationNormalisingFactor;
 
     // the logo of the app we draw in left corner
-    juce::Image _logo;
+    juce::Image logo;
 
     // left section with master and track properties
     TopbarLeftArea leftComponentsContainer;

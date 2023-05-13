@@ -125,10 +125,9 @@ void AudioLibraryTab::addAudioLibrary(std::string path)
 
 void AudioLibraryTab::paint(juce::Graphics &g)
 {
-    juce::Colour bgColor(30, 29, 29);
-
-    drawSection(g, findLocation, "Find", bgColor);
-    drawSection(g, librariesSectionLocation, "Libraries", bgColor);
+    juce::Colour bg = COLOR_APP_BACKGROUND;
+    drawSection(g, findLocation, "Find", bg);
+    drawSection(g, librariesSectionLocation, "Libraries", bg);
 }
 
 void AudioLibraryTab::resized()

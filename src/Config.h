@@ -65,17 +65,19 @@
 #define TOPBAR_RIGHT_SECTION_WIDTH 400
 
 // various colors
-#define COLOR_NOTIF_BACKGROUND juce::Colour(20, 20, 20)
+#define COLOR_BACKGROUND juce::Colour(20, 20, 20)
 #define COLOR_APP_BACKGROUND juce::Colour(27, 26, 26)
 #define COLOR_SAMPLE_BORDER juce::Colour(140, 140, 180)
-#define COLOR_NOTIF_TEXT juce::Colour(230, 230, 230)
+#define COLOR_TEXT juce::Colour(230, 230, 230)
 #define COLOR_NOTIF_BAR_TOP juce::Colour(62, 49, 49)
 #define COLOR_NOTIF_BAR_BOTTOM juce::Colour(10, 10, 10)
 #define COLOR_LABELS_BORDER juce::Colour(210, 210, 220)
 #define COLOR_SPLIT_PLACEHOLDER juce::Colour(210, 30, 30)
 #define COLOR_SELECT_AREA juce::Colour(54, 210, 210)
-#define COLOR_OPAQUE_BICOLOR_LIST_1 juce::Colour(25, 25, 25)
-#define COLOR_OPAQUE_BICOLOR_LIST_2 juce::Colour(23, 23, 23)
+#define COLOR_OPAQUE_BICOLOR_LIST_1 COLOR_APP_BACKGROUND
+#define COLOR_OPAQUE_BICOLOR_LIST_2 COLOR_APP_BACKGROUND
+
+#define DEFAULT_FONT_SIZE 15
 
 // the gain smoothing when the value is changed
 #define DSP_GAIN_SMOOTHING_RAMP_SEC 0.03f
