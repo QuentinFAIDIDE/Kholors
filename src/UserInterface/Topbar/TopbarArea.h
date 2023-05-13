@@ -38,6 +38,7 @@ class TopbarArea : public juce::AnimatedAppComponent, public TaskListener
     // Component inherited
     bool taskHandler(std::shared_ptr<Task> task) override;
     void paint(juce::Graphics &) override;
+    void paintOverChildren(juce::Graphics &) override;
     void resized() override;
     void mouseDown(const juce::MouseEvent &) override;
     void mouseUp(const juce::MouseEvent &) override;

@@ -14,7 +14,22 @@ AudioLibraryTab::AudioLibraryTab() : Thread("File Search Thread"), resultList("R
     treeView.setRootItemVisible(false);
     treeView.setRepaintsOnMouseActivity(false);
 
-    resultList.setColour(juce::ListBox::backgroundColourId, juce::Colour::fromFloatRGBA(0, 0, 0, 0));
+    treeView.setColour(juce::TreeView::ColourIds::linesColourId, COLOR_TEXT);
+    treeView.setColour(juce::TreeView::ColourIds::selectedItemBackgroundColourId, COLOR_BACKGROUND_HIGHLIGHT);
+    treeView.getViewport()->setScrollBarsShown(false, false, true, true);
+
+    treeView.setIndentSize(TREEVIEW_INDENT_SIZE);
+
+    resultList.setColour(juce::ListBox::backgroundColourId, COLOR_BACKGROUND_LIGHTER);
+    resultList.setColour(juce::ListBox::outlineColourId, COLOR_BACKGROUND_LIGHTER);
+    resultList.getViewport()->setScrollBarsShown(false, false, true, true);
+    resultList.setRowHeight(TREEVIEW_ITEM_HEIGHT);
+    resultList.setOutlineThickness(1);
+
+    searchBar.setColour(juce::TextEditor::ColourIds::textColourId, COLOR_TEXT);
+    searchBar.setColour(juce::TextEditor::ColourIds::backgroundColourId, COLOR_BACKGROUND_LIGHTER.darker(0.1f));
+    searchBar.setColour(juce::TextEditor::outlineColourId, COLOR_BACKGROUND_LIGHTER);
+    searchBar.setColour(juce::TextEditor::focusedOutlineColourId, COLOR_BACKGROUND_LIGHTER.darker(0.05f));
 
     addAndMakeVisible(treeView);
     addAndMakeVisible(searchBar);
@@ -125,9 +140,16 @@ void AudioLibraryTab::addAudioLibrary(std::string path)
 
 void AudioLibraryTab::paint(juce::Graphics &g)
 {
-    juce::Colour bg = COLOR_APP_BACKGROUND;
+    juce::Colour bg = COLOR_BACKGROUND_LIGHTER;
+    auto dropShadow = juce::DropShadow(COLOR_BLACK.withAlpha(0.4f), 5, juce::Point<int>(4, 2));
+    dropShadow.drawForRectangle(g, findLocation);
+    dropShadow.drawForRectangle(g, librariesSectionLocation);
     drawSection(g, findLocation, "Find", bg);
     drawSection(g, librariesSectionLocation, "Libraries", bg);
+
+    juce::Line<int> searchBarBottom(searchBarBounds.getBottomLeft(), searchBarBounds.getBottomRight());
+    g.setColour(COLOR_TEXT_DARKER.withAlpha(0.5f));
+    g.drawLine(searchBarBottom.toFloat(), 1.0f);
 }
 
 void AudioLibraryTab::resized()
@@ -153,7 +175,8 @@ void AudioLibraryTab::resized()
     treeView.setBounds(localBounds.reduced(2));
 
     // positionate the searchbar
-    searchBar.setBounds(findLocation.reduced(5, 5).withHeight(26).withY(findLocation.getY() + 24).reduced(2));
+    searchBarBounds = findLocation.reduced(5, 5).withHeight(26).withY(findLocation.getY() + 24).reduced(2);
+    searchBar.setBounds(searchBarBounds);
     resultList.setBounds(findLocation.reduced(5, 5)
                              .withHeight(findLocation.reduced(5, 5).getHeight() - 26 - 24 + 1)
                              .withY(findLocation.getY() + 24 + 26 + 3)

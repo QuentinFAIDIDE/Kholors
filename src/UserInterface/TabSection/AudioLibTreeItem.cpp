@@ -64,6 +64,12 @@ AudioLibFile::AudioLibFile(std::string path) : file(path)
     hasLoadedChildren = false;
     // OPTIMISATION: load items from here if UI is too laggy at the price
     // of tons of disk I/O at startup
+    setDrawsInLeftMargin(true);
+}
+
+int AudioLibFile::getItemHeight() const
+{
+    return TREEVIEW_ITEM_HEIGHT;
 }
 
 AudioLibFile::~AudioLibFile()
@@ -115,26 +121,35 @@ void AudioLibFile::itemOpennessChanged(bool isNowOpen)
 
 void AudioLibFile::paintItem(juce::Graphics &g, int width, int height)
 {
-    if (isSelected())
-    {
-        g.setColour(juce::Colour::fromFloatRGBA(0.8, 0.8, 0.8, 0.10));
-        g.fillAll();
-    }
-    g.setColour(COLOR_TEXT);
+    g.setColour(COLOR_TEXT_DARKER);
     g.drawText(name, 0, 0, width, height, juce::Justification::left);
+
+    g.setColour(COLOR_TEXT_DARKER.withAlpha(0.4f));
+
+    auto bounds = g.getClipBounds();
+    bounds.reduce(5, 0);
+    juce::Line<int> bottomLine(bounds.getBottomLeft(), bounds.getBottomRight());
+    g.drawLine(bottomLine.toFloat(), 0.5f);
+
+    if (getRowNumberInTree() == 0)
+    {
+        juce::Line<int> topLine(bounds.getTopLeft(), bounds.getTopRight());
+        g.drawLine(topLine.toFloat(), 0.5f);
+    }
 }
 
 void AudioLibFile::paintOpenCloseButton(juce::Graphics &g, const juce::Rectangle<float> &area,
                                         juce::Colour backgroundColour, bool isMouseOver)
 {
     g.setColour(juce::Colour(180, 180, 180));
+    auto middlePoint = area.reduced(area.getHeight() / 2).expanded(2);
     if (isOpen())
     {
-        g.fillRect(area.reduced(7, 8));
+        g.fillRect(middlePoint);
     }
     else
     {
-        g.fillEllipse(area.reduced(7));
+        g.fillEllipse(middlePoint);
     }
 }
 

@@ -12,9 +12,9 @@ void TopbarLeftArea::paint(juce::Graphics &g)
     auto leftLine = juce::Line<float>(bounds.getTopLeft(), bounds.getBottomLeft());
     auto rightLine = juce::Line<float>(bounds.getTopRight(), bounds.getBottomRight());
 
-    g.setColour(COLOR_LABELS_BORDER);
-    g.drawLine(leftLine);
-    g.drawLine(rightLine);
+    g.setColour(COLOR_LABELS_BORDER.withAlpha(0.5f));
+    g.drawLine(leftLine, 0.5);
+    g.drawLine(rightLine, 0.5);
 }
 
 void TopbarLeftArea::resized()

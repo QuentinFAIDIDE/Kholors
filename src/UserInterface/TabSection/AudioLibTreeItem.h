@@ -35,6 +35,7 @@ class AudioLibFile : public juce::TreeViewItem
     bool customComponentUsesTreeViewMouseHandler() const override;
     juce::File &getJuceFile();
     void focusAtPath(std::string);
+    int getItemHeight() const override;
 
   private:
     juce::File file;

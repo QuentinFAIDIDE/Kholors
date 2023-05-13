@@ -11,6 +11,9 @@ TopbarArea::TopbarArea()
     setFramesPerSecond(NOTIF_ANIM_FPS);
     animationNormalisingFactor = float(NOTIF_WIDTH + (2.0 * NOTIF_OUTTER_MARGINS));
     logo = juce::ImageFileFormat::loadFrom(LogoDarkPng::logo_dark_png, LogoDarkPng::logo_dark_pngSize);
+
+    addAndMakeVisible(leftComponentsContainer);
+    addAndMakeVisible(rightComponentsContainer);
 }
 
 TopbarArea::~TopbarArea()
@@ -32,6 +35,24 @@ bool TopbarArea::taskHandler(std::shared_ptr<Task> task)
 
 void TopbarArea::paint(juce::Graphics &g)
 {
+    g.setColour(COLOR_BACKGROUND);
+    g.fillAll();
+
+    // we then draw a card at half the outter margins
+    juce::Rectangle<float> cardInsideArea =
+        bounds.reduced(TOPBAR_OUTTER_MARGINS >> 1, TOPBAR_OUTTER_MARGINS >> 1).toFloat();
+    g.setColour(COLOR_BACKGROUND_LIGHTER);
+    g.fillRoundedRectangle(cardInsideArea, TOPBAR_BORDER_RADIUS);
+    g.setColour(COLOR_LABELS_BORDER);
+    g.drawRoundedRectangle(cardInsideArea, TOPBAR_BORDER_RADIUS, 0.4);
+
+    int imageY = (bounds.getHeight() / 2.0) - (logo.getHeight() / 2.0);
+
+    g.drawImageAt(logo, TOPBAR_OUTTER_MARGINS, imageY);
+}
+
+void TopbarArea::paintOverChildren(juce::Graphics &g)
+{
     // make sure the notification are filetered to remove old ones
     trimNotifications();
 
@@ -49,25 +70,6 @@ void TopbarArea::paint(juce::Graphics &g)
 
     // base location of the notification area
     notifBaseX = bounds.getWidth() - 2 * NOTIF_OUTTER_MARGINS - NOTIF_WIDTH;
-
-    g.setColour(COLOR_APP_BACKGROUND);
-    g.fillAll();
-
-    // draw background box over bounds
-    // paint the background of the area
-    g.setColour(COLOR_BACKGROUND);
-
-    // we then draw a card at half the outter margins
-    juce::Rectangle<float> cardInsideArea =
-        bounds.reduced(TOPBAR_OUTTER_MARGINS >> 1, TOPBAR_OUTTER_MARGINS >> 1).toFloat();
-    g.setColour(COLOR_BACKGROUND);
-    g.fillRoundedRectangle(cardInsideArea, TOPBAR_BORDER_RADIUS);
-    g.setColour(COLOR_LABELS_BORDER);
-    g.drawRoundedRectangle(cardInsideArea, TOPBAR_BORDER_RADIUS, 0.4);
-
-    int imageY = (bounds.getHeight() / 2.0) - (logo.getHeight() / 2.0);
-
-    g.drawImageAt(logo, TOPBAR_OUTTER_MARGINS, imageY);
 
     // get time of now to reuse it in the animation drawings parts
     now = juce::Time::getMillisecondCounter();

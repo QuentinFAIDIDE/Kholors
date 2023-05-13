@@ -26,15 +26,16 @@ class ResultList : public juce::ListBoxModel
 
     void paintListBoxItem(int rowNumber, juce::Graphics &g, int widtht, int height, bool selected) override
     {
-        g.setColour(COLOR_APP_BACKGROUND);
-        g.fillAll();
-
-        g.setColour(COLOR_TEXT);
+        g.setColour(COLOR_TEXT_DARKER.withAlpha(0.2f));
+        g.drawLine(juce::Line<int>(g.getClipBounds().getBottomLeft(), g.getClipBounds().getBottomRight()).toFloat(), 1);
 
         if (selected)
         {
-            g.drawRect(g.getClipBounds(), 1);
+            g.setColour(COLOR_BACKGROUND_HIGHLIGHT);
+            g.fillRect(g.getClipBounds());
         }
+
+        g.setColour(COLOR_TEXT_DARKER);
 
         std::string shortedName = content[rowNumber];
 

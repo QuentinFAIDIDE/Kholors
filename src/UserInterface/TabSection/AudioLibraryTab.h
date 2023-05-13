@@ -61,6 +61,8 @@ class AudioLibraryTab : public juce::Component,
 
     LibrarySearchBar searchBar;
 
+    juce::Rectangle<int> searchBarBounds;
+
     ResultList resultListContent;
     juce::ListBox resultList;
 
