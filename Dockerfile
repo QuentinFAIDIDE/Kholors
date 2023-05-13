@@ -6,5 +6,6 @@ RUN pacman -S --noconfirm git
 RUN pacman -S --noconfirm clang
 RUN pacman -S --noconfirm yaml-cpp
 RUN pacman -S --noconfirm nlohmann-json
+RUN pacman -S --noconfirm ccache
 
 WORKDIR /src/app
