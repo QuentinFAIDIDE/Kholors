@@ -58,6 +58,17 @@ void AudioLibraryManager::existsOrCreateFolder(juce::File folder)
 
 AudioLibraryManager::~AudioLibraryManager()
 {
+    // free all SortedAccessCountEntry
+    SortedAccessCountEntry *currentEntry;
+    SortedAccessCountEntry *previousEntry;
+    currentEntry = topAccessedEntry;
+    while (currentEntry != nullptr)
+    {
+        previousEntry = currentEntry;
+        currentEntry = previousEntry->next;
+        nSortedMostUsed--;
+        delete (previousEntry);
+    }
     // persists profile to disk
     saveProfileCount();
 }
