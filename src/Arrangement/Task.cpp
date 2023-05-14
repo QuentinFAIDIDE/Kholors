@@ -483,7 +483,7 @@ SampleGroupRecolor::SampleGroupRecolor(int cid) : colorId(cid), colorFromId(true
 }
 
 SampleGroupRecolor::SampleGroupRecolor(std::set<int> ids, std::map<int, juce::Colour> newColors)
-    : colorId(-1), changedSampleIds(ids), colorsPerId(newColors)
+    : colorId(-1), changedSampleIds(ids), colorsPerId(newColors), colorFromId(false)
 {
 }
 
