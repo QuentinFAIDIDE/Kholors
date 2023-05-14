@@ -95,6 +95,7 @@ AudioLibraryTab::~AudioLibraryTab()
     // stop thread with a 4sec timeout to kill it
     stopThread(4000);
 
+    treeView.setRootItem(nullptr);
     delete audioLibTreeRoot;
     if (audioLibraries != nullptr)
     {
