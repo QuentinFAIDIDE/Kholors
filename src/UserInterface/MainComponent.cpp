@@ -7,7 +7,7 @@
 
 //==============================================================================
 MainComponent::MainComponent()
-    : mixingBus(activityManager), arrangementArea(mixingBus, activityManager),
+    : notificationArea(activityManager), mixingBus(activityManager), arrangementArea(mixingBus, activityManager),
       actionTabs(juce::TabbedButtonBar::Orientation::TabsAtTop)
 {
     configureLookAndFeel();

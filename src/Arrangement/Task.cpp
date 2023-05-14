@@ -477,3 +477,37 @@ std::string SampleUpdateTask::marshal()
 }
 
 //////////////////////////////////////////////////////
+
+SampleGroupRecolor::SampleGroupRecolor(int cid) : colorId(cid), colorFromId(true)
+{
+}
+
+SampleGroupRecolor::SampleGroupRecolor(std::set<int> ids, std::map<int, juce::Colour> newColors)
+    : colorId(-1), changedSampleIds(ids), colorsPerId(newColors)
+{
+}
+
+std::string SampleGroupRecolor::marshal()
+{
+    std::vector<int> ids(changedSampleIds.begin(), changedSampleIds.end());
+    json taskj = {{"object", "task"},
+                  {"task", "sample_view_update"},
+                  {"color_id", colorId},
+                  {"changed_samples", ids},
+                  {"newColor", newColor.toString().toStdString()},
+                  {"color_from_id", colorFromId},
+                  {"is_completed", isCompleted()},
+                  {"failed", hasFailed()},
+                  {"recordable_in_history", recordableInHistory},
+                  {"is_part_of_reversion", isPartOfReversion}};
+    return taskj.dump();
+}
+
+std::vector<std::shared_ptr<Task>> SampleGroupRecolor::getOppositeTasks()
+{
+    std::vector<std::shared_ptr<Task>> tasks;
+    std::shared_ptr<SampleGroupRecolor> task = std::make_shared<SampleGroupRecolor>(changedSampleIds, colorsPerId);
+    task->colorId = -1;
+    tasks.push_back(task);
+    return tasks;
+}

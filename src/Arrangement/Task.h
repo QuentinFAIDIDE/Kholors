@@ -498,4 +498,45 @@ class SampleUpdateTask : public SilentTask
     std::shared_ptr<SamplePlayer> sample; // reference to SamplePlayer object
 };
 
+/**
+ Task to recolor selected sample groups.
+ */
+class SampleGroupRecolor : public Task
+{
+  public:
+    /**
+      Task to recolor selected samples
+     */
+    SampleGroupRecolor(int colorId);
+
+    /**
+      Task to recolor selected samples, but using
+      raw color and set of track ids instead (for reversed version)
+     */
+    SampleGroupRecolor(std::set<int>, std::map<int, juce::Colour>);
+
+    /**
+     Dumps the task data to a string as json
+     */
+    std::string marshal() override;
+
+    /**
+      Get the opposite colour change
+     */
+    std::vector<std::shared_ptr<Task>> getOppositeTasks() override;
+
+    // id of the color to put (from the colorPalette)
+    int colorId;
+    // the ids of the samples that were changed
+    std::set<int> changedSampleIds;
+    // the color before the change
+    juce::Colour colorPerIds;
+    // the color after the change
+    juce::Colour newColor;
+    // list of colors per id
+    std::map<int, juce::Colour> colorsPerId;
+    // are we recoloring from raw value or id
+    bool colorFromId;
+};
+
 #endif // DEF_ACTION_HPP

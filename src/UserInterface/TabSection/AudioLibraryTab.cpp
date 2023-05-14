@@ -170,16 +170,17 @@ void AudioLibraryTab::resized()
 
     // set the position of the file browser
     localBounds.reduce(5, 5);
-    localBounds.setY(localBounds.getY() + 22);
+    localBounds.setY(localBounds.getY() + SECTION_TITLE_HEIGHT);
     localBounds.setHeight(localBounds.getHeight() - 25);
     treeView.setBounds(localBounds.reduced(2));
 
     // positionate the searchbar
-    searchBarBounds = findLocation.reduced(5, 5).withHeight(26).withY(findLocation.getY() + 24).reduced(2);
+    searchBarBounds =
+        findLocation.reduced(5, 5).withHeight(26).withY(findLocation.getY() + SECTION_TITLE_HEIGHT).reduced(2);
     searchBar.setBounds(searchBarBounds);
     resultList.setBounds(findLocation.reduced(5, 5)
-                             .withHeight(findLocation.reduced(5, 5).getHeight() - 26 - 24 + 1)
-                             .withY(findLocation.getY() + 24 + 26 + 3)
+                             .withHeight(findLocation.reduced(5, 5).getHeight() - 26 - SECTION_TITLE_HEIGHT + 1)
+                             .withY(findLocation.getY() + SECTION_TITLE_HEIGHT + 26 + 3)
                              .reduced(2));
 }
 

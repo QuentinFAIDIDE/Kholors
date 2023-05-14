@@ -220,6 +220,7 @@ class ArrangementArea : public juce::Component,
     bool updateViewResizing(juce::Point<int> &);
 
     void refreshSampleOpenGlView(int index);
+    void recolorSelection(std::shared_ptr<SampleGroupRecolor>);
 };
 
 #endif // DEF_ARRANGEMENTAREA_HPP

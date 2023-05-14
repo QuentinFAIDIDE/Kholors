@@ -7,6 +7,7 @@
 #include <memory>
 #include <stdexcept>
 
+#include "../Arrangement/ColorPalette.h"
 #include "../OpenGL/FreqviewShaders.h"
 #include "../OpenGL/GLInfoLogger.h"
 #include "juce_opengl/opengl/juce_gl.h"
@@ -172,6 +173,17 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
         updateTask->setCompleted(true);
         updateTask->setFailed(false);
 
+        return true;
+    }
+
+    std::shared_ptr<SampleGroupRecolor> colorTask = std::dynamic_pointer_cast<SampleGroupRecolor>(task);
+    if (colorTask != nullptr && !colorTask->isCompleted() && !colorTask->hasFailed())
+    {
+
+        recolorSelection(colorTask);
+
+        colorTask->setCompleted(true);
+        colorTask->setFailed(false);
         return true;
     }
 
@@ -1671,4 +1683,75 @@ void ArrangementArea::itemDropped(const SourceDetails &dragSourceDetails)
 
     std::shared_ptr<SampleCreateTask> task = std::make_shared<SampleCreateTask>(filename.toStdString(), framePos);
     activityManager.broadcastTask(task);
+}
+
+void ArrangementArea::recolorSelection(std::shared_ptr<SampleGroupRecolor> task)
+{
+    std::set<int> samplesToRefreshDIsplay;
+    if (task->colorFromId)
+    {
+        // not really vital, but we'll prevent duplicate color setting
+        // with this set
+        std::set<int> changedGroups;
+        std::set<size_t>::iterator it;
+
+        std::set<int> changedIds;
+
+        std::map<int, juce::Colour> oldSampleColours;
+
+        // always copying the selection is a good habit
+        std::set<size_t> currentSelection = selectedTracks;
+        for (it = currentSelection.begin(); it != currentSelection.end(); it++)
+        {
+            auto initialColor = taxonomyManager.getSampleColor(*it);
+
+            samplesToRefreshDIsplay.insert(*it);
+            changedIds.insert(*it);
+            oldSampleColours[*it] = initialColor;
+
+            int gid = taxonomyManager.getSampleGroup(*it);
+            if (changedGroups.find(gid) == changedGroups.end())
+            {
+                changedGroups.insert(gid);
+                taxonomyManager.setGroupColor(gid, colourPalette[task->colorId]);
+
+                // now for each group we add its samples to the changed set
+                std::set<int> groupSamples = taxonomyManager.getGroupSamples(gid);
+                std::set<int>::iterator itGroupSamples;
+                for (itGroupSamples = groupSamples.begin(); itGroupSamples != groupSamples.end(); itGroupSamples++)
+                {
+                    samplesToRefreshDIsplay.insert(*itGroupSamples);
+                    changedIds.insert(*itGroupSamples);
+                    oldSampleColours[*itGroupSamples] = initialColor;
+                }
+            }
+        }
+
+        task->newColor = colourPalette[task->colorId];
+        task->changedSampleIds = changedIds;
+        task->colorsPerId = oldSampleColours;
+    }
+    else
+    {
+        std::set<int> changedGroups;
+        std::set<int>::iterator it;
+        for (it = task->changedSampleIds.begin(); it != task->changedSampleIds.end(); it++)
+        {
+            samplesToRefreshDIsplay.insert(*it);
+            int gid = taxonomyManager.getSampleGroup(*it);
+            if (changedGroups.find(gid) == changedGroups.end())
+            {
+                changedGroups.insert(gid);
+                taxonomyManager.setGroupColor(gid, task->colorsPerId[*it]);
+            }
+        }
+    }
+
+    // now resync all the colours and we're done
+    std::set<int>::iterator it;
+    for (it = samplesToRefreshDIsplay.begin(); it != samplesToRefreshDIsplay.end(); it++)
+    {
+        syncSampleColor(*it);
+    }
+    repaint();
 }

@@ -39,8 +39,10 @@ class TaxonomyManager
     void setGroupName(int groupId, std::string name);
     void setGroupColor(int groupId, juce::Colour &c);
     void setGroupColor(int groupId, int colorId);
-
+    int getSampleGroup(int sampleId);
     void disableSample(int sampleId);
+
+    std::set<int> getGroupSamples(int groupId);
 
   private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TaxonomyManager)

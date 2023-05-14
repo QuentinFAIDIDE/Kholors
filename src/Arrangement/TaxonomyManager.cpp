@@ -148,3 +148,23 @@ void TaxonomyManager::disableSample(int sampleId)
     setSampleGroup(sampleId, sampleId);
     setSampleName(sampleId, "Sample " + std::to_string(sampleId));
 }
+
+int TaxonomyManager::getSampleGroup(int id)
+{
+    if (id >= samples.size())
+    {
+        return id;
+    }
+
+    return samples[id].groupId;
+}
+
+std::set<int> TaxonomyManager::getGroupSamples(int gid)
+{
+    if (gid >= groups.size())
+    {
+        return std::set<int>();
+    }
+
+    return groups[gid].sampleIds;
+}
