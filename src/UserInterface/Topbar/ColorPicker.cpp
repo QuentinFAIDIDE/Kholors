@@ -4,7 +4,7 @@
 #include "../../Arrangement/ColorPalette.h"
 
 // full color square size including margins
-#define COLORSQUARE_SIZE 25
+#define COLORSQUARE_SIZE 22
 #define COLORSQUARE_INNER_MARGINS 3
 
 ColorPicker::ColorPicker(ActivityManager &am) : activityManager(am)
@@ -16,12 +16,12 @@ void ColorPicker::paint(juce::Graphics &g)
     auto bounds = g.getClipBounds();
 
     juce::Colour bg = juce::Colours::transparentBlack;
-    drawSection(g, bounds, "Group Color", bg);
+    drawSection(g, bounds, "Group Color", bg, true);
 
     // get the bounds below the section title
     auto boxesArea = bounds;
-    boxesArea.removeFromTop(SECTION_TITLE_HEIGHT);
-    boxesArea.reduce(4, 4);
+    boxesArea.removeFromTop(SECTION_TITLE_HEIGHT_SMALL);
+    boxesArea.reduce(TOPBAR_WIDGETS_MARGINS, TOPBAR_WIDGETS_MARGINS);
 
     // compute how many squares will fit
     int noHorizontalSqares = (boxesArea.getWidth() / COLORSQUARE_SIZE);

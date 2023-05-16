@@ -3,17 +3,19 @@
 #include "../../Arrangement/ActivityManager.h"
 #include "ColorPicker.h"
 
-TopbarRightArea::TopbarRightArea(ActivityManager &am) : colorPicker(am)
+TopbarRightArea::TopbarRightArea(ActivityManager &am) : colorPicker(am), selectionGainVu("Selected", "selection_gain")
 {
     addAndMakeVisible(colorPicker);
     colorPicker.setVisible(true);
     colorPicker.setSize(96, 200);
+
+    addAndMakeVisible(selectionGainVu);
 }
 
 void TopbarRightArea::paint(juce::Graphics &g)
 {
     auto constBounds = g.getClipBounds();
-    bounds = constBounds.toFloat();
+    bounds = constBounds.reduced(TOPBAR_SECTIONS_INNER_MARGINS, TOPBAR_SECTIONS_INNER_MARGINS).toFloat();
 
     // draw a separator to the left
     auto leftLine = juce::Line<float>(bounds.getTopLeft(), bounds.getBottomLeft());
@@ -25,4 +27,10 @@ void TopbarRightArea::resized()
 {
     auto colorPickerBounds = getLocalBounds().removeFromRight(COLORPICKER_WIDTH);
     colorPicker.setBounds(colorPickerBounds);
+
+    // bounds of the vu meter widget that display volume for selected samples.
+    // Note that VUMETER_WIDTH does not include side margins so we double it to make room.
+    auto selectedGainVuBounds = colorPickerBounds.withWidth(VUMETER_WIDGET_WIDTH);
+    selectedGainVuBounds.setX(selectedGainVuBounds.getX() - selectedGainVuBounds.getWidth());
+    selectionGainVu.setBounds(selectedGainVuBounds);
 }
