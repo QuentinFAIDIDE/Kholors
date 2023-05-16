@@ -23,12 +23,17 @@ void VuMeter::paint(juce::Graphics &g)
     boxesArea.removeFromTop(SECTION_TITLE_HEIGHT);
     boxesArea.reduce(margins, margins);
     
+    // TODO: remove two text sections from top to store
+    // some sort of averaged last max value (that get resets when clicked ?)
+
     int emptySidesWidth = (bounds.getWidth()-VUMETER_WIDTH)/2;
+    // TODO: draw scales in those empty area
     bounds.reduce(emptySidesWidth, 0);
 
     // now our bounds perfectly fit the vumeter
     // area where we draw
-    
+    g.setColor(COLOR_TEXT_DARKER);
+    g.drawRect(bounds);
 }
 
 void VuMeter::mouseDrag(const juce::MouseEvent &event)

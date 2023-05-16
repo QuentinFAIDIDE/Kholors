@@ -2,6 +2,7 @@
 #define DEF_VU_METER_HPP
 
 #define VUMETER_WIDTH 60
+#define VUMETER_WIDTH 14
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
