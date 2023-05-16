@@ -24,6 +24,10 @@ class VuMeter : public juce::Component
     float dbValueLeft, dbValueRight;
     float dbMaxLeft, dbMaxRight;
     std::string title;
+
+    void zoomToInnerSection(juce::Rectangle<int>);
+    void paintCoreMeter(juce::Graphics &, juce::Rectangle<int>);
+    void paintBottomValues(juce::Graphics &, juce::Rectangle<int>);
 };
 
 #endif // DEF_VU_METER_HPP

@@ -21,6 +21,27 @@ void VuMeter::paint(juce::Graphics &g)
     juce::Colour bg = juce::Colours::transparentBlack;
     drawSection(g, bounds, title, bg);
 
+    auto boxesArea = zoomToInnerSection(bounds);
+
+    paintBottomValues(g, boxesArea);
+
+    // we then draw the core meter
+    paintCoreMeter(g, boxesArea);
+}
+
+void VuMeter::mouseDrag(const juce::MouseEvent &event)
+{
+    // TODO
+}
+
+void VuMeter::setDbValue(float leftVal, float rightVal)
+{
+    dbValueLeft = leftVal;
+    dbValueRight = rightVal;
+}
+
+juce::Rectangle<int> zoomToInnerSection(juce::Rectangle<int> bounds)
+{
     // focus on the area without the title and margins
     auto boxesArea = bounds;
     boxesArea.removeFromTop(SECTION_TITLE_HEIGHT);
@@ -32,7 +53,16 @@ void VuMeter::paint(juce::Graphics &g)
 
     // remove the side areas
     boxesArea.reduce(emptySidesWidth, 0);
+    return boxesArea;
+}
 
+void VuMeter::paintCoreMeter(juce::Graphics &g, juce::Rectangle<int> boxesArea)
+{
+    // TODO
+}
+
+void VuMeter::paintBottomValues(juce::Graphics &g, juce::Rectangle<int> boxesArea)
+{
     // extract the bottom area where moving average values are show
     auto maxValArea = boxesArea.removeFromBottom(VUMETER_MAXVAL_HEIGHT);
     
@@ -50,15 +80,4 @@ void VuMeter::paint(juce::Graphics &g)
     g.fillRect(boxesArea);
     g.setColour(COLOR_TEXT_DARKER);
     g.drawRect(boxesArea);
-}
-
-void VuMeter::mouseDrag(const juce::MouseEvent &event)
-{
-    // TODO
-}
-
-void VuMeter::setDbValue(float leftVal, float rightVal)
-{
-    dbValueLeft = leftVal;
-    dbValueRight = rightVal;
 }
