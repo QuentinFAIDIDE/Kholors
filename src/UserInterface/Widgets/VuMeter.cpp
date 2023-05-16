@@ -22,18 +22,22 @@ void VuMeter::paint(juce::Graphics &g)
     auto boxesArea = bounds;
     boxesArea.removeFromTop(SECTION_TITLE_HEIGHT);
     boxesArea.reduce(margins, margins);
-    
-    // TODO: remove two text sections from top to store
-    // some sort of averaged last max value (that get resets when clicked ?)
 
     int emptySidesWidth = (bounds.getWidth()-VUMETER_WIDTH)/2;
+    
+    // extract the bottom area where moving average values are show
+    auto maxValArea = boxesArea.removeFromBottom(VUMETER_MAXVAL_HEIGHT);
+
+    g.setColor(COLOR_TEXT_DARKER);
+    g.drawRect(maxValArea.reduced(2));
+    
     // TODO: draw scales in those empty area
     bounds.reduce(emptySidesWidth, 0);
 
     // now our bounds perfectly fit the vumeter
     // area where we draw
     g.setColor(COLOR_TEXT_DARKER);
-    g.drawRect(bounds);
+    g.drawRect(bounds.reduced(2));
 }
 
 void VuMeter::mouseDrag(const juce::MouseEvent &event)

@@ -2,7 +2,7 @@
 #define DEF_VU_METER_HPP
 
 #define VUMETER_WIDTH 60
-#define VUMETER_WIDTH 14
+#define VUMETER_MAXVAL_HEIGHT 14
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -16,6 +16,7 @@ class VuMeter : public juce::Component
 
   private:
     float dbValueLeft, dbValueRight;
+    float dbMaxLeft, dbMaxRight;
     std::string title;
 };
 
