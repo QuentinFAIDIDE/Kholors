@@ -1,7 +1,7 @@
 #include "VuMeter.h"
 #include "../Section.h"
 
-VuMeter::VuMeter(std::string t) title(t)
+VuMeter::VuMeter(std::string t): title(t)
 {
 
 }
