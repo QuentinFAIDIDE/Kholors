@@ -25,12 +25,6 @@ void VuMeter::paint(juce::Graphics &g)
     auto boxesArea = bounds;
     boxesArea.removeFromTop(SECTION_TITLE_HEIGHT);
     boxesArea.reduce(TOPBAR_SECTIONS_INNER_MARGINS, TOPBAR_SECTIONS_INNER_MARGINS);
-
-    // extract the bottom area where moving average values are show
-    auto maxValArea = boxesArea.removeFromBottom(VUMETER_MAXVAL_HEIGHT);
-    // draw borders around it
-    g.setColor(COLOR_TEXT_DARKER);
-    g.drawRect(maxValArea.reduced(2));
     
     // what's the size of the remaining side parts ?
     int emptySidesWidth = (boxesArea.getWidth()-VUMETER_WIDTH)/2;
@@ -39,11 +33,22 @@ void VuMeter::paint(juce::Graphics &g)
     // remove the side areas
     boxesArea.reduce(emptySidesWidth, 0);
 
-    // now our bounds perfectly fit the vumeter
-    // area where we draw
-    g.setColor(COLOR_BACKGROUND);
+    // extract the bottom area where moving average values are show
+    auto maxValArea = boxesArea.removeFromBottom(VUMETER_MAXVAL_HEIGHT);
+    
+    // isolate left and right text area
+    g.setColour(COLOR_TEXT_DARKER);
+    auto leftTxtVal = maxValArea.withWidth(VUMETER_WIDTH/2);
+    auto rightTxtVal = leftTxtVal.withY(leftTxtVal.getY()+(VUMETER_WIDTH/2));
+
+    // draw the text
+    g.drawText(juce::String(dbMaxLeft), leftTxtVal, juce::Justification::Centre, true);
+    g.drawText(juce::String(dbMaxRight), rightTxtVal, juce::Justification::Centre, true);
+
+    // we then draw the inside of the vumeter
+    g.setColour(COLOR_BACKGROUND);
     g.fillRect(boxesArea);
-    g.setColor(COLOR_TEXT_DARKER);
+    g.setColour(COLOR_TEXT_DARKER);
     g.drawRect(boxesArea);
 }
 
