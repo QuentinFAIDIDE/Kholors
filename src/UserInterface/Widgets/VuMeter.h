@@ -40,7 +40,6 @@ class VuMeter : public juce::Component
     void setDbValue(float, float);
 
   private:
-
     // the actual decibels values of left and righht channel
     float dbValueLeft, dbValueRight;
 
@@ -54,7 +53,7 @@ class VuMeter : public juce::Component
     Return the area within the section at the desired vu meter width.
     (No title and margins)
     */
-    void zoomToInnerSection(juce::Rectangle<int>);
+    juce::Rectangle<int> zoomToInnerSection(juce::Rectangle<int>);
 
     /*
     Paint the core visualizer part of the vu meter
