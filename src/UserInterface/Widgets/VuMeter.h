@@ -1,8 +1,14 @@
 #ifndef DEF_VU_METER_HPP
 #define DEF_VU_METER_HPP
 
+// width of the stereo vumeter
 #define VUMETER_WIDTH 60
+// height of the area where max db are displayed
 #define VUMETER_MAXVAL_HEIGHT 14
+// how many tiny little squares we define
+#define VUMETER_DEFINITION 32
+// minimum db value displayed
+#define VUMETER_MIN_DB -60.0
 
 #include <juce_gui_basics/juce_gui_basics.h>
 

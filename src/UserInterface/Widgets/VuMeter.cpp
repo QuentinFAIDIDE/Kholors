@@ -1,7 +1,8 @@
 #include "VuMeter.h"
 #include "../Section.h"
+#include "../../Config.h"
 
-VuMeter::VuMeter(std::string t): title(t)
+VuMeter::VuMeter(std::string t): title(t), dbValueLeft(0.0), dbValueRight(0.0), dbMaxLeft(0.0), dbMaxRight(0.0)
 {
 
 }
