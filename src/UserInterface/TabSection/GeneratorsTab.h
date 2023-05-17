@@ -3,6 +3,8 @@
 
 #include "../Section.h"
 
+#define GENERATOR_TAB_SELECTOR_WIDTH 400
+
 /**
 Component that sits in the generator tab and allow
 to use Generators. @see Generators.
