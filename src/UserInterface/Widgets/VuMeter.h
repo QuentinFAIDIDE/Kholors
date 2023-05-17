@@ -2,14 +2,22 @@
 #define DEF_VU_METER_HPP
 
 // width of the stereo vumeter
-#define VUMETER_WIDTH 25
-#define VUMETER_WIDGET_WIDTH 50
-// height of the area where max db are displayed
-#define VUMETER_MAXVAL_HEIGHT 10
+#define VUMETER_WIDTH 52
+// the preferred widget width
+#define VUMETER_WIDGET_WIDTH (VUMETER_WIDTH + (2 * TOPBAR_WIDGETS_MARGINS))
+
+// padding inside the whole box
+#define VUMETER_OUTTER_PADDING 2
+
+// space beteen the squares
+#define VUMETER_INNER_PADDING 1
+
 // how many tiny little squares we define
 #define VUMETER_DEFINITION 32
+// how many db between each bars
+#define VUMETER_SCALE_DEFINITION 3.0
 // minimum db value displayed
-#define VUMETER_MIN_DB -60.0
+#define VUMETER_MIN_DB -24.0
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -61,6 +69,16 @@ class VuMeter : public juce::Component
     Paint the core visualizer part of the vu meter
     */
     void paintCoreMeter(juce::Graphics &, juce::Rectangle<int>);
+
+    /**
+    Paint the scale area on the right where the grading and number lives.
+    */
+    void drawScale(juce::Graphics &g, juce::Rectangle<int>);
+
+    /**
+     Paint the vu area where the left and right channel are displayed.
+     */
+    void drawMeter(juce::Graphics &g, juce::Rectangle<int>);
 };
 
 #endif // DEF_VU_METER_HPP

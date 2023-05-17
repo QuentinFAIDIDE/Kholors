@@ -11,7 +11,7 @@
 #define FREQTIME_VIEW_INTENSITY_RESOLUTION (2 << (FREQTIME_VIEW_INTENSITY_RESOLUTION_BITS - 1))
 // Max number of elements per pixel (used to preallocate cache)
 #define FREQTIME_VIEW_MAX_SINGLEPOINT_ELEMEMENTS 8
-#define FREQTIME_VIEW_HEIGHT 450
+#define FREQTIME_VIEW_HEIGHT 400
 // pixel vertical width of the space better top and bottom of samples
 #define FREQTIME_VIEW_INNER_MARGINS 2
 // TODO: RENAME THESE ! I START USING FREQVIEW IN THE MIDDLE
@@ -48,7 +48,7 @@
 
 // notification constants
 #define NOTIF_WIDTH 400
-#define NOTIF_HEIGHT 80
+#define NOTIF_HEIGHT 100
 #define NOTIF_INNER_MARGINS 20
 #define NOTIF_OUTTER_MARGINS 20
 #define NOTIF_BORDER_RADIUS 8.0
@@ -87,7 +87,7 @@
 #define TREEVIEW_ITEM_HEIGHT 22
 #define TREEVIEW_INDENT_SIZE 20
 
-#define TAB_PADDING 6
+#define TAB_PADDING 4
 #define TAB_SECTIONS_MARGINS 5
 
 #define DEFAULT_FONT_SIZE 15
