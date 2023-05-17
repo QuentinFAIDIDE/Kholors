@@ -9,6 +9,7 @@ to use Generators. @see Generators.
 */
 class GeneratorsTab : public juce::Component 
 {
+  public:
     /**
     Create the generator tab
     */
