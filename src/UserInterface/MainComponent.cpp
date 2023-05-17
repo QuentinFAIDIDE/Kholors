@@ -25,8 +25,8 @@ MainComponent::MainComponent()
     // set size of the component
     setSize(1400, 800);
 
-    actionTabs.addTab("Audio Library", COLOR_BACKGROUND_LIGHTER, &audioLibraryTab, false);
-    actionTabs.addTab("Generators", COLOR_BACKGROUND_LIGHTER, &generatorsTab, false);
+    actionTabs.addTab("Audio Library", COLOR_BACKGROUND, &audioLibraryTab, false);
+    actionTabs.addTab("Generators", COLOR_BACKGROUND, &generatorsTab, false);
     actionTabs.addTab("Sample Processing", juce::Colour(25, 24, 24), &sampleProcessingTab, false);
     actionTabs.addTab("Mastering", juce::Colour(25, 24, 24), &masteringTab, false);
 

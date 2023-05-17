@@ -157,30 +157,35 @@ void AudioLibraryTab::resized()
 {
     // get window coordinations
     juce::Rectangle<int> localBounds = getLocalBounds();
-    localBounds.reduce(6, 6);
+    localBounds.reduce(TAB_PADDING, TAB_PADDING);
 
     // set position of the Find section
     int idealProportion = LIBRARY_IDEAL_SEARCH_SIZE_PROPORTION * localBounds.getWidth();
     localBounds.setWidth(juce::jmax(idealProportion, LIBRARY_MIN_SEARCH_SIZE));
-    findLocation = localBounds.reduced(5, 5);
+    findLocation = localBounds.reduced(TAB_SECTIONS_MARGINS, TAB_SECTIONS_MARGINS);
 
     // set the position of the library files section
     localBounds.setX(localBounds.getX() + localBounds.getWidth());
-    localBounds.setWidth(getLocalBounds().reduced(6, 6).getWidth() - localBounds.getWidth());
-    librariesSectionLocation = localBounds.reduced(5, 5);
+    localBounds.setWidth(getLocalBounds().reduced(TAB_PADDING, TAB_PADDING).getWidth() - localBounds.getWidth());
+    librariesSectionLocation = localBounds.reduced(TAB_SECTIONS_MARGINS, TAB_SECTIONS_MARGINS);
 
     // set the position of the file browser
-    localBounds.reduce(5, 5);
+    localBounds.reduce(TAB_SECTIONS_MARGINS, TAB_SECTIONS_MARGINS);
     localBounds.setY(localBounds.getY() + SECTION_TITLE_HEIGHT);
     localBounds.setHeight(localBounds.getHeight() - 25);
     treeView.setBounds(localBounds.reduced(2));
 
+    // TODO: this code sucks, it should be refactored cleaner.
+
     // positionate the searchbar
-    searchBarBounds =
-        findLocation.reduced(5, 5).withHeight(26).withY(findLocation.getY() + SECTION_TITLE_HEIGHT).reduced(2);
+    searchBarBounds = findLocation.reduced(TAB_SECTIONS_MARGINS, TAB_SECTIONS_MARGINS)
+                          .withHeight(26)
+                          .withY(findLocation.getY() + SECTION_TITLE_HEIGHT)
+                          .reduced(2);
     searchBar.setBounds(searchBarBounds);
-    resultList.setBounds(findLocation.reduced(5, 5)
-                             .withHeight(findLocation.reduced(5, 5).getHeight() - 26 - SECTION_TITLE_HEIGHT + 1)
+    resultList.setBounds(findLocation.reduced(TAB_SECTIONS_MARGINS, TAB_SECTIONS_MARGINS)
+                             .withHeight(findLocation.reduced(TAB_SECTIONS_MARGINS, TAB_SECTIONS_MARGINS).getHeight() -
+                                         26 - SECTION_TITLE_HEIGHT + 1)
                              .withY(findLocation.getY() + SECTION_TITLE_HEIGHT + 26 + 3)
                              .reduced(2));
 }

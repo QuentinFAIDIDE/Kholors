@@ -87,6 +87,9 @@
 #define TREEVIEW_ITEM_HEIGHT 22
 #define TREEVIEW_INDENT_SIZE 20
 
+#define TAB_PADDING 6
+#define TAB_SECTIONS_MARGINS 5
+
 #define DEFAULT_FONT_SIZE 15
 
 // the gain smoothing when the value is changed
