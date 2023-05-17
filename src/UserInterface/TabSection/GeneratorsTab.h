@@ -2,6 +2,7 @@
 #define DEF_GENERATORS_TAB_HPP
 
 #include "../Section.h"
+#include "../../Config.h"
 
 #define GENERATOR_TAB_SELECTOR_WIDTH 400
 
