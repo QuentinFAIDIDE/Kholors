@@ -16,6 +16,7 @@
 #include "TabSection/AudioLibraryTab.h"
 #include "TabSection/EmptyTab.h"
 #include "Topbar/TopbarArea.h"
+#include "TabSection/GeneratorsTab.h"
 
 //==============================================================================
 /*
@@ -54,6 +55,7 @@ class MainComponent : public juce::AudioAppComponent, public juce::DragAndDropCo
     juce::TabbedComponent actionTabs;
 
     AudioLibraryTab audioLibraryTab;
+    GeneratorsTab generatorsTab;
     EmptyTab sampleProcessingTab;
     EmptyTab masteringTab;
 
