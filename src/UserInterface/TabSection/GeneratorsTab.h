@@ -23,6 +23,6 @@ class GeneratorsTab : public juce::Component
     Repaint the inside of the component
     */
     void paint(juce::Graphics&);
-}
+};
 
 #endif // DEF_GENERATORS_TAB_HPP
