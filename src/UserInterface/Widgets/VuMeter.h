@@ -13,11 +13,20 @@
 #define VUMETER_INNER_PADDING 1
 
 // how many tiny little squares we define
-#define VUMETER_DEFINITION 32
+#define VUMETER_DEFINITION 16
 // how many db between each bars
-#define VUMETER_SCALE_DEFINITION 3.0
+#define VUMETER_SCALE_DEFINITION 3.0f
 // minimum db value displayed
-#define VUMETER_MIN_DB -24.0
+#define VUMETER_MIN_DB -24.0f
+#define VUMETER_COLOR_0_MAX_DB -13.0f
+#define VUMETER_COLOR_1_MAX_DB -8.0f
+#define VUMETER_COLOR_2_MAX_DB -6.0f
+#define VUMETER_COLOR_3_MAX_DB -3.0f
+
+#define COLOR_VUMETER_0 juce::Colour(114, 245, 66)
+#define COLOR_VUMETER_1 juce::Colour(245, 212, 66)
+#define COLOR_VUMETER_2 juce::Colour(245, 138, 66)
+#define COLOR_VUMETER_3 juce::Colour(245, 72, 66)
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -79,6 +88,19 @@ class VuMeter : public juce::Component
      Paint the vu area where the left and right channel are displayed.
      */
     void drawMeter(juce::Graphics &g, juce::Rectangle<int>);
+
+    /**
+     Draw the channel vu meter area. It's made of VUMETER_DEFINITION rectangles of 4 colors.
+     */
+    void drawChannel(juce::Graphics &, juce::Rectangle<int>, float);
+
+    /**
+     Pick a color that corresponds to the index in the range.
+     The scale is described the the environement variables for
+     the colors and thresolds. It will also make the color dark
+     if above the db value sent.
+     */
+    juce::Colour pickColorForIndex(int, int, float);
 };
 
 #endif // DEF_VU_METER_HPP

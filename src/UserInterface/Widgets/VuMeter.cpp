@@ -57,9 +57,7 @@ void VuMeter::paintCoreMeter(juce::Graphics &g, juce::Rectangle<int> boxesArea)
 {
     // we then draw the inside of the vumeter
     g.setColour(COLOR_BACKGROUND);
-    g.fillRect(boxesArea.withWidth(boxesArea.getWidth() / 2));
-    g.setColour(COLOR_TEXT_DARKER.withAlpha(0.5f));
-    g.drawRect(boxesArea.withWidth(boxesArea.getWidth() / 2));
+    g.fillRect(boxesArea.withWidth((boxesArea.getWidth() / 2) + 2));
 
     // apply the vumeter inner margins
     boxesArea.reduce(VUMETER_OUTTER_PADDING, VUMETER_OUTTER_PADDING);
@@ -114,4 +112,71 @@ void VuMeter::drawScale(juce::Graphics &g, juce::Rectangle<int> area)
 
 void VuMeter::drawMeter(juce::Graphics &g, juce::Rectangle<int> area)
 {
+    // isolate left and right channels
+    auto leftMeter = area.withWidth(area.getWidth() / 2);
+    auto rightMeter = leftMeter.withX(leftMeter.getX() + leftMeter.getWidth());
+
+    // remove the sides
+    leftMeter.reduce(VUMETER_INNER_PADDING, 0);
+    rightMeter.reduce(VUMETER_INNER_PADDING, 0);
+
+    drawChannel(g, leftMeter, dbValueLeft);
+    drawChannel(g, rightMeter, dbValueRight);
+}
+
+void VuMeter::drawChannel(juce::Graphics &g, juce::Rectangle<int> area, float value)
+{
+    // ideal rectangle length
+    int rectHeigth = float(area.getHeight()) / float(VUMETER_DEFINITION);
+
+    // This is the effective resolution (number of levels) that can be different
+    // from requested one whenever int truncating make it so that we can fit one more.
+    // This is a lazy solution I admit but it's straightforward.
+    int effectiveResolution = area.getHeight() / rectHeigth;
+
+    // compute remaining area at top (because of int truncating)
+    int remainingPixels = area.getHeight() - (effectiveResolution * rectHeigth);
+    for (int i = 0; i < effectiveResolution; i++)
+    {
+        juce::Rectangle<int> rectToDraw(area.getX(),
+                                        area.getY() + area.getHeight() - (rectHeigth * (i + 1)) - (remainingPixels / 2),
+                                        area.getWidth(), rectHeigth);
+        rectToDraw.removeFromTop(VUMETER_INNER_PADDING);
+
+        juce::Colour color = pickColorForIndex(i, effectiveResolution, value);
+
+        g.setColour(color);
+
+        g.fillRect(rectToDraw);
+    }
+}
+
+juce::Colour VuMeter::pickColorForIndex(int index, int maxIndex, float dbVolume)
+{
+    int dbMeterPosition = juce::jmap((float)index / (float)(maxIndex - 1), VUMETER_MIN_DB, 0.0f);
+
+    juce::Colour col;
+    if (dbMeterPosition >= VUMETER_COLOR_3_MAX_DB)
+    {
+        col = COLOR_VUMETER_3;
+    }
+    else if (dbMeterPosition >= VUMETER_COLOR_2_MAX_DB)
+    {
+        col = COLOR_VUMETER_2;
+    }
+    else if (dbMeterPosition >= VUMETER_COLOR_1_MAX_DB)
+    {
+        col = COLOR_VUMETER_1;
+    }
+    else
+    {
+        col = COLOR_VUMETER_0;
+    }
+
+    if (dbMeterPosition >= dbVolume)
+    {
+        col = col.withAlpha(0.5f);
+    }
+
+    return col;
 }
