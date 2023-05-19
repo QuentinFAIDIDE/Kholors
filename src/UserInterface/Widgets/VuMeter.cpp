@@ -153,18 +153,18 @@ void VuMeter::drawChannel(juce::Graphics &g, juce::Rectangle<int> area, float va
 
 juce::Colour VuMeter::pickColorForIndex(int index, int maxIndex, float dbVolume)
 {
-    int dbMeterPosition = juce::jmap((float)index / (float)(maxIndex - 1), VUMETER_MIN_DB, 0.0f);
+    float dbMeterPosition = juce::jmap((float)index / (float)(maxIndex - 1), VUMETER_MIN_DB, 0.0f);
 
     juce::Colour col;
-    if (dbMeterPosition >= VUMETER_COLOR_3_MAX_DB)
+    if (dbMeterPosition >= VUMETER_COLOR_2_MAX_DB)
     {
         col = COLOR_VUMETER_3;
     }
-    else if (dbMeterPosition >= VUMETER_COLOR_2_MAX_DB)
+    else if (dbMeterPosition >= VUMETER_COLOR_1_MAX_DB)
     {
         col = COLOR_VUMETER_2;
     }
-    else if (dbMeterPosition >= VUMETER_COLOR_1_MAX_DB)
+    else if (dbMeterPosition >= VUMETER_COLOR_0_MAX_DB)
     {
         col = COLOR_VUMETER_1;
     }

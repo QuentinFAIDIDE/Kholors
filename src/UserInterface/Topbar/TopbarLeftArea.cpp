@@ -1,7 +1,9 @@
 #include "TopbarLeftArea.h"
 
-TopbarLeftArea::TopbarLeftArea()
+TopbarLeftArea::TopbarLeftArea() : masterGainVu("Master", "master"), inputGainVu("Input", "master")
 {
+    addAndMakeVisible(masterGainVu);
+    addAndMakeVisible(inputGainVu);
 }
 
 void TopbarLeftArea::paint(juce::Graphics &g)
@@ -19,4 +21,11 @@ void TopbarLeftArea::paint(juce::Graphics &g)
 
 void TopbarLeftArea::resized()
 {
+    auto rootBounds = getLocalBounds();
+    rootBounds.reduce(TOPBAR_SECTIONS_INNER_MARGINS * 2, 0);
+    auto masterVuArea = rootBounds.removeFromLeft(VUMETER_WIDGET_WIDTH);
+    auto inputVuArea = rootBounds.removeFromLeft(VUMETER_WIDGET_WIDTH);
+
+    masterGainVu.setBounds(masterVuArea);
+    inputGainVu.setBounds(inputVuArea);
 }

@@ -20,8 +20,7 @@
 #define VUMETER_MIN_DB -24.0f
 #define VUMETER_COLOR_0_MAX_DB -13.0f
 #define VUMETER_COLOR_1_MAX_DB -8.0f
-#define VUMETER_COLOR_2_MAX_DB -6.0f
-#define VUMETER_COLOR_3_MAX_DB -3.0f
+#define VUMETER_COLOR_2_MAX_DB -5.0f
 
 #define COLOR_VUMETER_0 juce::Colour(114, 245, 66)
 #define COLOR_VUMETER_1 juce::Colour(245, 212, 66)
