@@ -1,6 +1,9 @@
 #ifndef DATA_SOURCE_HPP
 #define DATA_SOURCE_HPP
 
+#include <string>
+#include <utility>
+
 /**
 Interface to have a class being
 able to feed a vumeter some data.
