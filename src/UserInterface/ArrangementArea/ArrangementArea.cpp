@@ -7,9 +7,9 @@
 #include <memory>
 #include <stdexcept>
 
-#include "../Arrangement/ColorPalette.h"
-#include "../OpenGL/FreqviewShaders.h"
-#include "../OpenGL/GLInfoLogger.h"
+#include "../../Arrangement/ColorPalette.h"
+#include "../../OpenGL/FreqviewShaders.h"
+#include "../../OpenGL/GLInfoLogger.h"
 #include "juce_opengl/opengl/juce_gl.h"
 
 // NOTE:

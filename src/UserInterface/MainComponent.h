@@ -11,12 +11,12 @@
 
 #include "../Arrangement/UserInterfaceState.h"
 #include "../Audio/MixingBus.h"
-#include "ArrangementArea.h"
+#include "./ArrangementArea/ArrangementArea.h"
 #include "KholorsLookAndFeel.h"
 #include "TabSection/AudioLibraryTab.h"
 #include "TabSection/EmptyTab.h"
-#include "Topbar/TopbarArea.h"
 #include "TabSection/GeneratorsTab.h"
+#include "Topbar/TopbarArea.h"
 
 //==============================================================================
 /*

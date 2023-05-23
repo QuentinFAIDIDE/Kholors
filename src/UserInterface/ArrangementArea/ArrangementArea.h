@@ -12,13 +12,13 @@
 #include <memory>
 #include <vector>
 
-#include "../Arrangement/ActivityManager.h"
-#include "../Arrangement/SampleAreaRectangle.h"
-#include "../Arrangement/TaxonomyManager.h"
-#include "../Audio/MixingBus.h"
-#include "../Config.h"
-#include "../OpenGL/BackgroundModel.h"
-#include "../OpenGL/SampleGraphicModel.h"
+#include "../../Arrangement/ActivityManager.h"
+#include "../../Arrangement/SampleAreaRectangle.h"
+#include "../../Arrangement/TaxonomyManager.h"
+#include "../../Audio/MixingBus.h"
+#include "../../Config.h"
+#include "../../OpenGL/BackgroundModel.h"
+#include "../../OpenGL/SampleGraphicModel.h"
 #include "juce_opengl/opengl/juce_gl.h"
 
 enum Border
