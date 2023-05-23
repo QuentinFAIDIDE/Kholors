@@ -26,9 +26,11 @@ class MixbusDataSource : public VuMeterDataSource
      *
      * @param[in]  avalues  The map with the new values to swap
      */
-    void swapVuMeterValues(std::map<VumeterId, std::pair<float, float>> values);
+    void swapVuMeterValues(std::map<VumeterId, std::pair<float, float>> &values);
 
   private:
+    juce::CriticalSection mutex;
+    std::map<VumeterId, std::pair<float, float>> vuMeterValues;
 };
 
 #endif // MIXBUS_DATA_SOURCE_HPP
