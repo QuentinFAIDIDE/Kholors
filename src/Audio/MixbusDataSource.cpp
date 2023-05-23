@@ -12,7 +12,7 @@ std::pair<float, float> MixbusDataSource::getVuMeterValue(VumeterId vuMeterId)
     // return nothing if we can't find that vu meter data
     else
     {
-        return std::Pair<float, float>(0,0);
+        return std::pair<float, float>(0,0);
     }
 }
 
