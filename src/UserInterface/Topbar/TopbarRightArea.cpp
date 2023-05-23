@@ -3,13 +3,19 @@
 #include "../../Arrangement/ActivityManager.h"
 #include "ColorPicker.h"
 
-TopbarRightArea::TopbarRightArea(ActivityManager &am) : colorPicker(am), selectionGainVu("Selected", "selection_gain")
+TopbarRightArea::TopbarRightArea(ActivityManager &am)
+    : colorPicker(am), selectionGainVu("Selected", VUMETER_ID_SELECTED)
 {
     addAndMakeVisible(colorPicker);
     colorPicker.setVisible(true);
     colorPicker.setSize(96, 200);
 
     addAndMakeVisible(selectionGainVu);
+}
+
+void TopbarRightArea::setDataSource(std::shared_ptr<VuMeterDataSource> ds)
+{
+    selectionGainVu.setDataSource(ds);
 }
 
 void TopbarRightArea::paint(juce::Graphics &g)

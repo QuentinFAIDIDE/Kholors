@@ -95,6 +95,16 @@ class UnitConverter
      */
     static float zoomInRangeInv(float);
 
+    /**
+     * @brief
+     *
+     * @param[in]  buffer        The buffer we extract level from
+     * @param[in]  chan          The channel number (will be modulo available)
+     *
+     * @return     decibels level
+     */
+    static float dbFromBufferChannel(const juce::AudioSourceChannelInfo &buffer, int chan);
+
   private:
     static float magnifyFftPrecomputedFactor1;
     static float magnifyFftPrecomputedFactor2;

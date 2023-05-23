@@ -2,6 +2,10 @@
 #define DEF_VU_METER_HPP
 
 // width of the stereo vumeter
+#include <memory>
+
+#include "../../Audio/DataSource.h"
+
 #define VUMETER_WIDTH 52
 // the preferred widget width
 #define VUMETER_WIDGET_WIDTH (VUMETER_WIDTH + (2 * TOPBAR_WIDGETS_MARGINS))
@@ -16,8 +20,6 @@
 #define VUMETER_DEFINITION 16
 // how many db between each bars
 #define VUMETER_SCALE_DEFINITION 3.0f
-// minimum db value displayed
-#define VUMETER_MIN_DB -24.0f
 #define VUMETER_COLOR_0_MAX_DB -13.0f
 #define VUMETER_COLOR_1_MAX_DB -8.0f
 #define VUMETER_COLOR_2_MAX_DB -5.0f
@@ -39,7 +41,7 @@ class VuMeter : public juce::Component
     /*
     Initialize the vumeter with the given title and identifier.
     */
-    VuMeter(std::string, std::string);
+    VuMeter(std::string, VumeterId);
 
     /*
     paint the vu meter
@@ -56,6 +58,15 @@ class VuMeter : public juce::Component
     */
     void setDbValue(float, float);
 
+    /**
+     * @brief      Sets the data source this VuMeter will pull from.
+     *             Note that the data source actually delivers to many
+     *             VuMeter based on the requested VuMeterId
+     *
+     * @param[in]  datasource  Instanciation of VumeterDataSource class.
+     */
+    void setDataSource(std::shared_ptr<VuMeterDataSource>);
+
   private:
     // the actual decibels values of left and righht channel
     float dbValueLeft, dbValueRight;
@@ -63,9 +74,14 @@ class VuMeter : public juce::Component
     // the title of the vu meter
     std::string title;
 
-    // the string identifying the data source of the vu meter
+    // the enumeration identifying the data source of the vu meter
     // in the Mixbus data source.
-    std::string identifier;
+    VumeterId identifier;
+
+    // datasource pointer
+    std::shared_ptr<VuMeterDataSource> dataSource;
+
+    ///////////////////////////////
 
     /*
     Return the area within the section at the desired vu meter width.
@@ -100,6 +116,12 @@ class VuMeter : public juce::Component
      if above the db value sent.
      */
     juce::Colour pickColorForIndex(int, int, float);
+
+    /**
+     Updates the value of the vu meter through the mixbus data source.
+     Might fail to get the lock and do nothing.
+     */
+    void updateValue();
 };
 
 #endif // DEF_VU_METER_HPP

@@ -18,6 +18,8 @@
 #include <memory>
 
 #include "../Arrangement/ActivityManager.h"
+#include "DataSource.h"
+#include "MixbusDataSource.h"
 #include "ReferenceCountedBuffer.h"
 #include "SamplePlayer.h"
 
@@ -61,6 +63,13 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     // MessageThread to repaint tracks
     void setTrackRepaintCallback(std::function<void()>);
 
+    /**
+     * @brief      Gets a pointer to the mixbus data source.
+     *
+     * @return     The mixbus data source shared pointer.
+     */
+    std::shared_ptr<MixbusDataSource> getMixbusDataSource();
+
   private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MixingBus)
     // TODO: add a readahead buffer
@@ -78,6 +87,12 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
 
     // is the track currently playing ?
     bool isPlaying;
+
+    // a shared pointer to an instance of a MixbusDataSource we can share with GUI
+    // (it has a builtin lock)
+    std::shared_ptr<MixbusDataSource> mixbusDataSource;
+
+    VuMeterData vuMeterVolumes;
 
     /** NOTES FROM JUCE FORUM ON MIXING Audio Sources:
     You can connect your AudioTransportSources to a MixerAudioSource 10, and call

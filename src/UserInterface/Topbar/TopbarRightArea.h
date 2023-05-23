@@ -14,6 +14,15 @@ class TopbarRightArea : public juce::Component
     void paint(juce::Graphics &) override;
     void resized() override;
 
+    /**
+     * @brief      Sets the data source this VuMeter will pull from.
+     *             Note that the data source actually delivers to many
+     *             VuMeter based on the requested VuMeterId
+     *
+     * @param[in]  datasource  Instanciation of VumeterDataSource class.
+     */
+    void setDataSource(std::shared_ptr<VuMeterDataSource>);
+
   private:
     // the outer bounds, minus the inner margins.
     juce::Rectangle<float> bounds;

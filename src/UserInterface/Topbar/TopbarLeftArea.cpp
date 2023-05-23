@@ -1,6 +1,6 @@
 #include "TopbarLeftArea.h"
 
-TopbarLeftArea::TopbarLeftArea() : masterGainVu("Master", "master"), inputGainVu("Input", "master")
+TopbarLeftArea::TopbarLeftArea() : masterGainVu("Master", VUMETER_ID_MASTER), inputGainVu("Input", VUMETER_ID_INPUT_0)
 {
     addAndMakeVisible(masterGainVu);
     addAndMakeVisible(inputGainVu);
@@ -17,6 +17,12 @@ void TopbarLeftArea::paint(juce::Graphics &g)
     g.setColour(COLOR_LABELS_BORDER.withAlpha(0.5f));
     g.drawLine(leftLine, 0.5);
     g.drawLine(rightLine, 0.5);
+}
+
+void TopbarLeftArea::setDataSource(std::shared_ptr<VuMeterDataSource> ds)
+{
+    masterGainVu.setDataSource(ds);
+    inputGainVu.setDataSource(ds);
 }
 
 void TopbarLeftArea::resized()

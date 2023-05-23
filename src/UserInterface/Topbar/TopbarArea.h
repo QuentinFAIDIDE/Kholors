@@ -49,6 +49,15 @@ class TopbarArea : public juce::AnimatedAppComponent, public TaskListener
     // Timer inherited
     void update() override;
 
+    /**
+     * @brief      Sets the data source this VuMeter will pull from.
+     *             Note that the data source actually delivers to many
+     *             VuMeter based on the requested VuMeterId
+     *
+     * @param[in]  datasource  Instanciation of VumeterDataSource class.
+     */
+    void setDataSource(std::shared_ptr<VuMeterDataSource>);
+
   private:
     //==============================================================================
     // isHidden relates to the supposed position of the animation was finished.

@@ -40,6 +40,9 @@ MainComponent::MainComponent()
         const juce::MessageManagerLock mmLock;
         arrangementArea.repaint();
     });
+
+    // spread the mixing bus data source for the visualizer
+    notificationArea.setDataSource(mixingBus.getMixbusDataSource());
 }
 
 void MainComponent::printAudioDeviceSettings()

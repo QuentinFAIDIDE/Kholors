@@ -3,7 +3,7 @@
 #include "../Section.h"
 #include <string>
 
-VuMeter::VuMeter(std::string t, std::string id) : dbValueLeft(0.0), dbValueRight(0.0), title(t), identifier(id)
+VuMeter::VuMeter(std::string t, VumeterId id) : dbValueLeft(0.0), dbValueRight(0.0), title(t), identifier(id)
 {
 }
 
@@ -11,7 +11,7 @@ void VuMeter::paint(juce::Graphics &g)
 {
     auto bounds = g.getClipBounds();
 
-    // abort if no space available
+    // abort if no space available to draw
     if (bounds.getWidth() < (VUMETER_WIDTH))
     {
         return;
@@ -21,13 +21,35 @@ void VuMeter::paint(juce::Graphics &g)
     juce::Colour bg = juce::Colours::transparentBlack;
     drawSection(g, bounds, title, bg, true);
 
+    // now we update the value from the data source if possible
+    updateValue();
+
     auto boxesArea = zoomToInnerSection(bounds);
 
     // we then draw the core meter
     paintCoreMeter(g, boxesArea);
 }
 
-void VuMeter::mouseDrag(const juce::MouseEvent &event)
+void VuMeter::setDataSource(std::shared_ptr<VuMeterDataSource> ds)
+{
+    dataSource = ds;
+}
+
+void VuMeter::updateValue()
+{
+    if (dataSource != nullptr && identifier != VUMETER_ID_NONE)
+    {
+        auto value = dataSource->getVuMeterValue(identifier);
+
+        if (value.hasValue())
+        {
+            dbValueLeft = value->first;
+            dbValueRight = value->second;
+        }
+    }
+}
+
+void VuMeter::mouseDrag(const juce::MouseEvent &)
 {
     // TODO
 }

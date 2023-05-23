@@ -1,5 +1,4 @@
 #include "TopbarArea.h"
-#include "TopbarRightArea.h"
 
 TopbarArea::TopbarArea(ActivityManager &am) : rightComponentsContainer(am)
 {
@@ -19,6 +18,12 @@ TopbarArea::TopbarArea(ActivityManager &am) : rightComponentsContainer(am)
 
 TopbarArea::~TopbarArea()
 {
+}
+
+void TopbarArea::setDataSource(std::shared_ptr<VuMeterDataSource> ds)
+{
+    leftComponentsContainer.setDataSource(ds);
+    rightComponentsContainer.setDataSource(ds);
 }
 
 bool TopbarArea::taskHandler(std::shared_ptr<Task> task)

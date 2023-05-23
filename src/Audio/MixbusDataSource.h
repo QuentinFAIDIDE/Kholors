@@ -10,6 +10,8 @@
 class MixbusDataSource : public VuMeterDataSource
 {
   public:
+    MixbusDataSource();
+
     /**
      * @brief      Gets the vu meter value.
      *
@@ -17,7 +19,7 @@ class MixbusDataSource : public VuMeterDataSource
      *
      * @return     The vu meter value.
      */
-    std::pair<float, float> getVuMeterValue(VumeterId vuMeterId);
+    juce::Optional<std::pair<float, float>> getVuMeterValue(VumeterId vuMeterId) override final;
 
     /**
      * @brief      Called from the audio thread. Swap the maps
@@ -26,11 +28,11 @@ class MixbusDataSource : public VuMeterDataSource
      *
      * @param[in]  avalues  The map with the new values to swap
      */
-    void swapVuMeterValues(std::map<VumeterId, std::pair<float, float>> &values);
+    void swapVuMeterValues(VuMeterData &values);
 
   private:
     juce::CriticalSection mutex;
-    std::map<VumeterId, std::pair<float, float>> vuMeterValues;
+    VuMeterData vuMeterValues;
 };
 
 #endif // MIXBUS_DATA_SOURCE_HPP

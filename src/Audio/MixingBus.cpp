@@ -1,5 +1,8 @@
 #include "MixingBus.h"
+#include "DataSource.h"
+#include "MixbusDataSource.h"
 #include "SamplePlayer.h"
+#include "UnitConverter.h"
 
 #include <cstdint>
 #include <iostream>
@@ -30,6 +33,9 @@ MixingBus::MixingBus(ActivityManager &am)
 
     lastDrawnCursor = 0;
 
+    // create instance of mixbusDataSource
+    mixbusDataSource = std::make_shared<MixbusDataSource>();
+
     // start the background thread that makes malloc/frees
     startThread();
 }
@@ -55,6 +61,11 @@ MixingBus::~MixingBus()
 
     // delete all buffers
     checkForBuffersToFree();
+}
+
+std::shared_ptr<MixbusDataSource> MixingBus::getMixbusDataSource()
+{
+    return mixbusDataSource;
 }
 
 bool MixingBus::taskHandler(std::shared_ptr<Task> task)
@@ -331,6 +342,16 @@ void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFi
 
         // apply limiter
         masterLimiter.process(context);
+
+        // let's spread the master volume to the vu meter
+        std::pair<float, float> masterVolume;
+        masterVolume.first = UnitConverter::dbFromBufferChannel(bufferToFill, 0);
+        masterVolume.second = UnitConverter::dbFromBufferChannel(bufferToFill, 1);
+
+        vuMeterVolumes[VUMETER_ID_MASTER] = masterVolume;
+
+        // send all the vu meter values to the data source
+        mixbusDataSource->swapVuMeterValues(vuMeterVolumes);
     }
     else
     {
