@@ -33,10 +33,14 @@ in vec4 ourColor;
 in vec2 TexCoord;
 
 uniform sampler2D ourTexture;
+uniform sampler2D alphaMask;
 
 void main()
 {
-    FragColor = vec4(ourColor.x, ourColor.y, ourColor.z, texture(ourTexture, TexCoord).a);
+    vec4 alphaMask = texture(alphaMask, TexCoord);
+    vec4 sampleWaveform = texture(ourTexture, TexCoord);
+    float alphaLevel = min(alphaMask.r, sampleWaveform.a);
+    FragColor = vec4(ourColor.x, ourColor.y, ourColor.z, alphaLevel);
 }
 )";
 

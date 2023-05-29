@@ -42,6 +42,8 @@
 // samplerate divided by 2 pow 10 which makes 1024 so around 1ms of signal
 #define FREQVIEW_MIN_RESIZE_FRAMES (AUDIO_FRAMERATE >> 10)
 
+#define FREQVIEW_SAMPLE_MASK_PATH "~/Kholors/sample_texture_mask.png"
+
 // minimum windows height to draw something
 #define MIN_SCREEN_WIDTH 350
 #define MIN_SCREEN_HEIGHT 600

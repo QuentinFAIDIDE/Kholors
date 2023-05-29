@@ -17,6 +17,7 @@
 #include "../../Arrangement/TaxonomyManager.h"
 #include "../../Audio/MixingBus.h"
 #include "../../Config.h"
+#include "../../OpenGL/AlphaMaskTextureLoader.h"
 #include "../../OpenGL/BackgroundModel.h"
 #include "../../OpenGL/SampleGraphicModel.h"
 #include "juce_opengl/opengl/juce_gl.h"
@@ -92,6 +93,10 @@ class ArrangementArea : public juce::Component,
     TaxonomyManager &taxonomyManager;
 
     juce::OpenGLContext openGLContext;
+
+    // object that loads the fragment shader second texture
+    // used as a sample alpha mask texture (ie add grain / stars)
+    AlphaMaskTextureLoader alphaMaskTextureLoader;
 
     // NOTE: we will draw each sample fft in OpenGL
     // with a square on which we map a texture.

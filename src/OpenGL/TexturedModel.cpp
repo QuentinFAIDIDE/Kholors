@@ -87,6 +87,7 @@ void TexturedModel::drawGlObjects()
 
     glActiveTexture(GL_TEXTURE0); // <- might only be necessary on some GPUs
     glBindTexture(GL_TEXTURE_2D, tbo);
+
     glBindVertexArray(vao);
 
     // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);

@@ -508,16 +508,20 @@ void ArrangementArea::newOpenGLContextCreated()
 
         std::cerr << "Sucessfully compiled OpenGL shaders" << std::endl;
 
-        // we push dummy values because the bounds may not have been set yet
         texturedPositionedShader->use();
         texturedPositionedShader->setUniform("ourTexture", 0);
+        texturedPositionedShader->setUniform("alphaMask", 1);
 
         updateShadersPositionUniforms(true);
 
         // log some info about openGL version and all
         logOpenGLInfoCallback(openGLContext);
+
         // enable the error logging
         enableOpenGLErrorLogging();
+
+        // load the alpha mask texture into the main shader
+        alphaMaskTextureLoader.loadTexture();
 
         // initialize background openGL objects
         backgroundGrid.registerGlObjects();
@@ -616,6 +620,7 @@ void ArrangementArea::renderOpenGL()
     backgroundGridShader->use();
     backgroundGrid.drawGlObjects();
 
+    alphaMaskTextureLoader.bindTexture();
     texturedPositionedShader->use();
 
     for (int i = 0; i < samples.size(); i++)
