@@ -20,6 +20,7 @@
 #include "../../OpenGL/AlphaMaskTextureLoader.h"
 #include "../../OpenGL/BackgroundModel.h"
 #include "../../OpenGL/SampleGraphicModel.h"
+#include "TempoGrid.h"
 #include "juce_opengl/opengl/juce_gl.h"
 
 enum Border
@@ -93,6 +94,8 @@ class ArrangementArea : public juce::Component,
     TaxonomyManager &taxonomyManager;
 
     juce::OpenGLContext openGLContext;
+
+    TempoGrid tempoGrid;
 
     // object that loads the fragment shader second texture
     // used as a sample alpha mask texture (ie add grain / stars)

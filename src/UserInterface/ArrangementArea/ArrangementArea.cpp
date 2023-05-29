@@ -38,7 +38,10 @@ ArrangementArea::ArrangementArea(MixingBus &mb, ActivityManager &am)
     lastPlayCursorPosition = 0;
     trackMovingInitialPosition = -1;
 
+    tempoGrid.updateView(viewPosition, viewScale);
+
     tempo = 120;
+    tempoGrid.updateTempo(120);
 
     // play cursor color
     cursorColor = juce::Colour(240, 240, 240);
@@ -53,6 +56,8 @@ ArrangementArea::ArrangementArea(MixingBus &mb, ActivityManager &am)
     openGLContext.setRenderer(this);
     openGLContext.setContinuousRepainting(false);
     openGLContext.attachTo(*this);
+
+    addAndMakeVisible(tempoGrid);
 }
 
 ArrangementArea::~ArrangementArea()
@@ -493,6 +498,8 @@ void ArrangementArea::resized()
     {
         updateShadersPositionUniforms();
     }
+
+    tempoGrid.setBounds(getLocalBounds());
 }
 
 void ArrangementArea::newOpenGLContextCreated()
@@ -1280,6 +1287,9 @@ bool ArrangementArea::updateViewResizing(juce::Point<int> &newPosition)
             viewScale = FREQVIEW_MAX_SCALE_FRAME_PER_PIXEL;
         }
     }
+
+    tempoGrid.updateView(viewPosition, viewScale);
+
     // save some repait by comparing viewScale and viewPosition
     return (oldViewPosition != viewPosition || oldViewScale != viewScale);
 }
