@@ -3,6 +3,7 @@
 #include "../../Config.h"
 
 #define BAR_LINE_HEIGHT 8
+#define SUBBAR_LINE_HEIGHT 4
 #define TEMPO_GRID_GRADIENT_HEIGHT 40
 #define TEMPO_GRID_TEXT_WIDTH 64
 #define TEMPO_GRID_TEXT_X_OFFSET 0
@@ -78,6 +79,22 @@ void TempoGrid::paint(juce::Graphics &g)
         barTickNumberArea.setHeight(TEMPO_GRID_TEXT_WIDTH);
 
         g.drawText(std::to_string(firstDisplayedBar+i), barTickNumberArea, juce::Justification::centredTop, false);
+    }
+
+
+    // now we prepare to draw the 4x4 sub tempo bars
+    float subBarPixelWidth = barPixelWidth / 4.0f;
+    float subBarFrameWidth = barFrameWidth / 4.0f;
+    float subBarViewIndex = viewPosition / subBarFrameWidth;
+    float subBarPixelShift = subBarPixelWidth * (1.0f - (subBarViewIndex - std::floor(subBarViewIndex)));
+
+    for (int i = 0; i <= noBars*4; i++)
+    {
+        float xOrigin = bounds.getX() + subBarPixelShift + float(i) * subBarPixelWidth;
+        barTickLine.setStart(xOrigin, halfBounds.getY() - SUBBAR_LINE_HEIGHT);
+        barTickLine.setEnd(xOrigin, halfBounds.getY() + SUBBAR_LINE_HEIGHT);
+        g.drawLine(barTickLine, 2);
+
     }
 }
 
