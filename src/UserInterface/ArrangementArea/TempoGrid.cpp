@@ -56,7 +56,7 @@ void TempoGrid::paint(juce::Graphics &g)
 
     float barPixelShift = barPixelWidth * (1.0f - (viewStartBarIndex - std::floor(viewStartBarIndex)));
 
-    int firstDisplayedBar = ((int)viewStartBarIndex) + 1
+    int firstDisplayedBar = ((int)viewStartBarIndex) + 1;
 
     int noBars = float(bounds.getWidth()) / barPixelWidth;
 
