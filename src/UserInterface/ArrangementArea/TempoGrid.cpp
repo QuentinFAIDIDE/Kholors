@@ -44,7 +44,20 @@ void TempoGrid::paint(juce::Graphics &g)
     g.drawLine(centerLine.toFloat(), 1);
 
     // now draw one tick at every bar
-    float barPixelWidth = (60.0 * float(AUDIO_FRAMERATE)) / (tempo * viewScale);
+
+    // width of a tempo bar in audio frame
+    float barFrameWidth = float(AUDIO_FRAMERATE*60)/tempo;
+
+    // width of a tempo bar in pixels
+    float barPixelWidth = barFrameWidth / viewScale;
+
+    // what's the position of the view in bars
+    float viewStartBarIndex = viewPosition /  barFrameWidth;
+
+    float barPixelShift = barPixelWidth * (1.0f - (viewStartBarIndex - std::floor(viewStartBarIndex)));
+
+    int firstDisplayedBar = ((int)viewStartBarIndex) + 1
+
     int noBars = float(bounds.getWidth()) / barPixelWidth;
 
     auto barTickLine = juce::Line<float>();
@@ -54,7 +67,7 @@ void TempoGrid::paint(juce::Graphics &g)
 
     for (int i = 0; i <= noBars; i++)
     {
-        float xOrigin = bounds.getX() + float(i) * barPixelWidth;
+        float xOrigin = bounds.getX() + barPixelShift + float(i) * barPixelWidth;
         barTickLine.setStart(xOrigin, halfBounds.getY() - BAR_LINE_HEIGHT);
         barTickLine.setEnd(xOrigin, halfBounds.getY() + BAR_LINE_HEIGHT);
         g.drawLine(barTickLine, 2);
@@ -64,7 +77,7 @@ void TempoGrid::paint(juce::Graphics &g)
         barTickNumberArea.setY(halfBounds.getY() + TEMPO_GRID_TEXT_Y_OFFSET);
         barTickNumberArea.setHeight(TEMPO_GRID_TEXT_WIDTH);
 
-        g.drawText("0", barTickNumberArea, juce::Justification::centredTop, false);
+        g.drawText(std::to_string(firstDisplayedBar+i), barTickNumberArea, juce::Justification::centredTop, false);
     }
 }
 
