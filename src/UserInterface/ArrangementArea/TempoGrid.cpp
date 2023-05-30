@@ -4,7 +4,7 @@
 
 #define BAR_LINE_HEIGHT 8
 #define SUBBAR_LINE_HEIGHT 4
-#define TEMPO_GRID_GRADIENT_HEIGHT 40
+#define TEMPO_GRID_GRADIENT_HEIGHT 64
 #define TEMPO_GRID_TEXT_WIDTH 64
 #define TEMPO_GRID_TEXT_X_OFFSET 0
 #define TEMPO_GRID_TEXT_Y_OFFSET -24
@@ -25,16 +25,16 @@ void TempoGrid::paint(juce::Graphics &g)
                                       halfBounds.getX() + halfBounds.getWidth(), halfBounds.getTopLeft().getY());
 
     // draw a gradient in the middle
-    juce::ColourGradient topGradient(juce::Colours::transparentBlack, halfBounds.getX(),
-                                     halfBounds.getTopLeft().getY() - TEMPO_GRID_GRADIENT_HEIGHT, COLOR_BACKGROUND,
-                                     halfBounds.getX(), halfBounds.getTopLeft().getY(), false);
+    juce::ColourGradient topGradient(
+        juce::Colours::transparentBlack, halfBounds.getX(), halfBounds.getTopLeft().getY() - TEMPO_GRID_GRADIENT_HEIGHT,
+        COLOR_BACKGROUND.withAlpha(0.5f), halfBounds.getX(), halfBounds.getTopLeft().getY(), false);
 
     g.setGradientFill(topGradient);
     g.fillRect(halfBounds.getX(), halfBounds.getTopLeft().getY() - TEMPO_GRID_GRADIENT_HEIGHT, halfBounds.getWidth(),
                TEMPO_GRID_GRADIENT_HEIGHT);
 
-    juce::ColourGradient botGradient(COLOR_BACKGROUND, halfBounds.getX(), halfBounds.getTopLeft().getY(),
-                                     juce::Colours::transparentBlack, halfBounds.getX(),
+    juce::ColourGradient botGradient(COLOR_BACKGROUND.withAlpha(0.5f), halfBounds.getX(),
+                                     halfBounds.getTopLeft().getY(), juce::Colours::transparentBlack, halfBounds.getX(),
                                      halfBounds.getTopLeft().getY() + TEMPO_GRID_GRADIENT_HEIGHT, false);
 
     g.setGradientFill(botGradient);
@@ -47,13 +47,13 @@ void TempoGrid::paint(juce::Graphics &g)
     // now draw one tick at every bar
 
     // width of a tempo bar in audio frame
-    float barFrameWidth = float(AUDIO_FRAMERATE*60)/tempo;
+    float barFrameWidth = float(AUDIO_FRAMERATE * 60) / tempo;
 
     // width of a tempo bar in pixels
     float barPixelWidth = barFrameWidth / viewScale;
 
     // what's the position of the view in bars
-    float viewStartBarIndex = viewPosition /  barFrameWidth;
+    float viewStartBarIndex = viewPosition / barFrameWidth;
 
     float barPixelShift = barPixelWidth * (1.0f - (viewStartBarIndex - std::floor(viewStartBarIndex)));
 
@@ -66,35 +66,66 @@ void TempoGrid::paint(juce::Graphics &g)
 
     g.setFont(juce::Font(TEMPO_GRID_FONT_SIZE));
 
-    for (int i = 0; i <= noBars; i++)
-    {
-        float xOrigin = bounds.getX() + barPixelShift + float(i) * barPixelWidth;
-        barTickLine.setStart(xOrigin, halfBounds.getY() - BAR_LINE_HEIGHT);
-        barTickLine.setEnd(xOrigin, halfBounds.getY() + BAR_LINE_HEIGHT);
-        g.drawLine(barTickLine, 2);
-
-        barTickNumberArea.setX(xOrigin - (TEMPO_GRID_TEXT_WIDTH / 2));
-        barTickNumberArea.setWidth(TEMPO_GRID_TEXT_WIDTH);
-        barTickNumberArea.setY(halfBounds.getY() + TEMPO_GRID_TEXT_Y_OFFSET);
-        barTickNumberArea.setHeight(TEMPO_GRID_TEXT_WIDTH);
-
-        g.drawText(std::to_string(firstDisplayedBar+i), barTickNumberArea, juce::Justification::centredTop, false);
-    }
-
-
     // now we prepare to draw the 4x4 sub tempo bars
     float subBarPixelWidth = barPixelWidth / 4.0f;
     float subBarFrameWidth = barFrameWidth / 4.0f;
     float subBarViewIndex = viewPosition / subBarFrameWidth;
     float subBarPixelShift = subBarPixelWidth * (1.0f - (subBarViewIndex - std::floor(subBarViewIndex)));
 
-    for (int i = 0; i <= noBars*4; i++)
+    for (int i = 0; i <= noBars * 4; i++)
     {
+
+        // ignore first 4 bars
+        if (float(firstDisplayedBar - 1) + (float(i) / 4.0f) < 1.0f)
+        {
+            continue;
+        }
+
         float xOrigin = bounds.getX() + subBarPixelShift + float(i) * subBarPixelWidth;
         barTickLine.setStart(xOrigin, halfBounds.getY() - SUBBAR_LINE_HEIGHT);
         barTickLine.setEnd(xOrigin, halfBounds.getY() + SUBBAR_LINE_HEIGHT);
         g.drawLine(barTickLine, 2);
+    }
 
+    float barWidth;
+    float barHighlight;
+    float eightBarsQueue;
+
+    for (int i = 0; i <= noBars; i++)
+    {
+        eightBarsQueue = 0;
+
+        if ((firstDisplayedBar + i) % 8 == 1)
+        {
+            g.setColour(COLOR_LABELS_BORDER);
+            barWidth = 3;
+            barHighlight = 3;
+        }
+        else
+        {
+            g.setColour(COLOR_TEXT_DARKER);
+            barWidth = 2;
+            barHighlight = 0;
+        }
+
+        if ((firstDisplayedBar + i) % (8 * 4) == 1)
+        {
+            g.setColour(juce::Colour(210, 170, 170));
+            eightBarsQueue = 4;
+        }
+
+        float xOrigin = bounds.getX() + barPixelShift + float(i) * barPixelWidth;
+        barTickLine.setStart(xOrigin, halfBounds.getY() - BAR_LINE_HEIGHT - barHighlight);
+        barTickLine.setEnd(xOrigin, halfBounds.getY() + BAR_LINE_HEIGHT + barHighlight + eightBarsQueue);
+        g.drawLine(barTickLine, barWidth);
+
+        barTickNumberArea.setX(xOrigin - (TEMPO_GRID_TEXT_WIDTH / 2));
+        barTickNumberArea.setWidth(TEMPO_GRID_TEXT_WIDTH);
+        barTickNumberArea.setY(halfBounds.getY() + TEMPO_GRID_TEXT_Y_OFFSET - barHighlight);
+        barTickNumberArea.setHeight(TEMPO_GRID_TEXT_WIDTH);
+
+        g.setColour(COLOR_TEXT_DARKER);
+        g.drawText(std::to_string(firstDisplayedBar + i), barTickNumberArea, juce::Justification::centredTop, false);
     }
 }
 
