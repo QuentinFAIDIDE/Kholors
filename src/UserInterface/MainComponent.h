@@ -41,8 +41,10 @@ class MainComponent : public juce::AudioAppComponent, public juce::DragAndDropCo
     void getNextAudioBlock(const juce::AudioSourceChannelInfo &) override;
     void configureApp(Config &conf);
 
-    void mouseDrag(const juce::MouseEvent &me) override;
     void mouseMove(const juce::MouseEvent &me) override;
+    void mouseUp(const juce::MouseEvent &me) override;
+    void mouseDown(const juce::MouseEvent &me) override;
+    void mouseDrag(const juce::MouseEvent &me) override;
 
   private:
     //==============================================================================

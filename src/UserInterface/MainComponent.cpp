@@ -148,19 +148,47 @@ void MainComponent::configureApp(Config &conf)
     }
 }
 
-void MainComponent::mouseDrag(const juce::MouseEvent &me)
-{
-    arrangementAreaHeight = me.getMouseDownY();
-}
-
 void MainComponent::mouseMove(const juce::MouseEvent &event)
 {
-    if (resizeHandleArea.contains(event.getMouseDownPosition()))
+    if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT &&
+        resizeHandleArea.contains(event.getPosition()))
     {
-        setMouseCursor(juce::MouseCursor::DraggingHandCursor);
+        setMouseCursor(juce::MouseCursor::UpDownResizeCursor);
     }
-    else
+    else if (activityManager.getAppState().getUiState() == UI_STATE_RESIZE_MAINVIEW)
     {
+        arrangementAreaHeight = event.getPosition().getY() - getBounds().getY();
+        resized();
+        repaint();
+    }
+}
+
+void MainComponent::mouseUp(const juce::MouseEvent &me)
+{
+    // note: isLeftButtonDown means it was down before it was lifted
+    if (activityManager.getAppState().getUiState() == UI_STATE_RESIZE_MAINVIEW && me.mods.isLeftButtonDown() == true)
+    {
+        activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
         setMouseCursor(juce::MouseCursor::NormalCursor);
+    }
+}
+
+void MainComponent::mouseDown(const juce::MouseEvent &me)
+{
+    if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT && me.mods.isLeftButtonDown() == true &&
+        resizeHandleArea.contains(me.getPosition()))
+    {
+        activityManager.getAppState().setUiState(UI_STATE_RESIZE_MAINVIEW);
+    }
+}
+
+void MainComponent::mouseDrag(const juce::MouseEvent &me)
+{
+
+    if (activityManager.getAppState().getUiState() == UI_STATE_RESIZE_MAINVIEW)
+    {
+        arrangementAreaHeight = me.getPosition().getY() - (NOTIF_HEIGHT + NOTIF_OUTTER_MARGINS + NOTIF_OUTTER_MARGINS);
+        resized();
+        repaint();
     }
 }

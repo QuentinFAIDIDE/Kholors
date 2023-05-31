@@ -35,7 +35,7 @@
 
 #define FREQVIEW_SAMPLE_MASK_PATH "~/Kholors/sample_texture_mask.png"
 
-#define MAINVIEW_RESIZE_HANDLE_HEIGHT 18
+#define MAINVIEW_RESIZE_HANDLE_HEIGHT 8
 
 // minimum windows height to draw something
 #define MIN_SCREEN_WIDTH 350
