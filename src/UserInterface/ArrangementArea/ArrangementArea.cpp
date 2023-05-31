@@ -695,12 +695,12 @@ void ArrangementArea::paintPlayCursor(juce::Graphics &g)
     if (activityManager.getAppState().getUiState() != UI_STATE_CURSOR_MOVING)
     {
         lastPlayCursorPosition = ((mixingBus.getNextReadPosition() - viewPosition) / viewScale);
-        g.fillRect(lastPlayCursorPosition - (PLAYCURSOR_WIDTH >> 1), 0, PLAYCURSOR_WIDTH, FREQTIME_VIEW_HEIGHT);
+        g.fillRect(lastPlayCursorPosition - (PLAYCURSOR_WIDTH >> 1), 0, PLAYCURSOR_WIDTH, getBounds().getHeight());
     }
     else
     {
         lastPlayCursorPosition = lastMouseX;
-        g.fillRect(lastPlayCursorPosition - (PLAYCURSOR_WIDTH >> 1), 0, PLAYCURSOR_WIDTH, FREQTIME_VIEW_HEIGHT);
+        g.fillRect(lastPlayCursorPosition - (PLAYCURSOR_WIDTH >> 1), 0, PLAYCURSOR_WIDTH, getBounds().getHeight());
     }
 }
 
@@ -840,7 +840,7 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
         {
             if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION)
             {
-                float freq = UnitConverter::verticalPositionToFrequency(lastMouseY);
+                float freq = UnitConverter::verticalPositionToFrequency(lastMouseY, getBounds().getHeight());
                 // create a track duplicate from the sample id at *it
                 std::cout << freq << std::endl;
                 std::shared_ptr<SampleCreateTask> task = std::make_shared<SampleCreateTask>(freq, *it);
@@ -1167,6 +1167,7 @@ void ArrangementArea::mouseWheelMove(const juce::MouseEvent &e, const juce::Mous
                 }
             }
 
+            tempoGrid.updateView(viewPosition, viewScale);
             repaint();
             updateShadersPositionUniforms(false);
         }
@@ -1176,7 +1177,7 @@ void ArrangementArea::mouseWheelMove(const juce::MouseEvent &e, const juce::Mous
 void ArrangementArea::cropSampleBordersVertically(bool innerBorders)
 {
     // compute the frequency to set in the filter
-    float filterFreq = UnitConverter::verticalPositionToFrequency(lastMouseY);
+    float filterFreq = UnitConverter::verticalPositionToFrequency(lastMouseY, getBounds().getHeight());
     // set the filter frequency for each sample
     std::set<size_t>::iterator itr;
 

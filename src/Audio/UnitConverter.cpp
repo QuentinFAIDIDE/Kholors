@@ -96,7 +96,7 @@ float UnitConverter::magnifyIntensity(float input)
     return intensity;
 }
 
-float UnitConverter::verticalPositionToFrequency(int y)
+float UnitConverter::verticalPositionToFrequency(int y, int viewHeight)
 {
     // REMINDER: upper half (below half height) is the first
     // fft with lower frequencies below. second halve freqs are the opposite disposition.
@@ -106,13 +106,13 @@ float UnitConverter::verticalPositionToFrequency(int y)
     // from texture freq index to storage freq index and then from storage
     // freq index to fft index.
     float freqRatio = 0.0f;
-    if (y < (FREQTIME_VIEW_HEIGHT >> 1))
+    if (y < (viewHeight >> 1))
     {
-        freqRatio = 1.0f - (float(y) / float(FREQTIME_VIEW_HEIGHT >> 1));
+        freqRatio = 1.0f - (float(y) / float(viewHeight >> 1));
     }
     else
     {
-        freqRatio = (float(y) / float(FREQTIME_VIEW_HEIGHT >> 1)) - 1.0f;
+        freqRatio = (float(y) / float(viewHeight >> 1)) - 1.0f;
     }
 
     // texture are flipped

@@ -41,6 +41,9 @@ class MainComponent : public juce::AudioAppComponent, public juce::DragAndDropCo
     void getNextAudioBlock(const juce::AudioSourceChannelInfo &) override;
     void configureApp(Config &conf);
 
+    void mouseDrag(const juce::MouseEvent &me) override;
+    void mouseMove(const juce::MouseEvent &me) override;
+
   private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)

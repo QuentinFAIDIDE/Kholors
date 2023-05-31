@@ -76,7 +76,7 @@ class UnitConverter
      * @param  y Height relative to the top in pixels
      * @return   Frequency in Hz
      */
-    static float verticalPositionToFrequency(int y);
+    static float verticalPositionToFrequency(int y, int viewHeight);
 
     /**
      * Convert a frequency in Hz to the texture position ratio between 0 and 1.

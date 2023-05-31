@@ -2,15 +2,6 @@
 // samples)
 #define AUDIO_FRAMERATE 44100
 
-// How many frequency bins we use on vertical axis
-#define FREQTIME_VIEW_Y_RESOLUTION 256
-// How many time bins we use on horizontal axis
-#define FREQTIME_VIEW_X_RESOLUTION 8192
-// How many shades of intensities we display
-#define FREQTIME_VIEW_INTENSITY_RESOLUTION_BITS 4
-#define FREQTIME_VIEW_INTENSITY_RESOLUTION (2 << (FREQTIME_VIEW_INTENSITY_RESOLUTION_BITS - 1))
-// Max number of elements per pixel (used to preallocate cache)
-#define FREQTIME_VIEW_MAX_SINGLEPOINT_ELEMEMENTS 8
 #define FREQTIME_VIEW_HEIGHT 400
 // pixel vertical width of the space better top and bottom of samples
 #define FREQTIME_VIEW_INNER_MARGINS 2

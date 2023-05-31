@@ -106,8 +106,8 @@ void MainComponent::resized()
     resizeHandleArea.setWidth(localBounds.getWidth());
     resizeHandleArea.setHeight(MAINVIEW_RESIZE_HANDLE_HEIGHT);
 
-
-    int y = NOTIF_HEIGHT + NOTIF_OUTTER_MARGINS + NOTIF_OUTTER_MARGINS + arrangementAreaHeight + MAINVIEW_RESIZE_HANDLE_HEIGHT;
+    int y = NOTIF_HEIGHT + NOTIF_OUTTER_MARGINS + NOTIF_OUTTER_MARGINS + arrangementAreaHeight +
+            MAINVIEW_RESIZE_HANDLE_HEIGHT;
     localBounds = getLocalBounds();
     localBounds.setY(y);
     localBounds.setHeight(localBounds.getHeight() - y - 6);
@@ -145,5 +145,22 @@ void MainComponent::configureApp(Config &conf)
 
         std::cerr << "Audio Device Settings updated" << std::endl;
         printAudioDeviceSettings();
+    }
+}
+
+void MainComponent::mouseDrag(const juce::MouseEvent &me)
+{
+    arrangementAreaHeight = me.getMouseDownY();
+}
+
+void MainComponent::mouseMove(const juce::MouseEvent &event)
+{
+    if (resizeHandleArea.contains(event.getMouseDownPosition()))
+    {
+        setMouseCursor(juce::MouseCursor::DraggingHandCursor);
+    }
+    else
+    {
+        setMouseCursor(juce::MouseCursor::NormalCursor);
     }
 }
