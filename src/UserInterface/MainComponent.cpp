@@ -10,6 +10,9 @@ MainComponent::MainComponent()
     : notificationArea(activityManager), mixingBus(activityManager), arrangementArea(mixingBus, activityManager),
       actionTabs(juce::TabbedButtonBar::Orientation::TabsAtTop)
 {
+
+    arrangementAreaHeight = FREQTIME_VIEW_HEIGHT;
+
     configureLookAndFeel();
 
     activityManager.registerTaskListener(&mixingBus);
@@ -90,14 +93,21 @@ void MainComponent::resized()
     localBounds.setY(0);
     localBounds.setHeight(NOTIF_HEIGHT + NOTIF_OUTTER_MARGINS + NOTIF_OUTTER_MARGINS);
     notificationArea.setBounds(localBounds);
-    // set arrangement area to a FREQTIME_VIEW_HEIGHT band at
+    // set arrangement area to a arrangementAreaHeight band at
     // middle of the screen
     localBounds.setX(0);
     localBounds.setY(NOTIF_HEIGHT + NOTIF_OUTTER_MARGINS + NOTIF_OUTTER_MARGINS);
-    localBounds.setHeight(FREQTIME_VIEW_HEIGHT);
+    localBounds.setHeight(arrangementAreaHeight);
     arrangementArea.setBounds(localBounds);
 
-    int y = NOTIF_HEIGHT + NOTIF_OUTTER_MARGINS + NOTIF_OUTTER_MARGINS + FREQTIME_VIEW_HEIGHT + 6;
+    // area where a click = a resizing
+    resizeHandleArea.setX(0);
+    resizeHandleArea.setY(localBounds.getBottom());
+    resizeHandleArea.setWidth(localBounds.getWidth());
+    resizeHandleArea.setHeight(MAINVIEW_RESIZE_HANDLE_HEIGHT);
+
+
+    int y = NOTIF_HEIGHT + NOTIF_OUTTER_MARGINS + NOTIF_OUTTER_MARGINS + arrangementAreaHeight + MAINVIEW_RESIZE_HANDLE_HEIGHT;
     localBounds = getLocalBounds();
     localBounds.setY(y);
     localBounds.setHeight(localBounds.getHeight() - y - 6);

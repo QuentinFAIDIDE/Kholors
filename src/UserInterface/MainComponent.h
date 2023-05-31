@@ -50,7 +50,12 @@ class MainComponent : public juce::AudioAppComponent, public juce::DragAndDropCo
     // widgets
     // the object responsible for managing the various samples imported
     MixingBus mixingBus;
+
     ArrangementArea arrangementArea;
+    int arrangementAreaHeight;
+
+    juce::Rectangle<int> resizeHandleArea;
+
     TopbarArea notificationArea;
     juce::TabbedComponent actionTabs;
 

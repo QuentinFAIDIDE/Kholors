@@ -31,7 +31,7 @@
 #define FREQVIEW_MAX_ABSOLUTE_SCALE_MOVEMENT 20
 // minimum sizes to draw freqview (arrangement) area
 #define FREQVIEW_MIN_WIDTH 300
-#define FREQVIEW_MIN_HEIGHT FREQTIME_VIEW_HEIGHT
+#define FREQVIEW_MIN_HEIGHT 150
 
 #define FREQVIEW_LABEL_HEIGHT 24
 #define FREQVIEW_LABELS_CORNER_ROUNDING 4.0f
@@ -43,6 +43,8 @@
 #define FREQVIEW_MIN_RESIZE_FRAMES (AUDIO_FRAMERATE >> 10)
 
 #define FREQVIEW_SAMPLE_MASK_PATH "~/Kholors/sample_texture_mask.png"
+
+#define MAINVIEW_RESIZE_HANDLE_HEIGHT 18
 
 // minimum windows height to draw something
 #define MIN_SCREEN_WIDTH 350
