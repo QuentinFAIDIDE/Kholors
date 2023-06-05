@@ -22,14 +22,14 @@
 #define VUMETER_SCALE_DEFINITION 3.0f
 #define VUMETER_COLOR_0_MAX_DB -13.0f
 #define VUMETER_COLOR_1_MAX_DB -8.0f
-#define VUMETER_COLOR_2_MAX_DB -5.0f
+#define VUMETER_COLOR_2_MAX_DB -3.0f
 #define VUMETER_DECAY_PER_BUFFER 3.0f
 #define VUMETER_BUFFERS_BEFORE_DECAY 20
 
-#define COLOR_VUMETER_0 juce::Colour(114, 245, 66)
-#define COLOR_VUMETER_1 juce::Colour(245, 212, 66)
-#define COLOR_VUMETER_2 juce::Colour(245, 138, 66)
-#define COLOR_VUMETER_3 juce::Colour(245, 72, 66)
+#define COLOR_VUMETER_0 juce::Colour(230, 237, 228)
+#define COLOR_VUMETER_1 juce::Colour(230, 237, 228)
+#define COLOR_VUMETER_2 juce::Colour(240, 174, 129)
+#define COLOR_VUMETER_3 juce::Colour(247, 133, 129)
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
