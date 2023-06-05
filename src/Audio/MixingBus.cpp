@@ -337,11 +337,15 @@ void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFi
         juce::dsp::AudioBlock<float> audioBlockRef(*bufferToFill.buffer, bufferToFill.startSample);
         juce::dsp::ProcessContextReplacing<float> context(audioBlockRef);
 
+        // the post processing (gain / limiter) is temporarly
+        // commented off because I am in the process of troubleshooting
+        // volume issues and vu meters (need pure signal untill I figure out why it's altered that much).
+
         // apply master gain
-        masterGain.process(context);
+        // masterGain.process(context);
 
         // apply limiter
-        masterLimiter.process(context);
+        // masterLimiter.process(context);
 
         // let's spread the master volume to the vu meter
         std::pair<float, float> masterVolume;

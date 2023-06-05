@@ -3,7 +3,9 @@
 #include "../Section.h"
 #include <string>
 
-VuMeter::VuMeter(std::string t, VumeterId id) : dbValueLeft(0.0), dbValueRight(0.0), title(t), identifier(id)
+VuMeter::VuMeter(std::string t, VumeterId id)
+    : dbValueLeft(VUMETER_MIN_DB), dbValueRight(VUMETER_MIN_DB), title(t), identifier(id), maxDbLeft(VUMETER_MIN_DB),
+      maxDbRight(VUMETER_MIN_DB), buffersSinceLeftChanMax(0), buffersSinceRightChanMax(0)
 {
 }
 
@@ -41,10 +43,49 @@ void VuMeter::updateValue()
     {
         auto value = dataSource->getVuMeterValue(identifier);
 
+        buffersSinceRightChanMax++;
+        buffersSinceLeftChanMax++;
+
         if (value.hasValue())
         {
             dbValueLeft = value->first;
             dbValueRight = value->second;
+
+            if (dbValueRight > maxDbRight)
+            {
+                maxDbRight = dbValueRight;
+                buffersSinceRightChanMax = 0;
+            }
+
+            if (dbValueLeft > maxDbLeft)
+            {
+                maxDbLeft = dbValueLeft;
+                buffersSinceLeftChanMax = 0;
+            }
+        }
+
+        if (maxDbLeft - VUMETER_DECAY_PER_BUFFER < VUMETER_MIN_DB)
+        {
+            maxDbLeft = VUMETER_MIN_DB;
+        }
+        else
+        {
+            if (buffersSinceLeftChanMax > VUMETER_BUFFERS_BEFORE_DECAY)
+            {
+                maxDbLeft -= VUMETER_DECAY_PER_BUFFER;
+            }
+        }
+
+        if (maxDbRight - VUMETER_DECAY_PER_BUFFER < VUMETER_MIN_DB)
+        {
+            maxDbRight = VUMETER_MIN_DB;
+        }
+        else
+        {
+            if (buffersSinceRightChanMax > VUMETER_BUFFERS_BEFORE_DECAY)
+            {
+                maxDbRight -= VUMETER_DECAY_PER_BUFFER;
+            }
         }
     }
 }
@@ -142,11 +183,11 @@ void VuMeter::drawMeter(juce::Graphics &g, juce::Rectangle<int> area)
     leftMeter.reduce(VUMETER_INNER_PADDING, 0);
     rightMeter.reduce(VUMETER_INNER_PADDING, 0);
 
-    drawChannel(g, leftMeter, dbValueLeft);
-    drawChannel(g, rightMeter, dbValueRight);
+    drawChannel(g, leftMeter, dbValueLeft, maxDbLeft);
+    drawChannel(g, rightMeter, dbValueRight, maxDbRight);
 }
 
-void VuMeter::drawChannel(juce::Graphics &g, juce::Rectangle<int> area, float value)
+void VuMeter::drawChannel(juce::Graphics &g, juce::Rectangle<int> area, float value, float maxval)
 {
     // ideal rectangle length
     int rectHeigth = float(area.getHeight()) / float(VUMETER_DEFINITION);
@@ -171,6 +212,13 @@ void VuMeter::drawChannel(juce::Graphics &g, juce::Rectangle<int> area, float va
 
         g.fillRect(rectToDraw);
     }
+
+    // compute max bar position
+    float maxLineHeight = area.getHeight() * std::abs((maxval - VUMETER_MIN_DB) / VUMETER_MIN_DB);
+    maxLineHeight = juce::jlimit(0.0f, float(area.getHeight()), maxLineHeight);
+    g.setColour(COLOR_TEXT);
+    maxLineHeight = area.getBottomLeft().getY() - maxLineHeight;
+    g.drawLine(area.getTopLeft().getX(), maxLineHeight, area.getTopRight().getX(), maxLineHeight);
 }
 
 juce::Colour VuMeter::pickColorForIndex(int index, int maxIndex, float dbVolume)

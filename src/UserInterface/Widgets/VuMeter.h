@@ -23,6 +23,8 @@
 #define VUMETER_COLOR_0_MAX_DB -13.0f
 #define VUMETER_COLOR_1_MAX_DB -8.0f
 #define VUMETER_COLOR_2_MAX_DB -5.0f
+#define VUMETER_DECAY_PER_BUFFER 3.0f
+#define VUMETER_BUFFERS_BEFORE_DECAY 20
 
 #define COLOR_VUMETER_0 juce::Colour(114, 245, 66)
 #define COLOR_VUMETER_1 juce::Colour(245, 212, 66)
@@ -81,6 +83,12 @@ class VuMeter : public juce::Component
     // datasource pointer
     std::shared_ptr<VuMeterDataSource> dataSource;
 
+    // maximum for left and right channel
+    float maxDbLeft, maxDbRight;
+
+    // buffers since last time the max was reached
+    int buffersSinceLeftChanMax, buffersSinceRightChanMax;
+
     ///////////////////////////////
 
     /*
@@ -107,7 +115,7 @@ class VuMeter : public juce::Component
     /**
      Draw the channel vu meter area. It's made of VUMETER_DEFINITION rectangles of 4 colors.
      */
-    void drawChannel(juce::Graphics &, juce::Rectangle<int>, float);
+    void drawChannel(juce::Graphics &, juce::Rectangle<int>, float, float);
 
     /**
      Pick a color that corresponds to the index in the range.

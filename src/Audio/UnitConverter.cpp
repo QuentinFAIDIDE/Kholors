@@ -168,6 +168,6 @@ float UnitConverter::zoomInRangeInv(float v)
 float UnitConverter::dbFromBufferChannel(const juce::AudioSourceChannelInfo &buffer, int chan)
 {
     auto rawValue =
-        buffer.buffer->getRMSLevel(chan % buffer.buffer->getNumChannels(), buffer.startSample, buffer.numSamples);
+        buffer.buffer->getMagnitude(chan % buffer.buffer->getNumChannels(), buffer.startSample, buffer.numSamples);
     return juce::Decibels::gainToDecibels(rawValue);
 }
