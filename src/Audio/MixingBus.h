@@ -121,6 +121,9 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     // a buffer to copy paste data in the audio thread
     juce::AudioBuffer<float> audioThreadBuffer;
 
+    // a buffer to hold the summed selected samples signal
+    juce::AudioBuffer<float> audioThreadSelectionBuffer;
+
     // A list of SamplePlayer objects that inherits PositionableAudioSource
     // and are objects that play buffers at some position
     juce::Array<std::shared_ptr<SamplePlayer>> tracks;

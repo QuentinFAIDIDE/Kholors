@@ -129,6 +129,13 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
         return true;
     }
 
+    std::shared_ptr<SelectionChangingTask> selectUpdate = std::dynamic_pointer_cast<SelectionChangingTask>(task);
+    if (selectUpdate != nullptr && selectUpdate->isCompleted())
+    {
+        mixbusDataSource->updateSelectedTracks(selectUpdate->newSelectedTracks);
+        return true;
+    }
+
     return false;
 }
 
@@ -289,11 +296,36 @@ void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFi
     // if there is more then one input track and we are playing
     if (tracks.size() > 0 && isPlaying)
     {
+
+        // get if possible a pointer to the set of selected tracks
+        std::set<size_t> *selectedTracks = mixbusDataSource->getLockedSelectedTracks();
+        // TODO: make the getSelectedTrack function lock the selected tracks set !
+
+        // ensure selected audio buffer has necessary space
+        if (selectedTracks != nullptr)
+        {
+            // initialize buffer
+            audioThreadSelectionBuffer.setSize(juce::jmax(1, bufferToFill.buffer->getNumChannels()),
+                                               bufferToFill.buffer->getNumSamples(), false, false, true);
+            audioThreadSelectionBuffer.clear();
+        }
+
         // get a pointer to a new processed input buffer from first source
         // we will append into this one to mix tracks together
         if (tracks.getUnchecked(0) != nullptr)
         {
             tracks.getUnchecked(0)->getNextAudioBlock(bufferToFill);
+
+            // if the track is currently selected sum its volume
+            if (selectedTracks != nullptr && selectedTracks->find(0) != selectedTracks->end())
+            {
+                // append it to the initial one
+                for (int chan = 0; chan < bufferToFill.buffer->getNumChannels(); chan++)
+                {
+                    audioThreadSelectionBuffer.addFrom(chan, 0, (*(bufferToFill.buffer)), chan,
+                                                       bufferToFill.startSample, bufferToFill.numSamples);
+                }
+            }
         }
         else
         {
@@ -304,7 +336,7 @@ void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFi
         {
             // initialize buffer
             audioThreadBuffer.setSize(juce::jmax(1, bufferToFill.buffer->getNumChannels()),
-                                      bufferToFill.buffer->getNumSamples());
+                                      bufferToFill.buffer->getNumSamples(), false, false, true);
 
             // create a new getNextAudioBlock request that
             // will use our MixingBus buffer to pull
@@ -329,6 +361,17 @@ void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFi
                         bufferToFill.buffer->addFrom(chan, bufferToFill.startSample, audioThreadBuffer, chan, 0,
                                                      bufferToFill.numSamples);
                     }
+
+                    // if the track is currently selected sum its volume
+                    if (selectedTracks != nullptr && selectedTracks->find(i) != selectedTracks->end())
+                    {
+                        // append it to the initial one
+                        for (int chan = 0; chan < bufferToFill.buffer->getNumChannels(); chan++)
+                        {
+                            audioThreadSelectionBuffer.addFrom(chan, 0, audioThreadBuffer, chan, 0,
+                                                               bufferToFill.numSamples);
+                        }
+                    }
                 }
             }
         }
@@ -339,7 +382,8 @@ void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFi
 
         // the post processing (gain / limiter) is temporarly
         // commented off because I am in the process of troubleshooting
-        // volume issues and vu meters (need pure signal untill I figure out why it's altered that much).
+        // volume issues and vu meters (need pure signal to dev vumeters untill I figure out why it's altered that
+        // much).
 
         // apply master gain
         // masterGain.process(context);
@@ -351,11 +395,22 @@ void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFi
         std::pair<float, float> masterVolume;
         masterVolume.first = UnitConverter::dbFromBufferChannel(bufferToFill, 0);
         masterVolume.second = UnitConverter::dbFromBufferChannel(bufferToFill, 1);
-
         vuMeterVolumes[VUMETER_ID_MASTER] = masterVolume;
+
+        // this buffer audio source info allow the dbFromBufferChannel function to work on
+        // the appropriate range
+        juce::AudioSourceChannelInfo selectionBufferInfos(&audioThreadSelectionBuffer, 0, bufferToFill.numSamples);
+
+        std::pair<float, float> selectionVolume;
+        selectionVolume.first = UnitConverter::dbFromBufferChannel(selectionBufferInfos, 0);
+        selectionVolume.second = UnitConverter::dbFromBufferChannel(selectionBufferInfos, 1);
+        vuMeterVolumes[VUMETER_ID_SELECTED] = selectionVolume;
 
         // send all the vu meter values to the data source
         mixbusDataSource->swapVuMeterValues(vuMeterVolumes);
+
+        // ensure we freed the selected tracks lock !
+        mixbusDataSource->releaseSelectedTracks();
     }
     else
     {

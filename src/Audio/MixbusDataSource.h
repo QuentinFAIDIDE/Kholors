@@ -6,6 +6,8 @@
 
 /**
  * @brief      This class describes a mixbus data source.
+ *             Its holds copy of informations like volumes
+ *             for vu meters or currently selected tracks.
  */
 class MixbusDataSource : public VuMeterDataSource
 {
@@ -30,9 +32,41 @@ class MixbusDataSource : public VuMeterDataSource
      */
     void swapVuMeterValues(VuMeterData &values);
 
+    /**
+     * @brief      Receives a copy of the set holding the selected
+     *             tracks ids and takes care of swapping with the locked
+     *             ones that are requested by the mixbus. This function can
+     *             lock.
+     *
+     * @param[in]  newSelectedTracks  The new selected tracks
+     */
+    void updateSelectedTracks(std::set<size_t> &newSelectedTracks);
+
+    /**
+     * @brief      Gets the selected tracks. Will not block and
+     *             return nothing if current selection is locked.
+     *             Warning: it takes the lock untill releaseSelectedTracks()
+     *             is called.
+     *
+     * @return     The selected tracks.
+     */
+    std::set<size_t> *getLockedSelectedTracks();
+
+    /**
+     * @brief      Releases the lock on selected tracks. To call after
+     *             getLockedSelectedTracks. Warning: quite dangerous
+     *             to use ! Never ever allow an udpateSelectedTracks to be
+     *             called and return something != nullptr without a matching call
+     *             to this to release lock.
+     */
+    void releaseSelectedTracks();
+
   private:
-    juce::CriticalSection mutex;
+    juce::CriticalSection vuMetersMutex;
     VuMeterData vuMeterValues;
+
+    std::set<size_t> selectedTracks;
+    juce::CriticalSection selectedTracksMutex;
 };
 
 #endif // MIXBUS_DATA_SOURCE_HPP
