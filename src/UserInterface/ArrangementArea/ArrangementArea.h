@@ -20,6 +20,7 @@
 #include "../../OpenGL/AlphaMaskTextureLoader.h"
 #include "../../OpenGL/BackgroundModel.h"
 #include "../../OpenGL/SampleGraphicModel.h"
+#include "FrequencyGrid.h"
 #include "TempoGrid.h"
 #include "juce_opengl/opengl/juce_gl.h"
 
@@ -67,6 +68,7 @@ class ArrangementArea : public juce::Component,
     //==============================================================================
     bool taskHandler(std::shared_ptr<Task> task) override;
     void paint(juce::Graphics &) override;
+    void paintOverChildren(juce::Graphics &) override;
     void resized() override;
     void mouseDown(const juce::MouseEvent &) override;
     void mouseUp(const juce::MouseEvent &) override;
@@ -96,6 +98,7 @@ class ArrangementArea : public juce::Component,
     juce::OpenGLContext openGLContext;
 
     TempoGrid tempoGrid;
+    FrequencyGrid frequencyGrid;
 
     // object that loads the fragment shader second texture
     // used as a sample alpha mask texture (ie add grain / stars)

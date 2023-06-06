@@ -57,6 +57,7 @@ ArrangementArea::ArrangementArea(MixingBus &mb, ActivityManager &am)
     openGLContext.setContinuousRepainting(false);
     openGLContext.attachTo(*this);
 
+    addAndMakeVisible(frequencyGrid);
     addAndMakeVisible(tempoGrid);
 }
 
@@ -81,8 +82,12 @@ void ArrangementArea::paint(juce::Graphics &g)
 
     paintSelection(g);
     paintPlayCursor(g);
-    paintLabels(g);
     paintSplitLocation(g);
+}
+
+void ArrangementArea::paintOverChildren(juce::Graphics &g)
+{
+    paintLabels(g);
     paintSelectionArea(g);
 }
 
@@ -503,6 +508,7 @@ void ArrangementArea::resized()
     }
 
     tempoGrid.setBounds(getLocalBounds());
+    frequencyGrid.setBounds(getLocalBounds());
 }
 
 void ArrangementArea::newOpenGLContextCreated()

@@ -75,8 +75,7 @@ void TempoGrid::paint(juce::Graphics &g)
     for (int i = 0; i <= noBars * 4; i++)
     {
 
-        // ignore first 4 bars
-        if (float(firstDisplayedBar - 1) + (float(i) / 4.0f) < 1.0f)
+        if ((viewStartBarIndex * 4) + i < 4)
         {
             continue;
         }
