@@ -524,7 +524,7 @@ std::string SelectionChangingTask::marshal()
     std::vector<int> ids(newSelectedTracks.begin(), newSelectedTracks.end());
     json taskj = {{"object", "task"},
                   {"task", "selection_changing"},
-                  {"changed_samples", ids}
+                  {"changed_samples", ids},
                   {"is_completed", isCompleted()},
                   {"failed", hasFailed()},
                   {"recordable_in_history", recordableInHistory},
