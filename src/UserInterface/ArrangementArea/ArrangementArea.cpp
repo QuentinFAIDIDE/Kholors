@@ -142,6 +142,9 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
     {
         samples[disableTask->id]->disable();
         selectedTracks.erase(disableTask->id);
+
+        copyAndBroadcastSelection(true);
+
         disableTask->setCompleted(true);
         disableTask->setFailed(false);
         return true;
@@ -681,6 +684,8 @@ void ArrangementArea::displaySample(std::shared_ptr<SamplePlayer> sp, std::share
         }
 
         selectedTracks.insert(task->getAllocatedIndex());
+
+        copyAndBroadcastSelection(true);
     }
 
     task->setCompleted(true);
@@ -827,6 +832,7 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
                     repaint();
                 }
             }
+            copyAndBroadcastSelection();
         }
     }
 
@@ -1134,6 +1140,7 @@ void ArrangementArea::addSelectedSamples()
                 selectedTracks.insert(i);
             }
         }
+        copyAndBroadcastSelection();
     }
 }
 
@@ -1583,6 +1590,9 @@ void ArrangementArea::deleteSelectedTracks()
 
     // clear selection and redraw
     selectedTracks.clear();
+
+    copyAndBroadcastSelection();
+
     repaint();
 }
 
@@ -1770,4 +1780,21 @@ void ArrangementArea::recolorSelection(std::shared_ptr<SampleGroupRecolor> task)
         syncSampleColor(*it);
     }
     repaint();
+}
+
+void ArrangementArea::copyAndBroadcastSelection(bool fromWithinTask = false)
+{
+    // create task with a copy of the selection set
+    SelectionChangingTask selectionUpdate(selectedTracks);
+    selectionUpdate.setCompleted(true);
+    selectionUpdate.setFailed(false);
+
+    if (fromWithinTask)
+    {
+        activityManager.broadcastNestedTaskNow(selectionUpdate);
+    }
+    else
+    {
+        activityManager.broadcastTask(selectionUpdate);
+    }
 }

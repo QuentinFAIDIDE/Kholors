@@ -229,6 +229,15 @@ class ArrangementArea : public juce::Component,
 
     void refreshSampleOpenGlView(int index);
     void recolorSelection(std::shared_ptr<SampleGroupRecolor>);
+
+    /**
+    Makes a copy of the set of selected tracks and broadcast it
+    as a completed task so that it can be picked by mixbus.
+    It's either from within a running task and will be broadcasted
+    now, or from another process and will trigger a new task broadcating
+    process.
+    */
+    void copyAndBroadcastSelection(bool fromWithinTask);
 };
 
 #endif // DEF_ARRANGEMENTAREA_HPP
