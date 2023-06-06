@@ -539,4 +539,24 @@ class SampleGroupRecolor : public Task
     bool colorFromId;
 };
 
+/**
+That that informs about changes to selection in ArrangementArea
+to replicate them in the Mixbus selection buffer.
+*/
+class SelectionChangingTask : public SilentTask
+{
+  public:
+  /**
+  Called to create the  task using the newSelection.
+  */
+  SelectionChangingTask(std::set<size_t>& newSelection);
+
+  /**
+  Dumps the task data to a string as json
+  */
+  std::string marshal() override;
+
+  std::set<size_t> newSelectedTracks;
+};
+
 #endif // DEF_ACTION_HPP

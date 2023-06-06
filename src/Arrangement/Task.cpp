@@ -467,7 +467,7 @@ SampleUpdateTask::SampleUpdateTask(int sampleId, std::shared_ptr<SamplePlayer> s
 std::string SampleUpdateTask::marshal()
 {
     json taskj = {{"object", "task"},
-                  {"task", "sample_view_update"},
+                  {"task", "sample_update"},
                   {"id", id},
                   {"is_completed", isCompleted()},
                   {"failed", hasFailed()},
@@ -491,7 +491,7 @@ std::string SampleGroupRecolor::marshal()
 {
     std::vector<int> ids(changedSampleIds.begin(), changedSampleIds.end());
     json taskj = {{"object", "task"},
-                  {"task", "sample_view_update"},
+                  {"task", "sample_group_recolor"},
                   {"color_id", colorId},
                   {"changed_samples", ids},
                   {"newColor", newColor.toString().toStdString()},
@@ -510,4 +510,24 @@ std::vector<std::shared_ptr<Task>> SampleGroupRecolor::getOppositeTasks()
     task->colorId = -1;
     tasks.push_back(task);
     return tasks;
+}
+
+//////////////////////////////////////////////////////
+
+SelectionChangingTask::SelectionChangingTask(std::set<size_t>& newSelection)
+{
+    newSelectedTracks = newSelection;
+}
+
+std::string SelectionChangingTask::marshal()
+{
+    std::vector<int> ids(changedSampleIds.begin(), changedSampleIds.end());
+    json taskj = {{"object", "task"},
+                  {"task", "selection_changing"},
+                  {"changed_samples", ids}
+                  {"is_completed", isCompleted()},
+                  {"failed", hasFailed()},
+                  {"recordable_in_history", recordableInHistory},
+                  {"is_part_of_reversion", isPartOfReversion}};
+    return taskj.dump();
 }
