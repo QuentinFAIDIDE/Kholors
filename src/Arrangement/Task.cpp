@@ -521,7 +521,7 @@ SelectionChangingTask::SelectionChangingTask(std::set<size_t>& newSelection)
 
 std::string SelectionChangingTask::marshal()
 {
-    std::vector<int> ids(changedSampleIds.begin(), changedSampleIds.end());
+    std::vector<int> ids(newSelectedTracks.begin(), newSelectedTracks.end());
     json taskj = {{"object", "task"},
                   {"task", "selection_changing"},
                   {"changed_samples", ids}
