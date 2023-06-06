@@ -832,7 +832,7 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
                     repaint();
                 }
             }
-            copyAndBroadcastSelection();
+            copyAndBroadcastSelection(false);
         }
     }
 
@@ -1140,7 +1140,7 @@ void ArrangementArea::addSelectedSamples()
                 selectedTracks.insert(i);
             }
         }
-        copyAndBroadcastSelection();
+        copyAndBroadcastSelection(false);
     }
 }
 
@@ -1591,7 +1591,7 @@ void ArrangementArea::deleteSelectedTracks()
     // clear selection and redraw
     selectedTracks.clear();
 
-    copyAndBroadcastSelection();
+    copyAndBroadcastSelection(false);
 
     repaint();
 }
@@ -1782,7 +1782,7 @@ void ArrangementArea::recolorSelection(std::shared_ptr<SampleGroupRecolor> task)
     repaint();
 }
 
-void ArrangementArea::copyAndBroadcastSelection(bool fromWithinTask = false)
+void ArrangementArea::copyAndBroadcastSelection(bool fromWithinTask)
 {
     // create task with a copy of the selection set
     std::shared_ptr<SelectionChangingTask> selectionUpdate = std::make_shared<SelectionChangingTask>(selectedTracks);
