@@ -1785,9 +1785,9 @@ void ArrangementArea::recolorSelection(std::shared_ptr<SampleGroupRecolor> task)
 void ArrangementArea::copyAndBroadcastSelection(bool fromWithinTask = false)
 {
     // create task with a copy of the selection set
-    SelectionChangingTask selectionUpdate(selectedTracks);
-    selectionUpdate.setCompleted(true);
-    selectionUpdate.setFailed(false);
+    std::shared_ptr<SelectionChangingTask> selectionUpdate = std::make_shared<SelectionChangingTask>(selectedTracks);
+    selectionUpdate->setCompleted(true);
+    selectionUpdate->setFailed(false);
 
     if (fromWithinTask)
     {
