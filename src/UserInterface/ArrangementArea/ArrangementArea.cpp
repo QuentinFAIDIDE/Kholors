@@ -1130,6 +1130,8 @@ void ArrangementArea::addSelectedSamples()
     currentSelectionRect = juce::Rectangle<float>(juce::Point<float>(startSelectX, startSelectY),
                                                   juce::Point<float>(lastMouseX, lastMouseY));
 
+    bool selectedSomethingNew = false;
+
     for (size_t i = 0; i < samples.size(); i++)
     {
         if (samples[i] == nullptr || samples[i]->isDisabled())
@@ -1140,12 +1142,19 @@ void ArrangementArea::addSelectedSamples()
         auto sampleAreas = samples[i]->getPixelBounds(viewPosition, viewScale, bounds.getHeight());
         for (size_t j = 0; j < sampleAreas.size(); j++)
         {
-
             if (currentSelectionRect.intersects(sampleAreas[j]))
             {
-                selectedTracks.insert(i);
+                if (selectedTracks.find(i) == selectedTracks.end())
+                {
+                    selectedSomethingNew = true;
+                    selectedTracks.insert(i);
+                }
             }
         }
+    }
+
+    if (selectedSomethingNew)
+    {
         copyAndBroadcastSelection(false);
     }
 }
