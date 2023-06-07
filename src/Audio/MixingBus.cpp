@@ -21,15 +21,12 @@ MixingBus::MixingBus(ActivityManager &am)
     masterGain.setGainDecibels(0.0f);
     // make sure it's smoothing changes
     masterGain.setRampDurationSeconds(DSP_GAIN_SMOOTHING_RAMP_SEC);
+
     // warn if smoothing is disabled
     if (!masterGain.isSmoothing())
     {
         std::cerr << "Unable to set master gain smoothing" << std::endl;
     }
-
-    // set master limiter parameters
-    masterLimiter.setThreshold(-DSP_DEFAULT_MASTER_LIMITER_HEADROOM_DB);
-    masterLimiter.setRelease(DSP_DEFAULT_MASTER_LIMITER_RELEASE_MS);
 
     lastDrawnCursor = 0;
 
@@ -256,10 +253,7 @@ void MixingBus::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
     currentAudioSpec.maximumBlockSize = juce::uint32(samplesPerBlockExpected);
     currentAudioSpec.numChannels = numChannels;
 
-    // reset the limiter internal states
-    masterLimiter.reset();
-    // prepare to play with these settings
-    masterLimiter.prepare(currentAudioSpec);
+    masterGain.prepare(currentAudioSpec);
 
     // allocate/free memory around in the background thread
     notify();
@@ -278,8 +272,7 @@ void MixingBus::releaseResources()
         }
     }
 
-    // reset the limiter internal states
-    masterLimiter.reset();
+    masterGain.reset();
 
     // clear output buffer
     audioThreadBuffer.setSize(2, 0);
@@ -380,16 +373,8 @@ void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFi
         juce::dsp::AudioBlock<float> audioBlockRef(*bufferToFill.buffer, bufferToFill.startSample);
         juce::dsp::ProcessContextReplacing<float> context(audioBlockRef);
 
-        // the post processing (gain / limiter) is temporarly
-        // commented off because I am in the process of troubleshooting
-        // volume issues and vu meters (need pure signal to dev vumeters untill I figure out why it's altered that
-        // much).
-
         // apply master gain
-        // masterGain.process(context);
-
-        // apply limiter
-        // masterLimiter.process(context);
+        masterGain.process(context);
 
         // let's spread the master volume to the vu meter
         std::pair<float, float> masterVolume;

@@ -142,10 +142,8 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     // stack of files to import
     std::vector<std::shared_ptr<SampleCreateTask>> importTaskQueue;
 
-    // master bus main
+    // master bus gain
     juce::dsp::Gain<float> masterGain;
-    // master bus limiter
-    juce::dsp::Limiter<float> masterLimiter;
 
     // a buffer value to hold Processing specs for dsp prepare functions
     juce::dsp::ProcessSpec currentAudioSpec;
