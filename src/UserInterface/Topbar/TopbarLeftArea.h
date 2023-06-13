@@ -26,7 +26,6 @@ class TopbarLeftArea : public juce::Component
     // the outer bounds, minus the LeftArea inner margins.
     juce::Rectangle<float> bounds;
     VuMeter masterGainVu;
-    VuMeter inputGainVu;
 };
 
 #endif // DEF_TOPBAR_LEFT_AREA
