@@ -7,6 +7,9 @@
 
 #include <juce_gui_extra/juce_gui_extra.h>
 
+/**
+ Widget for the area to the right of the topbar.
+ */
 class TopbarRightArea : public juce::Component
 {
   public:

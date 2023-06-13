@@ -3,9 +3,13 @@
 
 #include "../../Config.h"
 #include "../Widgets/VuMeter.h"
+#include "TrackProperties.h"
 
 #include <juce_gui_extra/juce_gui_extra.h>
 
+/**
+ Widget for the area to the left of the topbar.
+ */
 class TopbarLeftArea : public juce::Component
 {
   public:
@@ -26,6 +30,7 @@ class TopbarLeftArea : public juce::Component
     // the outer bounds, minus the LeftArea inner margins.
     juce::Rectangle<float> bounds;
     VuMeter masterGainVu;
+    TrackProperties trackProperties;
 };
 
 #endif // DEF_TOPBAR_LEFT_AREA

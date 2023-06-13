@@ -3,6 +3,7 @@
 TopbarLeftArea::TopbarLeftArea() : masterGainVu("Master", VUMETER_ID_MASTER)
 {
     addAndMakeVisible(masterGainVu);
+    addAndMakeVisible(trackProperties);
 }
 
 void TopbarLeftArea::paint(juce::Graphics &g)
@@ -30,4 +31,5 @@ void TopbarLeftArea::resized()
     auto masterVuArea = rootBounds.removeFromLeft(VUMETER_WIDGET_WIDTH);
 
     masterGainVu.setBounds(masterVuArea);
+    trackProperties.setBounds(rootBounds);
 }
