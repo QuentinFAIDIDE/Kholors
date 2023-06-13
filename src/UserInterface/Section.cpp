@@ -24,7 +24,7 @@ void drawSection(juce::Graphics &g, juce::Rectangle<int> &bounds, juce::String t
 
     if (small)
     {
-        g.setFont(juce::Font(DEFAULT_FONT_SIZE * 0.8));
+        g.setFont(juce::Font(SMALLER_FONT_SIZE));
         titleHeight = SECTION_TITLE_HEIGHT_SMALL;
 
         // small section could use less top padding

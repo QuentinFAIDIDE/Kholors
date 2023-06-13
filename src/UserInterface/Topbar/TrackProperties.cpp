@@ -8,7 +8,7 @@
 TrackProperties::TrackProperties()
 {
     std::shared_ptr<TimeInfo> timeInfo = std::make_shared<TimeInfo>();
-    trackTimeInfoLine = std::make_shared<LabeledLineContainer>("Position:", timeInfo, 60, 70);
+    trackTimeInfoLine = std::make_shared<LabeledLineContainer>("Position:", timeInfo, 60, TIMEINFO_WIDTH);
     addAndMakeVisible(*trackTimeInfoLine);
 }
 

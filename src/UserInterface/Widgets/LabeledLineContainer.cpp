@@ -16,6 +16,7 @@ std::shared_ptr<juce::Component> LabeledLineContainer::getContent()
 
 void LabeledLineContainer::paint(juce::Graphics &g)
 {
+    g.setFont(juce::Font(SMALLER_FONT_SIZE));
     g.setColour(COLOR_TEXT_DARKER);
     g.drawText(label, labelLocalBounds, juce::Justification::centredLeft, true);
 }

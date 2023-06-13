@@ -86,6 +86,7 @@
 #define TAB_SECTIONS_MARGINS 5
 
 #define DEFAULT_FONT_SIZE 15
+#define SMALLER_FONT_SIZE 12
 
 // the gain smoothing when the value is changed
 #define DSP_GAIN_SMOOTHING_RAMP_SEC 0.03f
