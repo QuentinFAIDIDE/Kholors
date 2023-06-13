@@ -1,6 +1,8 @@
 #ifndef DEF_TRACK_PROPERTIES_HPP
 #define DEF_TRACK_PROPERTIES_HPP
 
+#include "../Widgets/LabeledLineContainer.h"
+
 #include <juce_gui_extra/juce_gui_extra.h>
 
 /**
@@ -11,6 +13,10 @@ class TrackProperties : public juce::Component
   public:
     TrackProperties();
     void paint(juce::Graphics &g) override;
+    void resized() override;
+
+  private:
+    std::shared_ptr<LabeledLineContainer> trackTimeInfoLine;
 };
 
 #endif // DEF_TRACK_PROPERTIES_HPP
