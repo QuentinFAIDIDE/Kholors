@@ -151,6 +151,12 @@ class SamplePlayer : public juce::PositionableAudioSource
      * equivalent to a movement of (screenProportion*100) % of the screen.
      */
     float addOnScreenAmountToFreq(float freq, float screenProportion);
+
+    /**
+     Checks if the gain fade in and fade out ramp sums to more than the length
+     and if so, reduce them appropriately
+     */
+    void checkRampsAreValid();
 };
 
 #endif // DEF_SAMPLEPLAYER_HPP

@@ -244,6 +244,8 @@ void SamplePlayer::setLength(juce::int64 length)
     {
         bufferEnd = audioBufferRef->getAudioSampleBuffer()->getNumSamples() - 1;
     }
+
+    checkRampsAreValid();
 }
 
 // get the length up to which the buffer is readead
@@ -305,6 +307,7 @@ int SamplePlayer::tryMovingStart(int desiredShift)
 
     setBufferShift(getBufferShift() + actualChange);
     move(getEditingPosition() + actualChange);
+
     return actualChange;
 }
 
@@ -335,6 +338,9 @@ int SamplePlayer::tryMovingEnd(int desiredShift)
     }
 
     setLength(getLength() + actualChange);
+
+    checkRampsAreValid();
+
     return actualChange;
 }
 
@@ -354,6 +360,8 @@ void SamplePlayer::setBufferShift(juce::int64 shift)
     {
         bufferStart = shift;
     }
+
+    checkRampsAreValid();
 }
 
 // get the shift of the buffer shift
@@ -783,4 +791,14 @@ float SamplePlayer::getLowPassFreq()
 float SamplePlayer::getHighPassFreq()
 {
     return highPassFreq;
+}
+
+void SamplePlayer::checkRampsAreValid()
+{
+    if (fadeInFrameLength + fadeOutFrameLength > getLength())
+    {
+        float inOutFadeLengthRatio = float(fadeInFrameLength) / float(fadeOutFrameLength);
+        fadeInFrameLength = inOutFadeLengthRatio * float(getLength());
+        fadeOutFrameLength = (getLength() - fadeInFrameLength);
+    }
 }
