@@ -17,6 +17,7 @@ class TrackProperties : public juce::Component
 
   private:
     std::shared_ptr<LabeledLineContainer> trackTimeInfoLine;
+    std::shared_ptr<LabeledLineContainer> trackTempoLine;
 };
 
 #endif // DEF_TRACK_PROPERTIES_HPP
