@@ -11,6 +11,10 @@ void TimeInfo::paint(juce::Graphics &g)
     g.setColour(COLOR_BACKGROUND.withAlpha(0.5f));
     g.fillRoundedRectangle(g.getClipBounds().toFloat(), 3);
 
+    juce::Line<int> bottomLine(g.getClipBounds().getBottomLeft(), g.getClipBounds().getBottomRight());
+    g.setColour(COLOR_TEXT_DARKER.withAlpha(0.15f));
+    g.drawLine(bottomLine.toFloat(), 2.0f);
+
     auto textArea = g.getClipBounds().reduced(TIMEINFO_TEXT_MARGINS, TIMEINFO_TEXT_MARGINS);
     g.setColour(COLOR_TEXT_DARKER);
     g.setFont(sharedFonts->monospaceFont.withHeight(SMALLER_FONT_SIZE));
