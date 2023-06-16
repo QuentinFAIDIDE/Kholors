@@ -34,9 +34,9 @@ void TimeInfoValue::setFrameValue(int v)
     {
         return;
     }
-
+    lastUsedFrameCount = v;
     // compute ms value
-    ms = v / (AUDIO_FRAMERATE * 1000);
+    ms = v / (AUDIO_FRAMERATE / 1000);
     // populate seconds value and remove it from ms
     sec = ms / 1000;
     ms = ms - (sec * 1000);
@@ -55,6 +55,16 @@ TimeInfo::TimeInfo() : frameValue(0)
 
 void TimeInfo::paint(juce::Graphics &g)
 {
+    // if position data source is set fetch the value
+    if (positionDataSource != nullptr)
+    {
+        auto pos = positionDataSource->getPosition();
+        if (pos.hasValue())
+        {
+            value.setFrameValue(*pos);
+        }
+    }
+
     paintBackground(g);
 
     paintMulticolorTimeText(g);
@@ -140,4 +150,9 @@ std::string TimeInfo::formatToStringWithWidth(int intval, int width)
     }
 
     return output;
+}
+
+void TimeInfo::setDataSource(std::shared_ptr<PositionDataSource> pds)
+{
+    positionDataSource = pds;
 }

@@ -1,4 +1,5 @@
 #include "TopbarLeftArea.h"
+#include <memory>
 
 TopbarLeftArea::TopbarLeftArea() : masterGainVu("Master", VUMETER_ID_MASTER)
 {
@@ -19,9 +20,10 @@ void TopbarLeftArea::paint(juce::Graphics &g)
     g.drawLine(rightLine, 0.5);
 }
 
-void TopbarLeftArea::setDataSource(std::shared_ptr<VuMeterDataSource> ds)
+void TopbarLeftArea::setDataSource(std::shared_ptr<MixbusDataSource> ds)
 {
     masterGainVu.setDataSource(ds);
+    trackProperties.setDataSource(ds);
 }
 
 void TopbarLeftArea::resized()

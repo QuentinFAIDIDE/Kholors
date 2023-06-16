@@ -62,6 +62,7 @@ class VuMeterDataSource
  */
 class PositionDataSource
 {
+  public:
     virtual juce::Optional<int64_t> getPosition() = 0;
 };
 

@@ -20,7 +20,7 @@ TopbarArea::~TopbarArea()
 {
 }
 
-void TopbarArea::setDataSource(std::shared_ptr<VuMeterDataSource> ds)
+void TopbarArea::setDataSource(std::shared_ptr<MixbusDataSource> ds)
 {
     leftComponentsContainer.setDataSource(ds);
     rightComponentsContainer.setDataSource(ds);

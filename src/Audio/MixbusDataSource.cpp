@@ -2,6 +2,7 @@
 
 MixbusDataSource::MixbusDataSource()
 {
+    trackPosition = 0;
 }
 
 juce::Optional<std::pair<float, float>> MixbusDataSource::getVuMeterValue(VumeterId vuMeterId)
@@ -52,4 +53,14 @@ std::set<size_t> *MixbusDataSource::getLockedSelectedTracks()
 void MixbusDataSource::releaseSelectedTracks()
 {
     selectedTracksMutex.exit();
+}
+
+juce::Optional<int64_t> MixbusDataSource::getPosition()
+{
+    return trackPosition;
+}
+
+void MixbusDataSource::setPosition(int64_t pos)
+{
+    trackPosition = pos;
 }

@@ -2,6 +2,9 @@
 #define DEF_TIME_INFO_HPP
 
 #include <juce_gui_basics/juce_gui_basics.h>
+#include <memory>
+
+#include "../../Audio/MixbusDataSource.h"
 
 #include "../CustomFonts.h"
 
@@ -55,6 +58,13 @@ class TimeInfo : public juce::Component
      */
     void paint(juce::Graphics &g) override;
 
+    /**
+     * @brief      Sets the data source.
+     *
+     * @param[in]  pds   The new value
+     */
+    void setDataSource(std::shared_ptr<PositionDataSource> pds);
+
   private:
     // value of the timestamp in audio frames
     int frameValue;
@@ -62,6 +72,9 @@ class TimeInfo : public juce::Component
     TimeInfoValue value;
     // shared reference to the loaded custom fonts
     juce::SharedResourcePointer<CustomFonts> sharedFonts;
+
+    // the source where we pull values from
+    std::shared_ptr<PositionDataSource> positionDataSource;
 
     // width of a character
     int characterWidth;

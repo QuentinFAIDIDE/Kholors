@@ -3,7 +3,9 @@
 
 #include "../Widgets/LabeledLineContainer.h"
 
+#include "../../Audio/MixbusDataSource.h"
 #include <juce_gui_extra/juce_gui_extra.h>
+#include <memory>
 
 /**
  Widget for the area to the right of the topbar.
@@ -14,6 +16,7 @@ class TrackProperties : public juce::Component
     TrackProperties();
     void paint(juce::Graphics &g) override;
     void resized() override;
+    void setDataSource(std::shared_ptr<MixbusDataSource> ds);
 
   private:
     std::shared_ptr<LabeledLineContainer> trackTimeInfoLine;

@@ -56,7 +56,7 @@ class TopbarArea : public juce::AnimatedAppComponent, public TaskListener
      *
      * @param[in]  datasource  Instanciation of VumeterDataSource class.
      */
-    void setDataSource(std::shared_ptr<VuMeterDataSource>);
+    void setDataSource(std::shared_ptr<MixbusDataSource>);
 
   private:
     //==============================================================================

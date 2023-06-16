@@ -1,6 +1,7 @@
 #ifndef DEF_TOPBAR_LEFT_AREA
 #define DEF_TOPBAR_LEFT_AREA
 
+#include "../../Audio/MixbusDataSource.h"
 #include "../../Config.h"
 #include "../Widgets/VuMeter.h"
 #include "TrackProperties.h"
@@ -24,7 +25,7 @@ class TopbarLeftArea : public juce::Component
      *
      * @param[in]  datasource  Instanciation of VumeterDataSource class.
      */
-    void setDataSource(std::shared_ptr<VuMeterDataSource>);
+    void setDataSource(std::shared_ptr<MixbusDataSource>);
 
   private:
     // the outer bounds, minus the LeftArea inner margins.

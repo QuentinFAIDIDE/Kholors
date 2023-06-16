@@ -2,6 +2,7 @@
 #define MIXBUS_DATA_SOURCE_HPP
 
 #include "DataSource.h"
+#include <atomic>
 #include <cstdint>
 #include <map>
 
@@ -13,7 +14,7 @@
  *             values, and requested by (generally) UI components
  *             to get informations.
  */
-class MixbusDataSource : public VuMeterDataSource, PositionDataSource
+class MixbusDataSource : public VuMeterDataSource, public PositionDataSource
 {
   public:
     MixbusDataSource();
@@ -84,6 +85,7 @@ class MixbusDataSource : public VuMeterDataSource, PositionDataSource
   private:
     juce::CriticalSection vuMetersMutex;
     VuMeterData vuMeterValues;
+    std::atomic<int64_t> trackPosition;
 
     std::set<size_t> selectedTracks;
     juce::CriticalSection selectedTracksMutex;

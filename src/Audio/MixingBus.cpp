@@ -407,6 +407,7 @@ void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFi
     if (isPlaying)
     {
         playCursor += bufferToFill.numSamples;
+        mixbusDataSource->setPosition(playCursor);
         // wake up the background thread if we need to do any redrawing
         if (abs(playCursor - lastDrawnCursor) > FREQVIEW_MIN_REDRAW_DISTANCE_FRAMES)
         {
@@ -591,6 +592,7 @@ void MixingBus::setNextReadPosition(juce::int64 nextReadPosition)
 {
     // update play cursor
     playCursor = nextReadPosition;
+    mixbusDataSource->setPosition(playCursor);
 
     // tell all samplePlayers to update positions
     for (size_t i = 0; i < tracks.size(); i++)
