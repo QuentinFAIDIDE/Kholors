@@ -1,6 +1,7 @@
 #ifndef DATA_SOURCE_HPP
 #define DATA_SOURCE_HPP
 
+#include <cstdint>
 #include <vector>
 
 #define VUMETER_MAP_SIZE 32
@@ -54,6 +55,14 @@ class VuMeterDataSource
     Return data for vu meters using their unique identifier.
     */
     virtual juce::Optional<std::pair<float, float>> getVuMeterValue(VumeterId vuMeterId) = 0;
+};
+
+/**
+ * @brief      This class describes a position data source.
+ */
+class PositionDataSource
+{
+    virtual juce::Optional<int64_t> getPosition() = 0;
 };
 
 #endif // DATA_SOURCE_HPP

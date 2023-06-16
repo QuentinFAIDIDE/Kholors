@@ -2,14 +2,18 @@
 #define MIXBUS_DATA_SOURCE_HPP
 
 #include "DataSource.h"
+#include <cstdint>
 #include <map>
 
 /**
  * @brief      This class describes a mixbus data source.
  *             Its holds copy of informations like volumes
  *             for vu meters or currently selected tracks.
+ *             It is both owned and called by Mixbus to set
+ *             values, and requested by (generally) UI components
+ *             to get informations.
  */
-class MixbusDataSource : public VuMeterDataSource
+class MixbusDataSource : public VuMeterDataSource, PositionDataSource
 {
   public:
     MixbusDataSource();
@@ -60,6 +64,22 @@ class MixbusDataSource : public VuMeterDataSource
      *             to this to release lock.
      */
     void releaseSelectedTracks();
+
+    /**
+     * @brief      Gets the position of the track in audio samples (in the sense of audio frames).
+     *             Does not block and simply return nothing when lock is taken.
+     *
+     * @return     The position or nothing if didn't get the lock.
+     */
+    juce::Optional<int64_t> getPosition() override;
+
+    /**
+     * @brief      Sets the position, not blocking if lock is taken. Will do nothing in that
+     * eventuality.
+     *
+     * @param[in]  the new value to be set.
+     */
+    void setPosition(int64_t);
 
   private:
     juce::CriticalSection vuMetersMutex;
