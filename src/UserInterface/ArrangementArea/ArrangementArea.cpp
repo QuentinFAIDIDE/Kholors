@@ -235,7 +235,7 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
                 tempoGrid.updateTempo(tempo);
 
                 // this one has the side effect of uploading new tempo grid widths for the background shader
-                updateShadersPositions();
+                updateShadersPositionUniforms();
 
                 numFieldUpdateTask->setCompleted(true);
                 activityManager.broadcastNestedTaskNow(numFieldUpdateTask);

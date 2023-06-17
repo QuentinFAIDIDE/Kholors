@@ -8,7 +8,7 @@
 
 #define NUMERIC_INPUT_TEXT_MARGINS 3
 #define NUMERIC_INPUT_SIDE_ADDITIONAL_MARGINS 8
-
+#define NUMERIC_INPUT_MIN_DRAG_UPDATE 4.0f
 #define FORMAT_BUFFER_MAXLEN 128
 
 /**
@@ -67,6 +67,24 @@ class NumericInput : public juce::Component, public TaskListener
      */
     bool taskHandler(std::shared_ptr<Task> task) override;
 
+    /**
+     * @brief      Called when mouse is clicked.
+     *
+     */
+    void mouseDown(const juce::MouseEvent &) override;
+
+    /**
+     * @brief      Called when mouse click is released.
+     *
+     */
+    void mouseUp(const juce::MouseEvent &) override;
+
+    /**
+     * @brief      Called when mouse is moved while clicking.
+     *
+     */
+    void mouseDrag(const juce::MouseEvent &) override;
+
   private:
     // the actual displayed value
     float value;
@@ -79,6 +97,9 @@ class NumericInput : public juce::Component, public TaskListener
     // what's the lower unit of modification
     float step;
 
+    // the initial value when a drag was initiated
+    float dragInitialValue;
+
     // the shared fonts
     juce::SharedResourcePointer<CustomFonts> sharedFonts;
 
@@ -87,6 +108,16 @@ class NumericInput : public juce::Component, public TaskListener
 
     // the activity manager we need to broadcast tasks
     ActivityManager *activityManager;
+
+    // are we currently dragging this component value ?
+    bool isDragging;
+
+    // the last position at which the mouse drag initatied a value update
+    int lastDragUpdateY;
+
+    // the buffered mouse position stored when the udpate task is emmited
+    // and used elswhere when the task is received
+    int pendingDragUpdateY;
 
     // the buffer holding formatted string
     char formatBuffer[FORMAT_BUFFER_MAXLEN];

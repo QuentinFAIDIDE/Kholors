@@ -7,7 +7,7 @@
 
 NumericInput::NumericInput(bool integers, float minValue, float maxValue, float stepValue)
     : value(0.0f), isInteger(integers), min(minValue), max(maxValue), step(stepValue), numericInputId(-1),
-      activityManager(nullptr)
+      activityManager(nullptr), isDragging(false)
 {
 }
 
@@ -79,14 +79,77 @@ bool NumericInput::taskHandler(std::shared_ptr<Task> task)
     {
         if (isInteger)
         {
+            lastDragUpdateY = pendingDragUpdateY;
             value = std::round(updateTask->newValue);
         }
         else
         {
+            lastDragUpdateY = pendingDragUpdateY;
             value = updateTask->newValue;
         }
         return true;
     }
 
     return false;
+}
+
+void NumericInput::mouseDown(const juce::MouseEvent &me)
+{
+    if (activityManager == nullptr)
+    {
+        return;
+    }
+
+    if (!isDragging && me.mods.isLeftButtonDown() && activityManager->getAppState().getUiState() == UI_STATE_DEFAULT)
+    {
+        lastDragUpdateY = me.getMouseDownY();
+        isDragging = true;
+        dragInitialValue = value;
+        activityManager->getAppState().setUiState(UI_STATE_MOUSE_DRAG_NUMERIC_INPUT);
+    }
+}
+
+void NumericInput::mouseUp(const juce::MouseEvent &me)
+{
+    if (activityManager == nullptr)
+    {
+        return;
+    }
+
+    if (isDragging && me.mods.isLeftButtonDown() &&
+        activityManager->getAppState().getUiState() == UI_STATE_MOUSE_DRAG_NUMERIC_INPUT)
+    {
+        isDragging = false;
+        activityManager->getAppState().setUiState(UI_STATE_DEFAULT);
+        // emit the final task (already completed) so that we record it for reversion
+        std::shared_ptr<NumericInputUpdateTask> task =
+            std::make_shared<NumericInputUpdateTask>(numericInputId, value, dragInitialValue);
+        activityManager->broadcastTask(task);
+    }
+}
+
+void NumericInput::mouseDrag(const juce::MouseEvent &me)
+{
+    if (activityManager == nullptr)
+    {
+        return;
+    }
+
+    if (isDragging)
+    {
+        // if we had enough movement to trigger an update
+        if (std::abs(me.getPosition().getY() - lastDragUpdateY) > NUMERIC_INPUT_MIN_DRAG_UPDATE)
+        {
+            // the new desired value
+            float newValue =
+                value - (step * (float(me.getPosition().getY() - lastDragUpdateY) / NUMERIC_INPUT_MIN_DRAG_UPDATE));
+
+            pendingDragUpdateY = me.getPosition().getY();
+
+            // try to pop a task that updates the value
+            std::shared_ptr<NumericInputUpdateTask> task =
+                std::make_shared<NumericInputUpdateTask>(numericInputId, newValue);
+            activityManager->broadcastTask(task);
+        }
+    }
 }

@@ -149,6 +149,7 @@ void ActivityManager::undoLastActivity()
 
     for (size_t i = 0; i < tasksToCancel.size(); i++)
     {
+        tasksToCancel[i]->declareSelfAsPartOfReversion();
         for (size_t j = 0; j < taskListeners.size(); j++)
         {
             bool shouldStop = taskListeners[j]->taskHandler(tasksToCancel[i]);
@@ -182,6 +183,7 @@ void ActivityManager::redoLastActivity()
 
     taskToRestore->prepareForRepost();
     taskToRestore->preventFromGoingToTaskHistory();
+    taskToRestore->declareSelfAsPartOfReversion();
 
     for (size_t j = 0; j < taskListeners.size(); j++)
     {

@@ -186,7 +186,6 @@ std::vector<std::shared_ptr<Task>> SampleCreateTask::getOppositeTasks()
 
     // delete the new track
     std::shared_ptr<SampleDeletionTask> deletionTask = std::make_shared<SampleDeletionTask>(newIndex);
-    deletionTask->declareSelfAsPartOfReversion();
     reversionTasks.push_back(deletionTask);
 
     // depending on duplication we post a second task or not.
@@ -200,7 +199,6 @@ std::vector<std::shared_ptr<Task>> SampleCreateTask::getOppositeTasks()
     case DUPLICATION_TYPE_SPLIT_AT_FREQUENCY: {
         std::shared_ptr<SampleFreqCropTask> filterRestoreTask =
             std::make_shared<SampleFreqCropTask>(false, duplicatedSampleId, splitFrequency, highPassFreq);
-        filterRestoreTask->declareSelfAsPartOfReversion();
         reversionTasks.push_back(filterRestoreTask);
         break;
     }
@@ -208,7 +206,6 @@ std::vector<std::shared_ptr<Task>> SampleCreateTask::getOppositeTasks()
     case DUPLICATION_TYPE_SPLIT_AT_POSITION:
         std::shared_ptr<SampleTimeCropTask> lengthRestoreTask =
             std::make_shared<SampleTimeCropTask>(false, duplicatedSampleId, originalLength - position);
-        lengthRestoreTask->declareSelfAsPartOfReversion();
         reversionTasks.push_back(lengthRestoreTask);
         break;
     }
@@ -321,7 +318,6 @@ std::vector<std::shared_ptr<Task>> SampleDeletionTask::getOppositeTasks()
 {
     std::vector<std::shared_ptr<Task>> response;
     std::shared_ptr<SampleRestoreTask> restoreTask = std::make_shared<SampleRestoreTask>(id, deletedSample);
-    restoreTask->declareSelfAsPartOfReversion();
     response.push_back(restoreTask);
     return response;
 }
@@ -391,7 +387,6 @@ std::vector<std::shared_ptr<Task>> SampleTimeCropTask::getOppositeTasks()
 {
     std::vector<std::shared_ptr<Task>> result;
     std::shared_ptr<SampleTimeCropTask> task = std::make_shared<SampleTimeCropTask>(movingBeginning, id, -dragDistance);
-    task->declareSelfAsPartOfReversion();
     result.push_back(task);
     return result;
 }
@@ -423,7 +418,6 @@ std::vector<std::shared_ptr<Task>> SampleFreqCropTask::getOppositeTasks()
     std::vector<std::shared_ptr<Task>> result;
     std::shared_ptr<SampleFreqCropTask> task =
         std::make_shared<SampleFreqCropTask>(isLowPass, id, finalFrequency, initialFrequency);
-    task->declareSelfAsPartOfReversion();
     result.push_back(task);
     return result;
 }
@@ -451,7 +445,6 @@ std::vector<std::shared_ptr<Task>> SampleMovingTask::getOppositeTasks()
 {
     std::vector<std::shared_ptr<Task>> result;
     std::shared_ptr<SampleMovingTask> task = std::make_shared<SampleMovingTask>(id, -dragDistance);
-    task->declareSelfAsPartOfReversion();
     result.push_back(task);
     return result;
 }
@@ -573,6 +566,9 @@ std::vector<std::shared_ptr<Task>> NumericInputUpdateTask::getOppositeTasks()
 
     std::shared_ptr<NumericInputUpdateTask> task =
         std::make_shared<NumericInputUpdateTask>(numericalInputId, oldValue, newValue);
+    // this constructor default to completed task! we gotta set it back to uncompleted
+    task->setCompleted(false);
+
     tasks.push_back(task);
     return tasks;
 }
