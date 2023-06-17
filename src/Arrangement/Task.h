@@ -121,6 +121,10 @@ class Task : public Marshalable
     std::string errorMessage; // an eventual error messaged for the task failure
 };
 
+/**
+ * @brief      This class describes a silent task. This is a task
+ *             that defaults to not being recordable in history.
+ */
 class SilentTask : public Task
 {
   public:
@@ -546,17 +550,74 @@ to replicate them in the Mixbus selection buffer.
 class SelectionChangingTask : public SilentTask
 {
   public:
-  /**
-  Called to create the  task using the newSelection.
-  */
-  SelectionChangingTask(std::set<size_t>& newSelection);
+    /**
+    Called to create the  task using the newSelection.
+    */
+    SelectionChangingTask(std::set<size_t> &newSelection);
 
-  /**
-  Dumps the task data to a string as json
-  */
-  std::string marshal() override;
+    /**
+    Dumps the task data to a string as json
+    */
+    std::string marshal() override;
 
-  std::set<size_t> newSelectedTracks;
+    std::set<size_t> newSelectedTracks;
+};
+
+/**
+ * @brief      This class describes a numeric input update task.
+ *             This will update the backend value based on
+ *             the new input value.
+ */
+class NumericInputUpdateTask : public Task
+{
+
+  public:
+    /**
+     * @brief      Constructs a new instance. This one
+     *             will be silent and will not be recorded in
+     *             history. Used during dragging of numeric input values.
+     *
+     * @param[in]  inputId   The input identifier
+     * @param[in]  val       The new value to set
+     */
+    NumericInputUpdateTask(int inputId, float val);
+
+    /**
+     * @brief      Constructs a new instance. This one
+     *             will be marked completed
+     *             and will be recorded in history to be
+     *             available for reversion.
+     *
+     * @param[in]  inputId   The input identifier
+     * @param[in]  val       The value
+     * @param[in]  oldValue  The old value
+     */
+    NumericInputUpdateTask(int inputId, float val, float oldValue);
+
+    /**
+    Dumps the task data to a string as json
+    */
+    std::string marshal() override;
+
+    /**
+      Get the opposite task with flipped old and new value. Returns
+      nothing if the rask in not reversible (ie build with the constructor)
+      that does not expect oldValue
+     */
+    std::vector<std::shared_ptr<Task>> getOppositeTasks() override;
+
+    // the identifier of the input
+    int numericalInputId;
+
+    // the new value to be set (or that has been set)
+    float newValue;
+
+    // the old value that was there at before. Will be
+    // set only if the task was created through second
+    // constructor that allows to set this. This means
+    // that it is recorded in history and can be reverted
+    // unlike task created with the other constructor.
+    float oldValue;
 };
 
 #endif // DEF_ACTION_HPP

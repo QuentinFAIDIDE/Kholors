@@ -3,8 +3,8 @@
 #include <cstdio>
 #include <string>
 
-NumericInput::NumericInput(bool integers, float minValue, float maxValue, float stepValue, bool showButtons)
-    : value(0.0f), isInteger(integers), min(minValue), max(maxValue)
+NumericInput::NumericInput(bool integers, float minValue, float maxValue, float stepValue)
+    : value(0.0f), isInteger(integers), min(minValue), max(maxValue), numericInputId(-1)
 {
 }
 

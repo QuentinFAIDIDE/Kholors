@@ -1,6 +1,7 @@
 #ifndef DEF_NUMERIC_INPUT_HPP
 #define DEF_NUMERIC_INPUT_HPP
 
+#include "../../Arrangement/ActivityManager.h"
 #include "../CustomFonts.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -13,9 +14,10 @@
 class NumericInput : public juce::Component
 {
   public:
-    NumericInput(bool integers, float minValue, float maxValue, float stepValue, bool showButtons);
+    NumericInput(bool integers, float minValue, float maxValue, float stepValue);
     void paint(juce::Graphics &g) override;
     void setValue(float val);
+    void setActivity(ActivityManager *am, int inputId);
 
   private:
     // the actual displayed value
@@ -26,7 +28,14 @@ class NumericInput : public juce::Component
     float min;
     // maximum value the input can take
     float max;
+    // what's the lower unit of modification
+    float step;
+
+    // the shared fonts
     juce::SharedResourcePointer<CustomFonts> sharedFonts;
+
+    // the identifier of the numeric input to pop appropriate update tasks
+    int numericInputId;
 
     /**
      * Get the string from the value depending

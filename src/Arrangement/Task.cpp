@@ -514,7 +514,7 @@ std::vector<std::shared_ptr<Task>> SampleGroupRecolor::getOppositeTasks()
 
 //////////////////////////////////////////////////////
 
-SelectionChangingTask::SelectionChangingTask(std::set<size_t>& newSelection)
+SelectionChangingTask::SelectionChangingTask(std::set<size_t> &newSelection)
 {
     newSelectedTracks = newSelection;
 }
@@ -525,6 +525,54 @@ std::string SelectionChangingTask::marshal()
     json taskj = {{"object", "task"},
                   {"task", "selection_changing"},
                   {"changed_samples", ids},
+                  {"is_completed", isCompleted()},
+                  {"failed", hasFailed()},
+                  {"recordable_in_history", recordableInHistory},
+                  {"is_part_of_reversion", isPartOfReversion}};
+    return taskj.dump();
+}
+
+//////////////////////////////////////////////////////////////
+
+NumericInputUpdateTask::NumericInputUpdateTask(int inputId, float val)
+{
+    recordableInHistory = false;
+    newValue = val;
+    numericalInputId = inputId;
+}
+
+NumericInputUpdateTask::NumericInputUpdateTask(int inputId, float val, float oldval)
+{
+    setCompleted(true);
+    recordableInHistory = true;
+    newValue = val;
+    numericalInputId = inputId;
+    oldValue = oldval;
+}
+
+std::vector<std::shared_ptr<Task>> NumericInputUpdateTask::getOppositeTasks()
+{
+    std::vector<std::shared_ptr<Task>> tasks;
+    // do nothing if it's not meant to be reverted.
+    // tbh the reversion call shouldn't even happen anyway but who knows.
+    if (!recordableInHistory)
+    {
+        return tasks;
+    }
+
+    std::shared_ptr<NumericInputUpdateTask> task =
+        std::make_shared<NumericInputUpdateTask>(numericalInputId, oldValue, newValue);
+    tasks.push_back(task);
+    return tasks;
+}
+
+std::string NumericInputUpdateTask::marshal()
+{
+    json taskj = {{"object", "task"},
+                  {"task", "numeric_input_update"},
+                  {"new_value", newValue},
+                  {"old_value", oldValue},
+                  {"numeric_input_id", numericalInputId},
                   {"is_completed", isCompleted()},
                   {"failed", hasFailed()},
                   {"recordable_in_history", recordableInHistory},
