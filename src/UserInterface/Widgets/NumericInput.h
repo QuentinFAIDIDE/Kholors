@@ -56,6 +56,14 @@ class NumericInput : public juce::Component, public TaskListener
     void setNumericInputId(int id);
 
     /**
+     * @brief      Set the unit str to be displayed after the numeric value.
+     *             Using "" will disable the unit displaying.
+     *
+     * @param[in]  newUnit  The new unit text
+     */
+    void setUnit(std::string newUnit);
+
+    /**
      * @brief      Recevies task and await for one with matching
      *             numerical input id that are completed to update
      *             its value.
@@ -97,6 +105,9 @@ class NumericInput : public juce::Component, public TaskListener
     // what's the lower unit of modification
     float step;
 
+    // width of a monospace character
+    float charWidth;
+
     // the initial value when a drag was initiated
     float dragInitialValue;
 
@@ -121,6 +132,11 @@ class NumericInput : public juce::Component, public TaskListener
 
     // the buffer holding formatted string
     char formatBuffer[FORMAT_BUFFER_MAXLEN];
+
+    // text of the unit to display, defaults to empty
+    std::string unit;
+
+    //////////////////////////////////////////////////
 
     /**
      * @brief      Return the stringified value of this numeric input.

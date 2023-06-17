@@ -8,7 +8,7 @@
 #include "../Widgets/TimeInfo.h"
 
 #define TRACKPROP_MAX_LABEL_WIDTH 60
-#define TRACKPROP_TEMPO_WIDTH 50
+#define TRACKPROP_TEMPO_WIDTH 70
 
 TrackProperties::TrackProperties(ActivityManager &am)
 {
@@ -19,6 +19,7 @@ TrackProperties::TrackProperties(ActivityManager &am)
 
     // make the tempo widget and connect to to task handling (for updating values around)
     std::shared_ptr<NumericInput> tempoInput = std::make_shared<NumericInput>(true, MIN_TEMPO, MAX_TEMPO, 1);
+    tempoInput->setUnit("bpm");
     am.registerTaskListener(tempoInput.get());
     tempoInput->setNumericInputId(NUM_INPUT_ID_TEMPO);
     tempoInput->setActivityManager(&am);

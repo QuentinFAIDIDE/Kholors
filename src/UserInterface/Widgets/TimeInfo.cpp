@@ -108,7 +108,7 @@ void TimeInfo::paintMulticolorTimeText(juce::Graphics &g)
     g.drawText(minStr, txtSectionArea, juce::Justification::centredLeft);
 
     txtSectionArea = textArea.removeFromLeft(2 * characterWidth);
-    g.setColour(COLOR_TEXT_DARKER.withAlpha(TIMEINFO_UNITS_ALPHA));
+    g.setColour(COLOR_UNITS);
     g.drawText("m", txtSectionArea, juce::Justification::centredLeft);
 
     txtSectionArea = textArea.removeFromLeft(TIMEINFO_SEC_NO_CHAR * characterWidth);
@@ -116,7 +116,7 @@ void TimeInfo::paintMulticolorTimeText(juce::Graphics &g)
     g.drawText(secStr, txtSectionArea, juce::Justification::centredLeft);
 
     txtSectionArea = textArea.removeFromLeft(2 * characterWidth);
-    g.setColour(COLOR_TEXT_DARKER.withAlpha(TIMEINFO_UNITS_ALPHA));
+    g.setColour(COLOR_UNITS);
     g.drawText("s", txtSectionArea, juce::Justification::centredLeft);
 
     txtSectionArea = textArea.removeFromLeft(TIMEINFO_MS_NO_CHAR * characterWidth);
@@ -124,7 +124,7 @@ void TimeInfo::paintMulticolorTimeText(juce::Graphics &g)
     g.drawText(msStr, txtSectionArea, juce::Justification::centredLeft);
 
     txtSectionArea = textArea.removeFromLeft(2 * characterWidth);
-    g.setColour(COLOR_TEXT_DARKER.withAlpha(TIMEINFO_UNITS_ALPHA));
+    g.setColour(COLOR_UNITS);
     g.drawText("ms", txtSectionArea, juce::Justification::centredLeft);
 }
 

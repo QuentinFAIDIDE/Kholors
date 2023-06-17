@@ -13,7 +13,6 @@
 #define TIMEINFO_MIN_NO_CHAR 2
 #define TIMEINFO_SEC_NO_CHAR 2
 #define TIMEINFO_MS_NO_CHAR 3
-#define TIMEINFO_UNITS_ALPHA 0.7f
 
 /**
  * @brief      This class describes a time information component

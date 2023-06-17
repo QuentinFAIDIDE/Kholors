@@ -7,8 +7,9 @@
 
 NumericInput::NumericInput(bool integers, float minValue, float maxValue, float stepValue)
     : value(0.0f), isInteger(integers), min(minValue), max(maxValue), step(stepValue), numericInputId(-1),
-      activityManager(nullptr), isDragging(false)
+      activityManager(nullptr), isDragging(false), unit("")
 {
+    charWidth = sharedFonts->monospaceFont.withHeight(SMALLER_FONT_SIZE).getStringWidth(" ");
 }
 
 void NumericInput::paint(juce::Graphics &g)
@@ -23,8 +24,16 @@ void NumericInput::paint(juce::Graphics &g)
     auto textArea = g.getClipBounds().reduced(NUMERIC_INPUT_TEXT_MARGINS + NUMERIC_INPUT_SIDE_ADDITIONAL_MARGINS,
                                               NUMERIC_INPUT_TEXT_MARGINS);
 
-    g.setColour(COLOR_TEXT_DARKER);
     g.setFont(sharedFonts->monospaceFont.withHeight(SMALLER_FONT_SIZE));
+
+    if (unit != "")
+    {
+        g.setColour(COLOR_UNITS);
+        auto unitArea = textArea.removeFromRight((charWidth * unit.length()));
+        g.drawText(unit, unitArea, juce::Justification::centredRight);
+    }
+
+    g.setColour(COLOR_TEXT_DARKER);
     g.drawText(getStringValue(), textArea, juce::Justification::centredRight);
 }
 
@@ -62,6 +71,11 @@ void NumericInput::fetchValueIfPossible()
         std::shared_ptr<NumericInputUpdateTask> task = std::make_shared<NumericInputUpdateTask>(numericInputId);
         activityManager->broadcastTask(task);
     }
+}
+
+void NumericInput::setUnit(std::string newUnit)
+{
+    unit = newUnit;
 }
 
 bool NumericInput::taskHandler(std::shared_ptr<Task> task)
