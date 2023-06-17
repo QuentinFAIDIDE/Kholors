@@ -1,7 +1,7 @@
 #include "TopbarLeftArea.h"
 #include <memory>
 
-TopbarLeftArea::TopbarLeftArea() : masterGainVu("Master", VUMETER_ID_MASTER)
+TopbarLeftArea::TopbarLeftArea(ActivityManager &am) : masterGainVu("Master", VUMETER_ID_MASTER), trackProperties(am)
 {
     addAndMakeVisible(masterGainVu);
     addAndMakeVisible(trackProperties);

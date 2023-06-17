@@ -1,7 +1,6 @@
 #include "AppState.h"
 
 #include "Marshalable.h"
-#include "SampleState.h"
 #include "TaxonomyManager.h"
 #include "UserInterfaceState.h"
 

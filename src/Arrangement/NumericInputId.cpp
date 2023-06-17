@@ -1,5 +1,10 @@
 #include "NumericInputId.h"
 
+int noFixedInputs = 1;
+
+// description of the default available input ids.
+std::vector<std::string> defaultNumericInputIdsDescriptions = {"Master Track Tempo Value"};
+
 NumericInputManager::NumericInputManager()
 {
     // iterate over static input ids and store em
@@ -23,4 +28,14 @@ void NumericInputManager::freeId(int i)
 {
     numericInputIds.erase(i);
     numericInputDescriptions.erase(i);
+}
+
+std::string NumericInputManager::marshal()
+{
+    // TODO
+}
+
+Marshalable *NumericInputManager::unmarshal(std::string &)
+{
+    // TODO
 }

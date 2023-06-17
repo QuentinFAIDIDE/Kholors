@@ -3,6 +3,7 @@
 
 #include "../Widgets/LabeledLineContainer.h"
 
+#include "../../Arrangement/ActivityManager.h"
 #include "../../Audio/MixbusDataSource.h"
 #include <juce_gui_extra/juce_gui_extra.h>
 #include <memory>
@@ -13,7 +14,7 @@
 class TrackProperties : public juce::Component
 {
   public:
-    TrackProperties();
+    TrackProperties(ActivityManager &am);
     void paint(juce::Graphics &g) override;
     void resized() override;
     void setDataSource(std::shared_ptr<MixbusDataSource> ds);

@@ -15,11 +15,6 @@ enum FixedNumericInputId
     NUM_INPUT_ID_TEMPO = 0
 };
 
-inline int noFixedInputs = 1;
-
-// description of the default available input ids.
-inline std::vector<std::string> defaultNumericInputIdsDescriptions = {"Master Track Tempo Value"};
-
 /**
  * @brief      This class describes a numeric input manager.
  *             It allocates unique random input ids

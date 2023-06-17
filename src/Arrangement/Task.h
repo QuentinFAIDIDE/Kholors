@@ -595,6 +595,16 @@ class NumericInputUpdateTask : public Task
     NumericInputUpdateTask(int inputId, float val, float oldValue);
 
     /**
+     * @brief      This task simply asks to be assigned the current
+     *             value of the input and marked completed.
+     *             This is generally emitted by the NumericInput component
+     *             so that it can get the value through the completed event.
+     *
+     * @param[in]  inputId   The input identifier
+     */
+    NumericInputUpdateTask(int inputId);
+
+    /**
     Dumps the task data to a string as json
     */
     std::string marshal() override;
@@ -618,6 +628,13 @@ class NumericInputUpdateTask : public Task
     // that it is recorded in history and can be reverted
     // unlike task created with the other constructor.
     float oldValue;
+
+    // this is true when the third lighter constructor was
+    // used (where only id is provided). It means that
+    // the tasks must be assigned the current value
+    // of the numeric input in newValue and oldValue
+    // and be marked completed and broadcasted again.
+    bool isBroadcastRequest;
 };
 
 #endif // DEF_ACTION_HPP

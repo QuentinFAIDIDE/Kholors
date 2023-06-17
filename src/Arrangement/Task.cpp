@@ -539,6 +539,7 @@ NumericInputUpdateTask::NumericInputUpdateTask(int inputId, float val)
     recordableInHistory = false;
     newValue = val;
     numericalInputId = inputId;
+    isBroadcastRequest = false;
 }
 
 NumericInputUpdateTask::NumericInputUpdateTask(int inputId, float val, float oldval)
@@ -548,6 +549,16 @@ NumericInputUpdateTask::NumericInputUpdateTask(int inputId, float val, float old
     newValue = val;
     numericalInputId = inputId;
     oldValue = oldval;
+    isBroadcastRequest = false;
+}
+
+NumericInputUpdateTask::NumericInputUpdateTask(int id)
+{
+    recordableInHistory = false;
+    newValue = 0;
+    oldValue = 0;
+    numericalInputId = id;
+    isBroadcastRequest = true;
 }
 
 std::vector<std::shared_ptr<Task>> NumericInputUpdateTask::getOppositeTasks()
@@ -573,6 +584,7 @@ std::string NumericInputUpdateTask::marshal()
                   {"new_value", newValue},
                   {"old_value", oldValue},
                   {"numeric_input_id", numericalInputId},
+                  {"is_broadcast_request", isBroadcastRequest},
                   {"is_completed", isCompleted()},
                   {"failed", hasFailed()},
                   {"recordable_in_history", recordableInHistory},

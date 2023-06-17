@@ -1,6 +1,6 @@
 #include "TopbarArea.h"
 
-TopbarArea::TopbarArea(ActivityManager &am) : rightComponentsContainer(am)
+TopbarArea::TopbarArea(ActivityManager &am) : rightComponentsContainer(am), leftComponentsContainer(am)
 {
     isHidden = true;
     isAnimationRunning = false;

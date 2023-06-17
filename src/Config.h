@@ -2,6 +2,10 @@
 // samples)
 #define AUDIO_FRAMERATE 44100
 
+#define MIN_TEMPO 30
+#define DEFAULT_TEMPO 120
+#define MAX_TEMPO 250
+
 #define FREQTIME_VIEW_HEIGHT 400
 // pixel vertical width of the space better top and bottom of samples
 #define FREQTIME_VIEW_INNER_MARGINS 2

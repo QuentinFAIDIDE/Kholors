@@ -8,6 +8,7 @@
 #include <stdexcept>
 
 #include "../../Arrangement/ColorPalette.h"
+#include "../../Arrangement/NumericInputId.h"
 #include "../../OpenGL/FreqviewShaders.h"
 #include "../../OpenGL/GLInfoLogger.h"
 #include "juce_opengl/opengl/juce_gl.h"
@@ -29,6 +30,8 @@
 ArrangementArea::ArrangementArea(MixingBus &mb, ActivityManager &am)
     : mixingBus(mb), activityManager(am), taxonomyManager(am.getAppState().getTaxonomy())
 {
+    activityManager.registerTaskListener(this);
+
     // save reference to the sample manager
     // initialize grid and position
     viewPosition = 0;
@@ -40,8 +43,14 @@ ArrangementArea::ArrangementArea(MixingBus &mb, ActivityManager &am)
 
     tempoGrid.updateView(viewPosition, viewScale);
 
-    tempo = 120;
-    tempoGrid.updateTempo(120);
+    tempo = DEFAULT_TEMPO;
+    tempoGrid.updateTempo(DEFAULT_TEMPO);
+
+    // broadcast tempo value as a task
+    std::shared_ptr<NumericInputUpdateTask> tempoUpdate = std::make_shared<NumericInputUpdateTask>(NUM_INPUT_ID_TEMPO);
+    tempoUpdate->newValue = tempo;
+    tempoUpdate->setCompleted(true);
+    activityManager.broadcastTask(tempoUpdate);
 
     // play cursor color
     cursorColor = juce::Colour(240, 240, 240);
@@ -198,6 +207,44 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
         colorTask->setCompleted(true);
         colorTask->setFailed(false);
         return true;
+    }
+
+    std::shared_ptr<NumericInputUpdateTask> numFieldUpdateTask =
+        std::dynamic_pointer_cast<NumericInputUpdateTask>(task);
+    if (numFieldUpdateTask != nullptr && !numFieldUpdateTask->isCompleted())
+    {
+        // if it's a task to apply a tempo update, do it, mark completed, and broadcast change
+        if (numFieldUpdateTask->numericalInputId == NUM_INPUT_ID_TEMPO)
+        {
+
+            // if it's just a broadcasting request, simply broadcast existing value
+            if (numFieldUpdateTask->isBroadcastRequest)
+            {
+                numFieldUpdateTask->newValue = tempo;
+                numFieldUpdateTask->setCompleted(true);
+                activityManager.broadcastNestedTaskNow(numFieldUpdateTask);
+                return true;
+            }
+
+            // if this task wants to set a new value, well set it if possible
+            if (numFieldUpdateTask->newValue <= MAX_TEMPO && numFieldUpdateTask->newValue >= MIN_TEMPO)
+            {
+                // +0.5f to round instead of truncating
+                tempo = int(numFieldUpdateTask->newValue + 0.5f);
+
+                tempoGrid.updateTempo(tempo);
+
+                // this one has the side effect of uploading new tempo grid widths for the background shader
+                updateShadersPositions();
+
+                numFieldUpdateTask->setCompleted(true);
+                activityManager.broadcastNestedTaskNow(numFieldUpdateTask);
+
+                repaint();
+
+                return true;
+            }
+        }
     }
 
     return false;
@@ -578,15 +625,15 @@ void ArrangementArea::updateShadersPositionUniforms(bool fromGlThread)
     // send the new view positions to opengl thread
     if (!fromGlThread)
     {
-        openGLContext.executeOnGLThread([this](juce::OpenGLContext &) { alterShadersPositions(); }, false);
+        openGLContext.executeOnGLThread([this](juce::OpenGLContext &) { updateShadersPositions(); }, false);
     }
     else
     {
-        alterShadersPositions();
+        updateShadersPositions();
     }
 }
 
-void ArrangementArea::alterShadersPositions()
+void ArrangementArea::updateShadersPositions()
 {
     texturedPositionedShader->use();
     texturedPositionedShader->setUniform("viewPosition", (GLfloat)viewPosition);
@@ -854,7 +901,6 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
             {
                 float freq = UnitConverter::verticalPositionToFrequency(lastMouseY, getBounds().getHeight());
                 // create a track duplicate from the sample id at *it
-                std::cout << freq << std::endl;
                 std::shared_ptr<SampleCreateTask> task = std::make_shared<SampleCreateTask>(freq, *it);
                 activityManager.broadcastTask(task);
             }

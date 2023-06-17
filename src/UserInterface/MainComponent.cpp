@@ -16,7 +16,6 @@ MainComponent::MainComponent()
     configureLookAndFeel();
 
     activityManager.registerTaskListener(&mixingBus);
-    activityManager.registerTaskListener(&arrangementArea);
     activityManager.registerTaskListener(&notificationArea);
     activityManager.registerTaskListener(&audioLibraryTab);
 

@@ -2,14 +2,13 @@
 #define DEF_APPSTATE_HPP
 
 #include "Marshalable.h"
-#include "SampleState.h"
 #include "TaxonomyManager.h"
 #include "UserInterfaceState.h"
 
 /**
-AppState is responsible for states, ie 
+AppState is responsible for states, ie
 things like taxonomy, sample, colors.
-It is Marshalable in the sense that it 
+It is Marshalable in the sense that it
 can be saved to a json file and be reloaded
 later.
 */
@@ -49,8 +48,6 @@ class AppState : public Marshalable
     void setUiState(UserInterfaceState);
 
   private:
-
-    std::vector<SampleState *> sampleStates;
     TaxonomyManager taxonomy;
     UserInterfaceState uiState;
 };

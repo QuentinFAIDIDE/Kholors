@@ -191,7 +191,7 @@ class ArrangementArea : public juce::Component,
     bool buildShaders();
     bool buildShader(std::unique_ptr<juce::OpenGLShaderProgram> &, std::string, std::string);
     void updateShadersPositionUniforms(bool fromGlThread = false);
-    void alterShadersPositions();
+    void updateShadersPositions();
     void updateGridPixelValues();
 
     void initSelectedTracksDrag();

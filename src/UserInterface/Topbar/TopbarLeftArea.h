@@ -14,7 +14,7 @@
 class TopbarLeftArea : public juce::Component
 {
   public:
-    TopbarLeftArea();
+    TopbarLeftArea(ActivityManager &am);
     void paint(juce::Graphics &) override;
     void resized() override;
 
