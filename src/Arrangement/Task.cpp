@@ -587,3 +587,36 @@ std::string NumericInputUpdateTask::marshal()
                   {"is_part_of_reversion", isPartOfReversion}};
     return taskj.dump();
 }
+
+////////////////////////////////
+
+PlayStateUpdateTask::PlayStateUpdateTask()
+{
+    requestingStateBroadcast = true;
+    shouldPlay = false;
+    shouldResetPosition = false;
+    isCurrentlyPlaying = false;
+}
+
+PlayStateUpdateTask::PlayStateUpdateTask(bool play, bool resetPosition)
+{
+    requestingStateBroadcast = false;
+    shouldPlay = play;
+    shouldResetPosition = resetPosition;
+    isCurrentlyPlaying = false;
+}
+
+std::string PlayStateUpdateTask::marshal()
+{
+    json taskj = {{"object", "task"},
+                  {"task", "play_state_update"},
+                  {"requesting_state_broadcast", requestingStateBroadcast},
+                  {"should_play", shouldPlay},
+                  {"should_reset_position", shouldResetPosition},
+                  {"is_currently_playing", isCurrentlyPlaying},
+                  {"is_completed", isCompleted()},
+                  {"failed", hasFailed()},
+                  {"recordable_in_history", recordableInHistory},
+                  {"is_part_of_reversion", isPartOfReversion}};
+    return taskj.dump();
+}

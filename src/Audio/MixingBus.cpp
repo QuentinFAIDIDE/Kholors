@@ -133,6 +133,83 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
         return true;
     }
 
+    std::shared_ptr<PlayStateUpdateTask> playUpdate = std::dynamic_pointer_cast<PlayStateUpdateTask>(task);
+    if (playUpdate != nullptr && !playUpdate->isCompleted())
+    {
+        if (playUpdate->requestingStateBroadcast)
+        {
+            playUpdate->isCurrentlyPlaying = isPlaying;
+            playUpdate->setCompleted(true);
+            activityManager.broadcastNestedTaskNow(playUpdate);
+            return true;
+        }
+
+        // if we reach here, it's not a request for update, it's a request for
+        // execution of play/pause state change. To prevent wasting resources,
+        // we won't treat and broadcast state update for update that won't
+        // change the state.
+        if (playUpdate->shouldPlay)
+        {
+            if (isPlaying)
+            {
+                playUpdate->setFailed(true);
+                // we stop broadcast as no other TaskListener should
+                // respond to this cursed useless task.
+                return true;
+            }
+            else
+            {
+                startPlayback();
+                playUpdate->setCompleted(true);
+                playUpdate->isCurrentlyPlaying = true;
+                activityManager.broadcastNestedTaskNow(playUpdate);
+                return true;
+            }
+        }
+        else
+        {
+            if (!isPlaying)
+            {
+                if (playUpdate->shouldResetPosition)
+                {
+                    {
+                        const juce::ScopedLock lock(mixbusMutex);
+                        playCursor = 0;
+                        // spread update to each track/sample who
+                        // have their own position copy
+                        setNextReadPosition(playCursor);
+                    }
+                    playUpdate->setCompleted(true);
+                    playUpdate->isCurrentlyPlaying = false;
+                    // no need to broadcast this completed task or to resume
+                    // it broadcasting as the playback state didn't really change.
+                    return true;
+                }
+                else
+                {
+                    playUpdate->setFailed(true);
+                    return true;
+                }
+            }
+            else
+            {
+                stopPlayback();
+                if (playUpdate->shouldResetPosition)
+                {
+                    const juce::ScopedLock lock(mixbusMutex);
+                    playCursor = 0;
+                    // spread update to each track/sample who
+                    // have their own position copy
+                    setNextReadPosition(playCursor);
+                }
+                playUpdate->setCompleted(true);
+                playUpdate->isCurrentlyPlaying = false;
+                activityManager.broadcastNestedTaskNow(playUpdate);
+                return true;
+            }
+        }
+    }
+
     return false;
 }
 

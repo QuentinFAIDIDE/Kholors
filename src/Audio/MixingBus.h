@@ -50,9 +50,6 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     bool isLooping() const override;
     void setLooping(bool) override;
 
-    // start and stop playing
-    void startPlayback();
-    void stopPlayback();
     bool isCursorPlaying() const;
 
     // access tracks from gui's MessageThread
@@ -172,6 +169,9 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     // playing anymore
     void pauseIfCursorNotInBound();
     void checkForCursorRedraw();
+
+    void startPlayback();
+    void stopPlayback();
 
     void importNewFile(std::shared_ptr<SampleCreateTask> task);
     void duplicateTrack(std::shared_ptr<SampleCreateTask> task);

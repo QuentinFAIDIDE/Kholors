@@ -637,4 +637,38 @@ class NumericInputUpdateTask : public Task
     bool isBroadcastRequest;
 };
 
+/**
+ * @brief      Task to start or stop playing the current track.
+ *             Optionally it can be set to broadcast its current
+ *             state and reset position to zero.
+ */
+class PlayStateUpdateTask : public SilentTask
+{
+  public:
+    /**
+     * @brief      Constructs a new instance that will
+     *             request the mixbus to populate the
+     *             isCurrentlyPlaying member to true of its playing,
+     *             false otherwise.
+     */
+    PlayStateUpdateTask();
+
+    /**
+     * @brief      Constructs a new instance that will
+     *             start playing if play is true, or pause
+     *             otherwise. If resetPositionOnPause is true
+     *             it will reset the position to zero if pausing.
+     *
+     * @param[in]  play  The play
+     */
+    PlayStateUpdateTask(bool play, bool resetPosition);
+
+    /**
+    Dumps the task data to a string as json
+    */
+    std::string marshal() override;
+
+    bool shouldPlay, shouldResetPosition, isCurrentlyPlaying, requestingStateBroadcast;
+};
+
 #endif // DEF_ACTION_HPP

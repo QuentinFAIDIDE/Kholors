@@ -1501,11 +1501,13 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key)
     {
         if (mixingBus.isCursorPlaying())
         {
-            mixingBus.stopPlayback();
+            auto task = std::make_shared<PlayStateUpdateTask>(false, false);
+            activityManager.broadcastTask(task);
         }
         else if (activityManager.getAppState().getUiState() != UI_STATE_CURSOR_MOVING)
         {
-            mixingBus.startPlayback();
+            auto task = std::make_shared<PlayStateUpdateTask>(true, false);
+            activityManager.broadcastTask(task);
         }
     }
     else if (key == juce::KeyPress::createFromDescription(KEYMAP_DRAG_MODE) ||

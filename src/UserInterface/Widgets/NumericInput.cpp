@@ -101,7 +101,9 @@ bool NumericInput::taskHandler(std::shared_ptr<Task> task)
             lastDragUpdateY = pendingDragUpdateY;
             value = updateTask->newValue;
         }
-        return true;
+        // we won't prevent event from being broadcasted further to allow for multiple inputs
+        // to work on the same numeric id
+        return false;
     }
 
     return false;
