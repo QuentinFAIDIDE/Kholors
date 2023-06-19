@@ -34,7 +34,7 @@ class PlayButton : public juce::Component, public TaskListener
      */
     void mouseDown(const juce::MouseEvent &) override;
 
-  private:
+  protected:
     /**
      * a reference to the activity manager that allows
      * to submit tasks and register as a task listener.

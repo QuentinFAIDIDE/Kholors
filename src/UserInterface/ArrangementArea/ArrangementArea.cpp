@@ -90,7 +90,6 @@ void ArrangementArea::paint(juce::Graphics &g)
     }
 
     paintSelection(g);
-    paintPlayCursor(g);
     paintSplitLocation(g);
 }
 
@@ -98,6 +97,7 @@ void ArrangementArea::paintOverChildren(juce::Graphics &g)
 {
     paintLabels(g);
     paintSelectionArea(g);
+    paintPlayCursor(g);
 }
 
 void ArrangementArea::paintSelection(juce::Graphics &g)

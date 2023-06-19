@@ -15,6 +15,7 @@
 #include "../../Arrangement/Task.h"
 #include "../LogoDarkPng.h"
 #include "PlayButton.h"
+#include "StopButton.h"
 #include "TopbarLeftArea.h"
 #include "TopbarRightArea.h"
 
@@ -95,6 +96,7 @@ class TopbarArea : public juce::AnimatedAppComponent, public TaskListener
     TopbarRightArea rightComponentsContainer;
 
     PlayButton playButton;
+    StopButton stopButton;
 
     //==============================================================================
     void trimNotifications();
