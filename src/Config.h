@@ -64,6 +64,9 @@
 #define TOPBAR_LEFT_SECTION_WIDTH 360
 #define TOPBAR_RIGHT_SECTION_WIDTH 400
 
+#define TOPBAR_ICONS_BUTTONS_WIDTH 18
+#define TOPBAR_ICONS_GAP 4
+
 // various colors
 #define COLOR_BACKGROUND juce::Colour(20, 20, 20)
 #define COLOR_BACKGROUND_LIGHTER juce::Colour(25, 25, 25)

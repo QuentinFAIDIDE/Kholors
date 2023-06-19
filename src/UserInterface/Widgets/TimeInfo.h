@@ -6,7 +6,7 @@
 
 #include "../../Audio/MixbusDataSource.h"
 
-#include "../CustomFonts.h"
+#include "../FontsLoader.h"
 
 #define TIMEINFO_WIDTH 95
 
@@ -70,7 +70,7 @@ class TimeInfo : public juce::Component
     // the value handler (data broken down in min/sec/ms)
     TimeInfoValue value;
     // shared reference to the loaded custom fonts
-    juce::SharedResourcePointer<CustomFonts> sharedFonts;
+    juce::SharedResourcePointer<FontsLoader> sharedFonts;
 
     // the source where we pull values from
     std::shared_ptr<PositionDataSource> positionDataSource;

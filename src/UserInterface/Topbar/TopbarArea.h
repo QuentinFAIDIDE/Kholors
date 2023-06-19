@@ -14,6 +14,7 @@
 #include "../../Arrangement/ActivityManager.h"
 #include "../../Arrangement/Task.h"
 #include "../LogoDarkPng.h"
+#include "PlayButton.h"
 #include "TopbarLeftArea.h"
 #include "TopbarRightArea.h"
 
@@ -40,10 +41,6 @@ class TopbarArea : public juce::AnimatedAppComponent, public TaskListener
     void paint(juce::Graphics &) override;
     void paintOverChildren(juce::Graphics &) override;
     void resized() override;
-    void mouseDown(const juce::MouseEvent &) override;
-    void mouseUp(const juce::MouseEvent &) override;
-    void mouseDrag(const juce::MouseEvent &) override;
-    void mouseMove(const juce::MouseEvent &) override;
     // local
     void notifyError(const juce::String &);
     // Timer inherited
@@ -96,6 +93,8 @@ class TopbarArea : public juce::AnimatedAppComponent, public TaskListener
     // left section with master and track properties
     TopbarLeftArea leftComponentsContainer;
     TopbarRightArea rightComponentsContainer;
+
+    PlayButton playButton;
 
     //==============================================================================
     void trimNotifications();

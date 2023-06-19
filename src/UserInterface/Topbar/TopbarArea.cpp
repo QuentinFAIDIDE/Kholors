@@ -1,6 +1,6 @@
 #include "TopbarArea.h"
 
-TopbarArea::TopbarArea(ActivityManager &am) : rightComponentsContainer(am), leftComponentsContainer(am)
+TopbarArea::TopbarArea(ActivityManager &am) : leftComponentsContainer(am), rightComponentsContainer(am), playButton(am)
 {
     isHidden = true;
     isAnimationRunning = false;
@@ -14,6 +14,7 @@ TopbarArea::TopbarArea(ActivityManager &am) : rightComponentsContainer(am), left
 
     addAndMakeVisible(leftComponentsContainer);
     addAndMakeVisible(rightComponentsContainer);
+    addAndMakeVisible(playButton);
 }
 
 TopbarArea::~TopbarArea()
@@ -214,23 +215,18 @@ void TopbarArea::resized()
     area.reduce(TOPBAR_OUTTER_MARGINS, TOPBAR_OUTTER_MARGINS);
     auto rightSection = area.removeFromRight(TOPBAR_RIGHT_SECTION_WIDTH);
     rightComponentsContainer.setBounds(rightSection);
+
+    area = getLocalBounds();
+    area.reduce(TOPBAR_OUTTER_MARGINS, TOPBAR_OUTTER_MARGINS);
+    area.removeFromLeft(leftSection.getWidth() + logo.getWidth());
+    area.removeFromRight(rightComponentsContainer.getWidth());
+
+    int centerAreaXDelta = (area.getWidth() - (1 * TOPBAR_ICONS_BUTTONS_WIDTH)) / 2;
+    int centerAreaYDelta = (area.getHeight() - (1 * TOPBAR_ICONS_BUTTONS_WIDTH)) / 2;
+    area.reduce(centerAreaXDelta, centerAreaYDelta);
+
+    playButton.setBounds(area);
 };
-
-void TopbarArea::mouseDown(const juce::MouseEvent &me)
-{
-}
-
-void TopbarArea::mouseUp(const juce::MouseEvent &me)
-{
-}
-
-void TopbarArea::mouseDrag(const juce::MouseEvent &me)
-{
-}
-
-void TopbarArea::mouseMove(const juce::MouseEvent &me)
-{
-}
 
 // must be called from messagemanager thread
 void TopbarArea::notifyError(const juce::String &msg)

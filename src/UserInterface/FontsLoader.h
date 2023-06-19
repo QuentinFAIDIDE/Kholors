@@ -3,9 +3,9 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
-struct CustomFonts
+struct FontsLoader
 {
-    CustomFonts();
+    FontsLoader();
 
     juce::Font monospaceFont;
 };

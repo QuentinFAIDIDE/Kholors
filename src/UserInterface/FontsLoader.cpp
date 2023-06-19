@@ -1,8 +1,8 @@
-#include "CustomFonts.h"
+#include "FontsLoader.h"
 
 #include "FragmentMonoFont.h"
 
-CustomFonts::CustomFonts()
+FontsLoader::FontsLoader()
 {
     monospaceFont = juce::Typeface::createSystemTypefaceFor(FragmentMonoFont::FragmentMonoRegular_ttf,
                                                             FragmentMonoFont::FragmentMonoRegular_ttfSize);

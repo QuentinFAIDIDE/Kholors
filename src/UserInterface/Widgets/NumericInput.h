@@ -2,7 +2,7 @@
 #define DEF_NUMERIC_INPUT_HPP
 
 #include "../../Arrangement/ActivityManager.h"
-#include "../CustomFonts.h"
+#include "../FontsLoader.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -112,7 +112,7 @@ class NumericInput : public juce::Component, public TaskListener
     float dragInitialValue;
 
     // the shared fonts
-    juce::SharedResourcePointer<CustomFonts> sharedFonts;
+    juce::SharedResourcePointer<FontsLoader> sharedFonts;
 
     // the identifier of the numeric input to pop appropriate update tasks
     int numericInputId;
