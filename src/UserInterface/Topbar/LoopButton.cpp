@@ -3,6 +3,7 @@
 
 LoopButton::LoopButton(ActivityManager &am) : activityManager(am)
 {
+    isLooping = false;
     activityManager.registerTaskListener(this);
 }
 

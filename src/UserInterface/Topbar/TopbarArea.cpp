@@ -1,7 +1,7 @@
 #include "TopbarArea.h"
 
 TopbarArea::TopbarArea(ActivityManager &am)
-    : leftComponentsContainer(am), rightComponentsContainer(am), playButton(am), stopButton(am)
+    : leftComponentsContainer(am), rightComponentsContainer(am), playButton(am), stopButton(am), loopButton(am)
 {
     isHidden = true;
     isAnimationRunning = false;
@@ -17,6 +17,7 @@ TopbarArea::TopbarArea(ActivityManager &am)
     addAndMakeVisible(rightComponentsContainer);
     addAndMakeVisible(playButton);
     addAndMakeVisible(stopButton);
+    addAndMakeVisible(loopButton);
 }
 
 TopbarArea::~TopbarArea()
@@ -223,13 +224,15 @@ void TopbarArea::resized()
     area.removeFromLeft(leftSection.getWidth() + logo.getWidth());
     area.removeFromRight(rightComponentsContainer.getWidth());
 
-    int centerAreaXDelta = (area.getWidth() - (TOPBAR_ICONS_GAP) - (2 * TOPBAR_ICONS_BUTTONS_WIDTH)) / 2;
+    int centerAreaXDelta = (area.getWidth() - (TOPBAR_ICONS_GAP*2) - (3 * TOPBAR_ICONS_BUTTONS_WIDTH)) / 2;
     int centerAreaYDelta = (area.getHeight() - (1 * TOPBAR_ICONS_BUTTONS_WIDTH)) / 2;
     area.reduce(centerAreaXDelta, centerAreaYDelta);
 
     playButton.setBounds(area.removeFromLeft(TOPBAR_ICONS_BUTTONS_WIDTH));
     area.removeFromLeft(TOPBAR_ICONS_GAP);
     stopButton.setBounds(area.removeFromLeft(TOPBAR_ICONS_BUTTONS_WIDTH));
+    area.removeFromLeft(TOPBAR_ICONS_GAP);
+    loopButton.setBounds(area.removeFromLeft(TOPBAR_ICONS_BUTTONS_WIDTH));
 };
 
 // must be called from messagemanager thread
