@@ -14,8 +14,8 @@ TempoGrid::TempoGrid()
 {
     setInterceptsMouseClicks(false, false);
     loopModeToggle = false;
-    loopSectionStartFrame = 0;
-    loopSectionStopFrame = 44100;
+    loopSectionStartFrame = 44100;
+    loopSectionStopFrame = 88200;
 }
 
 void TempoGrid::paint(juce::Graphics &g)
@@ -28,6 +28,8 @@ void TempoGrid::paint(juce::Graphics &g)
                                       halfBounds.getX() + halfBounds.getWidth(), halfBounds.getTopLeft().getY());
 
     paintMiddleGradient(g, halfBounds);
+
+    paintLoopSection(g);
 
     // draw a horizontal line in the middle
     g.setColour(COLOR_TEXT_DARKER);
@@ -150,4 +152,80 @@ void TempoGrid::updateView(int vp, float vs)
 {
     viewPosition = vp;
     viewScale = vs;
+}
+
+void TempoGrid::paintLoopSection(juce::Graphics &g)
+{
+    int screenWidth = getLocalBounds().getWidth();
+    int screenHeight = getLocalBounds().getHeight();
+
+    int64_t viewFrameWidth = screenWidth * viewScale;
+
+    float loopStartScreenPosProportion = (float(loopSectionStartFrame) - float(viewPosition)) / float(viewFrameWidth);
+    float loopStopScreenPosProportion = (float(loopSectionStopFrame) - float(viewPosition)) / float(viewFrameWidth);
+
+    // if loop has a length of zero, we don't draw anything
+    if (loopSectionStartFrame == loopSectionStopFrame)
+    {
+        return;
+    }
+
+    if (loopModeToggle)
+    {
+        paintColoredLoopOutline(g, loopStartScreenPosProportion, loopStopScreenPosProportion);
+    }
+
+    paintLoopBorder(g, loopStartScreenPosProportion, loopStopScreenPosProportion);
+}
+
+void TempoGrid::paintLoopBorder(juce::Graphics &g, float loopStartScreenPosProportion,
+                                float loopStopScreenPosProportion)
+{
+    int screenWidth = getLocalBounds().getWidth();
+    int screenHeight = getLocalBounds().getHeight();
+
+    // if the loop section is visible on screen
+    if (loopStartScreenPosProportion <= 1.0 && loopStopScreenPosProportion >= 0.0)
+    {
+        // draw the line that covers the loop section
+        g.setColour(COLOR_LOOP_SECTION);
+        g.drawLine(loopStartScreenPosProportion * screenWidth, screenHeight, loopStopScreenPosProportion * screenWidth,
+                   screenHeight, LOOP_SECTION_LINE_WIDTH);
+
+        // draw the two rectangles at the edges of the loop section
+        juce::Rectangle<int> bordersRect(LOOP_SECTION_BORDERS_RECT_WIDTH, LOOP_SECTION_BORDERS_RECT_HEIGHT);
+        bordersRect.setX((loopStartScreenPosProportion * screenWidth) - (LOOP_SECTION_BORDERS_RECT_WIDTH / 2));
+        bordersRect.setY(screenHeight - LOOP_SECTION_BORDERS_RECT_HEIGHT);
+        g.fillRect(bordersRect);
+
+        bordersRect.setX((loopStopScreenPosProportion * screenWidth) - (LOOP_SECTION_BORDERS_RECT_WIDTH / 2));
+        g.fillRect(bordersRect);
+    }
+}
+
+void TempoGrid::paintColoredLoopOutline(juce::Graphics &g, float loopStartScreenPosProportion,
+                                        float loopStopScreenPosProportion)
+{
+    int screenWidth = getLocalBounds().getWidth();
+    int screenHeight = getLocalBounds().getHeight();
+
+    juce::Rectangle<int> outlineArea(0, screenHeight);
+    outlineArea.setY(0);
+    outlineArea.setX(0);
+    g.setColour(COLOR_LOOP_SECTION.withAlpha(0.2f));
+
+    if (loopStartScreenPosProportion > 0.0f)
+    {
+        float outlineEnd = juce::jmin(1.0f, loopStartScreenPosProportion);
+        outlineArea.setWidth(outlineEnd * screenWidth);
+        g.fillRect(outlineArea);
+    }
+
+    if (loopStopScreenPosProportion < 1.0f)
+    {
+        float outlineStart = juce::jmax(0.0f, loopStopScreenPosProportion);
+        outlineArea.setWidth((1.0f - outlineStart) * screenWidth);
+        outlineArea.setX(outlineStart * screenWidth);
+        g.fillRect(outlineArea);
+    }
 }
