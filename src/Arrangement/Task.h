@@ -671,4 +671,34 @@ class PlayStateUpdateTask : public SilentTask
     bool shouldPlay, shouldResetPosition, isCurrentlyPlaying, requestingStateBroadcast;
 };
 
+/**
+ * @brief    Task to toggle on or off the loop mode.
+ */
+class LoopToggleTask : public SilentTask
+{
+  public:
+    /**
+     * @brief   Constructs a new instance that will ask
+     *          for the current looping state to be saved
+     *          into the isCurrentlyLooping variable.
+     *          It will not change the looping state.
+     */
+    LoopToggleTask();
+
+    /**
+     * @brief   Constructs a new instance that will ask
+     *          for the current looping state to be toggled
+     *          on or off depending on the bool argument.
+     */
+    LoopToggleTask(bool on);
+
+    /**
+    Dumps the task data to a string as json
+    */
+    std::string marshal() override;
+
+    bool shouldLoop, isCurrentlyLooping, requestingStateBroadcast;
+
+};
+
 #endif // DEF_ACTION_HPP

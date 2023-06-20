@@ -620,3 +620,33 @@ std::string PlayStateUpdateTask::marshal()
                   {"is_part_of_reversion", isPartOfReversion}};
     return taskj.dump();
 }
+
+/////////////////////////////////
+
+LoopToggleTask::LoopToggleTask()
+{
+    requestingStateBroadcast = true;
+    shouldLoop = false;
+    isCurrentlyLooping = false;
+}
+
+LoopToggleTask::LoopToggleTask(bool on)
+{
+    requestingStateBroadcast = false;
+    shouldLoop = on;
+    isCurrentlyLooping = false;
+}
+
+std::string LoopToggleTask::marshal()
+{
+    json taskj = {{"object", "task"},
+                  {"task", "loop_mode_toggle"},
+                  {"requesting_state_broadcast", requestingStateBroadcast},
+                  {"should_loop", shouldLoop},
+                  {"is_currently_lopping", isCurrentlyLooping},
+                  {"is_completed", isCompleted()},
+                  {"failed", hasFailed()},
+                  {"recordable_in_history", recordableInHistory},
+                  {"is_part_of_reversion", isPartOfReversion}};
+    return taskj.dump();
+}
