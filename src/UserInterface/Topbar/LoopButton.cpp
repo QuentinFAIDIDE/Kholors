@@ -12,7 +12,7 @@ bool LoopButton::taskHandler(std::shared_ptr<Task> task)
     auto loopUpdateTask = std::dynamic_pointer_cast<LoopToggleTask>(task);
     if (loopUpdateTask != nullptr && loopUpdateTask->isCompleted())
     {
-        isLooping = loopUpdateTask->isCurrentlyPlaying;
+        isLooping = loopUpdateTask->isCurrentlyLooping;
         return false;
     }
 
