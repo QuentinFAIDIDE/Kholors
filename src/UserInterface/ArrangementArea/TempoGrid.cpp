@@ -13,6 +13,9 @@
 TempoGrid::TempoGrid()
 {
     setInterceptsMouseClicks(false, false);
+    loopModeToggle = false;
+    loopSectionStartFrame = 0;
+    loopSectionStopFrame = 44100;
 }
 
 void TempoGrid::paint(juce::Graphics &g)
@@ -24,6 +27,18 @@ void TempoGrid::paint(juce::Graphics &g)
     auto centerLine = juce::Line<int>(halfBounds.getX(), halfBounds.getTopLeft().getY(),
                                       halfBounds.getX() + halfBounds.getWidth(), halfBounds.getTopLeft().getY());
 
+    paintMiddleGradient(g, halfBounds);
+
+    // draw a horizontal line in the middle
+    g.setColour(COLOR_TEXT_DARKER);
+    g.drawLine(centerLine.toFloat(), 1);
+
+    // now draw one tick at every bar
+    paintTicks(g, bounds, halfBounds);
+}
+
+void TempoGrid::paintMiddleGradient(juce::Graphics &g, juce::Rectangle<int> halfBounds)
+{
     // draw a gradient in the middle
     juce::ColourGradient topGradient(
         juce::Colours::transparentBlack, halfBounds.getX(), halfBounds.getTopLeft().getY() - TEMPO_GRID_GRADIENT_HEIGHT,
@@ -39,13 +54,10 @@ void TempoGrid::paint(juce::Graphics &g)
 
     g.setGradientFill(botGradient);
     g.fillRect(halfBounds.getX(), halfBounds.getTopLeft().getY(), halfBounds.getWidth(), TEMPO_GRID_GRADIENT_HEIGHT);
+}
 
-    // draw a horizontal line in the middle
-    g.setColour(COLOR_TEXT_DARKER);
-    g.drawLine(centerLine.toFloat(), 1);
-
-    // now draw one tick at every bar
-
+void TempoGrid::paintTicks(juce::Graphics &g, juce::Rectangle<int> bounds, juce::Rectangle<int> halfBounds)
+{
     // width of a tempo bar in audio frame
     float barFrameWidth = float(AUDIO_FRAMERATE * 60) / tempo;
 
@@ -86,6 +98,7 @@ void TempoGrid::paint(juce::Graphics &g)
         g.drawLine(barTickLine, 2);
     }
 
+    // draw wider bars
     float barWidth;
     float barHighlight;
     float eightBarsQueue;

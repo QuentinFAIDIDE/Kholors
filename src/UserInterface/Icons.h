@@ -5,7 +5,7 @@
 namespace Icons
 {
     extern const char*  loop_svg;
-    const int           loop_svgSize = 3075;
+    const int           loop_svgSize = 3461;
 
     extern const char*  unloop_svg;
     const int           unloop_svgSize = 3569;

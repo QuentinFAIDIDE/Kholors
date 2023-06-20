@@ -35,6 +35,31 @@ class TempoGrid : public juce::Component
 
     // track tempo
     float tempo;
+
+    // is the loop mode toggled ?
+    bool loopModeToggle;
+
+    // loop section position in audio frames
+    int64_t loopSectionStartFrame, loopSectionStopFrame;
+
+    ///////////////////////////////
+
+    /**
+     * @brief      Paint gradient in the middle.
+     *
+     * @param      g           juce graphics context
+     * @param[in]  halfBounds  The bounds of half of the entire area
+     */
+    void paintMiddleGradient(juce::Graphics &g, juce::Rectangle<int> halfBounds);
+
+    /**
+     * @brief      Paints the ticks in the middle of the screen.
+     *
+     * @param      g           juce graphic context
+     * @param[in]  bounds      The bounds of the entire area
+     * @param[in]  halfBounds  The bounds of half of the entire area
+     */
+    void paintTicks(juce::Graphics &g, juce::Rectangle<int> bounds, juce::Rectangle<int> halfBounds);
 };
 
 #endif // DEF_TEMPO_GRID_HPP
