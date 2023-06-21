@@ -11,8 +11,9 @@
 // initialize the MixingBus, as well as Thread and audio inherited
 // behaviours.
 MixingBus::MixingBus(ActivityManager &am)
-    : activityManager(am), playCursor(0), Thread("Mixbus Loader Thread"), totalFrameLength(0), numChannels(2),
-      isPlaying(false), uiState(am.getAppState().getUiState()), forwardFFT(FREQVIEW_SAMPLE_FFT_ORDER)
+    : Thread("Mixbus Loader Thread"), activityManager(am), playCursor(0), totalFrameLength(0), numChannels(2),
+      isPlaying(false), loopingToggledOn(false), loopSectionStartFrame(0), loopSectionEndFrame(0),
+      forwardFFT(FREQVIEW_SAMPLE_FFT_ORDER), uiState(am.getAppState().getUiState())
 {
     // initialize format manager
     formatManager.registerBasicFormats();
@@ -67,28 +68,28 @@ std::shared_ptr<MixbusDataSource> MixingBus::getMixbusDataSource()
 
 bool MixingBus::taskHandler(std::shared_ptr<Task> task)
 {
-    std::shared_ptr<SampleCreateTask> sc = std::dynamic_pointer_cast<SampleCreateTask>(task);
+    auto sc = std::dynamic_pointer_cast<SampleCreateTask>(task);
     if (sc != nullptr && !sc->isCompleted() && !sc->hasFailed())
     {
         addSample(sc);
         return true;
     }
 
-    std::shared_ptr<SampleDeletionTask> sd = std::dynamic_pointer_cast<SampleDeletionTask>(task);
+    auto sd = std::dynamic_pointer_cast<SampleDeletionTask>(task);
     if (sd != nullptr && !sd->isCompleted() && !sd->hasFailed())
     {
         deleteSample(sd);
         return true;
     }
 
-    std::shared_ptr<SampleRestoreTask> restoreTask = std::dynamic_pointer_cast<SampleRestoreTask>(task);
+    auto restoreTask = std::dynamic_pointer_cast<SampleRestoreTask>(task);
     if (restoreTask != nullptr && !restoreTask->isCompleted() && !restoreTask->hasFailed())
     {
         restoreSample(restoreTask);
         return true;
     }
 
-    std::shared_ptr<SampleMovingTask> moveTask = std::dynamic_pointer_cast<SampleMovingTask>(task);
+    auto moveTask = std::dynamic_pointer_cast<SampleMovingTask>(task);
     if (moveTask != nullptr && !moveTask->isCompleted() && !moveTask->hasFailed())
     {
         if (tracks[moveTask->id] != nullptr)
@@ -112,21 +113,21 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
         return true;
     }
 
-    std::shared_ptr<SampleTimeCropTask> timeCropTask = std::dynamic_pointer_cast<SampleTimeCropTask>(task);
+    auto timeCropTask = std::dynamic_pointer_cast<SampleTimeCropTask>(task);
     if (timeCropTask != nullptr && !timeCropTask->isCompleted() && !timeCropTask->hasFailed())
     {
         cropSample(timeCropTask);
         return true;
     }
 
-    std::shared_ptr<SampleFreqCropTask> freqCropTask = std::dynamic_pointer_cast<SampleFreqCropTask>(task);
+    auto freqCropTask = std::dynamic_pointer_cast<SampleFreqCropTask>(task);
     if (freqCropTask != nullptr && !freqCropTask->isCompleted() && !freqCropTask->hasFailed())
     {
         cropSample(freqCropTask);
         return true;
     }
 
-    std::shared_ptr<SelectionChangingTask> selectUpdate = std::dynamic_pointer_cast<SelectionChangingTask>(task);
+    auto selectUpdate = std::dynamic_pointer_cast<SelectionChangingTask>(task);
     if (selectUpdate != nullptr && selectUpdate->isCompleted())
     {
         mixbusDataSource->updateSelectedTracks(selectUpdate->newSelectedTracks);
@@ -208,6 +209,19 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
                 return true;
             }
         }
+    }
+
+    auto loopToggleTask = std::dynamic_pointer_cast<LoopToggleTask>(task);
+    if (loopToggleTask != nullptr && !loopToggleTask->isCompleted())
+    {
+        if (!loopToggleTask->requestingStateBroadcast)
+        {
+            loopingToggledOn = loopToggleTask->shouldLoop;
+        }
+        loopToggleTask->isCurrentlyLooping = loopingToggledOn;
+        loopToggleTask->setCompleted(true);
+        activityManager.broadcastNestedTaskNow(loopToggleTask);
+        return true;
     }
 
     return false;

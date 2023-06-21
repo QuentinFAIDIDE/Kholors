@@ -85,6 +85,12 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     // is the track currently playing ?
     bool isPlaying;
 
+    // is the loop mode on ?
+    bool loopingToggledOn;
+
+    // position of the ends of the loop section in audio frames
+    int64_t loopSectionStartFrame, loopSectionEndFrame;
+
     // a shared pointer to an instance of a MixbusDataSource we can share with GUI
     // (it has a builtin lock)
     std::shared_ptr<MixbusDataSource> mixbusDataSource;

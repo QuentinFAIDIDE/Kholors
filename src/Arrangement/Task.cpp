@@ -651,7 +651,7 @@ std::string LoopToggleTask::marshal()
     return taskj.dump();
 }
 
-///////////////////////////////////////// 
+/////////////////////////////////////////
 
 LoopMovingTask::LoopMovingTask()
 {
@@ -683,7 +683,7 @@ LoopMovingTask::LoopMovingTask(int64_t oldBegin, int64_t oldEnd, int64_t newBegi
     currentLoopEndFrame = newEnd;
 }
 
-std::string LoopToggleTask::marshal()
+std::string LoopMovingTask::marshal()
 {
     json taskj = {{"object", "task"},
                   {"task", "loop_moving"},
