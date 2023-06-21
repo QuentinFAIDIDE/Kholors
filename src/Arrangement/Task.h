@@ -735,7 +735,11 @@ class LoopMovingTask : public Task
     */
     LoopMovingTask(int64_t oldBegin, int64_t oldEnd, int64_t newBegin, int64_t newEnd);
 
-  private:
+    /**
+    Dumps the task data to a string as json
+    */
+    std::string marshal() override;
+
     bool isBroadcastRequest;
     int64_t previousLoopBeginFrame, previousLoopEndFrame, currentLoopBeginFrame, currentLoopEndFrame;
 };

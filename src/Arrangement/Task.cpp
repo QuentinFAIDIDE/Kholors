@@ -650,3 +650,51 @@ std::string LoopToggleTask::marshal()
                   {"is_part_of_reversion", isPartOfReversion}};
     return taskj.dump();
 }
+
+///////////////////////////////////////// 
+
+LoopMovingTask::LoopMovingTask()
+{
+    isBroadcastRequest = true;
+    recordableInHistory = false;
+    previousLoopBeginFrame = 0;
+    previousLoopEndFrame = 0;
+    currentLoopBeginFrame = 0;
+    currentLoopEndFrame = 0;
+}
+
+LoopMovingTask::LoopMovingTask(int64_t newBegin, int64_t newEnd)
+{
+    isBroadcastRequest = false;
+    recordableInHistory = false;
+    previousLoopBeginFrame = 0;
+    previousLoopEndFrame = 0;
+    currentLoopBeginFrame = newBegin;
+    currentLoopEndFrame = newEnd;
+}
+
+LoopMovingTask::LoopMovingTask(int64_t oldBegin, int64_t oldEnd, int64_t newBegin, int64_t newEnd)
+{
+    isBroadcastRequest = false;
+    recordableInHistory = true;
+    previousLoopBeginFrame = oldBegin;
+    previousLoopEndFrame = oldEnd;
+    currentLoopBeginFrame = newBegin;
+    currentLoopEndFrame = newEnd;
+}
+
+std::string LoopToggleTask::marshal()
+{
+    json taskj = {{"object", "task"},
+                  {"task", "loop_moving"},
+                  {"is_broadcast_request", isBroadcastRequest},
+                  {"previous_loop_begin_frame", previousLoopBeginFrame},
+                  {"previous_loop_end_frame", previousLoopEndFrame},
+                  {"current_loop_begin_frame", currentLoopBeginFrame},
+                  {"current_loop_end_frame", currentLoopEndFrame},
+                  {"is_completed", isCompleted()},
+                  {"failed", hasFailed()},
+                  {"recordable_in_history", recordableInHistory},
+                  {"is_part_of_reversion", isPartOfReversion}};
+    return taskj.dump();
+}
