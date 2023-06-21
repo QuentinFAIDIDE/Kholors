@@ -4,7 +4,7 @@
 #include "../IconsLoader.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
-#define LOOP_SECTION_LINE_WIDTH 4
+#define LOOP_SECTION_LINE_WIDTH 10
 #define COLOR_LOOP_SECTION juce::Colour(150, 150, 200)
 #define LOOP_SECTION_BORDERS_RECT_WIDTH 25
 #define LOOP_SECTION_BORDERS_RECT_HEIGHT 40
@@ -32,6 +32,17 @@ class TempoGrid : public juce::Component
      Update position of view
      */
     void updateView(int viewPosition, float viewScale);
+
+    /**
+     * @brief      Test whether the click should be handled
+     *             by this component or passed to the parent (arrangement area).
+     *
+     * @param[in]  x     x pos relative to left edge of component
+     * @param[in]  y     y pos relative to top edge of component
+     *
+     * @return     true if click is inside, false otherwise
+     */
+    bool hitTest(int x, int y) override;
 
   private:
     // the position in the track in audio frames
@@ -100,6 +111,16 @@ class TempoGrid : public juce::Component
      */
     void paintColoredLoopOutline(juce::Graphics &g, float loopStartScreenPosProportion,
                                  float loopStopScreenPosProportion);
+
+    /**
+     * @brief      Return the area of the left or right handle depending on the bool.
+     *             It return position in the local component coordinates pixel system.
+     *
+     * @param[in]  left  if true return left handle area, if false, right one.
+     *
+     * @return     The loop handle area.
+     */
+    juce::Rectangle<int> getLoopHandleArea(bool left);
 };
 
 #endif // DEF_TEMPO_GRID_HPP

@@ -14,8 +14,8 @@ TempoGrid::TempoGrid()
 {
     setInterceptsMouseClicks(false, false);
     loopModeToggle = false;
-    loopSectionStartFrame = 44100;
-    loopSectionStopFrame = 88200;
+    loopSectionStartFrame = 0;
+    loopSectionStopFrame = 0;
 }
 
 void TempoGrid::paint(juce::Graphics &g)
@@ -196,14 +196,12 @@ void TempoGrid::paintLoopBorder(juce::Graphics &g, float loopStartScreenPosPropo
         juce::Rectangle<int> iconsRectangle(iconWidth, iconWidth);
 
         // draw the two rectangles at the edges of the loop section
-        juce::Rectangle<int> bordersRect(LOOP_SECTION_BORDERS_RECT_WIDTH, LOOP_SECTION_BORDERS_RECT_HEIGHT);
-        bordersRect.setX((loopStartScreenPosProportion * screenWidth) - (LOOP_SECTION_BORDERS_RECT_WIDTH / 2));
-        bordersRect.setY(screenHeight - LOOP_SECTION_BORDERS_RECT_HEIGHT);
+        juce::Rectangle<int> bordersRect = getLoopHandleArea(true);
         g.fillRect(bordersRect);
         iconsRectangle.setCentre(bordersRect.getCentre());
         sharedIcons->moveIcon->drawWithin(g, iconsRectangle.toFloat(), juce::RectanglePlacement::centred, 1.0f);
 
-        bordersRect.setX((loopStopScreenPosProportion * screenWidth) - (LOOP_SECTION_BORDERS_RECT_WIDTH / 2));
+        bordersRect = getLoopHandleArea(false);
         g.fillRect(bordersRect);
         iconsRectangle.setCentre(bordersRect.getCentre());
         sharedIcons->resizeHorizontalIcon->drawWithin(g, iconsRectangle.toFloat(), juce::RectanglePlacement::centred,
@@ -236,4 +234,32 @@ void TempoGrid::paintColoredLoopOutline(juce::Graphics &g, float loopStartScreen
         outlineArea.setX(outlineStart * screenWidth);
         g.fillRect(outlineArea);
     }
+}
+
+bool TempoGrid::hitTest(int x, int y)
+{
+    return false;
+}
+
+juce::Rectangle<int> TempoGrid::getLoopHandleArea(bool left)
+{
+    int screenWidth = getLocalBounds().getWidth();
+    int screenHeight = getLocalBounds().getHeight();
+    int64_t viewFrameWidth = screenWidth * viewScale;
+
+    juce::Rectangle<int> bordersRect(LOOP_SECTION_BORDERS_RECT_WIDTH, LOOP_SECTION_BORDERS_RECT_HEIGHT);
+    bordersRect.setY(screenHeight - LOOP_SECTION_BORDERS_RECT_HEIGHT);
+
+    float handleScreenPos;
+    if (left)
+    {
+        handleScreenPos = (float(loopSectionStartFrame) - float(viewPosition)) / float(viewFrameWidth);
+    }
+    else
+    {
+        handleScreenPos = (float(loopSectionStopFrame) - float(viewPosition)) / float(viewFrameWidth);
+    }
+
+    bordersRect.setX((handleScreenPos * screenWidth) - (LOOP_SECTION_BORDERS_RECT_WIDTH / 2));
+    return bordersRect;
 }
