@@ -701,4 +701,43 @@ class LoopToggleTask : public SilentTask
 
 };
 
+class LoopMovingTask : public Task
+{
+  public:
+    /**
+    * @brief    Constructs a new tasks that will
+    *           broadcast current loop position
+    *           as a completed task with currnetLoopBeginFrame
+    *           and actualLoopEndFrame populated with
+    *           the values
+    */
+    LoopMovingTask();
+
+    /**
+    * @brief    Constructs a new tasks that will
+    *           set current loop position to desired
+    *           one passed as args. Will not record
+    *           the task, the recorded one is the next
+    *           constructor that is reversable.
+    *           This is used when user start dragging and
+    *           we want to reflect the change, but don't want
+    *           to record a thousands micro movement for CTRL+Z.
+    *           When done dragging, the component will emit
+    *           a completed LoopMovingTask that will be reversable.
+    */
+    LoopMovingTask(int64_t newBegin, int64_t newEnd);
+
+
+    /**
+    * @brief    Constructs a new task that will
+    *           be marked completed and will be saved in history.
+    *           Used to complete a drag movement and make it reversible.
+    */
+    LoopMovingTask(int64_t oldBegin, int64_t oldEnd, int64_t newBegin, int64_t newEnd);
+
+  private:
+    bool isBroadcastRequest;
+    int64_t previousLoopBeginFrame, previousLoopEndFrame, currentLoopBeginFrame, currentLoopEndFrame;
+};
+
 #endif // DEF_ACTION_HPP
