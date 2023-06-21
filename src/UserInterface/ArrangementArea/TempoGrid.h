@@ -1,6 +1,7 @@
 #ifndef DEF_TEMPO_GRID_HPP
 #define DEF_TEMPO_GRID_HPP
 
+#include "../IconsLoader.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #define LOOP_SECTION_LINE_WIDTH 4
@@ -46,6 +47,11 @@ class TempoGrid : public juce::Component
 
     // loop section position in audio frames
     int64_t loopSectionStartFrame, loopSectionStopFrame;
+
+    /**
+     * Shared svg icons.
+     */
+    juce::SharedResourcePointer<IconsLoader> sharedIcons;
 
     ///////////////////////////////
 

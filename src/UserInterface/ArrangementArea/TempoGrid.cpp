@@ -157,7 +157,6 @@ void TempoGrid::updateView(int vp, float vs)
 void TempoGrid::paintLoopSection(juce::Graphics &g)
 {
     int screenWidth = getLocalBounds().getWidth();
-    int screenHeight = getLocalBounds().getHeight();
 
     int64_t viewFrameWidth = screenWidth * viewScale;
 
@@ -192,14 +191,23 @@ void TempoGrid::paintLoopBorder(juce::Graphics &g, float loopStartScreenPosPropo
         g.drawLine(loopStartScreenPosProportion * screenWidth, screenHeight, loopStopScreenPosProportion * screenWidth,
                    screenHeight, LOOP_SECTION_LINE_WIDTH);
 
+        // define area for the icons on the edges
+        int iconWidth = 0.75f * LOOP_SECTION_BORDERS_RECT_WIDTH;
+        juce::Rectangle<int> iconsRectangle(iconWidth, iconWidth);
+
         // draw the two rectangles at the edges of the loop section
         juce::Rectangle<int> bordersRect(LOOP_SECTION_BORDERS_RECT_WIDTH, LOOP_SECTION_BORDERS_RECT_HEIGHT);
         bordersRect.setX((loopStartScreenPosProportion * screenWidth) - (LOOP_SECTION_BORDERS_RECT_WIDTH / 2));
         bordersRect.setY(screenHeight - LOOP_SECTION_BORDERS_RECT_HEIGHT);
         g.fillRect(bordersRect);
+        iconsRectangle.setCentre(bordersRect.getCentre());
+        sharedIcons->moveIcon->drawWithin(g, iconsRectangle.toFloat(), juce::RectanglePlacement::centred, 1.0f);
 
         bordersRect.setX((loopStopScreenPosProportion * screenWidth) - (LOOP_SECTION_BORDERS_RECT_WIDTH / 2));
         g.fillRect(bordersRect);
+        iconsRectangle.setCentre(bordersRect.getCentre());
+        sharedIcons->resizeHorizontalIcon->drawWithin(g, iconsRectangle.toFloat(), juce::RectanglePlacement::centred,
+                                                      1.0f);
     }
 }
 

@@ -19,4 +19,11 @@ IconsLoader::IconsLoader()
 
     unloopIcon = juce::Drawable::createFromImageData(Icons::unloop_svg, Icons::unloop_svgSize);
     unloopIcon->replaceColour(juce::Colours::white, COLOR_TEXT_DARKER);
+
+    moveIcon = juce::Drawable::createFromImageData(Icons::move_svg, Icons::move_svgSize);
+    moveIcon->replaceColour(juce::Colours::white, COLOR_BACKGROUND);
+
+    resizeHorizontalIcon =
+        juce::Drawable::createFromImageData(Icons::resize_horizontal_svg, Icons::resize_horizontal_svgSize);
+    resizeHorizontalIcon->replaceColour(juce::Colours::white, COLOR_BACKGROUND);
 }
