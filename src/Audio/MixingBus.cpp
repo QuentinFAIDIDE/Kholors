@@ -224,6 +224,24 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
         return true;
     }
 
+    auto loopMovingTask = std::dynamic_pointer_cast<loopMovingTask>(task);
+    if (loopMovingTask != nullptr && !loopMovingTask->isCompleted())
+    {
+        if (!loopMovingTask->isBroadcastRequest)
+        {
+            loopSectionStartFrame = loopMovingTask->currentLoopBeginFrame;
+            loopSectionEndFrame = loopMovingTask->currentLoopEndFrame
+        }
+        else
+        {
+            loopMovingTask->currentLoopBeginFrame = loopSectionStartFrame;
+            loopMovingTask->currentLoopEndFrame = loopSectionEndFrame;
+        }
+        loopToggleTask->setCompleted(true);
+        activityManager.broadcastNestedTaskNow(loopToggleTask);
+        return true;
+    }
+
     return false;
 }
 
