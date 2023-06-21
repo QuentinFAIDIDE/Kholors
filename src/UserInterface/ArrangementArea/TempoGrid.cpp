@@ -238,6 +238,14 @@ void TempoGrid::paintColoredLoopOutline(juce::Graphics &g, float loopStartScreen
 
 bool TempoGrid::hitTest(int x, int y)
 {
+    auto leftHandle = getLoopHandleArea(true);
+    auto rightHandle = getLoopHandleArea(false);
+
+    if (leftHandle.contains(x, y) || rightHandle.contains(x, y))
+    {
+        return true;
+    }
+
     return false;
 }
 
