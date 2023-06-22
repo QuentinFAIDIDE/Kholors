@@ -230,7 +230,7 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
         if (!loopMovingTask->isBroadcastRequest)
         {
             loopSectionStartFrame = loopMovingTask->currentLoopBeginFrame;
-            loopSectionEndFrame = loopMovingTask->currentLoopEndFrame
+            loopSectionEndFrame = loopMovingTask->currentLoopEndFrame;
         }
         else
         {
