@@ -28,7 +28,7 @@
 
 //==============================================================================
 ArrangementArea::ArrangementArea(MixingBus &mb, ActivityManager &am)
-    : mixingBus(mb), activityManager(am), taxonomyManager(am.getAppState().getTaxonomy())
+    : activityManager(am), taxonomyManager(am.getAppState().getTaxonomy()), tempoGrid(am), mixingBus(mb)
 {
     activityManager.registerTaskListener(this);
 

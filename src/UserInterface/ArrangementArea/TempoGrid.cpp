@@ -1,6 +1,7 @@
 #include "TempoGrid.h"
 
 #include "../../Config.h"
+#include <memory>
 
 #define BAR_LINE_HEIGHT 8
 #define SUBBAR_LINE_HEIGHT 4
@@ -10,12 +11,13 @@
 #define TEMPO_GRID_TEXT_Y_OFFSET -24
 #define TEMPO_GRID_FONT_SIZE 12
 
-TempoGrid::TempoGrid()
+TempoGrid::TempoGrid(ActivityManager &am) : activityManager(am)
 {
-    setInterceptsMouseClicks(false, false);
     loopModeToggle = false;
     loopSectionStartFrame = 0;
     loopSectionStopFrame = 0;
+
+    activityManager.registerTaskListener(this);
 }
 
 void TempoGrid::paint(juce::Graphics &g)
@@ -238,6 +240,11 @@ void TempoGrid::paintColoredLoopOutline(juce::Graphics &g, float loopStartScreen
 
 bool TempoGrid::hitTest(int x, int y)
 {
+    if (activityManager.getAppState().getUiState() == UI_STATE_MOVE_LOOP_SECTION)
+    {
+        return true;
+    }
+
     auto leftHandle = getLoopHandleArea(true);
     auto rightHandle = getLoopHandleArea(false);
 
@@ -270,4 +277,96 @@ juce::Rectangle<int> TempoGrid::getLoopHandleArea(bool left)
 
     bordersRect.setX((handleScreenPos * screenWidth) - (LOOP_SECTION_BORDERS_RECT_WIDTH / 2));
     return bordersRect;
+}
+
+bool TempoGrid::taskHandler(std::shared_ptr<Task> task)
+{
+    // receives updates about completed tasks for loop state change
+    auto loopToggleTask = std::dynamic_pointer_cast<LoopToggleTask>(task);
+    if (loopToggleTask != nullptr && loopToggleTask->isCompleted())
+    {
+        std::cout << "received loop state " << loopToggleTask->isCurrentlyLooping << std::endl;
+        loopModeToggle = loopToggleTask->isCurrentlyLooping;
+        repaint();
+        return false;
+    }
+
+    // receives updates about completed tasks for loop position change
+    auto loopPositionTask = std::dynamic_pointer_cast<LoopMovingTask>(task);
+    if (loopPositionTask != nullptr && loopPositionTask->isCompleted())
+    {
+        std::cout << "received start" << loopPositionTask->currentLoopBeginFrame << std::endl;
+        std::cout << "received end" << loopPositionTask->currentLoopEndFrame << std::endl;
+
+        loopSectionStartFrame = loopPositionTask->currentLoopBeginFrame;
+        loopSectionStopFrame = loopPositionTask->currentLoopEndFrame;
+        repaint();
+        return false;
+    }
+
+    return false;
+}
+
+void TempoGrid::mouseDown(const juce::MouseEvent &me)
+{
+    if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT && me.mods.isLeftButtonDown())
+    {
+        auto leftHandle = getLoopHandleArea(true);
+        auto rightHandle = getLoopHandleArea(false);
+
+        if (rightHandle.contains(me.getPosition().getX(), me.getPosition().getY()))
+        {
+            activityManager.getAppState().setUiState(UI_STATE_MOVE_LOOP_SECTION);
+            draggingLeftHandle = false;
+            setMouseCursor(juce::MouseCursor::RightEdgeResizeCursor);
+            // TODO: record initial loop position
+            return;
+        }
+
+        if (leftHandle.contains(me.getPosition().getX(), me.getPosition().getY()))
+        {
+            activityManager.getAppState().setUiState(UI_STATE_MOVE_LOOP_SECTION);
+            draggingLeftHandle = true;
+            setMouseCursor(juce::MouseCursor::DraggingHandCursor);
+            // TODO: record initial loop position
+            return;
+        }
+    }
+}
+
+void TempoGrid::mouseUp(const juce::MouseEvent &me)
+{
+    if (me.mods.isLeftButtonDown() && activityManager.getAppState().getUiState() == UI_STATE_MOVE_LOOP_SECTION)
+    {
+        activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
+        setMouseCursor(juce::MouseCursor::NormalCursor);
+        // TODO: pop a final loop moving task
+    }
+}
+
+void TempoGrid::mouseDrag(const juce::MouseEvent &me)
+{
+}
+
+void TempoGrid::mouseMove(const juce::MouseEvent &me)
+{
+    if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT)
+    {
+        auto leftHandle = getLoopHandleArea(true);
+        auto rightHandle = getLoopHandleArea(false);
+
+        if (rightHandle.contains(me.getPosition().getX(), me.getPosition().getY()))
+        {
+            setMouseCursor(juce::MouseCursor::RightEdgeResizeCursor);
+            return;
+        }
+
+        if (leftHandle.contains(me.getPosition().getX(), me.getPosition().getY()))
+        {
+            setMouseCursor(juce::MouseCursor::DraggingHandCursor);
+            return;
+        }
+
+        setMouseCursor(juce::MouseCursor::NormalCursor);
+    }
 }

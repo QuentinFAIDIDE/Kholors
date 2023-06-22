@@ -7,7 +7,7 @@
 
 //==============================================================================
 MainComponent::MainComponent()
-    : notificationArea(activityManager), mixingBus(activityManager), arrangementArea(mixingBus, activityManager),
+    : mixingBus(activityManager), arrangementArea(mixingBus, activityManager), notificationArea(activityManager),
       actionTabs(juce::TabbedButtonBar::Orientation::TabsAtTop)
 {
 
@@ -45,6 +45,13 @@ MainComponent::MainComponent()
 
     // spread the mixing bus data source for the visualizer
     notificationArea.setDataSource(mixingBus.getMixbusDataSource());
+
+    // instanciate the loop values with what the mixbus has.
+    // empty comstructor = request to broacast current value from Mixbus class
+    auto getLoopStateTask = std::make_shared<LoopToggleTask>();
+    auto getLoopPositioNTask = std::make_shared<LoopMovingTask>();
+    activityManager.broadcastTask(getLoopStateTask);
+    activityManager.broadcastTask(getLoopPositioNTask);
 }
 
 void MainComponent::printAudioDeviceSettings()

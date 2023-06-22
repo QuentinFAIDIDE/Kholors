@@ -1,8 +1,10 @@
 #ifndef DEF_TEMPO_GRID_HPP
 #define DEF_TEMPO_GRID_HPP
 
+#include "../../Arrangement/ActivityManager.h"
 #include "../IconsLoader.h"
 #include <juce_gui_basics/juce_gui_basics.h>
+#include <memory>
 
 #define LOOP_SECTION_LINE_WIDTH 10
 #define COLOR_LOOP_SECTION juce::Colour(150, 150, 200)
@@ -13,10 +15,10 @@
  Component that draw a tempo grid in the middle
  of the view with bar counts.
  */
-class TempoGrid : public juce::Component
+class TempoGrid : public juce::Component, public TaskListener
 {
   public:
-    TempoGrid();
+    TempoGrid(ActivityManager &am);
 
     /**
     paint the grid over the rest meter
@@ -44,6 +46,43 @@ class TempoGrid : public juce::Component
      */
     bool hitTest(int x, int y) override;
 
+    /**
+     * @brief      Handle task broadcasted by activity manager.
+     *             returned value is true if we stop broadcasting
+     *             the task further. Generally we want to stop it
+     *             if no other service may need to catch it.
+     *             So we tend let "completed" task pass to potentially
+     *             other listening components, and stop the one
+     *             we performed, while eventually broadcasting
+     *             the completed version of the task.
+     */
+    bool taskHandler(std::shared_ptr<Task>) override;
+
+    /**
+     * @brief      Called by juce when the mouse is clicked.
+     *
+     */
+    void mouseDown(const juce::MouseEvent &me) override;
+
+    /**
+     * @brief      Called by juce when the mouse button is released.
+     *
+     */
+    void mouseUp(const juce::MouseEvent &me) override;
+
+    /**
+     * @brief      Called by juce when the mouse button is down and
+     *             there's a movement.
+     *
+     */
+    void mouseDrag(const juce::MouseEvent &me) override;
+
+    /**
+     * @brief      Called by juce when the mouse is moved
+     *
+     */
+    void mouseMove(const juce::MouseEvent &me) override;
+
   private:
     // the position in the track in audio frames
     int viewPosition;
@@ -53,11 +92,16 @@ class TempoGrid : public juce::Component
     // track tempo
     float tempo;
 
+    // true if the left handle of the loop is dragged, false if right
+    bool draggingLeftHandle;
+
     // is the loop mode toggled ?
     bool loopModeToggle;
 
     // loop section position in audio frames
     int64_t loopSectionStartFrame, loopSectionStopFrame;
+
+    ActivityManager &activityManager;
 
     /**
      * Shared svg icons.

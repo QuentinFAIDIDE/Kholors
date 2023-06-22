@@ -12,7 +12,7 @@
 // behaviours.
 MixingBus::MixingBus(ActivityManager &am)
     : Thread("Mixbus Loader Thread"), activityManager(am), playCursor(0), totalFrameLength(0), numChannels(2),
-      isPlaying(false), loopingToggledOn(false), loopSectionStartFrame(0), loopSectionEndFrame(0),
+      isPlaying(false), loopingToggledOn(false), loopSectionStartFrame(22050), loopSectionEndFrame(44100),
       forwardFFT(FREQVIEW_SAMPLE_FFT_ORDER), uiState(am.getAppState().getUiState())
 {
     // initialize format manager
@@ -237,8 +237,8 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
             loopMovingTask->currentLoopBeginFrame = loopSectionStartFrame;
             loopMovingTask->currentLoopEndFrame = loopSectionEndFrame;
         }
-        loopToggleTask->setCompleted(true);
-        activityManager.broadcastNestedTaskNow(loopToggleTask);
+        loopMovingTask->setCompleted(true);
+        activityManager.broadcastNestedTaskNow(loopMovingTask);
         return true;
     }
 
@@ -524,7 +524,8 @@ void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFi
     }
 
     // loop if this buffer covers the end of the loop section
-    if (loopingToggledOn && loopSectionStartFrame!=loopSectionEndFrame && loopSectionEndFrame >= playCursor && loopSectionEndFrame <= playCursor+bufferToFill.numSamples)
+    if (loopingToggledOn && loopSectionStartFrame != loopSectionEndFrame && loopSectionEndFrame >= playCursor &&
+        loopSectionEndFrame <= playCursor + bufferToFill.numSamples)
     {
         setNextReadPosition(loopSectionStartFrame);
     }

@@ -24,7 +24,7 @@ enum UserInterfaceState
 
     UI_STATE_RESIZE_MAINVIEW,
 
-    UI_STATE_PICK_LOOP_SECTION
+    UI_STATE_MOVE_LOOP_SECTION
 };
 
 #endif // UI_STATE_H
