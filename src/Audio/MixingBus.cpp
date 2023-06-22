@@ -224,7 +224,7 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
         return true;
     }
 
-    auto loopMovingTask = std::dynamic_pointer_cast<loopMovingTask>(task);
+    auto loopMovingTask = std::dynamic_pointer_cast<LoopMovingTask>(task);
     if (loopMovingTask != nullptr && !loopMovingTask->isCompleted())
     {
         if (!loopMovingTask->isBroadcastRequest)
