@@ -401,7 +401,6 @@ void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFi
 
         // get if possible a pointer to the set of selected tracks
         std::set<size_t> *selectedTracks = mixbusDataSource->getLockedSelectedTracks();
-        // TODO: make the getSelectedTrack function lock the selected tracks set !
 
         // ensure selected audio buffer has necessary space
         if (selectedTracks != nullptr)
@@ -522,6 +521,12 @@ void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFi
         {
             notify();
         }
+    }
+
+    // loop if this buffer covers the end of the loop section
+    if (loopingToggledOn && loopSectionStartFrame!=loopSectionEndFrame && loopSectionEndFrame >= playCursor && loopSectionEndFrame <= playCursor+bufferToFill.numSamples)
+    {
+        setNextReadPosition(loopSectionStartFrame);
     }
 }
 
