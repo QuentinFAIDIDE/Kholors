@@ -285,7 +285,6 @@ bool TempoGrid::taskHandler(std::shared_ptr<Task> task)
     auto loopToggleTask = std::dynamic_pointer_cast<LoopToggleTask>(task);
     if (loopToggleTask != nullptr && loopToggleTask->isCompleted())
     {
-        std::cout << "received loop state " << loopToggleTask->isCurrentlyLooping << std::endl;
         loopModeToggle = loopToggleTask->isCurrentlyLooping;
         repaint();
         return false;
@@ -295,9 +294,6 @@ bool TempoGrid::taskHandler(std::shared_ptr<Task> task)
     auto loopPositionTask = std::dynamic_pointer_cast<LoopMovingTask>(task);
     if (loopPositionTask != nullptr && loopPositionTask->isCompleted())
     {
-        std::cout << "received start" << loopPositionTask->currentLoopBeginFrame << std::endl;
-        std::cout << "received end" << loopPositionTask->currentLoopEndFrame << std::endl;
-
         loopSectionStartFrame = loopPositionTask->currentLoopBeginFrame;
         loopSectionStopFrame = loopPositionTask->currentLoopEndFrame;
         repaint();
@@ -319,7 +315,8 @@ void TempoGrid::mouseDown(const juce::MouseEvent &me)
             activityManager.getAppState().setUiState(UI_STATE_MOVE_LOOP_SECTION);
             draggingLeftHandle = false;
             setMouseCursor(juce::MouseCursor::RightEdgeResizeCursor);
-            // TODO: record initial loop position
+            currentDragTask = std::make_shared<LoopMovingTask>(loopSectionStartFrame, loopSectionStopFrame,
+                                                               loopSectionStartFrame, loopSectionStopFrame);
             return;
         }
 
@@ -328,7 +325,8 @@ void TempoGrid::mouseDown(const juce::MouseEvent &me)
             activityManager.getAppState().setUiState(UI_STATE_MOVE_LOOP_SECTION);
             draggingLeftHandle = true;
             setMouseCursor(juce::MouseCursor::DraggingHandCursor);
-            // TODO: record initial loop position
+            currentDragTask = std::make_shared<LoopMovingTask>(loopSectionStartFrame, loopSectionStopFrame,
+                                                               loopSectionStartFrame, loopSectionStopFrame);
             return;
         }
     }
@@ -340,12 +338,36 @@ void TempoGrid::mouseUp(const juce::MouseEvent &me)
     {
         activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
         setMouseCursor(juce::MouseCursor::NormalCursor);
-        // TODO: pop a final loop moving task
+        currentDragTask->currentLoopBeginFrame = loopSectionStartFrame;
+        currentDragTask->currentLoopEndFrame = loopSectionStopFrame;
+        currentDragTask->setCompleted(true);
+        activityManager.broadcastTask(currentDragTask);
     }
 }
 
 void TempoGrid::mouseDrag(const juce::MouseEvent &me)
 {
+    if (activityManager.getAppState().getUiState() == UI_STATE_MOVE_LOOP_SECTION)
+    {
+        int64_t mouseFramePosition = viewPosition + (me.getPosition().getX() * viewScale);
+
+        std::shared_ptr<LoopMovingTask> task;
+
+        // left handle is the one that moves, right one resizes
+        if (draggingLeftHandle)
+        {
+            int64_t loopFrameSize = loopSectionStopFrame - loopSectionStartFrame;
+            task = std::make_shared<LoopMovingTask>(mouseFramePosition, mouseFramePosition + loopFrameSize);
+        }
+        else
+        {
+            int64_t loopFrameSize = mouseFramePosition - loopSectionStartFrame;
+            task = std::make_shared<LoopMovingTask>(loopSectionStartFrame, loopSectionStartFrame + loopFrameSize);
+        }
+
+        task->quantisize(float(60 * AUDIO_FRAMERATE) / float(tempo));
+        activityManager.broadcastTask(task);
+    }
 }
 
 void TempoGrid::mouseMove(const juce::MouseEvent &me)

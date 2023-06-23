@@ -698,3 +698,26 @@ std::string LoopMovingTask::marshal()
                   {"is_part_of_reversion", isPartOfReversion}};
     return taskj.dump();
 }
+
+std::vector<std::shared_ptr<Task>> LoopMovingTask::getOppositeTasks()
+{
+    std::vector<std::shared_ptr<Task>> tasks;
+    auto task = std::make_shared<LoopMovingTask>(previousLoopBeginFrame, previousLoopEndFrame);
+    tasks.push_back(task);
+    return tasks;
+}
+
+void LoopMovingTask::quantisize(float quantLevel)
+{
+    // the position of the loop start in quantLevel bars unit
+    float startPositionInBars = std::round(float(currentLoopBeginFrame) / quantLevel);
+    float stopPositionInBars = std::round(float(currentLoopEndFrame) / quantLevel);
+
+    if (startPositionInBars == stopPositionInBars)
+    {
+        stopPositionInBars += 1.0f;
+    }
+
+    currentLoopBeginFrame = startPositionInBars * quantLevel;
+    currentLoopEndFrame = stopPositionInBars * quantLevel;
+}

@@ -104,6 +104,13 @@ class TempoGrid : public juce::Component, public TaskListener
     ActivityManager &activityManager;
 
     /**
+     * The task that will be broadcasted once the drag
+     * of the loop section is completed. Mostly
+     * usefull for storing the loop initial position.
+     */
+    std::shared_ptr<LoopMovingTask> currentDragTask;
+
+    /**
      * Shared svg icons.
      */
     juce::SharedResourcePointer<IconsLoader> sharedIcons;
