@@ -718,9 +718,6 @@ void MixingBus::setNextReadPosition(juce::int64 nextReadPosition)
             tracks.getUnchecked(i)->setNextReadPosition(nextReadPosition);
         }
     }
-
-    // we need to repaint the track view !
-    trackRepaintCallback();
 }
 
 juce::int64 MixingBus::getNextReadPosition() const
@@ -873,6 +870,7 @@ void MixingBus::duplicateTrack(std::shared_ptr<SampleCreateTask> task)
 
     // get a scoped lock for the buffer array
     {
+        // DEADLOCK HERE WHEN ADDING A SAMPLE NEAR LOOP END
         const juce::ScopedLock lock(mixbusMutex);
 
         if (task->reuseNewId)
@@ -887,7 +885,10 @@ void MixingBus::duplicateTrack(std::shared_ptr<SampleCreateTask> task)
             tracks.add(newSample);
             newTrackIndex = tracks.size() - 1;
         }
+        tracks[newTrackIndex]->setNextReadPosition(playCursor);
     }
+
+    std::cout << "released lock" << std::endl;
 
     task->setAllocatedIndex(newTrackIndex);
     task->setCompleted(true);
