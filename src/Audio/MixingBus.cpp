@@ -650,8 +650,9 @@ void MixingBus::importNewFile(std::shared_ptr<SampleCreateTask> task)
                     tracks.add(newSample);
                     newTrackIndex = tracks.size() - 1;
                 }
-                // add the buffer the array of audio buffers
+                // add the buffer the array of audio buffers and set its position
                 buffers.add(newBuffer);
+                tracks[newTrackIndex]->setNextReadPosition(playCursor);
             }
 
             task->setAllocatedIndex(newTrackIndex);
@@ -887,8 +888,6 @@ void MixingBus::duplicateTrack(std::shared_ptr<SampleCreateTask> task)
         }
         tracks[newTrackIndex]->setNextReadPosition(playCursor);
     }
-
-    std::cout << "released lock" << std::endl;
 
     task->setAllocatedIndex(newTrackIndex);
     task->setCompleted(true);
