@@ -4,13 +4,15 @@
 #include "ColorPicker.h"
 
 TopbarRightArea::TopbarRightArea(ActivityManager &am)
-    : colorPicker(am), selectionGainVu("Selected", VUMETER_ID_SELECTED)
+    : colorPicker(am), selectionGainVu("Selected", VUMETER_ID_SELECTED), sampleProperties(am)
 {
     addAndMakeVisible(colorPicker);
     colorPicker.setVisible(true);
     colorPicker.setSize(96, 200);
 
     addAndMakeVisible(selectionGainVu);
+
+    addAndMakeVisible(sampleProperties);
 }
 
 void TopbarRightArea::setDataSource(std::shared_ptr<VuMeterDataSource> ds)
@@ -39,4 +41,9 @@ void TopbarRightArea::resized()
     auto selectedGainVuBounds = colorPickerBounds.withWidth(VUMETER_WIDGET_WIDTH);
     selectedGainVuBounds.setX(selectedGainVuBounds.getX() - selectedGainVuBounds.getWidth());
     selectionGainVu.setBounds(selectedGainVuBounds);
+
+    auto samplePropsBounds = getLocalBounds();
+    samplePropsBounds.removeFromRight(COLORPICKER_WIDTH);
+    samplePropsBounds.removeFromRight(VUMETER_WIDGET_WIDTH);
+    sampleProperties.setBounds(samplePropsBounds);
 }

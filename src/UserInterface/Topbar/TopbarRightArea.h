@@ -4,8 +4,7 @@
 #include "../../Config.h"
 #include "../Widgets/VuMeter.h"
 #include "ColorPicker.h"
-
-#include <juce_gui_extra/juce_gui_extra.h>
+#include "SampleProperties.h"
 
 /**
  Widget for the area to the right of the topbar.
@@ -31,6 +30,7 @@ class TopbarRightArea : public juce::Component
     juce::Rectangle<float> bounds;
     ColorPicker colorPicker;
     VuMeter selectionGainVu;
+    SampleProperties sampleProperties;
 };
 
 #endif // DEF_TOPBAR_RIGHT_ARE
