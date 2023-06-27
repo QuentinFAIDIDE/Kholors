@@ -366,7 +366,11 @@ void TempoGrid::mouseDrag(const juce::MouseEvent &me)
         }
 
         task->quantisize(float(60 * AUDIO_FRAMERATE) / float(tempo));
-        activityManager.broadcastTask(task);
+
+        if (task->currentLoopBeginFrame != loopSectionStartFrame || task->currentLoopEndFrame != loopSectionStopFrame)
+        {
+            activityManager.broadcastTask(task);
+        }
     }
 }
 
