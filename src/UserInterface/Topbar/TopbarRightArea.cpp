@@ -45,5 +45,6 @@ void TopbarRightArea::resized()
     auto samplePropsBounds = getLocalBounds();
     samplePropsBounds.removeFromRight(COLORPICKER_WIDTH);
     samplePropsBounds.removeFromRight(VUMETER_WIDGET_WIDTH);
-    sampleProperties.setBounds(samplePropsBounds);
+    samplePropsBounds.setX(samplePropsBounds.getX() + TOPBAR_SECTIONS_INNER_MARGINS);
+    sampleProperties.setBounds(samplePropsBounds.reduced(TOPBAR_SECTIONS_INNER_MARGINS, 0));
 }
