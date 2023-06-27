@@ -18,7 +18,8 @@ TrackProperties::TrackProperties(ActivityManager &am)
     addAndMakeVisible(*trackTimeInfoLine);
 
     // make the tempo widget and connect to to task handling (for updating values around)
-    std::shared_ptr<NumericInput> tempoInput = std::make_shared<NumericInput>(true, MIN_TEMPO, MAX_TEMPO, 1);
+    std::shared_ptr<GenericNumericInput> tempoInput =
+        std::make_shared<GenericNumericInput>(true, MIN_TEMPO, MAX_TEMPO, 1);
     tempoInput->setUnit("bpm");
     am.registerTaskListener(tempoInput.get());
     tempoInput->setNumericInputId(NUM_INPUT_ID_TEMPO);
