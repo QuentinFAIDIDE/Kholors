@@ -721,3 +721,60 @@ void LoopMovingTask::quantisize(float quantLevel)
     currentLoopBeginFrame = startPositionInBars * quantLevel;
     currentLoopEndFrame = stopPositionInBars * quantLevel;
 }
+
+///////////////////////////////////
+
+SampleFadeChange::SampleFadeChange()
+{
+    isBroadcastRequest = true;
+    recordableInHistory = false;
+    previousFadeInFrameLen = 0;
+    previousFadeOutFrameLen = 0;
+    currentFadeInFrameLen = 0;
+    currentFadeOutFrameLen = 0;
+}
+
+SampleFadeChange::SampleFadeChange(int fadeInFrameLen, int fadeOutFrameLen)
+{
+    isBroadcastRequest = false;
+    recordableInHistory = false;
+    previousFadeInFrameLen = 0;
+    previousFadeOutFrameLen = 0;
+    currentFadeInFrameLen = fadeInFrameLen;
+    currentFadeOutFrameLen = fadeOutFrameLen;
+}
+
+SampleFadeChange::SampleFadeChange(int oldFadeInFrameLen, int oldFadeOutFrameLen, int newFadeInFrameLen, int newFadeOutFrameLen)
+{
+    setCompleted(true);
+    isBroadcastRequest = false;
+    recordableInHistory = false;
+    previousFadeInFrameLen = oldFadeInFrameLen;
+    previousFadeOutFrameLen = oldFadeOutFrameLen;
+    currentFadeInFrameLen = newFadeInFrameLen;
+    currentFadeOutFrameLen = newFadeOutFrameLen;
+}
+
+std::string SampleFadeChange::marshal()
+{
+    json taskj = {{"object", "task"},
+                  {"task", "sample_fade_change"},
+                  {"is_broadcast_request", isBroadcastRequest},
+                  {"previous_fade_in_frame_len", previousFadeInFrameLen},
+                  {"previous_fade_out_frame_len", previousFadeOutFrameLen},
+                  {"current_fade_in_frame_len", currentFadeInFrameLen},
+                  {"current_fade_out_frame_len", currentFadeOutFrameLen},
+                  {"is_completed", isCompleted()},
+                  {"failed", hasFailed()},
+                  {"recordable_in_history", recordableInHistory},
+                  {"is_part_of_reversion", isPartOfReversion}};
+    return taskj.dump();
+}
+
+std::vector<std::shared_ptr<Task>> SampleFadeChange::getOppositeTasks()
+{
+    std::vector<std::shared_ptr<Task>> tasks;
+    auto task = std::make_shared<SampleFadeChange>(previousFadeInFrameLen, previousFadeOutFrameLen);
+    tasks.push_back(task);
+    return tasks;
+}
