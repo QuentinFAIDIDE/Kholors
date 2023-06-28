@@ -1,7 +1,7 @@
 #include "SampleProperties.h"
 
 #include "../Section.h"
-#include "../Widgets/NumericInput.h"
+#include "SampleInputs.h"
 #include <climits>
 
 #define SAMPLEPROPS_MAX_LABEL_WIDTH 60
@@ -17,8 +17,7 @@ SampleProperties::SampleProperties(ActivityManager &am)
                                                         SAMPLEPROPS_INPUT_WIDTH);
     addAndMakeVisible(*fadeInLine);
 
-    std::shared_ptr<GenericNumericInput> fadeOutInput =
-        std::make_shared<SampleFadeInput>(false);
+    auto fadeOutInput = std::make_shared<SampleFadeInput>(false);
     fadeOutInput->setUnit("ms");
     am.registerTaskListener(fadeOutInput.get());
     fadeOutInput->setActivityManager(&am);
@@ -26,12 +25,12 @@ SampleProperties::SampleProperties(ActivityManager &am)
                                                          SAMPLEPROPS_INPUT_WIDTH);
     addAndMakeVisible(*fadeOutLine);
 
-    auto gainInput = std::make_shared<SampleGainInput>(true, -12.0, 12.0, 0.1);
+    auto gainInput = std::make_shared<SampleGainInput>();
     fadeOutInput->setUnit("dB");
     am.registerTaskListener(gainInput.get());
     gainInput->setActivityManager(&am);
     gainLine = std::make_shared<LabeledLineContainer>("Gain:", gainInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
-                                                       SAMPLEPROPS_INPUT_WIDTH);
+                                                      SAMPLEPROPS_INPUT_WIDTH);
     addAndMakeVisible(*gainLine);
 }
 

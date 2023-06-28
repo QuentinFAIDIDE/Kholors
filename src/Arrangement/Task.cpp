@@ -750,11 +750,12 @@ SampleFadeChange::SampleFadeChange(int id, int fadeInFrameLen, int fadeOutFrameL
     onlyFadeOut = false;
 }
 
-SampleFadeChange::SampleFadeChange(int id, int oldFadeInFrameLen, int oldFadeOutFrameLen, int newFadeInFrameLen, int newFadeOutFrameLen)
+SampleFadeChange::SampleFadeChange(int id, int oldFadeInFrameLen, int oldFadeOutFrameLen, int newFadeInFrameLen,
+                                   int newFadeOutFrameLen)
 {
     setCompleted(true);
     isBroadcastRequest = false;
-    recordableInHistory = false;
+    recordableInHistory = true;
     previousFadeInFrameLen = oldFadeInFrameLen;
     previousFadeOutFrameLen = oldFadeOutFrameLen;
     currentFadeInFrameLen = newFadeInFrameLen;
@@ -787,6 +788,59 @@ std::vector<std::shared_ptr<Task>> SampleFadeChange::getOppositeTasks()
     auto task = std::make_shared<SampleFadeChange>(sampleId, previousFadeInFrameLen, previousFadeOutFrameLen);
     task->onlyFadeIn = onlyFadeIn;
     task->onlyFadeOut = onlyFadeOut;
+    tasks.push_back(task);
+    return tasks;
+}
+
+/////////////////////////////////////
+
+SampleGainChange::SampleGainChange(int id)
+{
+    isBroadcastRequest = true;
+    recordableInHistory = false;
+    previousDbGain = 0;
+    currentDbGain = 0;
+    sampleId = id;
+}
+
+SampleGainChange::SampleGainChange(int id, float dbGain)
+{
+    isBroadcastRequest = false;
+    recordableInHistory = false;
+    previousDbGain = 0;
+    currentDbGain = dbGain;
+    sampleId = id;
+}
+
+SampleGainChange::SampleGainChange(int id, float previousGainDb, float currentGainDb)
+{
+    setCompleted(true);
+    isBroadcastRequest = false;
+    recordableInHistory = true;
+    previousDbGain = previousGainDb;
+    currentDbGain = currentGainDb;
+    sampleId = id;
+}
+
+std::string SampleGainChange::marshal()
+{
+    json taskj = {{"object", "task"},
+                  {"task", "sample_gain_change"},
+                  {"is_broadcast_request", isBroadcastRequest},
+                  {"sample_id", sampleId},
+                  {"previous_db_gain", previousDbGain},
+                  {"current_db_gain", currentDbGain},
+                  {"is_completed", isCompleted()},
+                  {"failed", hasFailed()},
+                  {"recordable_in_history", recordableInHistory},
+                  {"is_part_of_reversion", isPartOfReversion}};
+    return taskj.dump();
+}
+
+std::vector<std::shared_ptr<Task>> SampleGainChange::getOppositeTasks()
+{
+    std::vector<std::shared_ptr<Task>> tasks;
+    auto task = std::make_shared<SampleGainChange>(sampleId, previousDbGain);
     tasks.push_back(task);
     return tasks;
 }

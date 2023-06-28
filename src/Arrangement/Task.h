@@ -755,11 +755,14 @@ class LoopMovingTask : public Task
     int64_t previousLoopBeginFrame, previousLoopEndFrame, currentLoopBeginFrame, currentLoopEndFrame;
 };
 
-class SampleFadeChange : public Task {
+class SampleFadeChange : public Task
+{
 
+  public:
     SampleFadeChange(int id);
     SampleFadeChange(int id, int newFadeInFrameLen, int newFadeOutFrameLen);
-    SampleFadeChange(int id, int oldFadeInFrameLen, int oldFadeOutFrameLen, int newFadeInFrameLen, int newFadeOutFrameLen);
+    SampleFadeChange(int id, int oldFadeInFrameLen, int oldFadeOutFrameLen, int newFadeInFrameLen,
+                     int newFadeOutFrameLen);
 
     /**
     Dumps the task data to a string as json
@@ -774,6 +777,29 @@ class SampleFadeChange : public Task {
     int sampleId;
     bool onlyFadeIn, onlyFadeOut;
     int previousFadeInFrameLen, previousFadeOutFrameLen, currentFadeInFrameLen, currentFadeOutFrameLen;
+    bool isBroadcastRequest;
+};
+
+class SampleGainChange : public Task
+{
+
+  public:
+    SampleGainChange(int id);
+    SampleGainChange(int id, float dbGain);
+    SampleGainChange(int id, float previousGainDb, float currentGainDb);
+
+    /**
+    Dumps the task data to a string as json
+    */
+    std::string marshal() override;
+
+    /**
+      Get the opposite task with flipped old and new value
+     */
+    std::vector<std::shared_ptr<Task>> getOppositeTasks() override;
+
+    int sampleId;
+    int previousDbGain, currentDbGain;
     bool isBroadcastRequest;
 };
 
