@@ -9,8 +9,7 @@
 
 SampleProperties::SampleProperties(ActivityManager &am)
 {
-    std::shared_ptr<GenericNumericInput> fadeInInput =
-        std::make_shared<GenericNumericInput>(true, 0, SAMPLEPLAYER_MAX_FADE_MS, 1);
+    auto fadeInInput = std::make_shared<SampleFadeInput>(true);
     fadeInInput->setUnit("ms");
     am.registerTaskListener(fadeInInput.get());
     fadeInInput->setActivityManager(&am);
@@ -19,20 +18,21 @@ SampleProperties::SampleProperties(ActivityManager &am)
     addAndMakeVisible(*fadeInLine);
 
     std::shared_ptr<GenericNumericInput> fadeOutInput =
-        std::make_shared<GenericNumericInput>(true, 0, SAMPLEPLAYER_MAX_FADE_MS, 1);
+        std::make_shared<SampleFadeInput>(false);
     fadeOutInput->setUnit("ms");
     am.registerTaskListener(fadeOutInput.get());
     fadeOutInput->setActivityManager(&am);
-    fadeOutLine = std::make_shared<LabeledLineContainer>("Fade In:", fadeOutInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
+    fadeOutLine = std::make_shared<LabeledLineContainer>("Fade Out:", fadeOutInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
                                                          SAMPLEPROPS_INPUT_WIDTH);
     addAndMakeVisible(*fadeOutLine);
 
-    std::shared_ptr<GenericNumericInput> groupIdInput = std::make_shared<GenericNumericInput>(true, 0, INT_MAX, 1);
-    am.registerTaskListener(groupIdInput.get());
-    groupIdInput->setActivityManager(&am);
-    groupLine = std::make_shared<LabeledLineContainer>("Group Id:", groupIdInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
+    auto gainInput = std::make_shared<SampleGainInput>(true, -12.0, 12.0, 0.1);
+    fadeOutInput->setUnit("dB");
+    am.registerTaskListener(gainInput.get());
+    gainInput->setActivityManager(&am);
+    gainLine = std::make_shared<LabeledLineContainer>("Gain:", gainInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
                                                        SAMPLEPROPS_INPUT_WIDTH);
-    addAndMakeVisible(*groupLine);
+    addAndMakeVisible(*gainLine);
 }
 
 void SampleProperties::paint(juce::Graphics &g)
@@ -47,7 +47,7 @@ void SampleProperties::resized()
 {
     auto contentBounds = getLocalBounds();
     contentBounds.removeFromTop(SECTION_TITLE_HEIGHT_SMALL);
+    gainLine->setBounds(contentBounds.removeFromTop(LABELED_LINE_CONTAINER_DEFAULT_HEIGHT));
     fadeInLine->setBounds(contentBounds.removeFromTop(LABELED_LINE_CONTAINER_DEFAULT_HEIGHT));
     fadeOutLine->setBounds(contentBounds.removeFromTop(LABELED_LINE_CONTAINER_DEFAULT_HEIGHT));
-    groupLine->setBounds(contentBounds.removeFromTop(LABELED_LINE_CONTAINER_DEFAULT_HEIGHT));
 }

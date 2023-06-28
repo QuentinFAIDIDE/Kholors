@@ -757,9 +757,9 @@ class LoopMovingTask : public Task
 
 class SampleFadeChange : public Task {
 
-    SampleFadeChange();
-    SampleFadeChange(int newFadeInFrameLen, int newFadeOutFrameLen);
-    SampleFadeChange(int oldFadeInFrameLen, int oldFadeOutFrameLen, int newFadeInFrameLen, int newFadeOutFrameLen);
+    SampleFadeChange(int id);
+    SampleFadeChange(int id, int newFadeInFrameLen, int newFadeOutFrameLen);
+    SampleFadeChange(int id, int oldFadeInFrameLen, int oldFadeOutFrameLen, int newFadeInFrameLen, int newFadeOutFrameLen);
 
     /**
     Dumps the task data to a string as json
@@ -771,6 +771,8 @@ class SampleFadeChange : public Task {
      */
     std::vector<std::shared_ptr<Task>> getOppositeTasks() override;
 
+    int sampleId;
+    bool onlyFadeIn, onlyFadeOut;
     int previousFadeInFrameLen, previousFadeOutFrameLen, currentFadeInFrameLen, currentFadeOutFrameLen;
     bool isBroadcastRequest;
 };

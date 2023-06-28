@@ -13,9 +13,9 @@ class SampleProperties : public juce::Component
     void resized() override;
 
   private:
+    std::shared_ptr<LabeledLineContainer> gainLine;
     std::shared_ptr<LabeledLineContainer> fadeInLine;
     std::shared_ptr<LabeledLineContainer> fadeOutLine;
-    std::shared_ptr<LabeledLineContainer> groupLine;
 };
 
 #endif // DEF_SAMPLE_PROPERTIES_HPP

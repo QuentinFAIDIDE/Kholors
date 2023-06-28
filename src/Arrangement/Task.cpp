@@ -724,7 +724,7 @@ void LoopMovingTask::quantisize(float quantLevel)
 
 ///////////////////////////////////
 
-SampleFadeChange::SampleFadeChange()
+SampleFadeChange::SampleFadeChange(int id)
 {
     isBroadcastRequest = true;
     recordableInHistory = false;
@@ -732,9 +732,12 @@ SampleFadeChange::SampleFadeChange()
     previousFadeOutFrameLen = 0;
     currentFadeInFrameLen = 0;
     currentFadeOutFrameLen = 0;
+    sampleId = id;
+    onlyFadeIn = false;
+    onlyFadeOut = false;
 }
 
-SampleFadeChange::SampleFadeChange(int fadeInFrameLen, int fadeOutFrameLen)
+SampleFadeChange::SampleFadeChange(int id, int fadeInFrameLen, int fadeOutFrameLen)
 {
     isBroadcastRequest = false;
     recordableInHistory = false;
@@ -742,9 +745,12 @@ SampleFadeChange::SampleFadeChange(int fadeInFrameLen, int fadeOutFrameLen)
     previousFadeOutFrameLen = 0;
     currentFadeInFrameLen = fadeInFrameLen;
     currentFadeOutFrameLen = fadeOutFrameLen;
+    sampleId = id;
+    onlyFadeIn = false;
+    onlyFadeOut = false;
 }
 
-SampleFadeChange::SampleFadeChange(int oldFadeInFrameLen, int oldFadeOutFrameLen, int newFadeInFrameLen, int newFadeOutFrameLen)
+SampleFadeChange::SampleFadeChange(int id, int oldFadeInFrameLen, int oldFadeOutFrameLen, int newFadeInFrameLen, int newFadeOutFrameLen)
 {
     setCompleted(true);
     isBroadcastRequest = false;
@@ -753,6 +759,9 @@ SampleFadeChange::SampleFadeChange(int oldFadeInFrameLen, int oldFadeOutFrameLen
     previousFadeOutFrameLen = oldFadeOutFrameLen;
     currentFadeInFrameLen = newFadeInFrameLen;
     currentFadeOutFrameLen = newFadeOutFrameLen;
+    sampleId = id;
+    onlyFadeIn = false;
+    onlyFadeOut = false;
 }
 
 std::string SampleFadeChange::marshal()
@@ -760,6 +769,7 @@ std::string SampleFadeChange::marshal()
     json taskj = {{"object", "task"},
                   {"task", "sample_fade_change"},
                   {"is_broadcast_request", isBroadcastRequest},
+                  {"sample_id", sampleId},
                   {"previous_fade_in_frame_len", previousFadeInFrameLen},
                   {"previous_fade_out_frame_len", previousFadeOutFrameLen},
                   {"current_fade_in_frame_len", currentFadeInFrameLen},
@@ -774,7 +784,9 @@ std::string SampleFadeChange::marshal()
 std::vector<std::shared_ptr<Task>> SampleFadeChange::getOppositeTasks()
 {
     std::vector<std::shared_ptr<Task>> tasks;
-    auto task = std::make_shared<SampleFadeChange>(previousFadeInFrameLen, previousFadeOutFrameLen);
+    auto task = std::make_shared<SampleFadeChange>(sampleId, previousFadeInFrameLen, previousFadeOutFrameLen);
+    task->onlyFadeIn = onlyFadeIn;
+    task->onlyFadeOut = onlyFadeOut;
     tasks.push_back(task);
     return tasks;
 }

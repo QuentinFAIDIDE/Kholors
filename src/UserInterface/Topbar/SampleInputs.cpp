@@ -16,10 +16,10 @@ void SampleFadeInput::fetchValueIfPossible()
     if (getActivityManager() != nullptr && sampleId >= 0)
     {
         // emit a task that gets the initial value
-        auto task = std::make_shared<AAAAAA>(numericInputId);
+        auto task = std::make_shared<SampleFadeChange>(numericInputId);
         getActivityManager()->broadcastTask(task);
     }
-    if (sampleId < 0)
+    if (getActivityManager() != nullptr && sampleId < 0)
     {
         setValue(0);
     }
@@ -33,14 +33,26 @@ bool SampleFadeInput::taskHandler(std::shared_ptr<Task> task)
         return false;
     }
 
-    // we are interested in completed NumericInputUpdateTask
-    std::shared_ptr<NumericInputUpdateTask> updateTask = std::dynamic_pointer_cast<NumericInputUpdateTask>(task);
+    // we are interested in completed SampleFadeChange tasks
+    auto updateTask = std::dynamic_pointer_cast<SampleFadeChange>(task);
     if (updateTask != nullptr && updateTask->isCompleted() && !updateTask->hasFailed() &&
-        updateTask->numericalInputId == numericInputId)
+        updateTask->sampleId == sampleId)
     {
-        setValue(updateTask->newValue);
-        // we won't prevent event from being broadcasted further to allow for multiple inputs
-        // to work on the same numeric id
+        if (isFadeIn)
+        {
+            if (!updateTask->onlyFadeOut)
+            {
+                setValue(float(updateTask->currentFadeInFrameLen*1000)/float(AUDIO_FRAMERATE));
+            }
+        }
+        else
+        {
+            if (!updateTask->onlyFadeIn)
+            {
+                setValue(float(updateTask->currentFadeOutFrameLen*1000)/float(AUDIO_FRAMERATE));
+            }
+        }
+        // we won't prevent event from being broadcasted further to allow for multiple inputs  to exist
         return false;
     }
 
@@ -51,12 +63,28 @@ void SampleFadeInput::emitFinalDragTask()
 {
     // emit the final task (already completed) so that we record it for reversion
     std::shared_ptr<NumericInputUpdateTask> task =
-        std::make_shared<NumericInputUpdateTask>(numericInputId, getValue(), getInitialDragValue());
+        std::make_shared<SampleFadeChange>(sampleId, getValue(), 0, getInitialDragValue());
+    if (isFadeIn)
+    {
+        task->onlyFadeIn = true;
+    }
+    else
+    {
+        task->onlyFadeOut = true;
+    }
     getActivityManager()->broadcastTask(task);
 }
 
 void SampleFadeInput::emitIntermediateDragTask(float newValue)
 {
     std::shared_ptr<NumericInputUpdateTask> task = std::make_shared<NumericInputUpdateTask>(numericInputId, newValue);
+    if (isFadeIn)
+    {
+        task->onlyFadeIn = true;
+    }
+    else
+    {
+        task->onlyFadeOut = true;
+    }
     getActivityManager()->broadcastTask(task);
 }
