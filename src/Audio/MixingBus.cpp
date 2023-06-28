@@ -242,6 +242,50 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
         return true;
     }
 
+    auto fadeChangeTask = std::dynamic_pointer_cast<SampleFadeChange>(task);
+    if (fadeChangeTask != nullptr && !fadeChangeTask->isCompleted())
+    {
+        // do nothing if the sample doesn't exist
+        if (fadeChangeTask->sampleId < 0 || fadeChangeTask->sampleId >= tracks.size() ||
+            tracks[fadeChangeTask->sampleId] == nullptr)
+        {
+            return false;
+        }
+
+        // broadcast result if it's what we need to do
+        if (fadeChangeTask->isBroadcastRequest)
+        {
+            fadeChangeTask->currentFadeInFrameLen = tracks[fadeChangeTask->sampleId]->getFadeInLength();
+            fadeChangeTask->currentFadeOutFrameLen = tracks[fadeChangeTask->sampleId]->getFadeOutLength();
+            fadeChangeTask->setCompleted(true);
+            activityManager.broadcastNestedTaskNow(fadeChangeTask);
+            return true;
+        }
+
+        bool hasUpdated = false;
+        if (!fadeChangeTask->onlyFadeOut)
+        {
+            bool fadeInUpdate =
+                tracks[fadeChangeTask->sampleId]->setFadeInLength(fadeChangeTask->currentFadeInFrameLen);
+            hasUpdated = fadeInUpdate;
+
+            fadeChangeTask->currentFadeInFrameLen = tracks[fadeChangeTask->sampleId]->getFadeInLength();
+        }
+
+        if (!fadeChangeTask->onlyFadeIn)
+        {
+            bool fadeOutUpdate =
+                tracks[fadeChangeTask->sampleId]->setFadeOutLength(fadeChangeTask->currentFadeOutFrameLen);
+            hasUpdated = hasUpdated || fadeOutUpdate;
+            fadeChangeTask->currentFadeOutFrameLen = tracks[fadeChangeTask->sampleId]->getFadeOutLength();
+        }
+
+        fadeChangeTask->setCompleted(hasUpdated);
+
+        activityManager.broadcastNestedTaskNow(fadeChangeTask);
+        return true;
+    }
+
     return false;
 }
 

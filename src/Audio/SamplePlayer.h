@@ -96,7 +96,37 @@ class SamplePlayer : public juce::PositionableAudioSource
     // get the shift of the buffer shift
     juce::int64 getBufferShift() const;
 
-    // TODO: getters for stereo low and high pass
+    /**
+     * @brief      Gets the fade in length in audio frames.
+     *
+     * @return     The fade in length.
+     */
+    int getFadeInLength();
+
+    /**
+     * @brief      Sets the fade in length in audio frames.
+     *
+     * @param[in]  length  The length
+     *
+     * @return     true if it worked, false if not
+     */
+    bool setFadeInLength(int length);
+
+    /**
+     * @brief      Gets the fade out length in audio frames.
+     *
+     * @return     The fade out length.
+     */
+    int getFadeOutLength();
+
+    /**
+     * @brief      Sets the fade out length in audio frames.
+     *
+     * @param[in]  length  The length
+     *
+     * @return     true if it worked, false if not
+     */
+    bool setFadeOutLength(int length);
 
   private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SamplePlayer)

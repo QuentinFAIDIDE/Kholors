@@ -49,6 +49,36 @@ void SamplePlayer::setGainRamp(float ms)
     }
 }
 
+bool SamplePlayer::setFadeInLength(int length)
+{
+    if (length + fadeOutFrameLength >= getLength())
+    {
+        return false;
+    }
+    fadeInFrameLength = length;
+    return true;
+}
+
+bool SamplePlayer::setFadeOutLength(int length)
+{
+    if (length + fadeInFrameLength >= getLength())
+    {
+        return false;
+    }
+    fadeOutFrameLength = length;
+    return true;
+}
+
+int SamplePlayer::getFadeInLength()
+{
+    return fadeInFrameLength;
+}
+
+int SamplePlayer::getFadeOutLength()
+{
+    return fadeOutFrameLength;
+}
+
 bool SamplePlayer::hasBeenInitialized() const
 {
     return isSampleSet;
