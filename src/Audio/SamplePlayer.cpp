@@ -9,6 +9,7 @@ SamplePlayer::SamplePlayer(int64_t position)
     : editingPosition(position), bufferInitialPosition(0), bufferStart(0), bufferEnd(0), position(0),
       lowPassFreq(maxFilterFreq), highPassFreq(0), isSampleSet(false), numFft(0)
 {
+    setGain(0.0f);
     setLowPassFreq(lowPassFreq);
     setHighPassFreq(highPassFreq);
 
@@ -19,6 +20,16 @@ SamplePlayer::SamplePlayer(int64_t position)
 
 SamplePlayer::~SamplePlayer()
 {
+}
+
+void SamplePlayer::setDbGain(float gainDb)
+{
+    gainValue = juce::Decibels::decibelsToGain(gainDb);
+}
+
+float SamplePlayer::getDbGain()
+{
+    return juce::Decibels::gainToDecibels(gainValue);
 }
 
 void SamplePlayer::setGainRamp(float ms)
@@ -551,6 +562,7 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferT
     {
         bufferToFill.clearActiveBufferRegion();
         applyFilters(bufferToFill);
+        bufferToFill.buffer->applyGain(gainValue);
         position += bufferToFill.numSamples;
         return;
     }
@@ -572,6 +584,7 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferT
         bufferToFill.clearActiveBufferRegion();
         position += bufferToFill.numSamples;
         applyFilters(bufferToFill);
+        bufferToFill.buffer->applyGain(gainValue);
         return;
     }
 
@@ -624,6 +637,7 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferT
     position += bufferToFill.numSamples;
 
     applyFilters(bufferToFill);
+    bufferToFill.buffer->applyGain(gainValue);
 }
 
 void SamplePlayer::applyGainFade(float *data, int startIndex, int length, int startIndexLocalPosition)

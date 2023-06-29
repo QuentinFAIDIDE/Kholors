@@ -128,6 +128,16 @@ class SamplePlayer : public juce::PositionableAudioSource
      */
     bool setFadeOutLength(int length);
 
+    /**
+     * @brief       Sets the gain in decibels.
+     */
+    void setDbGain(float db);
+
+    /**
+     * @brief       Get the gain in decibels.
+     */
+    float getDbGain();
+
   private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SamplePlayer)
 
@@ -157,6 +167,9 @@ class SamplePlayer : public juce::PositionableAudioSource
     BufferPtr audioBufferRef;
     bool isSampleSet;
     juce::Colour colour;
+
+    // the sample gain (not in db but in Gain)
+    float gainValue;
 
     // Store the results of the fft of the buffered audio.
     // LAYOUT: for each channel, for each fft over time, for each intensity at
