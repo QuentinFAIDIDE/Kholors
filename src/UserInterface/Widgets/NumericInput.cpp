@@ -125,8 +125,13 @@ void NumericInput::mouseDrag(const juce::MouseEvent &me)
 
             pendingDragUpdateY = me.getPosition().getY();
 
-            // try to pop a task that updates the value
-            emitIntermediateDragTask(newValue);
+            newValue = juce::jlimit(minValue, maxValue, newValue);
+
+            if (newValue != getValue())
+            {
+                // try to pop a task that updates the value
+                emitIntermediateDragTask(newValue);
+            }
         }
     }
 }
