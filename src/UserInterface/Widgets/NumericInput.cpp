@@ -125,7 +125,7 @@ void NumericInput::mouseDrag(const juce::MouseEvent &me)
 
             pendingDragUpdateY = me.getPosition().getY();
 
-            newValue = juce::jlimit(minValue, maxValue, newValue);
+            newValue = juce::jlimit(min, max, newValue);
 
             if (newValue != getValue())
             {
