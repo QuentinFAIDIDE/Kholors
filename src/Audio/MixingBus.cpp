@@ -286,6 +286,27 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
         return true;
     }
 
+    auto gainChangeTask = std::dynamic_pointer_cast<SampleGainChange>(task);
+    if (gainChangeTask != nullptr && !gainChangeTask->isCompleted() && !gainChangeTask->hasFailed())
+    {
+        // do nothing if the sample doesn't exist
+        if (gainChangeTask->sampleId < 0 || gainChangeTask->sampleId >= tracks.size() ||
+            tracks[gainChangeTask->sampleId] == nullptr)
+        {
+            return false;
+        }
+
+        if (!gainChangeTask->isBroadcastRequest)
+        {
+            tracks[gainChangeTask->sampleId]->setDbGain(gainChangeTask->currentDbGain);
+        }
+        gainChangeTask->currentDbGain = tracks[gainChangeTask->sampleId]->getDbGain();
+
+        gainChangeTask->setCompleted(true);
+        activityManager.broadcastNestedTaskNow(gainChangeTask);
+        return true;
+    }
+
     return false;
 }
 

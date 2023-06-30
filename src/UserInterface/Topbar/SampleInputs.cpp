@@ -1,6 +1,9 @@
 #include "SampleInputs.h"
 #include <memory>
 
+#define MAX_DB_CHANGE 12.0f
+#define DB_CHANGE_STEP 0.2f
+
 SampleFadeInput::SampleFadeInput(bool fadeIn)
     : NumericInput(true, 0, SAMPLEPLAYER_MAX_FADE_MS, 1), sampleId(-1), isFadeIn(fadeIn)
 {
@@ -98,7 +101,7 @@ void SampleFadeInput::emitIntermediateDragTask(float newValue)
 
 /////////////////////////////////////////////////////////////////////////
 
-SampleGainInput::SampleGainInput() : NumericInput(true, 0, SAMPLEPLAYER_MAX_FADE_MS, 1), sampleId(-1)
+SampleGainInput::SampleGainInput() : NumericInput(false, -MAX_DB_CHANGE, MAX_DB_CHANGE, DB_CHANGE_STEP), sampleId(-1)
 {
 }
 
@@ -152,6 +155,6 @@ void SampleGainInput::emitFinalDragTask()
 
 void SampleGainInput::emitIntermediateDragTask(float newValue)
 {
-    auto task = std::make_shared<SampleFadeChange>(newValue);
+    auto task = std::make_shared<SampleGainChange>(sampleId, newValue);
     getActivityManager()->broadcastTask(task);
 }

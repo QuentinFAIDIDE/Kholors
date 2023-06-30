@@ -32,6 +32,7 @@ SampleProperties::SampleProperties(ActivityManager &am)
     gainInput->setUnit("dB");
     am.registerTaskListener(gainInput.get());
     gainInput->setActivityManager(&am);
+    fadeOutInput->setMinDragUpdate(1.0f);
     gainLine = std::make_shared<LabeledLineContainer>("Gain:", gainInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
                                                       SAMPLEPROPS_INPUT_WIDTH);
     addAndMakeVisible(*gainLine);
@@ -63,8 +64,9 @@ bool SampleProperties::taskHandler(std::shared_ptr<Task> task)
     {
         auto fadeInInput = std::dynamic_pointer_cast<SampleFadeInput>(fadeInLine->getContent());
         auto fadeOutInput = std::dynamic_pointer_cast<SampleFadeInput>(fadeOutLine->getContent());
+        auto gainInput = std::dynamic_pointer_cast<SampleGainInput>(gainLine->getContent());
 
-        if (fadeInInput == nullptr || fadeOutInput == nullptr)
+        if (fadeInInput == nullptr || fadeOutInput == nullptr || gainInput == nullptr)
         {
             return false;
         }
@@ -74,11 +76,13 @@ bool SampleProperties::taskHandler(std::shared_ptr<Task> task)
             int firstSampleId = *selectionUpdateTask->newSelectedTracks.begin();
             fadeInInput->setSampleId(firstSampleId);
             fadeOutInput->setSampleId(firstSampleId);
+            gainInput->setSampleId(firstSampleId);
         }
         else
         {
             fadeInInput->setSampleId(-1);
             fadeOutInput->setSampleId(-1);
+            gainInput->setSampleId(-1);
         }
     }
 
