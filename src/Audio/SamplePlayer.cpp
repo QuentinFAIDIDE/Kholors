@@ -9,7 +9,7 @@ SamplePlayer::SamplePlayer(int64_t position)
     : editingPosition(position), bufferInitialPosition(0), bufferStart(0), bufferEnd(0), position(0),
       lowPassFreq(maxFilterFreq), highPassFreq(0), isSampleSet(false), numFft(0)
 {
-    setGain(0.0f);
+    setDbGain(0.0f);
     setLowPassFreq(lowPassFreq);
     setHighPassFreq(highPassFreq);
 
