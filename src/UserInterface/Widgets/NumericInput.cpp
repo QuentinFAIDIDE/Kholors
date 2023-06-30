@@ -6,8 +6,8 @@
 #include <string>
 
 NumericInput::NumericInput(bool integers, float minValue, float maxValue, float stepValue)
-    : value(0.0f), isInteger(integers), min(minValue), max(maxValue), step(stepValue), activityManager(nullptr),
-      isDragging(false), unit("")
+    : value(0.0f), isInteger(integers), min(minValue), max(maxValue), step(stepValue),
+      minDragUpdate(NUMERIC_INPUT_MIN_DRAG_UPDATE), activityManager(nullptr), isDragging(false), unit("")
 {
     charWidth = sharedFonts->monospaceFont.withHeight(SMALLER_FONT_SIZE).getStringWidth(" ");
 }
@@ -120,8 +120,7 @@ void NumericInput::mouseDrag(const juce::MouseEvent &me)
         if (std::abs(me.getPosition().getY() - lastDragUpdateY) > NUMERIC_INPUT_MIN_DRAG_UPDATE)
         {
             // the new desired value
-            float newValue =
-                value - (step * (float(me.getPosition().getY() - lastDragUpdateY) / NUMERIC_INPUT_MIN_DRAG_UPDATE));
+            float newValue = value - (step * (float(me.getPosition().getY() - lastDragUpdateY) / minDragUpdate));
 
             pendingDragUpdateY = me.getPosition().getY();
 
@@ -134,6 +133,11 @@ void NumericInput::mouseDrag(const juce::MouseEvent &me)
             }
         }
     }
+}
+
+void NumericInput::setMinDragUpdate(float v)
+{
+    minDragUpdate = v;
 }
 
 float NumericInput::getInitialDragValue()

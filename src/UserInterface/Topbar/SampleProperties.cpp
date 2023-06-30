@@ -14,6 +14,7 @@ SampleProperties::SampleProperties(ActivityManager &am)
     fadeInInput->setUnit("ms");
     am.registerTaskListener(fadeInInput.get());
     fadeInInput->setActivityManager(&am);
+    fadeInInput->setMinDragUpdate(1.0f);
     fadeInLine = std::make_shared<LabeledLineContainer>("Fade In:", fadeInInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
                                                         SAMPLEPROPS_INPUT_WIDTH);
     addAndMakeVisible(*fadeInLine);
@@ -22,6 +23,7 @@ SampleProperties::SampleProperties(ActivityManager &am)
     fadeOutInput->setUnit("ms");
     am.registerTaskListener(fadeOutInput.get());
     fadeOutInput->setActivityManager(&am);
+    fadeOutInput->setMinDragUpdate(1.0f);
     fadeOutLine = std::make_shared<LabeledLineContainer>("Fade Out:", fadeOutInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
                                                          SAMPLEPROPS_INPUT_WIDTH);
     addAndMakeVisible(*fadeOutLine);

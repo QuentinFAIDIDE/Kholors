@@ -142,6 +142,14 @@ class NumericInput : public juce::Component, public TaskListener
      */
     ActivityManager *getActivityManager();
 
+    /**
+     * @brief      Sets the minimum drag update. This is the
+     *             value in pixels of a step movement.
+     *
+     * @param[in]  v     The new value
+     */
+    void setMinDragUpdate(float v);
+
   private:
     // the actual displayed value
     float value;
@@ -153,6 +161,9 @@ class NumericInput : public juce::Component, public TaskListener
     float max;
     // what's the lower unit of modification
     float step;
+
+    // the minimum unit of pixel movement to consider a drag step
+    float minDragUpdate;
 
     // width of a monospace character
     float charWidth;

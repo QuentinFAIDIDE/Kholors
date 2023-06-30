@@ -775,6 +775,8 @@ std::string SampleFadeChange::marshal()
                   {"previous_fade_out_frame_len", previousFadeOutFrameLen},
                   {"current_fade_in_frame_len", currentFadeInFrameLen},
                   {"current_fade_out_frame_len", currentFadeOutFrameLen},
+                  {"only_fade_in", onlyFadeIn},
+                  {"only_fade_out", onlyFadeOut},
                   {"is_completed", isCompleted()},
                   {"failed", hasFailed()},
                   {"recordable_in_history", recordableInHistory},
