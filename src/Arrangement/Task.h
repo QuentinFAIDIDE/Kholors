@@ -799,7 +799,7 @@ class SampleGainChange : public Task
     std::vector<std::shared_ptr<Task>> getOppositeTasks() override;
 
     int sampleId;
-    int previousDbGain, currentDbGain;
+    float previousDbGain, currentDbGain;
     bool isBroadcastRequest;
 };
 

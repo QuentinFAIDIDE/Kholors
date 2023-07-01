@@ -46,7 +46,7 @@ std::string NumericInput::getStringValue()
     }
     else
     {
-        snprintf(formatBuffer, FORMAT_BUFFER_MAXLEN, "%.2f\n", value);
+        snprintf(formatBuffer, FORMAT_BUFFER_MAXLEN, "%.2f", value);
         return std::string(formatBuffer);
     }
 }

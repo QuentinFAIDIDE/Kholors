@@ -15,7 +15,10 @@ SamplePlayer::SamplePlayer(int64_t position)
 
     fadeInFrameLength = 0;
     fadeOutFrameLength = 0;
-    setGainRamp(SAMPLEPLAYER_DEFAULT_FADE_MS);
+
+    setGainRamp(SAMPLEPLAYER_DEFAULT_FADE_IN_MS);
+    setFadeInLength((AUDIO_FRAMERATE / 1000.0) * SAMPLEPLAYER_DEFAULT_FADE_IN_MS);
+    setFadeOutLength((AUDIO_FRAMERATE / 1000.0) * SAMPLEPLAYER_DEFAULT_FADE_OUT_MS);
 }
 
 SamplePlayer::~SamplePlayer()
@@ -173,7 +176,10 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
         }
     }
 
-    setGainRamp(SAMPLEPLAYER_DEFAULT_FADE_MS);
+    setGainRamp(SAMPLEPLAYER_DEFAULT_FADE_IN_MS);
+
+    setFadeInLength((AUDIO_FRAMERATE / 1000.0) * SAMPLEPLAYER_DEFAULT_FADE_IN_MS);
+    setFadeOutLength((AUDIO_FRAMERATE / 1000.0) * SAMPLEPLAYER_DEFAULT_FADE_OUT_MS);
 }
 
 void SamplePlayer::setBuffer(BufferPtr targetBuffer, std::vector<float> &fftData)
@@ -192,7 +198,10 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, std::vector<float> &fftData
 
     // set the fft data
     audioBufferFrequencies = fftData;
-    setGainRamp(SAMPLEPLAYER_DEFAULT_FADE_MS);
+
+    setGainRamp(SAMPLEPLAYER_DEFAULT_FADE_IN_MS);
+    setFadeInLength((AUDIO_FRAMERATE / 1000.0) * SAMPLEPLAYER_DEFAULT_FADE_IN_MS);
+    setFadeOutLength((AUDIO_FRAMERATE / 1000.0) * SAMPLEPLAYER_DEFAULT_FADE_OUT_MS);
 }
 
 int SamplePlayer::getNumFft() const
@@ -431,6 +440,9 @@ std::shared_ptr<SamplePlayer> SamplePlayer::createDuplicate(juce::int64 newPosit
     duplicate->setLength(getLength());
     duplicate->setLowPassFreq(lowPassFreq);
     duplicate->setHighPassFreq(highPassFreq);
+    duplicate->setFadeInLength(fadeInFrameLength);
+    duplicate->setFadeOutLength(fadeOutFrameLength);
+    duplicate->gainValue = gainValue;
     return duplicate;
 }
 
@@ -475,6 +487,9 @@ std::shared_ptr<SamplePlayer> SamplePlayer::splitAtFrequency(float frequencyLimi
     duplicate->setLength(getLength());
     duplicate->setLowPassFreq(frequencyLimitHz);
     duplicate->setHighPassFreq(highPassFreq);
+    duplicate->setFadeInLength(fadeInFrameLength);
+    duplicate->setFadeOutLength(fadeOutFrameLength);
+    duplicate->gainValue = gainValue;
 
     // we are now the high end part
     setHighPassFreq(frequencyLimitHz);
@@ -507,6 +522,9 @@ std::shared_ptr<SamplePlayer> SamplePlayer::splitAtPosition(juce::int64 position
     duplicate->setLength(getLength() - positionLimit);
     duplicate->setLowPassFreq(lowPassFreq);
     duplicate->setHighPassFreq(highPassFreq);
+    duplicate->setFadeInLength(fadeInFrameLength);
+    duplicate->setFadeOutLength(fadeOutFrameLength);
+    duplicate->gainValue = gainValue;
 
     // we are now the first part
     setLength(positionLimit);
