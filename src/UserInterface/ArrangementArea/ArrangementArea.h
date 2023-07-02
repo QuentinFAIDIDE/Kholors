@@ -10,6 +10,7 @@
 #include <juce_opengl/juce_opengl.h>
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "../../Arrangement/ActivityManager.h"
@@ -152,6 +153,10 @@ class ArrangementArea : public juce::Component,
     // selected tracks
     std::set<size_t> selectedTracks;
 
+    // Selected tracks gain ramps saved for the final SampleTimeCrop tasks
+    // First component is fade in in frame length, second is fade out.
+    std::map<int, std::pair<int, int>> selectedSamplesFrameGainRamps;
+
     // initial position when dragging selected samples.
     // if -1, we are not dragging samples
     int64_t trackMovingInitialPosition;
@@ -198,6 +203,14 @@ class ArrangementArea : public juce::Component,
     void updateSelectedTracksDrag(int);
 
     void addSelectedSamples();
+
+    /**
+     * @brief      Saves initial selection gain ramps (fade in and fade out)
+     *             for current selection. This is required as the final sample crop
+     *             tasks will need to save potentially altered fades to be restored
+     *             after reversion..
+     */
+    void saveInitialSelectionGainRamps();
 
     /*
     Emits tasks when the beginning or the end of

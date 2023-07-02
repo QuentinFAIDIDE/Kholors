@@ -199,7 +199,7 @@ class SamplePlayer : public juce::PositionableAudioSource
      Checks if the gain fade in and fade out ramp sums to more than the length
      and if so, reduce them appropriately
      */
-    void checkRampsAreValid();
+    void checkGainRamps();
 };
 
 #endif // DEF_SAMPLEPLAYER_HPP

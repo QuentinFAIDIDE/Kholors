@@ -60,6 +60,20 @@ bool SampleFadeInput::taskHandler(std::shared_ptr<Task> task)
         return false;
     }
 
+    // if we have a completed task for our selected sample for a resize, request an update
+    auto sampleResizeTask = std::dynamic_pointer_cast<SampleTimeCropTask>(task);
+    if (sampleResizeTask != nullptr && sampleResizeTask->isCompleted() && !sampleResizeTask->hasFailed() &&
+        sampleId == sampleResizeTask->id)
+    {
+        // Note that we could very well use the finalFadeInFrameLength and its fade out counterpart saved in the task to
+        // update here, as we will not emit a sample resize task without setting them. Nervertheless it feels much safer
+        // to protect from a corrupted sampleResizeTask and request the actual values to be broadcasted from the
+        // MixingBus class.
+        auto sampleFadeUpdate = std::make_shared<SampleFadeChange>(sampleId);
+        getActivityManager()->broadcastNestedTaskNow(sampleFadeUpdate);
+        return false;
+    }
+
     return false;
 }
 

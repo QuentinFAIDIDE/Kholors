@@ -428,6 +428,10 @@ class ImportFileCountTask : public SilentTask
  If it's the left edge, it will shift the beginning in audio file and the position
  of the sample. If it's the right edge, it will just change its length its read
  up to.
+ It will also be responsible for tracking fade in and fade out gain ramps changes
+ for the resized sample (resize can alter these values). You should AVOID AT ALL COST
+ to treat this task (emit it completed and undoable (reversable) and going in history)
+ if you have not set all four fade frame lengths !!!
  */
 class SampleTimeCropTask : public Task
 {

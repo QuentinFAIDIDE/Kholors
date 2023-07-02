@@ -814,6 +814,7 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
             {
             case BORDER_LEFT:
                 activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_SAMPLE_START);
+                saveInitialSelectionGainRamps();
                 dragLastPosition = lastMouseX;
                 dragDistanceMap.clear();
                 break;
@@ -846,6 +847,7 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
 
             case BORDER_RIGHT:
                 activityManager.getAppState().setUiState(UI_STATE_MOUSE_DRAG_SAMPLE_LENGTH);
+                saveInitialSelectionGainRamps();
                 dragLastPosition = lastMouseX;
                 dragDistanceMap.clear();
                 break;
@@ -924,6 +926,22 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
         }
 
         activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
+    }
+}
+
+void ArrangementArea::saveInitialSelectionGainRamps()
+{
+    selectedSamplesFrameGainRamps.clear();
+    std::set<size_t>::iterator itr;
+    for (itr = selectedTracks.begin(); itr != selectedTracks.end(); itr++)
+    {
+        if (*itr < 0 || *itr >= mixingBus.getNumTracks() || mixingBus.getTrack(*itr) == nullptr)
+        {
+            continue;
+        }
+
+        selectedSamplesFrameGainRamps[*itr] = std::pair<int, int>(mixingBus.getTrack(*itr)->getFadeInLength(),
+                                                                  mixingBus.getTrack(*itr)->getFadeOutLength());
     }
 }
 
@@ -1087,8 +1105,23 @@ void ArrangementArea::emitTimeDragTasks(bool cropBeginning)
     int taskGroupId = Task::getNewTaskGroupIndex();
     for (it = dragDistanceMap.begin(); it != dragDistanceMap.end(); it++)
     {
+        if (it->first < 0 || it->first >= mixingBus.getNumTracks() || mixingBus.getTrack(it->first) == nullptr)
+        {
+            continue;
+        }
+
         std::shared_ptr<SampleTimeCropTask> task =
             std::make_shared<SampleTimeCropTask>(cropBeginning, it->first, it->second);
+
+        if (selectedSamplesFrameGainRamps.find(it->first) != selectedSamplesFrameGainRamps.end())
+        {
+            auto initialGainRamps = selectedSamplesFrameGainRamps[it->first];
+            task->initialFadeInFrameLen = initialGainRamps.first;
+            task->initialFadeOutFrameLen = initialGainRamps.second;
+        }
+        task->finalFadeInFrameLen = mixingBus.getTrack(it->first)->getFadeInLength();
+        task->finalFadeOutFrameLen = mixingBus.getTrack(it->first)->getFadeOutLength();
+
         task->setTaskGroupIndex(taskGroupId);
         task->setCompleted(true);
         activityManager.broadcastTask(task);
