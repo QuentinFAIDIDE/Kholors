@@ -335,6 +335,18 @@ void MixingBus::cropSample(std::shared_ptr<SampleTimeCropTask> task)
             tracks[task->id]->tryMovingEnd(task->dragDistance);
         }
 
+        // if the fade changed due to resize, broadcast the change
+        int finalFadeIn = tracks[task->id]->getFadeInLength();
+        int finalFadeOut = tracks[task->id]->getFadeOutLength();
+
+        // record the initial and final fade in and out, because if they were
+        // altered by resize, we might need to post a SampleFadeChange
+        // task when reverting this resizing task
+        task->initialFadeInFrameLen = initialFadeIn;
+        task->initialFadeOutFrameLen = initialFadeOut;
+        task->finalFadeInFrameLen = finalFadeIn;
+        task->finalFadeOutFrameLen = finalFadeOut;
+
         task->setCompleted(true);
         task->setFailed(false);
 
@@ -342,14 +354,12 @@ void MixingBus::cropSample(std::shared_ptr<SampleTimeCropTask> task)
         std::shared_ptr<SampleUpdateTask> sut = std::make_shared<SampleUpdateTask>(task->id, tracks[task->id]);
         activityManager.broadcastNestedTaskNow(sut);
 
-        // if the fade changed due to resize, broadcast the change
-        int finalFadeIn = tracks[task->id]->getFadeInLength();
-        int finalFadeOut = tracks[task->id]->getFadeOutLength();
-
+        // if the fade length changed, make the ui widgets update!
         if (initialFadeIn != finalFadeIn || initialFadeOut != finalFadeOut)
         {
             auto fadeUpdate =
                 std::make_shared<SampleFadeChange>(task->id, initialFadeIn, initialFadeOut, finalFadeIn, finalFadeOut);
+            fadeUpdate->preventFromGoingToTaskHistory();
             activityManager.broadcastNestedTaskNow(fadeUpdate);
         }
 

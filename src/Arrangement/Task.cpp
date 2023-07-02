@@ -2,6 +2,8 @@
 #include "TaxonomyManager.h"
 #include <memory>
 
+int Task::taskGroupIndexIterator = 0;
+
 Task::Task()
 {
     completed = false;
@@ -12,6 +14,8 @@ Task::Task()
     recordableInHistory = true;
 
     isPartOfReversion = false;
+
+    taskGroupIndex = getNewTaskGroupIndex();
 }
 
 Task::~Task()
@@ -79,11 +83,37 @@ void Task::prepareForRepost()
 
 std::vector<std::shared_ptr<Task>> Task::getOppositeTasks()
 {
-    // will be nullptr
     std::vector<std::shared_ptr<Task>> emptyReversionTasks;
     return emptyReversionTasks;
 }
 
+int Task::getTaskGroupIndex()
+{
+    return taskGroupIndex;
+}
+
+void Task::setTaskGroupIndex(int index)
+{
+    taskGroupIndex = index;
+}
+
+void Task::setTaskGroupToTarget(Task &targetTask)
+{
+    setTaskGroupIndex(targetTask.getTaskGroupIndex());
+}
+
+int Task::getNewTaskGroupIndex()
+{
+    int taskGroupToReturn = taskGroupIndexIterator;
+
+    taskGroupIndexIterator++;
+    if (taskGroupIndexIterator >= MAX_TASK_INDEX)
+    {
+        taskGroupIndexIterator = 0;
+    }
+
+    return taskGroupToReturn;
+}
 // ============================
 
 SilentTask::SilentTask()
@@ -367,6 +397,10 @@ SampleRestoreDisplayTask::SampleRestoreDisplayTask(int i, std::shared_ptr<Sample
 SampleTimeCropTask::SampleTimeCropTask(bool cropBeginning, int sampleId, int frameDist)
     : id(sampleId), dragDistance(frameDist), movingBeginning(cropBeginning)
 {
+    initialFadeInFrameLen = 0;
+    initialFadeOutFrameLen = 0;
+    finalFadeInFrameLen = 0;
+    finalFadeOutFrameLen = 0;
 }
 
 std::string SampleTimeCropTask::marshal()
@@ -378,6 +412,10 @@ std::string SampleTimeCropTask::marshal()
                   {"moving_start", movingBeginning},
                   {"is_completed", isCompleted()},
                   {"failed", hasFailed()},
+                  {"initial_fade_in_frame_length", initialFadeInFrameLen},
+                  {"initial_fade_out_frame_length", initialFadeOutFrameLen},
+                  {"final_fade_in_frame_length", finalFadeInFrameLen},
+                  {"final_fade_out_frame_length", finalFadeOutFrameLen},
                   {"recordable_in_history", recordableInHistory},
                   {"is_part_of_reversion", isPartOfReversion}};
     return taskj.dump();
@@ -386,8 +424,15 @@ std::string SampleTimeCropTask::marshal()
 std::vector<std::shared_ptr<Task>> SampleTimeCropTask::getOppositeTasks()
 {
     std::vector<std::shared_ptr<Task>> result;
-    std::shared_ptr<SampleTimeCropTask> task = std::make_shared<SampleTimeCropTask>(movingBeginning, id, -dragDistance);
+    auto task = std::make_shared<SampleTimeCropTask>(movingBeginning, id, -dragDistance);
     result.push_back(task);
+
+    if (initialFadeInFrameLen != finalFadeInFrameLen || initialFadeOutFrameLen != finalFadeOutFrameLen)
+    {
+        auto fadeRestoreTask = std::make_shared<SampleFadeChange>(id, initialFadeInFrameLen, initialFadeOutFrameLen);
+        result.push_back(fadeRestoreTask);
+    }
+
     return result;
 }
 

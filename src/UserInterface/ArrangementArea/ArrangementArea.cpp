@@ -895,6 +895,8 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
         // iterate over selected tracks to duplicate everything
         std::set<std::size_t>::iterator it = selectedTracks.begin();
 
+        int groupId = Task::getNewTaskGroupIndex();
+
         while (it != selectedTracks.end())
         {
             if (activityManager.getAppState().getUiState() == UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION)
@@ -902,6 +904,7 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
                 float freq = UnitConverter::verticalPositionToFrequency(lastMouseY, getBounds().getHeight());
                 // create a track duplicate from the sample id at *it
                 std::shared_ptr<SampleCreateTask> task = std::make_shared<SampleCreateTask>(freq, *it);
+                task->setTaskGroupIndex(groupId);
                 activityManager.broadcastTask(task);
             }
             else
@@ -913,6 +916,7 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
                     int frameSplitPosition = (lastMouseX - xSampleLocations[0].getX()) * viewScale;
                     std::shared_ptr<SampleCreateTask> task =
                         std::make_shared<SampleCreateTask>(frameSplitPosition, *it, DUPLICATION_TYPE_SPLIT_AT_POSITION);
+                    task->setTaskGroupIndex(groupId);
                     activityManager.broadcastTask(task);
                 }
             }
@@ -1068,6 +1072,10 @@ void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent &jme)
     case UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION:
     case UI_STATE_DISPLAY_TIME_SPLIT_LOCATION:
         break;
+    case UI_STATE_MOUSE_DRAG_NUMERIC_INPUT:
+    case UI_STATE_RESIZE_MAINVIEW:
+    case UI_STATE_MOVE_LOOP_SECTION:
+        break;
     }
 }
 
@@ -1076,12 +1084,13 @@ void ArrangementArea::emitTimeDragTasks(bool cropBeginning)
     // iterate over map distances and for each push a completed
     // task to task listeners (to store it in history)
     std::map<int, int>::iterator it;
+    int taskGroupId = Task::getNewTaskGroupIndex();
     for (it = dragDistanceMap.begin(); it != dragDistanceMap.end(); it++)
     {
         std::shared_ptr<SampleTimeCropTask> task =
             std::make_shared<SampleTimeCropTask>(cropBeginning, it->first, it->second);
+        task->setTaskGroupIndex(taskGroupId);
         task->setCompleted(true);
-        task->setFailed(false);
         activityManager.broadcastTask(task);
     }
 }
@@ -1091,6 +1100,7 @@ void ArrangementArea::emitFilterDragTasks(bool isLowPass)
     // iterate over map distances and for each push a completed
     // task to task listeners (to store it in history)
     std::map<int, float>::iterator it;
+    int taskGroupId = Task::getNewTaskGroupIndex();
     for (it = initFiltersFreqs.begin(); it != initFiltersFreqs.end(); it++)
     {
         float finalFreq;
@@ -1105,6 +1115,7 @@ void ArrangementArea::emitFilterDragTasks(bool isLowPass)
 
         std::shared_ptr<SampleFreqCropTask> task =
             std::make_shared<SampleFreqCropTask>(isLowPass, it->first, it->second, finalFreq);
+        task->setTaskGroupIndex(taskGroupId);
         task->setCompleted(true);
         activityManager.broadcastTask(task);
     }
@@ -1156,6 +1167,9 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
     case UI_STATE_KEYBOARD_SAMPLE_DRAG:
     case UI_STATE_DISPLAY_FREQUENCY_SPLIT_LOCATION:
     case UI_STATE_DISPLAY_TIME_SPLIT_LOCATION:
+    case UI_STATE_MOUSE_DRAG_NUMERIC_INPUT:
+    case UI_STATE_RESIZE_MAINVIEW:
+    case UI_STATE_MOVE_LOOP_SECTION:
         break;
     }
 
@@ -1390,6 +1404,9 @@ void ArrangementArea::mouseMove(const juce::MouseEvent &jme)
     case UI_STATE_MOUSE_DRAG_SAMPLE_LENGTH:
     case UI_STATE_SELECT_AREA_WITH_MOUSE:
     case UI_STATE_DEFAULT:
+    case UI_STATE_MOUSE_DRAG_NUMERIC_INPUT:
+    case UI_STATE_RESIZE_MAINVIEW:
+    case UI_STATE_MOVE_LOOP_SECTION:
         break;
     }
 
@@ -1634,6 +1651,8 @@ void ArrangementArea::deleteSelectedTracks()
     // tasks to broadcast
     std::vector<std::shared_ptr<Task>> tasksToBroadcast;
 
+    int taskGroupId = Task::getNewTaskGroupIndex();
+
     // for each selected track
     std::set<size_t>::iterator it;
     for (it = selectedTracks.begin(); it != selectedTracks.end(); it++)
@@ -1641,6 +1660,7 @@ void ArrangementArea::deleteSelectedTracks()
         if (mixingBus.getTrack(*it) != nullptr)
         {
             std::shared_ptr<SampleDeletionTask> delTask = std::make_shared<SampleDeletionTask>(*it);
+            delTask->setTaskGroupIndex(taskGroupId);
             tasksToBroadcast.push_back(delTask);
         }
     }
@@ -1667,6 +1687,9 @@ bool ArrangementArea::keyStateChanged(bool isKeyDown)
         // if the D key is not pressed anymore
         if (!juce::KeyPress::isKeyCurrentlyDown(juce::KeyPress::createFromDescription(KEYMAP_DRAG_MODE).getKeyCode()))
         {
+
+            int taskGroupId = Task::getNewTaskGroupIndex();
+
             // update tracks position, get out of drag mode, and repaint
             std::shared_ptr<SamplePlayer> sp;
             int64_t trackPosition;
@@ -1698,8 +1721,8 @@ bool ArrangementArea::keyStateChanged(bool isKeyDown)
 
                 // broadcast a completed task so that it's recorded in history
                 std::shared_ptr<SampleMovingTask> task = std::make_shared<SampleMovingTask>(*it, dragDistance);
+                task->setTaskGroupIndex(taskGroupId);
                 task->setCompleted(true);
-                task->setFailed(false);
                 activityManager.broadcastTask(task);
             }
 

@@ -8,6 +8,8 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+#define MAX_TASK_INDEX 1048576
+
 /**
   Unused as of now.
  */
@@ -93,6 +95,7 @@ class Task : public Marshalable
       Get the sequence of opposite task from this one, eg the ones
       that when performed cancels out this task.
       If this is not possible, the array is empty.
+      The tasks are performed in order, ie lowest ids first.
      */
     virtual std::vector<std::shared_ptr<Task>> getOppositeTasks();
 
@@ -107,9 +110,38 @@ class Task : public Marshalable
     void preventFromGoingToTaskHistory();
 
     /**
-     Called when the task is about to be resposted. Example of specific use case: SampleCreateTask to reuse ids.
+     Called when the task is about to be posted a second time after a rewind. Example of specific use case:
+     SampleCreateTask to reuse ids.
      */
     virtual void prepareForRepost();
+
+    /**
+     * @brief      Gets the task group index.
+     *
+     * @return     The task group index.
+     */
+    int getTaskGroupIndex();
+
+    /**
+     * @brief      Sets the task group index.
+     *
+     * @param[in]  newTaskGroupIndex  The new task group index
+     */
+    void setTaskGroupIndex(int newTaskGroupIndex);
+
+    /**
+     * @brief      Sets the task group to same of the target.
+     *
+     * @param      targeTask  The target task
+     */
+    void setTaskGroupToTarget(Task &targetTask);
+
+    /**
+     * @brief      Gets a new task group index (incremented from task index counter).
+     *
+     * @return     The new task group index.
+     */
+    static int getNewTaskGroupIndex();
 
   protected:
     bool recordableInHistory; // tell if this task should be saved in history. Inherit SilentTask to have it false.
@@ -119,6 +151,11 @@ class Task : public Marshalable
     bool completed;           // has this task been completed/performed
     bool failed;              // has this task failed
     std::string errorMessage; // an eventual error messaged for the task failure
+
+    int taskGroupIndex; // a unique identifier to group tasks together
+
+    static int taskGroupIndexIterator; // a static value that is incremented and assigned to new task, and also wrapped
+                                       // at MAX_TASK_INDEX
 };
 
 /**
@@ -418,6 +455,14 @@ class SampleTimeCropTask : public Task
     int id;               // id of sample to crop
     int dragDistance;     // the distance in audio frame to move from
     bool movingBeginning; // are we moving the left edge (beginning) or the right one (end)
+
+    // we record the fade ins and out before and after
+    // because we might alter them and therefore
+    // need to restore them on cancellation task
+    int initialFadeInFrameLen;  // length in frame of the fade in before resizing
+    int initialFadeOutFrameLen; // length in frame of the fade out before resizing
+    int finalFadeInFrameLen;    // length in frame of the fade in after resizing
+    int finalFadeOutFrameLen;   // length in frame of the fade out after resizing
 };
 
 /**

@@ -132,39 +132,59 @@ void ActivityManager::undoLastActivity()
 {
     juce::SpinLock::ScopedLockType bLock(broadcastLock);
 
-    int lastActivityIndex = (historyNextIndex - 1) % ACTIVITY_HISTORY_RING_BUFFER_SIZE;
+    bool cancelingNextTask = true;
 
-    if (history[lastActivityIndex] == nullptr)
+    while (cancelingNextTask)
     {
-        std::cout << "No operation to cancel" << std::endl;
-        return;
-    }
+        int lastActivityIndex = (historyNextIndex - 1) % ACTIVITY_HISTORY_RING_BUFFER_SIZE;
 
-    auto tasksToCancel = history[lastActivityIndex]->getOppositeTasks();
-    if (tasksToCancel.size() == 0)
-    {
-        std::cout << "Operation cannot be canceled" << std::endl;
-        return;
-    }
-
-    for (size_t i = 0; i < tasksToCancel.size(); i++)
-    {
-        tasksToCancel[i]->declareSelfAsPartOfReversion();
-        for (size_t j = 0; j < taskListeners.size(); j++)
+        if (history[lastActivityIndex] == nullptr)
         {
-            bool shouldStop = taskListeners[j]->taskHandler(tasksToCancel[i]);
-            if (shouldStop)
-            {
-                break;
-            }
+            std::cout << "No operation to cancel" << std::endl;
+            return;
         }
-        std::cout << "Reversion task: " << tasksToCancel[i]->marshal() << std::endl;
-    }
 
-    canceledTasks.push(history[lastActivityIndex]);
-    // TODO: factor out the ringbuffer history structure for cleaner code
-    history[lastActivityIndex] = nullptr;
-    historyNextIndex = lastActivityIndex;
+        // we are saving the group index so that we can decide on canceling next
+        // task if it's from the same task group
+        int taskGroupIndex = history[lastActivityIndex]->getTaskGroupIndex();
+
+        auto tasksToCancel = history[lastActivityIndex]->getOppositeTasks();
+        if (tasksToCancel.size() == 0)
+        {
+            std::cout << "Operation cannot be canceled" << std::endl;
+            return;
+        }
+
+        for (size_t i = 0; i < tasksToCancel.size(); i++)
+        {
+            tasksToCancel[i]->declareSelfAsPartOfReversion();
+            for (size_t j = 0; j < taskListeners.size(); j++)
+            {
+                bool shouldStop = taskListeners[j]->taskHandler(tasksToCancel[i]);
+                if (shouldStop)
+                {
+                    break;
+                }
+            }
+            std::cout << "Reversion task: " << tasksToCancel[i]->marshal() << std::endl;
+        }
+
+        canceledTasks.push(history[lastActivityIndex]);
+
+        history[lastActivityIndex] = nullptr;
+        historyNextIndex = lastActivityIndex;
+
+        // if the next task exists and has same task group id, we cancel it as well by calling us again
+        lastActivityIndex = (historyNextIndex - 1) % ACTIVITY_HISTORY_RING_BUFFER_SIZE;
+        if (history[lastActivityIndex] != nullptr && history[lastActivityIndex]->getTaskGroupIndex() == taskGroupIndex)
+        {
+            cancelingNextTask = true;
+        }
+        else
+        {
+            cancelingNextTask = false;
+        }
+    }
 }
 
 void ActivityManager::redoLastActivity()
@@ -173,29 +193,47 @@ void ActivityManager::redoLastActivity()
     // (also prevents calls from task broadcasting loop)
     juce::SpinLock::ScopedLockType bLock(broadcastLock);
 
-    if (canceledTasks.empty())
+    bool restoringNextTask = true;
+
+    while (restoringNextTask)
     {
-        return;
-    }
 
-    std::shared_ptr<Task> taskToRestore = canceledTasks.top();
-    canceledTasks.pop();
-
-    taskToRestore->prepareForRepost();
-    taskToRestore->preventFromGoingToTaskHistory();
-    taskToRestore->declareSelfAsPartOfReversion();
-
-    for (size_t j = 0; j < taskListeners.size(); j++)
-    {
-        bool shouldStop = taskListeners[j]->taskHandler(taskToRestore);
-        if (shouldStop)
+        if (canceledTasks.empty())
         {
-            break;
+            return;
+        }
+
+        std::shared_ptr<Task> taskToRestore = canceledTasks.top();
+        canceledTasks.pop();
+
+        int taskGroupIndex = taskToRestore->getTaskGroupIndex();
+
+        taskToRestore->prepareForRepost();
+        taskToRestore->preventFromGoingToTaskHistory();
+        taskToRestore->declareSelfAsPartOfReversion();
+
+        for (size_t j = 0; j < taskListeners.size(); j++)
+        {
+            bool shouldStop = taskListeners[j]->taskHandler(taskToRestore);
+            if (shouldStop)
+            {
+                break;
+            }
+        }
+
+        history[historyNextIndex] = taskToRestore;
+        historyNextIndex = (historyNextIndex + 1) % ACTIVITY_HISTORY_RING_BUFFER_SIZE;
+
+        std::cout << "Restored task: " << taskToRestore->marshal() << std::endl;
+
+        // if the next canceled task exists and has same task group id, we restore it as well
+        if (!canceledTasks.empty() && canceledTasks.top()->getTaskGroupIndex() == taskGroupIndex)
+        {
+            restoringNextTask = true;
+        }
+        else
+        {
+            restoringNextTask = false;
         }
     }
-
-    history[historyNextIndex] = taskToRestore;
-    historyNextIndex = (historyNextIndex + 1) % ACTIVITY_HISTORY_RING_BUFFER_SIZE;
-
-    std::cout << "Restored task: " << taskToRestore->marshal() << std::endl;
 }
