@@ -280,7 +280,15 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
             fadeChangeTask->currentFadeOutFrameLen = tracks[fadeChangeTask->sampleId]->getFadeOutLength();
         }
 
-        fadeChangeTask->setCompleted(hasUpdated);
+        fadeChangeTask->setCompleted(true);
+        if (hasUpdated)
+        {
+            fadeChangeTask->setFailed(false);
+        }
+        else
+        {
+            fadeChangeTask->setFailed(true);
+        }
 
         activityManager.broadcastNestedTaskNow(fadeChangeTask);
         return true;
@@ -314,6 +322,10 @@ void MixingBus::cropSample(std::shared_ptr<SampleTimeCropTask> task)
 {
     if (tracks[task->id] != nullptr)
     {
+
+        int initialFadeIn = tracks[task->id]->getFadeInLength();
+        int initialFadeOut = tracks[task->id]->getFadeOutLength();
+
         if (task->movingBeginning)
         {
             tracks[task->id]->tryMovingStart(task->dragDistance);
@@ -329,6 +341,17 @@ void MixingBus::cropSample(std::shared_ptr<SampleTimeCropTask> task)
         // we need to tell arrangement are to update
         std::shared_ptr<SampleUpdateTask> sut = std::make_shared<SampleUpdateTask>(task->id, tracks[task->id]);
         activityManager.broadcastNestedTaskNow(sut);
+
+        // if the fade changed due to resize, broadcast the change
+        int finalFadeIn = tracks[task->id]->getFadeInLength();
+        int finalFadeOut = tracks[task->id]->getFadeOutLength();
+
+        if (initialFadeIn != finalFadeIn || initialFadeOut != finalFadeOut)
+        {
+            auto fadeUpdate =
+                std::make_shared<SampleFadeChange>(task->id, initialFadeIn, initialFadeOut, finalFadeIn, finalFadeOut);
+            activityManager.broadcastNestedTaskNow(fadeUpdate);
+        }
 
         trackRepaintCallback();
     }
