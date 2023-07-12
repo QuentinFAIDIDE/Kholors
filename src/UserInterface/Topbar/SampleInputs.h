@@ -24,7 +24,7 @@ class SampleFadeInput : public NumericInput
      * @param[in]  id   identifier of the sample to change
      *
      */
-    void setSampleId(int id);
+    void setSampleIds(std::set<size_t> &ids);
 
     /**
      * @brief      if possible (activity manager is set and id != -1) broadcast
@@ -54,8 +54,23 @@ class SampleFadeInput : public NumericInput
     void emitIntermediateDragTask(float value) override;
 
   private:
+    void startDragging() override;
+
     // the identifier of the sample we are updating things for
-    int sampleId;
+    std::set<size_t> sampleIds;
+
+    // map of values when the dragging movements begins (for all selected samples)
+    std::map<size_t, int> initialValues;
+
+    // values that are currently set by the input (not all samples have same values
+    // since some may fail to update past a certains thresold (ex: fade in larger than some sample))
+    std::map<size_t, int> currentValues;
+
+    // the sample id in the selected ones that drives the displayed values
+    int displayedSampleId;
+
+    // a boolean to know if we are currently iterating over selection
+    bool iteratingOverSelection;
 
     // are we fading in or out ?
     bool isFadeIn;

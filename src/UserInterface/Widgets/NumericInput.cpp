@@ -88,6 +88,7 @@ void NumericInput::mouseDown(const juce::MouseEvent &me)
         isDragging = true;
         dragInitialValue = value;
         activityManager->getAppState().setUiState(UI_STATE_MOUSE_DRAG_NUMERIC_INPUT);
+        startDragging();
     }
 }
 
@@ -153,6 +154,10 @@ float NumericInput::getValue()
 ActivityManager *NumericInput::getActivityManager()
 {
     return activityManager;
+}
+
+void NumericInput::startDragging()
+{
 }
 
 /////////////////////////////////////

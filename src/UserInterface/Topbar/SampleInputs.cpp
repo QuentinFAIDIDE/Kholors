@@ -5,25 +5,46 @@
 #define DB_CHANGE_STEP 0.2f
 
 SampleFadeInput::SampleFadeInput(bool fadeIn)
-    : NumericInput(true, 0, SAMPLEPLAYER_MAX_FADE_MS, 1), sampleId(-1), isFadeIn(fadeIn)
+    : NumericInput(true, 0, SAMPLEPLAYER_MAX_FADE_MS, 1), isFadeIn(fadeIn), iteratingOverSelection(false)
 {
 }
 
-void SampleFadeInput::setSampleId(int id)
+void SampleFadeInput::setSampleIds(std::set<size_t> &ids)
 {
-    sampleId = id;
+    if (iteratingOverSelection)
+    {
+        std::cerr << "Wew ! Selection was updated while iterating over input samples!! This is not cool and should be "
+                     "fixed by the clumsy developer!"
+                  << std::endl;
+    }
+    sampleIds = ids;
+    displayedSampleId = -1;
+    if (sampleIds.size() > 0)
+    {
+        displayedSampleId = *sampleIds.begin();
+    }
+    initialValues.clear();
+    currentValues.clear();
     fetchValueIfPossible();
 }
 
 void SampleFadeInput::fetchValueIfPossible()
 {
-    if (getActivityManager() != nullptr && sampleId >= 0)
+    if (getActivityManager() != nullptr && sampleIds.size() > 0)
     {
-        // emit a task that gets the initial value
-        auto task = std::make_shared<SampleFadeChange>(sampleId);
-        getActivityManager()->broadcastTask(task);
+        // a copy of the selected set for more safety
+        std::set<size_t> actualSelectedIds = sampleIds;
+        auto it = actualSelectedIds.begin();
+        iteratingOverSelection = true;
+        for (it = actualSelectedIds.begin(); it != actualSelectedIds.end(); it++)
+        {
+            // emit a task that gets the initial value
+            auto task = std::make_shared<SampleFadeChange>(*it);
+            getActivityManager()->broadcastTask(task);
+        }
+        iteratingOverSelection = false;
     }
-    if (getActivityManager() != nullptr && sampleId < 0)
+    if (getActivityManager() != nullptr)
     {
         setValue(0);
     }
@@ -32,7 +53,7 @@ void SampleFadeInput::fetchValueIfPossible()
 bool SampleFadeInput::taskHandler(std::shared_ptr<Task> task)
 {
     // no need to parse tasks if we have no assigned id
-    if (sampleId < 0)
+    if (sampleIds.size() == 0)
     {
         return false;
     }
@@ -40,20 +61,28 @@ bool SampleFadeInput::taskHandler(std::shared_ptr<Task> task)
     // we are interested in completed SampleFadeChange tasks
     auto updateTask = std::dynamic_pointer_cast<SampleFadeChange>(task);
     if (updateTask != nullptr && updateTask->isCompleted() && !updateTask->hasFailed() &&
-        updateTask->sampleId == sampleId)
+        sampleIds.find(updateTask->sampleId) != sampleIds.end())
     {
         if (isFadeIn)
         {
             if (!updateTask->onlyFadeOut)
             {
-                setValue(float(updateTask->currentFadeInFrameLen * 1000) / float(AUDIO_FRAMERATE));
+                if (updateTask->sampleId == displayedSampleId)
+                {
+                    setValue(float(updateTask->currentFadeInFrameLen * 1000) / float(AUDIO_FRAMERATE));
+                }
+                currentValues[updateTask->sampleId] = updateTask->currentFadeInFrameLen;
             }
         }
         else
         {
             if (!updateTask->onlyFadeIn)
             {
-                setValue(float(updateTask->currentFadeOutFrameLen * 1000) / float(AUDIO_FRAMERATE));
+                if (updateTask->sampleId == displayedSampleId)
+                {
+                    setValue(float(updateTask->currentFadeOutFrameLen * 1000) / float(AUDIO_FRAMERATE));
+                }
+                currentValues[updateTask->sampleId] = updateTask->currentFadeOutFrameLen;
             }
         }
         // we won't prevent event from being broadcasted further to allow for multiple inputs  to exist
@@ -63,13 +92,13 @@ bool SampleFadeInput::taskHandler(std::shared_ptr<Task> task)
     // if we have a completed task for our selected sample for a resize, request an update
     auto sampleResizeTask = std::dynamic_pointer_cast<SampleTimeCropTask>(task);
     if (sampleResizeTask != nullptr && sampleResizeTask->isCompleted() && !sampleResizeTask->hasFailed() &&
-        sampleId == sampleResizeTask->id)
+        sampleIds.find(sampleResizeTask->id) != sampleIds.end())
     {
         // Note that we could very well use the finalFadeInFrameLength and its fade out counterpart saved in the task to
         // update here, as we will not emit a sample resize task without setting them. Nervertheless it feels much safer
         // to protect from a corrupted sampleResizeTask and request the actual values to be broadcasted from the
         // MixingBus class.
-        auto sampleFadeUpdate = std::make_shared<SampleFadeChange>(sampleId);
+        auto sampleFadeUpdate = std::make_shared<SampleFadeChange>(sampleResizeTask->id);
         getActivityManager()->broadcastNestedTaskNow(sampleFadeUpdate);
         return false;
     }
@@ -79,38 +108,120 @@ bool SampleFadeInput::taskHandler(std::shared_ptr<Task> task)
 
 void SampleFadeInput::emitFinalDragTask()
 {
-    // emit the final task (already completed) so that we record to be able to revert
-    auto task = std::make_shared<SampleFadeChange>(sampleId, 0, 0, 0, 0);
-    if (isFadeIn)
+    // the pile of tasks to broadcast
+    std::vector<std::shared_ptr<SampleFadeChange>> tasks;
+
+    // true if we need to abort due to missing intiial or current value
+    // for selection
+    bool missingValue = false;
+
+    auto selectedSamplesCopy = sampleIds;
+    auto it = selectedSamplesCopy.begin();
+    iteratingOverSelection = true;
+
+    int taskGroupId = Task::getNewTaskGroupIndex();
+
+    for (it = selectedSamplesCopy.begin(); it != selectedSamplesCopy.end(); it++)
     {
-        task->onlyFadeIn = true;
-        task->previousFadeInFrameLen = getInitialDragValue() * (float(AUDIO_FRAMERATE) / 1000.0);
-        task->currentFadeInFrameLen = getValue() * (float(AUDIO_FRAMERATE) / 1000.0);
+        // emit the final tasks (already completed) so that we record to be able to revert
+        auto task = std::make_shared<SampleFadeChange>(*it, 0, 0, 0, 0);
+        task->setTaskGroupIndex(taskGroupId);
+
+        // if we're missing initial or final value, abort
+        if (initialValues.find(*it) == initialValues.end() || currentValues.find(*it) == currentValues.end())
+        {
+            missingValue = true;
+            break;
+        }
+
+        if (isFadeIn)
+        {
+            task->onlyFadeIn = true;
+            task->previousFadeInFrameLen = initialValues[*it];
+            task->currentFadeInFrameLen = currentValues[*it];
+        }
+        else
+        {
+            task->onlyFadeOut = true;
+            task->previousFadeOutFrameLen = initialValues[*it];
+            task->currentFadeOutFrameLen = currentValues[*it];
+        }
+
+        // save task to be posted later when we know we're not missing any sample id value
+        tasks.push_back(task);
     }
-    else
+
+    // abort if we're missing stuff
+    if (missingValue)
     {
-        task->onlyFadeOut = true;
-        task->previousFadeOutFrameLen = getInitialDragValue() * (float(AUDIO_FRAMERATE) / 1000.0);
-        task->currentFadeOutFrameLen = getValue() * (float(AUDIO_FRAMERATE) / 1000.0);
+        std::cerr << "Severe problem: missing multisample input values, aborted updated!!!" << std::endl;
+        return;
     }
-    getActivityManager()->broadcastTask(task);
+
+    // broadcast final task
+    for (int i = 0; i < tasks.size(); i++)
+    {
+        getActivityManager()->broadcastTask(tasks[i]);
+    }
+
+    iteratingOverSelection = false;
 }
 
 void SampleFadeInput::emitIntermediateDragTask(float newValue)
 {
-    std::shared_ptr<SampleFadeChange> task;
+    // list of tasks to post
+    std::vector<std::shared_ptr<SampleFadeChange>> tasks;
 
-    if (isFadeIn)
+    // true if we need to abort due to missing intiial or current value
+    // for selection
+    bool missingValue = false;
+
+    auto selectedSamplesCopy = sampleIds;
+    auto it = selectedSamplesCopy.begin();
+    iteratingOverSelection = true;
+
+    for (it = selectedSamplesCopy.begin(); it != selectedSamplesCopy.end(); it++)
     {
-        task = std::make_shared<SampleFadeChange>(sampleId, newValue * (float(AUDIO_FRAMERATE) / 1000.0), 0);
-        task->onlyFadeIn = true;
+        std::shared_ptr<SampleFadeChange> task;
+
+        // if we're missing initial or final value, abort
+        if (initialValues.find(*it) == initialValues.end() || currentValues.find(*it) == currentValues.end())
+        {
+            missingValue = true;
+            break;
+        }
+
+        if (isFadeIn)
+        {
+            task = std::make_shared<SampleFadeChange>(*it, newValue * (float(AUDIO_FRAMERATE) / 1000.0), 0);
+            task->onlyFadeIn = true;
+        }
+        else
+        {
+            task = std::make_shared<SampleFadeChange>(*it, 0, newValue * (float(AUDIO_FRAMERATE) / 1000.0));
+            task->onlyFadeOut = true;
+        }
+        tasks.push_back(task);
     }
-    else
+
+    // abort if we're missing stuff
+    if (missingValue)
     {
-        task = std::make_shared<SampleFadeChange>(sampleId, 0, newValue * (float(AUDIO_FRAMERATE) / 1000.0));
-        task->onlyFadeOut = true;
+        std::cerr << "Severe problem: missing multisample input values, aborted intermediate updated!!!" << std::endl;
+        return;
     }
-    getActivityManager()->broadcastTask(task);
+
+    for (int i = 0; i < tasks.size(); i++)
+    {
+        getActivityManager()->broadcastTask(tasks[i]);
+    }
+
+    iteratingOverSelection = false;
+}
+
+void SampleFadeInput::startDragging()
+{
+    initialValues = currentValues;
 }
 
 /////////////////////////////////////////////////////////////////////////

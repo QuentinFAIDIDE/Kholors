@@ -150,6 +150,10 @@ class NumericInput : public juce::Component, public TaskListener
      */
     void setMinDragUpdate(float v);
 
+  protected:
+    // callback called whenever the dragging of the input is started
+    virtual void startDragging();
+
   private:
     // the actual displayed value
     float value;
