@@ -226,7 +226,7 @@ void SampleFadeInput::startDragging()
 
 /////////////////////////////////////////////////////////////////////////
 
-SampleGainInput::SampleGainInput() : NumericInput(false, -MAX_DB_CHANGE, MAX_DB_CHANGE, DB_CHANGE_STEP), sampleId(-1)
+SampleGainInput::SampleGainInput() : NumericInput(false, -MAX_DB_CHANGE, MAX_DB_CHANGE, DB_CHANGE_STEP), iteratingOverSelection(false)
 {
 }
 
