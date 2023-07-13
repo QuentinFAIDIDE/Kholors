@@ -71,18 +71,9 @@ bool SampleProperties::taskHandler(std::shared_ptr<Task> task)
             return false;
         }
 
-        if (selectionUpdateTask->newSelectedTracks.size() == 1)
-        {
-            int firstSampleId = *selectionUpdateTask->newSelectedTracks.begin();
-            gainInput->setSampleId(firstSampleId);
-        }
-        else
-        {
-            gainInput->setSampleId(-1);
-        }
-
         fadeInInput->setSampleIds(selectionUpdateTask->newSelectedTracks);
         fadeOutInput->setSampleIds(selectionUpdateTask->newSelectedTracks);
+        gainInput->setSampleIds(selectionUpdateTask->newSelectedTracks);
     }
 
     return false;

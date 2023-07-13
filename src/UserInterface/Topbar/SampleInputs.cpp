@@ -230,21 +230,43 @@ SampleGainInput::SampleGainInput() : NumericInput(false, -MAX_DB_CHANGE, MAX_DB_
 {
 }
 
-void SampleGainInput::setSampleId(int id)
+void SampleGainInput::setSampleIds(std::set<size_t> &ids)
 {
-    sampleId = id;
+    if (iteratingOverSelection)
+    {
+        std::cerr << "Wew ! Selection was updated while iterating over input samples!! This is not cool and should be "
+                     "fixed by the clumsy developer! (gain input version)"
+                  << std::endl;
+    }
+    sampleIds = ids;
+    displayedSampleId = -1;
+    if (sampleIds.size() > 0)
+    {
+        displayedSampleId = *sampleIds.begin();
+    }
+    initialValues.clear();
+    currentValues.clear();
     fetchValueIfPossible();
 }
 
+
 void SampleGainInput::fetchValueIfPossible()
 {
-    if (getActivityManager() != nullptr && sampleId >= 0)
+    if (getActivityManager() != nullptr && sampleIds.size() > 0)
     {
-        // emit a task that gets the initial value
-        auto task = std::make_shared<SampleGainChange>(sampleId);
-        getActivityManager()->broadcastTask(task);
+        // a copy of the selected set for more safety
+        std::set<size_t> actualSelectedIds = sampleIds;
+        auto it = actualSelectedIds.begin();
+        iteratingOverSelection = true;
+        for (it = actualSelectedIds.begin(); it != actualSelectedIds.end(); it++)
+        {
+            // emit a task that gets the initial value
+            auto task = std::make_shared<SampleGainChange>(*it);
+            getActivityManager()->broadcastTask(task);
+        }
+        iteratingOverSelection = false;
     }
-    if (getActivityManager() != nullptr && sampleId < 0)
+    if (getActivityManager() != nullptr)
     {
         setValue(0);
     }
@@ -252,18 +274,21 @@ void SampleGainInput::fetchValueIfPossible()
 
 bool SampleGainInput::taskHandler(std::shared_ptr<Task> task)
 {
-    // no need to parse tasks if we have no assigned id
-    if (sampleId < 0)
+    if (sampleIds.size() == 0)
     {
         return false;
     }
 
-    // we are interested in completed SampleGainChange tasks
     auto updateTask = std::dynamic_pointer_cast<SampleGainChange>(task);
     if (updateTask != nullptr && updateTask->isCompleted() && !updateTask->hasFailed() &&
-        updateTask->sampleId == sampleId)
+        sampleIds.find(updateTask->sampleId) != sampleIds.end())
     {
-        setValue(updateTask->currentDbGain);
+        if (updateTask->sampleId == displayedSampleId)
+        {
+            setValue(updateTask->currentDbGain);
+        }
+        currentValues[updateTask->sampleId] = updateTask->currentDbGain;
+            
         // we won't prevent event from being broadcasted further to allow for multiple inputs  to exist
         return false;
     }
@@ -273,13 +298,96 @@ bool SampleGainInput::taskHandler(std::shared_ptr<Task> task)
 
 void SampleGainInput::emitFinalDragTask()
 {
-    // emit the final task (already completed) so that we record to be able to revert
-    auto task = std::make_shared<SampleGainChange>(sampleId, getInitialDragValue(), getValue());
-    getActivityManager()->broadcastTask(task);
+    // the pile of tasks to broadcast
+    std::vector<std::shared_ptr<SampleGainChange>> tasks;
+
+    // true if we need to abort due to missing intiial or current value
+    // for selection
+    bool missingValue = false;
+
+    auto selectedSamplesCopy = sampleIds;
+    auto it = selectedSamplesCopy.begin();
+    iteratingOverSelection = true;
+
+    int taskGroupId = Task::getNewTaskGroupIndex();
+
+    for (it = selectedSamplesCopy.begin(); it != selectedSamplesCopy.end(); it++)
+    {
+        // if we're missing initial or final value, abort
+        if (initialValues.find(*it) == initialValues.end() || currentValues.find(*it) == currentValues.end())
+        {
+            missingValue = true;
+            break;
+        }
+
+        // emit the final tasks (already completed) so that we record to be able to revert
+        auto task = std::make_shared<SampleGainChange>(*it, initialValues[*it], currentValues[*it]);
+        task->setTaskGroupIndex(taskGroupId);
+
+        // save task to be posted later when we know we're not missing any sample id value
+        tasks.push_back(task);
+    }
+
+    // abort if we're missing stuff
+    if (missingValue)
+    {
+        std::cerr << "Severe problem: missing multisample input values, aborted updated!!!" << std::endl;
+        return;
+    }
+
+    // broadcast final task
+    for (int i = 0; i < tasks.size(); i++)
+    {
+        getActivityManager()->broadcastTask(tasks[i]);
+    }
+
+    iteratingOverSelection = false;
 }
 
 void SampleGainInput::emitIntermediateDragTask(float newValue)
 {
-    auto task = std::make_shared<SampleGainChange>(sampleId, newValue);
-    getActivityManager()->broadcastTask(task);
+    // list of tasks to post
+    std::vector<std::shared_ptr<SampleGainChange>> tasks;
+
+    // true if we need to abort due to missing intiial or current value
+    // for selection
+    bool missingValue = false;
+
+    auto selectedSamplesCopy = sampleIds;
+    auto it = selectedSamplesCopy.begin();
+    iteratingOverSelection = true;
+
+    for (it = selectedSamplesCopy.begin(); it != selectedSamplesCopy.end(); it++)
+    {
+        std::shared_ptr<SampleGainChange> task;
+
+        // if we're missing initial or final value, abort
+        if (initialValues.find(*it) == initialValues.end() || currentValues.find(*it) == currentValues.end())
+        {
+            missingValue = true;
+            break;
+        }
+
+        task = std::make_shared<SampleGainChange>(*it, newValue);
+        tasks.push_back(task);
+    }
+
+    // abort if we're missing stuff
+    if (missingValue)
+    {
+        std::cerr << "Severe problem: missing multisample input values (gain version), aborted intermediate updated!!!" << std::endl;
+        return;
+    }
+
+    for (int i = 0; i < tasks.size(); i++)
+    {
+        getActivityManager()->broadcastTask(tasks[i]);
+    }
+
+    iteratingOverSelection = false;
+}
+
+void SampleGainInput::startDragging()
+{
+    initialValues = currentValues;
 }
