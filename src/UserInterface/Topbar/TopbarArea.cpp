@@ -224,7 +224,7 @@ void TopbarArea::resized()
     area.removeFromLeft(leftSection.getWidth() + logo.getWidth());
     area.removeFromRight(rightComponentsContainer.getWidth());
 
-    int centerAreaXDelta = (area.getWidth() - (TOPBAR_ICONS_GAP*2) - (3 * TOPBAR_ICONS_BUTTONS_WIDTH)) / 2;
+    int centerAreaXDelta = (area.getWidth() - (TOPBAR_ICONS_GAP * 2) - (3 * TOPBAR_ICONS_BUTTONS_WIDTH)) / 2;
     int centerAreaYDelta = (area.getHeight() - (1 * TOPBAR_ICONS_BUTTONS_WIDTH)) / 2;
     area.reduce(centerAreaXDelta, centerAreaYDelta);
 
