@@ -616,8 +616,6 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferT
     {
         bufferToFill.clearActiveBufferRegion();
         position += bufferToFill.numSamples;
-        applyFilters(bufferToFill);
-        bufferToFill.buffer->applyGain(gainValue);
         return;
     }
 
