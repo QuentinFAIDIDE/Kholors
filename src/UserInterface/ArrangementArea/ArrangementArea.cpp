@@ -737,8 +737,6 @@ void ArrangementArea::displaySample(std::shared_ptr<SamplePlayer> sp, std::share
         }
 
         selectedTracks.insert(task->getAllocatedIndex());
-
-        copyAndBroadcastSelection(true);
     }
 
     task->setCompleted(true);
@@ -1080,6 +1078,7 @@ void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent &jme)
         break;
 
     case UI_STATE_SELECT_AREA_WITH_MOUSE:
+        copyAndBroadcastSelection(false);
         activityManager.getAppState().setUiState(UI_STATE_DEFAULT);
         repaint();
         break;
@@ -1223,8 +1222,6 @@ void ArrangementArea::addSelectedSamples()
     currentSelectionRect = juce::Rectangle<float>(juce::Point<float>(startSelectX, startSelectY),
                                                   juce::Point<float>(lastMouseX, lastMouseY));
 
-    bool selectedSomethingNew = false;
-
     for (size_t i = 0; i < samples.size(); i++)
     {
         if (samples[i] == nullptr || samples[i]->isDisabled())
@@ -1239,16 +1236,10 @@ void ArrangementArea::addSelectedSamples()
             {
                 if (selectedTracks.find(i) == selectedTracks.end())
                 {
-                    selectedSomethingNew = true;
                     selectedTracks.insert(i);
                 }
             }
         }
-    }
-
-    if (selectedSomethingNew)
-    {
-        copyAndBroadcastSelection(false);
     }
 }
 
