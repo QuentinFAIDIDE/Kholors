@@ -188,7 +188,7 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
     {
         openGLContext.executeOnGLThread(
             [this, updateTask](juce::OpenGLContext &c) {
-                samples[updateTask->id]->updatePropertiesAndUploadToGpu(updateTask->sample);
+                samples[updateTask->id]->loadVerticeData(updateTask->sample);
             },
             true);
 
@@ -1340,8 +1340,8 @@ void ArrangementArea::refreshSampleOpenGlView(int index)
     {
         return;
     }
-    openGLContext.executeOnGLThread(
-        [this, index, sp](juce::OpenGLContext &c) { samples[index]->updatePropertiesAndUploadToGpu(sp); }, true);
+    openGLContext.executeOnGLThread([this, index, sp](juce::OpenGLContext &c) { samples[index]->loadVerticeData(sp); },
+                                    true);
 }
 
 bool ArrangementArea::updateViewResizing(juce::Point<int> &newPosition)

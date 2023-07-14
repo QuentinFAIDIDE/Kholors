@@ -24,7 +24,7 @@ SampleGraphicModel::SampleGraphicModel(std::shared_ptr<SamplePlayer> sp, juce::C
 
     color = col;
 
-    updatePropertiesAndUploadToGpu(sp);
+    loadVerticeData(sp);
 
     // stored fft data we parse in SamplePlayer
     std::vector<float> ffts = sp->getFftData();
@@ -126,7 +126,7 @@ void SampleGraphicModel::loadFftDataToTexture(std::vector<float> &ffts, int fftC
     }
 }
 
-void SampleGraphicModel::updatePropertiesAndUploadToGpu(std::shared_ptr<SamplePlayer> sp)
+void SampleGraphicModel::loadVerticeData(std::shared_ptr<SamplePlayer> sp)
 {
 
     startPositionNormalized = float(sp->getBufferStart()) / float(sp->getTotalLength());
@@ -138,10 +138,11 @@ void SampleGraphicModel::updatePropertiesAndUploadToGpu(std::shared_ptr<SamplePl
     lastLowPassFreq = sp->getLowPassFreq();
     lastHighPassFreq = sp->getHighPassFreq();
 
-    generateAndUploadVertices(leftX, rightX, lastLowPassFreq, lastHighPassFreq);
+    generateAndUploadVerticesToGPU(leftX, rightX, lastLowPassFreq, lastHighPassFreq);
 }
 
-void SampleGraphicModel::generateAndUploadVertices(float leftX, float rightX, float lowPassFreq, float highPassFreq)
+void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float rightX, float lowPassFreq,
+                                                        float highPassFreq)
 {
 
     vertices.reserve(8);
@@ -235,7 +236,7 @@ void SampleGraphicModel::setColor(juce::Colour &col)
     float leftX = vertices[0].position[0];
     float rightX = vertices[1].position[0];
     color = col;
-    generateAndUploadVertices(leftX, rightX, lastLowPassFreq, lastHighPassFreq);
+    generateAndUploadVerticesToGPU(leftX, rightX, lastLowPassFreq, lastHighPassFreq);
 }
 
 // Save position and width when selection dragging begins.
@@ -250,7 +251,7 @@ void SampleGraphicModel::initDrag()
 void SampleGraphicModel::updateDrag(int frameMove)
 {
     int position = dragStartPosition + frameMove;
-    generateAndUploadVertices(position, position + lastWidth, lastLowPassFreq, lastHighPassFreq);
+    generateAndUploadVerticesToGPU(position, position + lastWidth, lastLowPassFreq, lastHighPassFreq);
 }
 
 void SampleGraphicModel::uploadVerticesToGpu()

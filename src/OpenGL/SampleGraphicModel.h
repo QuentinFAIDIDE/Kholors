@@ -19,7 +19,7 @@ class SampleGraphicModel : public TexturedModel
     juce::int64 getFramePosition();
     juce::int64 getFrameLength();
     void setColor(juce::Colour &);
-    void updatePropertiesAndUploadToGpu(std::shared_ptr<SamplePlayer> sp);
+    void loadVerticeData(std::shared_ptr<SamplePlayer> sp);
     std::vector<juce::Rectangle<float>> getPixelBounds(float viewPosition, float viewScale, float viewHeight);
 
   private:
@@ -27,7 +27,7 @@ class SampleGraphicModel : public TexturedModel
     int lastWidth;
     int getTextureIndex(int freqIndex, int timeIndex, int freqDuplicateShift, bool isLeftChannel);
 
-    void generateAndUploadVertices(float leftX, float rightX, float lowFreq, float highFreq);
+    void generateAndUploadVerticesToGPU(float leftX, float rightX, float lowFreq, float highFreq);
 
     void connectSquareFromVertexIds(size_t, size_t, size_t, size_t);
 
