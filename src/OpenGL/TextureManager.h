@@ -1,0 +1,105 @@
+#ifndef DEF_TEXTURE_MANAGER_HPP
+#define DEF_TEXTURE_MANAGER_HPP
+
+#include "../Audio/SamplePlayer.h"
+#include "juce_opengl/opengl/juce_gl.h"
+#include <memory>
+
+#define TEXTURE_MANAGER_HASH_LENGTH 1024
+
+class TextureManager
+{
+  public:
+    /**
+     * @brief      Gets a texture identifier if this audio buffer
+     *             already has been converted to a texture. Return nothing
+     *             if the buffer was never seen. If found, increment texture
+     *             users count.
+     *
+     * @param[in]  sp   reference to the sample player object that holds the audio buffer.
+     *
+     * @return     The texture identifier.
+     */
+    juce::Optional<GLint> getTextureIdentifier(std::shared_ptr<SamplePlayer> sp);
+
+    /**
+     * @brief      After the textured object was deleted, we ensure its texture
+     *             usage count is decremented so that it can be freed whenever reaching
+     *             zero.
+     *
+     * @param[in]  id    the identifier of the texture that the object had.
+     */
+    void decrementUsageCount(GLint);
+
+    /**
+     * @brief      Gets the texture data. To be called if getTextureIdentifier returned something.
+     *
+     * @param[in]  identifier  The identifier
+     *
+     * @return     The texture data.
+     */
+    std::shared_ptr<std::vector<float>> getTextureData(GLint identifier);
+
+    /**
+     * @brief      Gets the audio buffer corresponding the texture index.
+     *
+     * @param[in]  id    The identifier of the texture
+     *
+     * @return     The audio buffer (counted) reference.
+     */
+    BufferPtr getAudioBufferFromTextureIndex(GLint id);
+
+    /**
+     * @brief      Te be called when a texture was registered to openGL, will save the texture
+     *             identifier to share it, as well as raw texture data and sample audio for
+     *             identification purpose of forthcoming duplicated that needs to reuse the texture.
+     *
+     * @param[in]  index        The index
+     * @param[in]  textureData  The texture data
+     * @param[in]  sp           The new value
+     */
+    void setTexture(GLint index, std::shared_ptr<std::vector<float>> textureData, std::shared_ptr<SamplePlayer> sp);
+
+    /**
+     * @brief      Gets the texture data from identifier.
+     *
+     * @param[in]  id the open gl id that was return by getTextureIdentifier or passed to setTextureIdentifier
+     *
+     * @return     The texture data from identifier.
+     */
+    std::shared_ptr<std::vector<float>> getTextureDataFromIdentifier(GLint);
+
+  private:
+    /**
+     * @brief      free the texture resources for this texture id.
+     *
+     * @param[in]  id    The identifier
+     */
+    void freeTextureIdResources(GLint id);
+
+    /**
+     * @brief      Generate a hash of the data provided up to length.
+     *
+     * @param[in]  data    The data
+     * @param[in]  length  The length
+     *
+     * @return     a hash of the first length samples of the floats at data
+     */
+    size_t hashAudioChannel(const float *data, int length);
+
+    /**
+     * @brief      test if two audio buffer are equal on all channels
+     *
+     * @return     true if equal, false if not
+     */
+    bool areAudioBufferEqual(juce::AudioBuffer<float> &, juce::AudioBuffer<float> &);
+
+    // tells how many samples have that length. Used to quickly rule out
+    // that some sample is already stored here.
+    std::map<int, int> lengthCounts;
+
+    // bucket of textures based on their audio left channel hash
+    std::map<size_t, std::vector<GLint>> texturesPerHash;
+};
+
+#endif // DEF_TEXTURE_MANAGER_HPP

@@ -25,6 +25,13 @@ class SamplePlayer : public juce::PositionableAudioSource
     void setBuffer(BufferPtr, juce::dsp::FFT &);
     void setBuffer(BufferPtr, std::vector<float> &fftData);
 
+    /**
+     * @brief      Gets the buffer reference.
+     *
+     * @return     The buffer reference.
+     */
+    BufferPtr getBufferRef();
+
     // inherited from PositionableAudioSource
     juce::int64 getNextReadPosition() const override;
     void setNextReadPosition(juce::int64) override;
