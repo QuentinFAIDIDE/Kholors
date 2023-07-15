@@ -5,7 +5,7 @@ juce::Optional<GLint> TextureManager::getTextureIdentifier(std::shared_ptr<Sampl
     BufferPtr buffer = sp->getBufferRef();
 
     // if length is unique, directly return nothing
-    if (lengthCounts.find(buffer->getAudioSampleBuffer()->getNumSamples()) == lengthCounts.end())
+    if (texturesLengthCount.find(buffer->getAudioSampleBuffer()->getNumSamples()) == texturesLengthCount.end())
     {
         return juce::Optional<GLint>();
     }
@@ -21,14 +21,26 @@ juce::Optional<GLint> TextureManager::getTextureIdentifier(std::shared_ptr<Sampl
         return juce::Optional<GLint>();
     }
 
-    std::vector<GLint> audioBufferBucket = foundHash->second;
+    std::vector<GLint> audioBufferIdentifiersBucket = foundHash->second;
 
     // for each hash item iterate and test full equality
-    for (size_t i = 0; i < audioBufferBucket.size(); i++)
+    for (size_t i = 0; i < audioBufferIdentifiersBucket.size(); i++)
     {
-        juce::Optional<BufferPtr> bucketAudioBuffer = getAudioBufferFromTextureIndex(textu);
-        if (areAudioBufferEqual(buffer->getAudioSampleBuffer(), ))
+        BufferPtr bucketAudioBuffer = getAudioBufferFromTextureId(audioBufferIdentifiersBucket[i]);
+        if (bucketAudioBuffer.get() == nullptr)
+        {
+            std::cerr << "a TextureManager hash bucket had a GLint texture identifier for which no audio was found"
+                      << std::endl;
+            continue;
+        }
+
+        if (areAudioBufferEqual(*buffer->getAudioSampleBuffer(), *bucketAudioBuffer.get()->getAudioSampleBuffer()))
+        {
+            return audioBufferIdentifiersBucket[i];
+        }
     }
+
+    return juce::Optional<GLint>();
 }
 
 bool TextureManager::areAudioBufferEqual(juce::AudioBuffer<float> &a, juce::AudioBuffer<float> &b)
@@ -60,8 +72,28 @@ bool TextureManager::areAudioBufferEqual(juce::AudioBuffer<float> &a, juce::Audi
     return true;
 }
 
-BufferPtr TextureManager::getAudioBufferFromTextureIndex(GLint id)
+BufferPtr TextureManager::getAudioBufferFromTextureId(GLint id)
 {
+    auto textureSearchIterator = audioBufferTextureData.find(id);
+
+    if (textureSearchIterator == audioBufferTextureData.end())
+    {
+        return BufferPtr();
+    }
+
+    return textureSearchIterator->second->audioData;
+}
+
+std::shared_ptr<std::vector<float>> TextureManager::getTextureData(GLint identifier)
+{
+    auto textureSearchIterator = audioBufferTextureData.find(identifier);
+
+    if (textureSearchIterator == audioBufferTextureData.end())
+    {
+        return nullptr;
+    }
+
+    return textureSearchIterator->second->textureData;
 }
 
 size_t TextureManager::hashAudioChannel(const float *data, int length)
@@ -94,9 +126,88 @@ size_t TextureManager::hashAudioChannel(const float *data, int length)
     return seed;
 }
 
-void TextureManager::decrementUsageCount(GLint id)
+bool TextureManager::decrementUsageCount(GLint id)
 {
-    // if this GLint is in the count tables
-    // decrement it
-    // if count is zero, free this texture resources
+    auto textureSearchIterator = audioBufferTextureData.find(id);
+
+    if (textureSearchIterator == audioBufferTextureData.end())
+    {
+        std::cerr << "Warning: trying to decrement usage count of a texture id that doesn't exists" << std::endl;
+        return true;
+    }
+
+    textureSearchIterator->second->useCount--;
+
+    if (textureSearchIterator->second->useCount < 0)
+    {
+        std::cerr << "Warning: texture usage count went negative" << std::endl;
+        return true;
+    }
+
+    if (textureSearchIterator->second->useCount == 0)
+    {
+        clearTextureData(id);
+        return true;
+    }
+
+    return false;
+}
+
+void TextureManager::clearTextureData(GLint textureId)
+{
+    auto textureSearchIterator = audioBufferTextureData.find(textureId);
+
+    if (textureSearchIterator == audioBufferTextureData.end())
+    {
+        std::cerr << "Warning: trying to clear a texture id that doesn't exists" << std::endl;
+        return;
+    }
+
+    // first we need to remove the texture count per audio buffer length
+    auto audioBuffer = textureSearchIterator->second->audioData;
+    auto sampleLength = audioBuffer->getAudioSampleBuffer()->getNumSamples();
+
+    if (texturesLengthCount.find(sampleLength) == texturesLengthCount.end())
+    {
+        std::cerr << "Warning: texture to delete had no corresponding length count" << std::endl;
+    }
+
+    texturesLengthCount[sampleLength] = texturesLengthCount[sampleLength] - 1;
+    if (texturesLengthCount[sampleLength] <= 0)
+    {
+        texturesLengthCount.erase(sampleLength);
+    }
+
+    // then we remove the glint from the bucket corresponding to the hash
+    // compute hash
+    int hashingLength = juce::jmin(audioBuffer->getAudioSampleBuffer()->getNumSamples(), TEXTURE_MANAGER_HASH_LENGTH);
+    size_t hash = hashAudioChannel(audioBuffer->getAudioSampleBuffer()->getReadPointer(0), hashingLength);
+
+    // if no items for this hash, this sucks really hard
+    auto foundHash = texturesPerHash.find(hash);
+    if (foundHash == texturesPerHash.end())
+    {
+        std::cerr << "A texture to delete had no corresponding hash bucket!" << std::endl;
+    }
+    else
+    {
+        bool clearedIdFromBucket = false;
+        std::vector<GLint> audioBufferIdentifiersBucket = foundHash->second;
+        for (size_t i = 0; i < audioBufferIdentifiersBucket.size(); i++)
+        {
+            if (audioBufferIdentifiersBucket[i] == textureId)
+            {
+                audioBufferIdentifiersBucket.erase(audioBufferIdentifiersBucket.begin() + i);
+                clearedIdFromBucket = true;
+                break;
+            }
+        }
+        if (!clearedIdFromBucket)
+        {
+            std::cerr << "A texture to delete was not found in its hash bucket !!" << std::endl;
+        }
+    }
+
+    // finally we remove the structure with the texture data (note we already checked id exists in there)
+    audioBufferTextureData.erase(textureId);
 }

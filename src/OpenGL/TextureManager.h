@@ -7,6 +7,13 @@
 
 #define TEXTURE_MANAGER_HASH_LENGTH 1024
 
+struct AudioBufferTextureData
+{
+    std::shared_ptr<std::vector<float>> textureData;
+    BufferPtr audioData;
+    int useCount;
+};
+
 class TextureManager
 {
   public:
@@ -25,11 +32,15 @@ class TextureManager
     /**
      * @brief      After the textured object was deleted, we ensure its texture
      *             usage count is decremented so that it can be freed whenever reaching
-     *             zero.
+     *             zero. When usage count is lowered to zero, true is returned as to
+     *             signal the caller needs to free the texture resource. If this function
+     *             returns false, the texture should not be freed.
      *
      * @param[in]  id    the identifier of the texture that the object had.
+     *
+     * @return     True if the texture should be freed, false of not.
      */
-    void decrementUsageCount(GLint);
+    bool decrementUsageCount(GLint);
 
     /**
      * @brief      Gets the texture data. To be called if getTextureIdentifier returned something.
@@ -47,7 +58,7 @@ class TextureManager
      *
      * @return     The audio buffer (counted) reference.
      */
-    BufferPtr getAudioBufferFromTextureIndex(GLint id);
+    BufferPtr getAudioBufferFromTextureId(GLint id);
 
     /**
      * @brief      Te be called when a texture was registered to openGL, will save the texture
@@ -94,12 +105,23 @@ class TextureManager
      */
     bool areAudioBufferEqual(juce::AudioBuffer<float> &, juce::AudioBuffer<float> &);
 
-    // tells how many samples have that length. Used to quickly rule out
+    /**
+     * @brief      Clear all data for this texture id. To be called after
+     *             the count of texture usage fell to zero.
+     *
+     * @param[in]  textureId  The texture identifier
+     */
+    void clearTextureData(GLint textureId);
+
+    // tells how many textures audio have that length. Used to quickly rule out
     // that some sample is already stored here.
-    std::map<int, int> lengthCounts;
+    std::map<int, int> texturesLengthCount;
 
     // bucket of textures based on their audio left channel hash
     std::map<size_t, std::vector<GLint>> texturesPerHash;
+
+    // map from GLint texture ids to audio buffer and texture data
+    std::map<GLint, std::shared_ptr<AudioBufferTextureData>> audioBufferTextureData;
 };
 
 #endif // DEF_TEXTURE_MANAGER_HPP
