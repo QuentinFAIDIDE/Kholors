@@ -22,8 +22,8 @@ class SamplePlayer : public juce::PositionableAudioSource
     SamplePlayer(int64_t position);
     ~SamplePlayer();
     // this tells the SamplePlayer which audio buffer to use
-    void setBuffer(BufferPtr, juce::dsp::FFT &);
-    void setBuffer(BufferPtr, std::vector<float> &fftData);
+    void setBuffer(BufferPtr audioBufferRef, juce::dsp::FFT &fftFunctor);
+    void setBuffer(BufferPtr audioBufferRef, std::shared_ptr<std::vector<float>> fftData);
 
     /**
      * @brief      Gets the buffer reference.
@@ -88,7 +88,7 @@ class SamplePlayer : public juce::PositionableAudioSource
 
     // get number of fft blocks we use to cover the buffer
     int getNumFft() const;
-    std::vector<float> &getFftData();
+    std::shared_ptr<std::vector<float>> getFftData();
 
     // a lock to switch buffers and safely read in message thread (gui)
     juce::SpinLock playerMutex;
@@ -182,7 +182,7 @@ class SamplePlayer : public juce::PositionableAudioSource
     // LAYOUT: for each channel, for each fft over time, for each intensity at
     // freq. fft is size FREQVIEW_SAMPLE_FFT_SCOPE_SIZE and there are numFft. an
     // fft covers FREQVIEW_SAMPLE_FFT_SIZE audio samples.
-    std::vector<float> audioBufferFrequencies;
+    std::shared_ptr<std::vector<float>> audioBufferFrequencies;
     // how many blocks of FREQVIEW_SAMPLE_FFT_SIZE samples
     // for this buffer
     int numFft;

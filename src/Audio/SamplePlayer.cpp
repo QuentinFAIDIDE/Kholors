@@ -2,6 +2,7 @@
 #include "UnitConverter.h"
 
 #include <iterator>
+#include <memory>
 
 int SamplePlayer::maxFilterFreq = (AUDIO_FRAMERATE >> 1) - 1;
 
@@ -9,6 +10,9 @@ SamplePlayer::SamplePlayer(int64_t position)
     : editingPosition(position), bufferInitialPosition(0), bufferStart(0), bufferEnd(0), position(0),
       lowPassFreq(maxFilterFreq), highPassFreq(0), isSampleSet(false), numFft(0)
 {
+
+    audioBufferFrequencies = std::make_shared<std::vector<float>>();
+
     setDbGain(0.0f);
     setLowPassFreq(lowPassFreq);
     setHighPassFreq(highPassFreq);
@@ -114,8 +118,8 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
     isSampleSet = true;
 
     // allocate the buffer where the fft result will be stored
-    audioBufferFrequencies.resize(numChannels * numFft * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
-    std::fill(audioBufferFrequencies.begin(), audioBufferFrequencies.end(), 0.0f);
+    audioBufferFrequencies->resize(numChannels * numFft * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
+    std::fill(audioBufferFrequencies->begin(), audioBufferFrequencies->end(), 0.0f);
 
     // allocate a buffer to perform a fft (double size of fft)
     std::vector<float> inputOutputData((FREQVIEW_SAMPLE_FFT_SIZE) << 1, 0.0f);
@@ -171,7 +175,7 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
                 // map the index to magnify important frequencies
                 auto logIndexFft = UnitConverter::magnifyFftIndex(k);
 
-                audioBufferFrequencies[fftIndex + k] = inputOutputData[logIndexFft];
+                (*audioBufferFrequencies)[fftIndex + k] = inputOutputData[logIndexFft];
             }
         }
     }
@@ -182,7 +186,7 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
     setFadeOutLength((AUDIO_FRAMERATE / 1000.0) * SAMPLEPLAYER_DEFAULT_FADE_OUT_MS);
 }
 
-void SamplePlayer::setBuffer(BufferPtr targetBuffer, std::vector<float> &fftData)
+void SamplePlayer::setBuffer(BufferPtr targetBuffer, std::shared_ptr<std::vector<float>> fftData)
 {
     // get lock and change buffer
     const juce::SpinLock::ScopedLockType lock(playerMutex);
@@ -229,7 +233,7 @@ std::string SamplePlayer::getFileName()
     }
 }
 
-std::vector<float> &SamplePlayer::getFftData()
+std::shared_ptr<std::vector<float>> SamplePlayer::getFftData()
 {
     return audioBufferFrequencies;
 }
@@ -866,4 +870,9 @@ float SamplePlayer::getLowPassFreq()
 float SamplePlayer::getHighPassFreq()
 {
     return highPassFreq;
+}
+
+BufferPtr SamplePlayer::getBufferRef()
+{
+    return audioBufferRef;
 }

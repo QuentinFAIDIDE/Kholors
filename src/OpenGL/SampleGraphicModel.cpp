@@ -27,11 +27,11 @@ SampleGraphicModel::SampleGraphicModel(std::shared_ptr<SamplePlayer> sp, juce::C
     loadVerticeData(sp);
 
     // stored fft data we parse in SamplePlayer
-    std::vector<float> ffts = sp->getFftData();
+    std::shared_ptr<std::vector<float>> ffts = sp->getFftData();
     loadFftDataToTexture(ffts, sp->getNumFft(), sp->getBufferNumChannels());
 }
 
-void SampleGraphicModel::loadFftDataToTexture(std::vector<float> &ffts, int fftCount, int channelCount)
+void SampleGraphicModel::loadFftDataToTexture(std::shared_ptr<std::vector<float>> ffts, int fftCount, int channelCount)
 {
     numFfts = fftCount;
     numChannels = channelCount;
@@ -82,7 +82,7 @@ void SampleGraphicModel::loadFftDataToTexture(std::vector<float> &ffts, int fftC
             // as the frequencies in the ffts goes from low to high, we have
             // to flip the freqi to fetch the frequency and it's all good !
             intensity =
-                ffts[(ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + (FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - (freqiZoomed + 1))];
+                (*ffts)[(ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + (FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - (freqiZoomed + 1))];
             // increase contrast and map between 0 and 1
             intensity = UnitConverter::magnifyIntensity(intensity);
 
@@ -106,11 +106,11 @@ void SampleGraphicModel::loadFftDataToTexture(std::vector<float> &ffts, int fftC
             // get the value depending on if we got a second channel or not
             if (numChannels == 2)
             {
-                intensity = ffts[channelFftsShift + (ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + freqiZoomed];
+                intensity = (*ffts)[channelFftsShift + (ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + freqiZoomed];
             }
             else
             {
-                intensity = ffts[(ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + freqiZoomed];
+                intensity = (*ffts)[(ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + freqiZoomed];
             }
             intensity = UnitConverter::magnifyIntensity(intensity);
 

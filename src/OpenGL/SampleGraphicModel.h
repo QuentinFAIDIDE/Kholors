@@ -41,7 +41,7 @@ class SampleGraphicModel : public TexturedModel
      * @param fftCount     How many fft this array contains.
      * @param channelCount How many channels this array contains.
      */
-    void loadFftDataToTexture(std::vector<float> &ffts, int fftCount, int channelCount);
+    void loadFftDataToTexture(std::shared_ptr<std::vector<float>> ffts, int fftCount, int channelCount);
 
     int numFfts;
     int numChannels;

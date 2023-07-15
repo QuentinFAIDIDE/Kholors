@@ -43,15 +43,6 @@ class TextureManager
     bool decrementUsageCount(GLint);
 
     /**
-     * @brief      Gets the texture data. To be called if getTextureIdentifier returned something.
-     *
-     * @param[in]  identifier  The identifier
-     *
-     * @return     The texture data.
-     */
-    std::shared_ptr<std::vector<float>> getTextureData(GLint identifier);
-
-    /**
      * @brief      Gets the audio buffer corresponding the texture index.
      *
      * @param[in]  id    The identifier of the texture
@@ -59,6 +50,15 @@ class TextureManager
      * @return     The audio buffer (counted) reference.
      */
     BufferPtr getAudioBufferFromTextureId(GLint id);
+
+    /**
+     * @brief      Gets the texture data from identifier.
+     *
+     * @param[in]  id the open gl id that was return by getTextureIdentifier or passed to setTextureIdentifier
+     *
+     * @return     The texture data from identifier.
+     */
+    std::shared_ptr<std::vector<float>> getTextureDataFromId(GLint);
 
     /**
      * @brief      Te be called when a texture was registered to openGL, will save the texture
@@ -72,13 +72,10 @@ class TextureManager
     void setTexture(GLint index, std::shared_ptr<std::vector<float>> textureData, std::shared_ptr<SamplePlayer> sp);
 
     /**
-     * @brief      Gets the texture data from identifier.
-     *
-     * @param[in]  id the open gl id that was return by getTextureIdentifier or passed to setTextureIdentifier
-     *
-     * @return     The texture data from identifier.
+     * @brief      Declares that a texture id was used in a new opengl object.
+     *             This increments usage count.
      */
-    std::shared_ptr<std::vector<float>> getTextureDataFromIdentifier(GLint);
+    void declareTextureUsage(GLint textureId);
 
   private:
     /**

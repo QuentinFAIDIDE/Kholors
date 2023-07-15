@@ -1,4 +1,5 @@
 #include "TextureManager.h"
+#include <memory>
 
 juce::Optional<GLint> TextureManager::getTextureIdentifier(std::shared_ptr<SamplePlayer> sp)
 {
@@ -84,7 +85,7 @@ BufferPtr TextureManager::getAudioBufferFromTextureId(GLint id)
     return textureSearchIterator->second->audioData;
 }
 
-std::shared_ptr<std::vector<float>> TextureManager::getTextureData(GLint identifier)
+std::shared_ptr<std::vector<float>> TextureManager::getTextureDataFromId(GLint identifier)
 {
     auto textureSearchIterator = audioBufferTextureData.find(identifier);
 
@@ -210,4 +211,58 @@ void TextureManager::clearTextureData(GLint textureId)
 
     // finally we remove the structure with the texture data (note we already checked id exists in there)
     audioBufferTextureData.erase(textureId);
+}
+
+void TextureManager::setTexture(GLint textureId, std::shared_ptr<std::vector<float>> textureData,
+                                std::shared_ptr<SamplePlayer> sp)
+{
+    // increments textureLength count
+    int length = sp->getBufferRef()->getAudioSampleBuffer()->getNumSamples();
+    if (texturesLengthCount.find(length) == texturesLengthCount.end())
+    {
+        texturesLengthCount[length] = 1;
+    }
+    else
+    {
+        texturesLengthCount[length]++;
+    }
+
+    // add texture identifier to audio hash bucket
+    int hashingLength =
+        juce::jmin(sp->getBufferRef()->getAudioSampleBuffer()->getNumSamples(), TEXTURE_MANAGER_HASH_LENGTH);
+    size_t hash = hashAudioChannel(sp->getBufferRef()->getAudioSampleBuffer()->getReadPointer(0), hashingLength);
+    // if no items for this hash, create a bucket
+    auto foundHash = texturesPerHash.find(hash);
+    if (foundHash == texturesPerHash.end())
+    {
+        std::vector<GLint> bucket;
+        bucket.push_back(textureId);
+        texturesPerHash[hash] = bucket;
+    }
+    // if a bucket exists, append to it
+    else
+    {
+        foundHash->second.push_back(textureId);
+    }
+
+    // populate the struct with texture data and save it
+    auto newTextureData = std::make_shared<AudioBufferTextureData>();
+    newTextureData->audioData = sp->getBufferRef();
+    newTextureData->textureData = sp->getFftData();
+    newTextureData->useCount = 1;
+
+    audioBufferTextureData.insert(std::pair<GLint, std::shared_ptr<AudioBufferTextureData>>(textureId, newTextureData));
+}
+
+void TextureManager::declareTextureUsage(GLint textureId)
+{
+    auto textureSearchIterator = audioBufferTextureData.find(textureId);
+
+    if (textureSearchIterator == audioBufferTextureData.end())
+    {
+        std::cerr << "Warning: trying to increment count for a texture id that doesn't exists" << std::endl;
+        return;
+    }
+
+    textureSearchIterator->second->useCount++;
 }
