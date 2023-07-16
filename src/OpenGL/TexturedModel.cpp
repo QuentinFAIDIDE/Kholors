@@ -50,18 +50,22 @@ void TexturedModel::registerGlObjects()
         std::cerr << "got following open gl error after registering vertices data: " << err << std::endl;
     }
 
-    // register the texture
-    glGenTextures(1, &tbo);
-    glBindTexture(GL_TEXTURE_2D, tbo);
-    // set the texture wrapping
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    // set the filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // send the texture to the gpu
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA, textureWidth, textureHeight, 0, GL_RGBA, GL_FLOAT,
-                 texture.data());
+    if (!reuseTexture)
+    {
+        // register the texture
+        glGenTextures(1, &tbo);
+        glBindTexture(GL_TEXTURE_2D, tbo);
+        // set the texture wrapping
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        // set the filtering parameters
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        // send the texture to the gpu
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA, textureWidth, textureHeight, 0, GL_RGBA, GL_FLOAT,
+                     texture->data());
+        textureManager->setTexture(tbo, displayedSample);
+    }
 
     while ((err = glGetError()) != GL_NO_ERROR)
     {
@@ -106,7 +110,12 @@ void TexturedModel::disable()
         glDeleteVertexArrays(1, &vao);
         glDeleteBuffers(1, &vbo);
         glDeleteBuffers(1, &ebo);
-        glDeleteTextures(1, &tbo);
+
+        bool shouldFreeTexture = textureManager->decrementUsageCount(tbo);
+        if (shouldFreeTexture)
+        {
+            glDeleteTextures(1, &tbo);
+        }
     }
 }
 

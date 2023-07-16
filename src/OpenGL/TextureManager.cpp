@@ -1,14 +1,14 @@
 #include "TextureManager.h"
 #include <memory>
 
-juce::Optional<GLint> TextureManager::getTextureIdentifier(std::shared_ptr<SamplePlayer> sp)
+juce::Optional<GLuint> TextureManager::getTextureIdentifier(std::shared_ptr<SamplePlayer> sp)
 {
     BufferPtr buffer = sp->getBufferRef();
 
     // if length is unique, directly return nothing
     if (texturesLengthCount.find(buffer->getAudioSampleBuffer()->getNumSamples()) == texturesLengthCount.end())
     {
-        return juce::Optional<GLint>();
+        return juce::Optional<GLuint>();
     }
 
     // compute hash
@@ -19,10 +19,10 @@ juce::Optional<GLint> TextureManager::getTextureIdentifier(std::shared_ptr<Sampl
     auto foundHash = texturesPerHash.find(hash);
     if (foundHash == texturesPerHash.end())
     {
-        return juce::Optional<GLint>();
+        return juce::Optional<GLuint>();
     }
 
-    std::vector<GLint> audioBufferIdentifiersBucket = foundHash->second;
+    std::vector<GLuint> audioBufferIdentifiersBucket = foundHash->second;
 
     // for each hash item iterate and test full equality
     for (size_t i = 0; i < audioBufferIdentifiersBucket.size(); i++)
@@ -30,7 +30,7 @@ juce::Optional<GLint> TextureManager::getTextureIdentifier(std::shared_ptr<Sampl
         BufferPtr bucketAudioBuffer = getAudioBufferFromTextureId(audioBufferIdentifiersBucket[i]);
         if (bucketAudioBuffer.get() == nullptr)
         {
-            std::cerr << "a TextureManager hash bucket had a GLint texture identifier for which no audio was found"
+            std::cerr << "a TextureManager hash bucket had a GLuint texture identifier for which no audio was found"
                       << std::endl;
             continue;
         }
@@ -41,7 +41,7 @@ juce::Optional<GLint> TextureManager::getTextureIdentifier(std::shared_ptr<Sampl
         }
     }
 
-    return juce::Optional<GLint>();
+    return juce::Optional<GLuint>();
 }
 
 bool TextureManager::areAudioBufferEqual(juce::AudioBuffer<float> &a, juce::AudioBuffer<float> &b)
@@ -73,7 +73,7 @@ bool TextureManager::areAudioBufferEqual(juce::AudioBuffer<float> &a, juce::Audi
     return true;
 }
 
-BufferPtr TextureManager::getAudioBufferFromTextureId(GLint id)
+BufferPtr TextureManager::getAudioBufferFromTextureId(GLuint id)
 {
     auto textureSearchIterator = audioBufferTextureData.find(id);
 
@@ -85,7 +85,7 @@ BufferPtr TextureManager::getAudioBufferFromTextureId(GLint id)
     return textureSearchIterator->second->audioData;
 }
 
-std::shared_ptr<std::vector<float>> TextureManager::getTextureDataFromId(GLint identifier)
+std::shared_ptr<std::vector<float>> TextureManager::getTextureDataFromId(GLuint identifier)
 {
     auto textureSearchIterator = audioBufferTextureData.find(identifier);
 
@@ -127,7 +127,7 @@ size_t TextureManager::hashAudioChannel(const float *data, int length)
     return seed;
 }
 
-bool TextureManager::decrementUsageCount(GLint id)
+bool TextureManager::decrementUsageCount(GLuint id)
 {
     auto textureSearchIterator = audioBufferTextureData.find(id);
 
@@ -154,7 +154,7 @@ bool TextureManager::decrementUsageCount(GLint id)
     return false;
 }
 
-void TextureManager::clearTextureData(GLint textureId)
+void TextureManager::clearTextureData(GLuint textureId)
 {
     auto textureSearchIterator = audioBufferTextureData.find(textureId);
 
@@ -193,7 +193,7 @@ void TextureManager::clearTextureData(GLint textureId)
     else
     {
         bool clearedIdFromBucket = false;
-        std::vector<GLint> audioBufferIdentifiersBucket = foundHash->second;
+        std::vector<GLuint> audioBufferIdentifiersBucket = foundHash->second;
         for (size_t i = 0; i < audioBufferIdentifiersBucket.size(); i++)
         {
             if (audioBufferIdentifiersBucket[i] == textureId)
@@ -213,7 +213,7 @@ void TextureManager::clearTextureData(GLint textureId)
     audioBufferTextureData.erase(textureId);
 }
 
-void TextureManager::setTexture(GLint textureId, std::shared_ptr<SamplePlayer> sp)
+void TextureManager::setTexture(GLuint textureId, std::shared_ptr<SamplePlayer> sp)
 {
     // increments textureLength count
     int length = sp->getBufferRef()->getAudioSampleBuffer()->getNumSamples();
@@ -234,7 +234,7 @@ void TextureManager::setTexture(GLint textureId, std::shared_ptr<SamplePlayer> s
     auto foundHash = texturesPerHash.find(hash);
     if (foundHash == texturesPerHash.end())
     {
-        std::vector<GLint> bucket;
+        std::vector<GLuint> bucket;
         bucket.push_back(textureId);
         texturesPerHash[hash] = bucket;
     }
@@ -250,10 +250,11 @@ void TextureManager::setTexture(GLint textureId, std::shared_ptr<SamplePlayer> s
     newTextureData->textureData = sp->getFftData();
     newTextureData->useCount = 1;
 
-    audioBufferTextureData.insert(std::pair<GLint, std::shared_ptr<AudioBufferTextureData>>(textureId, newTextureData));
+    audioBufferTextureData.insert(
+        std::pair<GLuint, std::shared_ptr<AudioBufferTextureData>>(textureId, newTextureData));
 }
 
-void TextureManager::declareTextureUsage(GLint textureId)
+void TextureManager::declareTextureUsage(GLuint textureId)
 {
     auto textureSearchIterator = audioBufferTextureData.find(textureId);
 

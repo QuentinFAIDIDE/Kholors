@@ -3,6 +3,7 @@
 #include "../Config.h"
 #include "Vertex.h"
 #include <algorithm>
+#include <memory>
 
 using namespace juce::gl;
 
@@ -10,6 +11,10 @@ using namespace juce::gl;
 
 SampleGraphicModel::SampleGraphicModel(std::shared_ptr<SamplePlayer> sp, juce::Colour col)
 {
+    reuseTexture = false;
+
+    displayedSample = sp;
+
     if (sp == nullptr || !sp->hasBeenInitialized())
     {
         std::cerr << "Warning: trying to display unitialized sample !" << std::endl;
@@ -19,23 +24,22 @@ SampleGraphicModel::SampleGraphicModel(std::shared_ptr<SamplePlayer> sp, juce::C
     loaded = false;
     disabled = false;
 
-    // for now, all sample are simply rectangles (two triangles)
-    // on which we map the fft texture.
-
     color = col;
 
     loadVerticeData(sp);
 
-    // stored fft data we parse in SamplePlayer
+    // try to see if this texture already exists or not in texture manager
+    auto optionalTextureId = textureManager->getTextureIdentifier(sp);
+    reuseTexture = optionalTextureId.hasValue();
+    if (reuseTexture)
+    {
+        tbo = *optionalTextureId;
+        texture = textureManager->getTextureDataFromId(tbo);
+        textureManager->declareTextureUsage(tbo);
+    }
+
+    // set a values related to fft data navigation
     std::shared_ptr<std::vector<float>> ffts = sp->getFftData();
-    loadFftDataToTexture(ffts, sp->getNumFft(), sp->getBufferNumChannels());
-}
-
-void SampleGraphicModel::loadFftDataToTexture(std::shared_ptr<std::vector<float>> ffts, int fftCount, int channelCount)
-{
-    numFfts = fftCount;
-    numChannels = channelCount;
-
     // the texture scaling in opengl use either manhatan distance or linear sum
     // of neigbouring pixels. So as we have less pixel over time than pixel over
     // frequencies, a glitch appear and the values leak to the sides.
@@ -43,11 +47,32 @@ void SampleGraphicModel::loadFftDataToTexture(std::shared_ptr<std::vector<float>
     // If this is raised too high, this can blow up the GPU memory real fast.
     // If you change this value, make sure to stress test the loading a bit on shitty GPUs.
     horizontalScaleMultiplier = 4;
+    numFfts = sp->getNumFft();
+    numChannels = sp->getBufferNumChannels();
+    textureHeight = 2 * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE;
+    textureWidth = numFfts * horizontalScaleMultiplier;
+    channelTextureShift = textureWidth * (textureHeight >> 1) * 4;
+
+    if (!reuseTexture)
+    {
+        // strangely enough, passing the initializer list is required otherwise the vector
+        // object is broken
+        texture = std::make_shared<std::vector<float>>(textureHeight * textureWidth * 4);
+        // reserve the size of the displayed texture
+        texture->resize(textureHeight * textureWidth * 4); // 4 is for rgba values
+        std::fill(texture->begin(), texture->end(), 1.0f);
+
+        loadFftDataToTexture(ffts, numFfts, numChannels);
+    }
+}
+
+void SampleGraphicModel::loadFftDataToTexture(std::shared_ptr<std::vector<float>> ffts, int fftCount, int channelCount)
+{
 
     // NOTE: we store the texture colors (fft intensity) as RGBA.
     // This implies some harsh data duplication, but openGL
     // requires texture lines to be 4bytes aligned and they
-    // end up in this format anyway down the line.
+    // end up compressed and in this format anyway down the line.
     // We won't put the color in as we will mix it later in the
     // opengl shader with the vertex color.
 
@@ -57,18 +82,11 @@ void SampleGraphicModel::loadFftDataToTexture(std::shared_ptr<std::vector<float>
     // data start from bottom left corner and fill the row left to right, then
     // all the rows above up to the final top right corner.
 
-    // reserve the size of the displayed texture
-    textureHeight = 2 * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE;
-    textureWidth = numFfts * horizontalScaleMultiplier;
-    texture.resize(textureHeight * textureWidth * 4); // 4 is for rgba values
-    std::fill(texture.begin(), texture.end(), 1.0f);
-
     float intensity = 0.0f;
 
     int texturePos = 0;
     int freqiZoomed = 0;
 
-    channelTextureShift = textureWidth * (textureHeight >> 1) * 4;
     int channelFftsShift = numFfts * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE;
 
     // for each fourier transform over time
@@ -90,10 +108,10 @@ void SampleGraphicModel::loadFftDataToTexture(std::shared_ptr<std::vector<float>
             {
                 texturePos = getTextureIndex(freqi, ffti, nDuplicate, true);
                 // now we write the intensity into the texture
-                texture[texturePos] = 1.0f;
-                texture[texturePos + 1] = 1.0f;
-                texture[texturePos + 2] = 1.0f;
-                texture[texturePos + 3] = intensity;
+                texture->data()[texturePos] = 1.0f;
+                texture->data()[texturePos + 1] = 1.0f;
+                texture->data()[texturePos + 2] = 1.0f;
+                texture->data()[texturePos + 3] = intensity;
             }
 
             // now we write the other channel on bottom part (if not exists, write
@@ -117,10 +135,10 @@ void SampleGraphicModel::loadFftDataToTexture(std::shared_ptr<std::vector<float>
             for (int nDuplicate = 0; nDuplicate < horizontalScaleMultiplier; nDuplicate++)
             {
                 texturePos = getTextureIndex(freqi, ffti, nDuplicate, false);
-                texture[texturePos] = 1.0f;
-                texture[texturePos + 1] = 1.0f;
-                texture[texturePos + 2] = 1.0f;
-                texture[texturePos + 3] = intensity;
+                texture->data()[texturePos] = 1.0f;
+                texture->data()[texturePos + 1] = 1.0f;
+                texture->data()[texturePos + 2] = 1.0f;
+                texture->data()[texturePos + 3] = intensity;
             }
         }
     }
@@ -300,7 +318,7 @@ float SampleGraphicModel::textureIntensity(float x, float y)
     {
         freqIndexNormalised = (y - 0.5) * 2 * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE;
     }
-    return texture[getTextureIndex(freqIndexNormalised, timeIndex, 1, y < 0.5) + 3];
+    return texture->data()[getTextureIndex(freqIndexNormalised, timeIndex, 1, y < 0.5) + 3];
 }
 
 int SampleGraphicModel::isFilteredArea(float y)

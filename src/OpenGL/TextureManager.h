@@ -27,7 +27,7 @@ class TextureManager
      *
      * @return     The texture identifier.
      */
-    juce::Optional<GLint> getTextureIdentifier(std::shared_ptr<SamplePlayer> sp);
+    juce::Optional<GLuint> getTextureIdentifier(std::shared_ptr<SamplePlayer> sp);
 
     /**
      * @brief      After the textured object was deleted, we ensure its texture
@@ -40,7 +40,7 @@ class TextureManager
      *
      * @return     True if the texture should be freed, false of not.
      */
-    bool decrementUsageCount(GLint);
+    bool decrementUsageCount(GLuint);
 
     /**
      * @brief      Gets the audio buffer corresponding the texture index.
@@ -49,7 +49,7 @@ class TextureManager
      *
      * @return     The audio buffer (counted) reference.
      */
-    BufferPtr getAudioBufferFromTextureId(GLint id);
+    BufferPtr getAudioBufferFromTextureId(GLuint id);
 
     /**
      * @brief      Gets the texture data from identifier.
@@ -58,7 +58,7 @@ class TextureManager
      *
      * @return     The texture data from identifier.
      */
-    std::shared_ptr<std::vector<float>> getTextureDataFromId(GLint);
+    std::shared_ptr<std::vector<float>> getTextureDataFromId(GLuint);
 
     /**
      * @brief      Te be called when a texture was registered to openGL, will save the texture
@@ -69,13 +69,13 @@ class TextureManager
      * @param[in]  textureData  The texture data
      * @param[in]  sp           The new value
      */
-    void setTexture(GLint index, std::shared_ptr<SamplePlayer> sp);
+    void setTexture(GLuint index, std::shared_ptr<SamplePlayer> sp);
 
     /**
      * @brief      Declares that a texture id was used in a new opengl object.
      *             This increments usage count.
      */
-    void declareTextureUsage(GLint textureId);
+    void declareTextureUsage(GLuint textureId);
 
   private:
     /**
@@ -83,7 +83,7 @@ class TextureManager
      *
      * @param[in]  id    The identifier
      */
-    void freeTextureIdResources(GLint id);
+    void freeTextureIdResources(GLuint id);
 
     /**
      * @brief      Generate a hash of the data provided up to length.
@@ -108,17 +108,17 @@ class TextureManager
      *
      * @param[in]  textureId  The texture identifier
      */
-    void clearTextureData(GLint textureId);
+    void clearTextureData(GLuint textureId);
 
     // tells how many textures audio have that length. Used to quickly rule out
     // that some sample is already stored here.
     std::map<int, int> texturesLengthCount;
 
     // bucket of textures based on their audio left channel hash
-    std::map<size_t, std::vector<GLint>> texturesPerHash;
+    std::map<size_t, std::vector<GLuint>> texturesPerHash;
 
-    // map from GLint texture ids to audio buffer and texture data
-    std::map<GLint, std::shared_ptr<AudioBufferTextureData>> audioBufferTextureData;
+    // map from GLuint texture ids to audio buffer and texture data
+    std::map<GLuint, std::shared_ptr<AudioBufferTextureData>> audioBufferTextureData;
 };
 
 #endif // DEF_TEXTURE_MANAGER_HPP

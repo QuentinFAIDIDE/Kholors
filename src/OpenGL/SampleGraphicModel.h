@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "../Audio/SamplePlayer.h"
+#include "TextureManager.h"
 #include "TexturedModel.h"
 #include "Vertex.h"
 #include "juce_opengl/opengl/juce_gl.h"

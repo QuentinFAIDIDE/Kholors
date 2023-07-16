@@ -2,6 +2,8 @@
 #define DEF_TEXTURED_MODEL
 
 #include "GraphicModel.h"
+#include "TextureManager.h"
+#include <memory>
 
 class TexturedModel : public GraphicModel
 {
@@ -23,10 +25,19 @@ class TexturedModel : public GraphicModel
   protected:
     int textureWidth;
     int textureHeight;
-    std::vector<float> texture;
+    std::shared_ptr<std::vector<float>> texture;
     std::vector<unsigned char> textureBytes;
     // texture buffer object identifier
     GLuint tbo;
+
+    // reference to the sample we want to display
+    std::shared_ptr<SamplePlayer> displayedSample;
+
+    bool reuseTexture;
+
+    // a shared reference to an object that helps reusing textures so that duplicates
+    // or same-file reimport share the same texture.
+    juce::SharedResourcePointer<TextureManager> textureManager;
 };
 
 #endif
