@@ -213,8 +213,7 @@ void TextureManager::clearTextureData(GLint textureId)
     audioBufferTextureData.erase(textureId);
 }
 
-void TextureManager::setTexture(GLint textureId, std::shared_ptr<std::vector<float>> textureData,
-                                std::shared_ptr<SamplePlayer> sp)
+void TextureManager::setTexture(GLint textureId, std::shared_ptr<SamplePlayer> sp)
 {
     // increments textureLength count
     int length = sp->getBufferRef()->getAudioSampleBuffer()->getNumSamples();

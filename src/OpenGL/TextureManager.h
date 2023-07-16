@@ -69,7 +69,7 @@ class TextureManager
      * @param[in]  textureData  The texture data
      * @param[in]  sp           The new value
      */
-    void setTexture(GLint index, std::shared_ptr<std::vector<float>> textureData, std::shared_ptr<SamplePlayer> sp);
+    void setTexture(GLint index, std::shared_ptr<SamplePlayer> sp);
 
     /**
      * @brief      Declares that a texture id was used in a new opengl object.
