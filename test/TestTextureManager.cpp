@@ -70,8 +70,8 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    textureManager.setTexture(10, sp1);
-    textureManager.setTexture(11, sp2);
+    textureManager.setTexture(10, sp1, sp1->getFftData());
+    textureManager.setTexture(11, sp2, sp1->getFftData());
 
     if (!textureManager.getTextureIdentifier(sp1).hasValue() || *textureManager.getTextureIdentifier(sp1) != 10)
     {
