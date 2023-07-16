@@ -64,7 +64,7 @@ void TexturedModel::registerGlObjects()
         // send the texture to the gpu
         glTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA, textureWidth, textureHeight, 0, GL_RGBA, GL_FLOAT,
                      texture->data());
-        textureManager->setTexture(tbo, displayedSample);
+        textureManager->setTexture(tbo, displayedSample, texture);
     }
 
     while ((err = glGetError()) != GL_NO_ERROR)

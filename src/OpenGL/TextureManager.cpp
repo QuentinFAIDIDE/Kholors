@@ -213,7 +213,8 @@ void TextureManager::clearTextureData(GLuint textureId)
     audioBufferTextureData.erase(textureId);
 }
 
-void TextureManager::setTexture(GLuint textureId, std::shared_ptr<SamplePlayer> sp)
+void TextureManager::setTexture(GLuint textureId, std::shared_ptr<SamplePlayer> sp,
+                                std::shared_ptr<std::vector<float>> textureData)
 {
     // increments textureLength count
     int length = sp->getBufferRef()->getAudioSampleBuffer()->getNumSamples();
@@ -247,7 +248,7 @@ void TextureManager::setTexture(GLuint textureId, std::shared_ptr<SamplePlayer> 
     // populate the struct with texture data and save it
     auto newTextureData = std::make_shared<AudioBufferTextureData>();
     newTextureData->audioData = sp->getBufferRef();
-    newTextureData->textureData = sp->getFftData();
+    newTextureData->textureData = textureData;
     newTextureData->useCount = 1;
 
     audioBufferTextureData.insert(

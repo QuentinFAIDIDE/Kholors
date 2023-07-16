@@ -57,13 +57,20 @@ SampleGraphicModel::SampleGraphicModel(std::shared_ptr<SamplePlayer> sp, juce::C
     {
         // strangely enough, passing the initializer list is required otherwise the vector
         // object is broken
-        texture = std::make_shared<std::vector<float>>(textureHeight * textureWidth * 4);
+        texture = std::make_shared<std::vector<float>>();
         // reserve the size of the displayed texture
         texture->resize(textureHeight * textureWidth * 4); // 4 is for rgba values
         std::fill(texture->begin(), texture->end(), 1.0f);
 
         loadFftDataToTexture(ffts, numFfts, numChannels);
     }
+
+    std::cout << "texture size: " << texture->size() << std::endl;
+    std::cout << "numFfts: " << numFfts << std::endl;
+    std::cout << "numChannels: " << numChannels << std::endl;
+    std::cout << "textureHeight: " << textureHeight << std::endl;
+    std::cout << "textureWidth: " << textureWidth << std::endl;
+    std::cout << "channelTextureShift: " << channelTextureShift << std::endl;
 }
 
 void SampleGraphicModel::loadFftDataToTexture(std::shared_ptr<std::vector<float>> ffts, int fftCount, int channelCount)
@@ -274,7 +281,6 @@ void SampleGraphicModel::updateDrag(int frameMove)
 
 void SampleGraphicModel::uploadVerticesToGpu()
 {
-
     const juce::ScopedLock lock(loadingMutex);
 
     glBindVertexArray(vao);

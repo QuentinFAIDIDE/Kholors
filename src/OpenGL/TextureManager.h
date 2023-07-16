@@ -65,11 +65,11 @@ class TextureManager
      *             identifier to share it, as well as raw texture data and sample audio for
      *             identification purpose of forthcoming duplicated that needs to reuse the texture.
      *
-     * @param[in]  index        The index
-     * @param[in]  textureData  The texture data
-     * @param[in]  sp           The new value
+     * @param[in]  index        Texture index assigned by openGL
+     * @param[in]  sp           Pointer for the displayed SamplePlayer
+     * @param[in]  textureData  The texture data (RGBA one that is sent to GPU)
      */
-    void setTexture(GLuint index, std::shared_ptr<SamplePlayer> sp);
+    void setTexture(GLuint index, std::shared_ptr<SamplePlayer> sp, std::shared_ptr<std::vector<float>> textureData);
 
     /**
      * @brief      Declares that a texture id was used in a new opengl object.
