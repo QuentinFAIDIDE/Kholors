@@ -11,8 +11,8 @@ using namespace juce::gl;
  Class responsible for loading the default sample alpha mark
  that is mixed with the displayed fft result.
  Note that we didn't rely on juce's code, mostly because we want to micromanage
- texture compression and multiple layers of textures as it's
- a critical bottleneck.
+ texture compression, mipmaps and layers of textures as it's
+ a critical bottleneck (for gpu with few memory).
  */
 class AlphaMaskTextureLoader
 {

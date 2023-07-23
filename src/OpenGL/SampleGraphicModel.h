@@ -28,7 +28,8 @@ class SampleGraphicModel : public TexturedModel
     int lastWidth;
     int getTextureIndex(int freqIndex, int timeIndex, int freqDuplicateShift, bool isLeftChannel);
 
-    void generateAndUploadVerticesToGPU(float leftX, float rightX, float lowFreq, float highFreq);
+    void generateAndUploadVerticesToGPU(float leftX, float rightX, float lowFreq, float highFreq, float fadeInFrames,
+                                        float fadeOutFrames);
 
     void connectSquareFromVertexIds(size_t, size_t, size_t, size_t);
 
@@ -50,8 +51,19 @@ class SampleGraphicModel : public TexturedModel
     juce::Colour color;
     float lastLowPassFreq, lastHighPassFreq;
     int horizontalScaleMultiplier;
-    // the position between 0 and 1 of samplePlayer startPosition and endPosition relative to audio buffer
-    float startPositionNormalized, endPositionNormalised;
+    float lastFadeInFrameLength, lastFadeOutFrameLength;
+
+    // NOTE: the sample can be moved inside their audio buffer so their texture
+    // position can change. On top of that, there is a fade in and fade out
+    // length that we will reflect on displayed samples by fading colors to transparent
+    // at the start and end of each samples proportional to fade length.
+
+    // position between 0 and 1 of samplePlayer startPosition and endPosition relative to audio buffer
+    float bufferStartPosRatio, bufferEndPosRatio;
+
+    // audio buffer position between 0 and 1 start and end position where it's not ongoing fade in or fade out gain
+    // ramps
+    float bufferStartPosRatioAfterFadeIn, bufferEndPosRatioBeforeFadeOut;
 };
 
 #endif // DEF_SAMPLE_GRAPHIC_MODEL

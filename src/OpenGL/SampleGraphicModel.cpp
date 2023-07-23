@@ -64,13 +64,6 @@ SampleGraphicModel::SampleGraphicModel(std::shared_ptr<SamplePlayer> sp, juce::C
 
         loadFftDataToTexture(ffts, numFfts, numChannels);
     }
-
-    std::cout << "texture size: " << texture->size() << std::endl;
-    std::cout << "numFfts: " << numFfts << std::endl;
-    std::cout << "numChannels: " << numChannels << std::endl;
-    std::cout << "textureHeight: " << textureHeight << std::endl;
-    std::cout << "textureWidth: " << textureWidth << std::endl;
-    std::cout << "channelTextureShift: " << channelTextureShift << std::endl;
 }
 
 void SampleGraphicModel::loadFftDataToTexture(std::shared_ptr<std::vector<float>> ffts, int fftCount, int channelCount)
@@ -154,20 +147,26 @@ void SampleGraphicModel::loadFftDataToTexture(std::shared_ptr<std::vector<float>
 void SampleGraphicModel::loadVerticeData(std::shared_ptr<SamplePlayer> sp)
 {
 
-    startPositionNormalized = float(sp->getBufferStart()) / float(sp->getTotalLength());
-    endPositionNormalised = float(sp->getBufferEnd()) / float(sp->getTotalLength());
+    bufferStartPosRatio = float(sp->getBufferStart()) / float(sp->getTotalLength());
+    bufferEndPosRatio = float(sp->getBufferEnd()) / float(sp->getTotalLength());
+
+    bufferStartPosRatioAfterFadeIn = float(sp->getBufferStart() + sp->getFadeInLength()) / float(sp->getTotalLength());
+    bufferEndPosRatioBeforeFadeOut = float(sp->getBufferEnd() - sp->getFadeOutLength()) / float(sp->getTotalLength());
 
     float leftX = float(sp->getEditingPosition());
     float rightX = leftX + float(sp->getLength());
 
     lastLowPassFreq = sp->getLowPassFreq();
     lastHighPassFreq = sp->getHighPassFreq();
+    lastFadeInFrameLength = sp->getFadeInLength();
+    lastFadeOutFrameLength = sp->getFadeOutLength();
 
-    generateAndUploadVerticesToGPU(leftX, rightX, lastLowPassFreq, lastHighPassFreq);
+    generateAndUploadVerticesToGPU(leftX, rightX, lastLowPassFreq, lastHighPassFreq, sp->getFadeInLength(),
+                                   sp->getFadeOutLength());
 }
 
 void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float rightX, float lowPassFreq,
-                                                        float highPassFreq)
+                                                        float highPassFreq, float fadeInFrames, float fadeOutFrames)
 {
 
     vertices.reserve(8);
@@ -180,48 +179,105 @@ void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float right
     float halfLowPassPos = lowPassPositionRatio / 2.0;
     float halfHighPassPos = highPassPositionRatio / 2.0;
 
+    // NOTE: each vertice data is 2 position values, 4 colors values, and 2 texture position values
+
+    // first 8 vertices are the main part, and the remaining 8 are
+    // the ones used to express fade in and fade out ramps (by blending to transparent on sides)
+
     // upper left corner 0
-    vertices.push_back({{leftX, -lowPassPositionRatio},
+    vertices.push_back({{leftX + fadeInFrames, -lowPassPositionRatio},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {startPositionNormalized, 0.5f + halfLowPassPos}});
+                        {bufferStartPosRatioAfterFadeIn, 0.5f + halfLowPassPos}});
 
     // upper right corner 1
-    vertices.push_back({{rightX, -lowPassPositionRatio},
+    vertices.push_back({{rightX - fadeOutFrames, -lowPassPositionRatio},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {endPositionNormalised, 0.5f + halfLowPassPos}});
+                        {bufferEndPosRatioBeforeFadeOut, 0.5f + halfLowPassPos}});
 
     // right upper band bottom corner 2
-    vertices.push_back({{rightX, -highPassPositionRatio},
+    vertices.push_back({{rightX - fadeOutFrames, -highPassPositionRatio},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {endPositionNormalised, 0.5f + halfHighPassPos}});
+                        {bufferEndPosRatioBeforeFadeOut, 0.5f + halfHighPassPos}});
 
     // left upper band bottom corner 3
-    vertices.push_back({{leftX, -highPassPositionRatio},
+    vertices.push_back({{leftX + fadeInFrames, -highPassPositionRatio},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {startPositionNormalized, 0.5f + halfHighPassPos}});
+                        {bufferStartPosRatioAfterFadeIn, 0.5f + halfHighPassPos}});
 
     // left lower band top 4
-    vertices.push_back({{leftX, highPassPositionRatio},
+    vertices.push_back({{leftX + fadeInFrames, highPassPositionRatio},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {startPositionNormalized, 0.5f - halfHighPassPos}});
+                        {bufferStartPosRatioAfterFadeIn, 0.5f - halfHighPassPos}});
 
     // right lower band top 5
-    vertices.push_back({{rightX, highPassPositionRatio},
+    vertices.push_back({{rightX - fadeOutFrames, highPassPositionRatio},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {endPositionNormalised, 0.5f - halfHighPassPos}});
+                        {bufferEndPosRatioBeforeFadeOut, 0.5f - halfHighPassPos}});
 
     // lower right corner 6
-    vertices.push_back({{rightX, lowPassPositionRatio},
+    vertices.push_back({{rightX - fadeOutFrames, lowPassPositionRatio},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {endPositionNormalised, 0.5f - halfLowPassPos}});
+                        {bufferEndPosRatioBeforeFadeOut, 0.5f - halfLowPassPos}});
 
     // lower left corner 7
-    vertices.push_back({{leftX, lowPassPositionRatio},
+    vertices.push_back({{leftX + fadeInFrames, lowPassPositionRatio},
                         {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {startPositionNormalized, 0.5f - halfLowPassPos}});
+                        {bufferStartPosRatioAfterFadeIn, 0.5f - halfLowPassPos}});
 
+    // alpha blended out versions
+
+    // fade in upper left corner 8
+    vertices.push_back({{leftX, -lowPassPositionRatio},
+                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 0.0f},
+                        {bufferStartPosRatio, 0.5f + halfLowPassPos}});
+
+    // fade out upper right corner 9
+    vertices.push_back({{rightX, -lowPassPositionRatio},
+                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 0.0f},
+                        {bufferEndPosRatio, 0.5f + halfLowPassPos}});
+
+    // fade out right upper band bottom corner 10
+    vertices.push_back({{rightX, -highPassPositionRatio},
+                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 0.0f},
+                        {bufferEndPosRatio, 0.5f + halfHighPassPos}});
+
+    // fade in left upper band bottom corner 11
+    vertices.push_back({{leftX, -highPassPositionRatio},
+                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 0.0f},
+                        {bufferStartPosRatio, 0.5f + halfHighPassPos}});
+
+    // fade in left lower band top 12
+    vertices.push_back({{leftX, highPassPositionRatio},
+                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 0.0f},
+                        {bufferStartPosRatio, 0.5f - halfHighPassPos}});
+
+    // fade out right lower band top 13
+    vertices.push_back({{rightX, highPassPositionRatio},
+                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 0.0f},
+                        {bufferEndPosRatio, 0.5f - halfHighPassPos}});
+
+    // fade out lower right corner 14
+    vertices.push_back({{rightX, lowPassPositionRatio},
+                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 0.0f},
+                        {bufferEndPosRatio, 0.5f - halfLowPassPos}});
+
+    // fade in lower left corner 15
+    vertices.push_back({{leftX, lowPassPositionRatio},
+                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 0.0f},
+                        {bufferStartPosRatio, 0.5f - halfLowPassPos}});
+
+    // connect the squares that are not part of the fade and fade out blends (core full color sample)
     connectSquareFromVertexIds(0, 1, 2, 3);
     connectSquareFromVertexIds(4, 5, 6, 7);
+
+    // connect the fade in and fade out squares
+
+    connectSquareFromVertexIds(8, 0, 3, 11);  // top sample part fade in to the left
+    connectSquareFromVertexIds(12, 4, 7, 15); // bottom sample part fade in to the left
+
+    connectSquareFromVertexIds(1, 9, 10, 2);  // top sample part fade out to the right
+    connectSquareFromVertexIds(5, 13, 14, 6); // bottom sample part fade out to the right
+
     uploadVerticesToGpu();
 }
 
@@ -258,17 +314,18 @@ int SampleGraphicModel::getTextureIndex(int freqIndex, int timeIndex, int freqDu
 // To run on opengl thread, will recolor track
 void SampleGraphicModel::setColor(juce::Colour &col)
 {
-    float leftX = vertices[0].position[0];
-    float rightX = vertices[1].position[0];
+    float leftX = vertices[8].position[0];
+    float rightX = vertices[9].position[0];
     color = col;
-    generateAndUploadVerticesToGPU(leftX, rightX, lastLowPassFreq, lastHighPassFreq);
+    generateAndUploadVerticesToGPU(leftX, rightX, lastLowPassFreq, lastHighPassFreq, lastFadeInFrameLength,
+                                   lastFadeOutFrameLength);
 }
 
 // Save position and width when selection dragging begins.
 void SampleGraphicModel::initDrag()
 {
-    dragStartPosition = vertices[0].position[0];
-    lastWidth = vertices[1].position[0] - vertices[0].position[0];
+    dragStartPosition = vertices[8].position[0];
+    lastWidth = vertices[9].position[0] - vertices[8].position[0];
 }
 
 // To run on opengl thread, will update track position to account
@@ -276,7 +333,8 @@ void SampleGraphicModel::initDrag()
 void SampleGraphicModel::updateDrag(int frameMove)
 {
     int position = dragStartPosition + frameMove;
-    generateAndUploadVerticesToGPU(position, position + lastWidth, lastLowPassFreq, lastHighPassFreq);
+    generateAndUploadVerticesToGPU(position, position + lastWidth, lastLowPassFreq, lastHighPassFreq,
+                                   lastFadeInFrameLength, lastFadeOutFrameLength);
 }
 
 void SampleGraphicModel::uploadVerticesToGpu()
@@ -312,7 +370,7 @@ float SampleGraphicModel::textureIntensity(float x, float y)
         return 0.0f;
     }
 
-    float xInAudioBuffer = juce::jmap(x, startPositionNormalized, endPositionNormalised);
+    float xInAudioBuffer = juce::jmap(x, bufferStartPosRatio, bufferEndPosRatio);
     int timeIndex = xInAudioBuffer * numFfts;
     // index of zoomed frequencies, not linear to logarithm of frequencies
     int freqIndexNormalised = 0;
@@ -348,12 +406,12 @@ int SampleGraphicModel::isFilteredArea(float y)
 
 juce::int64 SampleGraphicModel::getFramePosition()
 {
-    return juce::int64(vertices[0].position[0]);
+    return juce::int64(vertices[8].position[0]);
 }
 
 juce::int64 SampleGraphicModel::getFrameLength()
 {
-    return juce::int64(vertices[1].position[0] - vertices[0].position[0]);
+    return juce::int64(vertices[9].position[0] - vertices[8].position[0]);
 }
 
 std::vector<juce::Rectangle<float>> SampleGraphicModel::getPixelBounds(float viewPosition, float viewScale,
@@ -366,12 +424,12 @@ std::vector<juce::Rectangle<float>> SampleGraphicModel::getPixelBounds(float vie
     std::vector<juce::Rectangle<float>> rectangles;
 
     rectangles.push_back(juce::Rectangle<float>(
-        (vertices[0].position[0] - viewPosition) / viewScale, (1.0 - freqRatioLowPass) * (viewHeight / 2.0),
-        (vertices[1].position[0] - vertices[0].position[0]) / viewScale, height / 2.0));
+        (vertices[8].position[0] - viewPosition) / viewScale, (1.0 - freqRatioLowPass) * (viewHeight / 2.0),
+        (vertices[9].position[0] - vertices[8].position[0]) / viewScale, height / 2.0));
 
-    rectangles.push_back(juce::Rectangle<float>((vertices[0].position[0] - viewPosition) / viewScale,
+    rectangles.push_back(juce::Rectangle<float>((vertices[8].position[0] - viewPosition) / viewScale,
                                                 (viewHeight / 2.0) + ((freqRatioHighPass) * (viewHeight / 2.0)),
-                                                (vertices[1].position[0] - vertices[0].position[0]) / viewScale,
+                                                (vertices[9].position[0] - vertices[8].position[0]) / viewScale,
                                                 height / 2.0));
 
     return rectangles;

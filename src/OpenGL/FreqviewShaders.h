@@ -40,6 +40,7 @@ void main()
     vec4 alphaMask = texture(alphaMask, TexCoord);
     vec4 sampleWaveform = texture(ourTexture, TexCoord);
     float alphaLevel = min(alphaMask.r, sampleWaveform.a);
+    alphaLevel = ourColor.a * alphaLevel;
     FragColor = vec4(ourColor.x, ourColor.y, ourColor.z, alphaLevel);
 }
 )";

@@ -250,6 +250,19 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
         }
     }
 
+    std::shared_ptr<SampleFadeChange> fadeChange = std::dynamic_pointer_cast<SampleFadeChange>(task);
+    if (fadeChange != nullptr && fadeChange->isCompleted() && !fadeChange->hasFailed() &&
+        mixingBus.getTrack(fadeChange->sampleId) != nullptr)
+    {
+        openGLContext.executeOnGLThread(
+            [this, fadeChange](juce::OpenGLContext &c) {
+                samples[fadeChange->sampleId]->loadVerticeData(mixingBus.getTrack(fadeChange->sampleId));
+            },
+            true);
+
+        return false;
+    }
+
     return false;
 }
 
