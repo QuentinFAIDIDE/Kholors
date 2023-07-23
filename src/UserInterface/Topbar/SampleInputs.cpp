@@ -17,15 +17,25 @@ void SampleFadeInput::setSampleIds(std::set<size_t> &ids)
                      "fixed by the clumsy developer!"
                   << std::endl;
     }
+
+    bool newSelectionIsSubset = std::includes(sampleIds.begin(), sampleIds.end(), ids.begin(), ids.end());
+
     sampleIds = ids;
     displayedSampleId = -1;
     if (sampleIds.size() > 0)
     {
         displayedSampleId = *sampleIds.begin();
     }
-    initialValues.clear();
-    currentValues.clear();
-    fetchValueIfPossible();
+
+    // it's just usueless and slow to update map of initial values
+    // when the new selection is a subset. It creates super slow
+    // group deletion.
+    if (!newSelectionIsSubset)
+    {
+        initialValues.clear();
+        currentValues.clear();
+        fetchValueIfPossible();
+    }
 }
 
 void SampleFadeInput::fetchValueIfPossible()
@@ -226,7 +236,8 @@ void SampleFadeInput::startDragging()
 
 /////////////////////////////////////////////////////////////////////////
 
-SampleGainInput::SampleGainInput() : NumericInput(false, -MAX_DB_CHANGE, MAX_DB_CHANGE, DB_CHANGE_STEP), iteratingOverSelection(false)
+SampleGainInput::SampleGainInput()
+    : NumericInput(false, -MAX_DB_CHANGE, MAX_DB_CHANGE, DB_CHANGE_STEP), iteratingOverSelection(false)
 {
 }
 
@@ -238,17 +249,26 @@ void SampleGainInput::setSampleIds(std::set<size_t> &ids)
                      "fixed by the clumsy developer! (gain input version)"
                   << std::endl;
     }
+
+    bool newSelectionIsSubset = std::includes(sampleIds.begin(), sampleIds.end(), ids.begin(), ids.end());
+
     sampleIds = ids;
     displayedSampleId = -1;
     if (sampleIds.size() > 0)
     {
         displayedSampleId = *sampleIds.begin();
     }
-    initialValues.clear();
-    currentValues.clear();
-    fetchValueIfPossible();
-}
 
+    // it's just usueless and slow to update map of initial values
+    // when the new selection is a subset. It creates super slow
+    // group deletion.
+    if (!newSelectionIsSubset)
+    {
+        initialValues.clear();
+        currentValues.clear();
+        fetchValueIfPossible();
+    }
+}
 
 void SampleGainInput::fetchValueIfPossible()
 {
@@ -288,7 +308,7 @@ bool SampleGainInput::taskHandler(std::shared_ptr<Task> task)
             setValue(updateTask->currentDbGain);
         }
         currentValues[updateTask->sampleId] = updateTask->currentDbGain;
-            
+
         // we won't prevent event from being broadcasted further to allow for multiple inputs  to exist
         return false;
     }
@@ -375,7 +395,8 @@ void SampleGainInput::emitIntermediateDragTask(float newValue)
     // abort if we're missing stuff
     if (missingValue)
     {
-        std::cerr << "Severe problem: missing multisample input values (gain version), aborted intermediate updated!!!" << std::endl;
+        std::cerr << "Severe problem: missing multisample input values (gain version), aborted intermediate updated!!!"
+                  << std::endl;
         return;
     }
 

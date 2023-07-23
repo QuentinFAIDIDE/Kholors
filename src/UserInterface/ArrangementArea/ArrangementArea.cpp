@@ -155,9 +155,12 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
     if (disableTask != nullptr && !disableTask->isCompleted() && !disableTask->hasFailed())
     {
         samples[disableTask->id]->disable();
-        selectedTracks.erase(disableTask->id);
 
-        copyAndBroadcastSelection(true);
+        if (selectedTracks.find(disableTask->id) != selectedTracks.end())
+        {
+            selectedTracks.erase(disableTask->id);
+            copyAndBroadcastSelection(true);
+        }
 
         disableTask->setCompleted(true);
         disableTask->setFailed(false);
@@ -1677,9 +1680,19 @@ void ArrangementArea::deleteSelectedTracks()
 
     int taskGroupId = Task::getNewTaskGroupIndex();
 
+    auto tracksToDelete = selectedTracks;
+
+    // first clear and broadcast selection.
+    // this preventing slowdown on large group deletion
+    // where deletion tasks repeateadly update selection
+    // and get selected sample inputs widget and mixbus
+    // to do tons of updates.
+    selectedTracks.clear();
+    copyAndBroadcastSelection(false);
+
     // for each selected track
     std::set<size_t>::iterator it;
-    for (it = selectedTracks.begin(); it != selectedTracks.end(); it++)
+    for (it = tracksToDelete.begin(); it != tracksToDelete.end(); it++)
     {
         if (mixingBus.getTrack(*it) != nullptr)
         {
@@ -1694,11 +1707,6 @@ void ArrangementArea::deleteSelectedTracks()
     {
         activityManager.broadcastTask(tasksToBroadcast[i]);
     }
-
-    // clear selection and redraw
-    selectedTracks.clear();
-
-    copyAndBroadcastSelection(false);
 
     repaint();
 }
