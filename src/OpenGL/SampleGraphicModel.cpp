@@ -382,7 +382,22 @@ float SampleGraphicModel::textureIntensity(float x, float y)
     {
         freqIndexNormalised = (y - 0.5) * 2 * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE;
     }
-    return texture->data()[getTextureIndex(freqIndexNormalised, timeIndex, 1, y < 0.5) + 3];
+
+    float intensity = texture->data()[getTextureIndex(freqIndexNormalised, timeIndex, 1, y < 0.5) + 3];
+
+    // now we apply the gain ramps if it falls in the
+    if (xInAudioBuffer < bufferStartPosRatioAfterFadeIn)
+    {
+        intensity = intensity *
+                    ((xInAudioBuffer - bufferStartPosRatio) / (bufferStartPosRatioAfterFadeIn - bufferStartPosRatio));
+    }
+    else if (xInAudioBuffer > bufferEndPosRatioBeforeFadeOut)
+    {
+        intensity = intensity * (1.0f - ((xInAudioBuffer - bufferEndPosRatioBeforeFadeOut) /
+                                         (bufferEndPosRatio - bufferEndPosRatioBeforeFadeOut)));
+    }
+
+    return intensity;
 }
 
 int SampleGraphicModel::isFilteredArea(float y)
