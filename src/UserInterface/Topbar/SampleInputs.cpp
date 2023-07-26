@@ -1,7 +1,7 @@
 #include "SampleInputs.h"
 #include <memory>
 
-#define MAX_DB_CHANGE 12.0f
+#define MAX_DB_CHANGE 48.0f
 #define DB_CHANGE_STEP 0.2f
 
 SampleFadeInput::SampleFadeInput(bool fadeIn)

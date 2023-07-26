@@ -7,7 +7,7 @@
 #define VUMETER_MAP_SIZE 32
 
 // minimum db value displayed
-#define VUMETER_MIN_DB -24.0f
+#define VUMETER_MIN_DB -36.0f
 
 #include <string>
 #include <utility>
