@@ -890,12 +890,26 @@ float freqForFilterDbReduction(bool isHighPass, float filterFreq, float dbReduct
     // the multiplier to apply the octave distance to the base frequency
     float multiplier = std::pow(2.0f, octaveDistance);
 
+    float response = 0;
+
     if (isHighPass)
     {
-        return filterFreq / multiplier;
+        response = filterFreq / multiplier;
     }
     else
     {
-        return filterFreq * multiplier;
+        response = filterFreq * multiplier;
     }
+
+    if (response < 0.0)
+    {
+        response = 0;
+    }
+
+    if (response > AUDIO_FRAMERATE / 2.0f)
+    {
+        response = AUDIO_FRAMERATE / 2.0f;
+    }
+
+    return response;
 }
