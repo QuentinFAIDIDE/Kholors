@@ -876,3 +876,26 @@ BufferPtr SamplePlayer::getBufferRef()
 {
     return audioBufferRef;
 }
+
+float freqForFilterDbReduction(bool isHighPass, float filterFreq, float dbReductionRequired, int filterRepeat)
+{
+    // how many decibels per octave we loose per filter (since they are second order this is const)
+    float defaultFilterSlope = 12.0;
+    // the total slope in db/octave of this set of filters
+    float slope = defaultFilterSlope * filterRepeat;
+
+    // how many octave change to achieve this gain reduction
+    float octaveDistance = dbReductionRequired / slope;
+
+    // the multiplier to apply the octave distance to the base frequency
+    float multiplier = std::pow(2.0f, octaveDistance);
+
+    if (isHighPass)
+    {
+        return filterFreq / multipler;
+    }
+    else
+    {
+        return filterFreq * multiplier;
+    }
+}

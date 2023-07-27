@@ -145,6 +145,19 @@ class SamplePlayer : public juce::PositionableAudioSource
      */
     float getDbGain();
 
+    /**
+     * @brief       Find the frequency at which the filter
+     *              (low pass or high pass) will have reduced
+     *              the amplitude by the specified amount.
+     *
+     * @param[in]  isHighPass           True if the filter is high pass, false if low pass
+     * @param[in]  filterFreq           Frequency where the filter is applied (if we ignore knee, where the slope starts)
+     * @param[in]  dbReductionRequired  The db reduction we wish to have the frequency for. 
+     * @param[in]  filterRepeat         How many times the base 12db/octave filter is repeated
+     * 
+     */
+    static float freqForFilterDbReduction(bool isHighPass, float filterFreq, float dbReductionRequired, int filterRepeat);
+
   private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SamplePlayer)
 
