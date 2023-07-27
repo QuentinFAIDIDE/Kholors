@@ -892,7 +892,7 @@ float freqForFilterDbReduction(bool isHighPass, float filterFreq, float dbReduct
 
     if (isHighPass)
     {
-        return filterFreq / multipler;
+        return filterFreq / multiplier;
     }
     else
     {
