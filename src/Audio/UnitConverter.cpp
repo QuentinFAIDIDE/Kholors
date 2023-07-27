@@ -88,11 +88,6 @@ float UnitConverter::magnifyIntensity(float input)
     float intensity = input;
     // we need to normalize the frequency by mapping the range
     intensity = juce::jmap(intensity, MIN_DB, MAX_DB, 0.0f, 1.0f);
-    // then we make it a little prettier with a sigmoid function
-    // (increase contrasts)
-    intensity = sigmoid((intensity * 12.0) - 6.0);
-    // and finally we make sure it falls in range
-    intensity = juce::jlimit(0.0f, 1.0f, intensity);
     return intensity;
 }
 
