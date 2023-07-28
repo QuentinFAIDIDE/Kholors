@@ -10,7 +10,10 @@ using namespace juce::gl;
 #include "../Audio/UnitConverter.h"
 
 // how many additional point are draw beyond the filter limit to display the gain reduction over next freqs
-#define DEFAULT_FILTERS_FADE_DEFINITION 4
+#define FILTERS_FADE_DEFINITION 4
+
+// how many decibels per step we display when we draw the the samples filter fade out
+#define FILTERS_FADE_STEP_DB 12.0f
 
 SampleGraphicModel::SampleGraphicModel(std::shared_ptr<SamplePlayer> sp, juce::Colour col)
 {
@@ -150,22 +153,41 @@ void SampleGraphicModel::loadFftDataToTexture(std::shared_ptr<std::vector<float>
 void SampleGraphicModel::loadVerticeData(std::shared_ptr<SamplePlayer> sp)
 {
 
+    // horizontal texture position data
     bufferStartPosRatio = float(sp->getBufferStart()) / float(sp->getTotalLength());
     bufferEndPosRatio = float(sp->getBufferEnd()) / float(sp->getTotalLength());
-
     bufferStartPosRatioAfterFadeIn = float(sp->getBufferStart() + sp->getFadeInLength()) / float(sp->getTotalLength());
     bufferEndPosRatioBeforeFadeOut = float(sp->getBufferEnd() - sp->getFadeOutLength()) / float(sp->getTotalLength());
 
+    // horizontal vertice position data
     float leftX = float(sp->getEditingPosition());
     float rightX = leftX + float(sp->getLength());
-
-    lastLowPassFreq = sp->getLowPassFreq();
-    lastHighPassFreq = sp->getHighPassFreq();
     lastFadeInFrameLength = sp->getFadeInLength();
     lastFadeOutFrameLength = sp->getFadeOutLength();
 
-    generateAndUploadVerticesToGPU(leftX, rightX, lastLowPassFreq, lastHighPassFreq, sp->getFadeInLength(),
-                                   sp->getFadeOutLength());
+    // vertical frequency positions
+    lastLowPassFreq = sp->getLowPassFreq();
+    lastHighPassFreq = sp->getHighPassFreq();
+
+    updateStepFrequencies(sp);
+
+    // call the function that dynamically generates the vertices
+    generateAndUploadVerticesToGPU(leftX, rightX, lastLowPassFreq, lastHighPassFreq, lastFadeInFrameLength, lastFadeOutFrameLength);
+}
+
+void SampleGraphicModel::updateStepFrequencies(SamplePlayer &sp)
+{
+    lowPassFadeSteps.reserve(FILTERS_FADE_DEFINITION);
+    lowPassFadeSteps.clear();
+
+    highPassFadeSteps.reserve(FILTERS_FADE_DEFINITION);
+    highPassFadeSteps.clear();
+
+    for (size_t i = 0 ; i< FILTERS_FADE_DEFINITION; i++)
+    {
+        lowPassFadeSteps.push_back();
+        highPassFadeSteps.push_back();
+    }
 }
 
 void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float rightX, float lowPassFreq,
@@ -174,7 +196,7 @@ void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float right
     // how many vertice line there are vertically (sample fade start, sample start, sample end, sample fade end)
     int noVerticalVerticeLines = 4; 
     // how many horizontal lines in the mesh (2 times cause there are symetrical bottom and top parts)
-    int noHorizontalVerticeLines = 2*(2+(DEFAULT_FILTERS_FADE_DEFINITION*2)); 
+    int noHorizontalVerticeLines = 2*(2+(FILTERS_FADE_DEFINITION*2)); 
 
     int noVertices = noVerticalVerticeLines * noHorizontalVerticeLines;
     int noSquares = (noVerticalVerticeLines-1)*(noHorizontalVerticeLines-1);
@@ -186,6 +208,27 @@ void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float right
 
     vertices.clear();
     triangleIds.clear();
+
+    for (size_t i = 0; i < noVertices; i++)
+    {
+       vertices.push_back({{0.0f, 0.0f}, // position
+                           {0.0f, 0.0f, 0.0f, 1.0f}, // color
+                           {0.0f, 0.0f}}); // texture positon
+    }
+
+    // NOTE: We count vertices from left to right and top to bottom (like western text reading order)
+
+    // set vertical vertice position of low pass filter fade out steps 
+    for (int i = 0; i < FILTERS_FADE_DEFINITION; i++)
+    {
+        float currentStepDbFade = (i+1)*FILTERS_FADE_STEP_DB;
+        float stepFreq = sp
+        // top mesh
+        setVerticeLineValue(VERTEX_POSITION_Y, HORIZONTAL_VERTEX_LINE, FILTERS_FADE_DEFINITION-1-i, );
+        // bottom mesh
+        setVerticeLineValue(VERTEX_POSITION_Y, HORIZONTAL_VERTEX_LINE, FILTERS_FADE_DEFINITION-1-i, );
+    }
+    
 
     //////////////////// BEGINNING OF OLD PART ////////////////////////////////////////////
 
