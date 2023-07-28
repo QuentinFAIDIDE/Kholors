@@ -185,8 +185,22 @@ void SampleGraphicModel::updateStepFrequencies(SamplePlayer &sp)
 
     for (size_t i = 0 ; i< FILTERS_FADE_DEFINITION; i++)
     {
-        lowPassFadeSteps.push_back();
-        highPassFadeSteps.push_back();
+        lowPassFadeSteps.push_back(
+            SamplePlayer::freqForFilterDbReduction(
+                false,
+                sp->getLowPassFreq(),
+                (i+1)*FILTERS_FADE_STEP_DB,
+                sp->getLPRepeat()
+                );
+           );
+        highPassFadeSteps.push_back(
+            SamplePlayer::freqForFilterDbReduction(
+                true,
+                sp->getHighPassFreq(),
+                (i+1)*FILTERS_FADE_STEP_DB,
+                sp->getHPRepeat()
+                );
+           );
     }
 }
 
