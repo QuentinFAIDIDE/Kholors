@@ -32,7 +32,7 @@ SampleGraphicModel::SampleGraphicModel(std::shared_ptr<SamplePlayer> sp, juce::C
 
     color = col;
 
-    loadVerticeData(sp);
+    reloadSampleData(sp);
 
     // try to see if this texture already exists or not in texture manager
     auto optionalTextureId = textureManager->getTextureIdentifier(sp);
@@ -150,7 +150,7 @@ void SampleGraphicModel::loadFftDataToTexture(std::shared_ptr<std::vector<float>
     }
 }
 
-void SampleGraphicModel::loadVerticeData(std::shared_ptr<SamplePlayer> sp)
+void SampleGraphicModel::reloadSampleData(std::shared_ptr<SamplePlayer> sp)
 {
 
     // horizontal texture position data
@@ -169,38 +169,27 @@ void SampleGraphicModel::loadVerticeData(std::shared_ptr<SamplePlayer> sp)
     lastLowPassFreq = sp->getLowPassFreq();
     lastHighPassFreq = sp->getHighPassFreq();
 
-    updateStepFrequencies(sp);
+    updateFiltersGainReductionSteps(sp);
 
     // call the function that dynamically generates the vertices
-    generateAndUploadVerticesToGPU(leftX, rightX, lastLowPassFreq, lastHighPassFreq, lastFadeInFrameLength, lastFadeOutFrameLength);
+    generateAndUploadVerticesToGPU(leftX, rightX, lastLowPassFreq, lastHighPassFreq, lastFadeInFrameLength,
+                                   lastFadeOutFrameLength);
 }
 
-void SampleGraphicModel::updateStepFrequencies(SamplePlayer &sp)
+void SampleGraphicModel::updateFiltersGainReductionSteps(std::shared_ptr<SamplePlayer> sp)
 {
-    lowPassFadeSteps.reserve(FILTERS_FADE_DEFINITION);
-    lowPassFadeSteps.clear();
+    lowPassGainReductionSteps.reserve(FILTERS_FADE_DEFINITION);
+    lowPassGainReductionSteps.clear();
 
-    highPassFadeSteps.reserve(FILTERS_FADE_DEFINITION);
-    highPassFadeSteps.clear();
+    highPassGainReductionSteps.reserve(FILTERS_FADE_DEFINITION);
+    highPassGainReductionSteps.clear();
 
-    for (size_t i = 0 ; i< FILTERS_FADE_DEFINITION; i++)
+    for (size_t i = 0; i < FILTERS_FADE_DEFINITION; i++)
     {
-        lowPassFadeSteps.push_back(
-            SamplePlayer::freqForFilterDbReduction(
-                false,
-                sp->getLowPassFreq(),
-                (i+1)*FILTERS_FADE_STEP_DB,
-                sp->getLowPassRepeat()
-                );
-           );
-        highPassFadeSteps.push_back(
-            SamplePlayer::freqForFilterDbReduction(
-                true,
-                sp->getHighPassFreq(),
-                (i+1)*FILTERS_FADE_STEP_DB,
-                sp->getHighPassRepeat()
-                );
-           );
+        lowPassGainReductionSteps.push_back(SamplePlayer::freqForFilterDbReduction(
+            false, sp->getLowPassFreq(), (i + 1) * FILTERS_FADE_STEP_DB, sp->getLowPassRepeat()));
+        highPassGainReductionSteps.push_back(SamplePlayer::freqForFilterDbReduction(
+            true, sp->getHighPassFreq(), (i + 1) * FILTERS_FADE_STEP_DB, sp->getHighPassRepeat()));
     }
 }
 
@@ -208,14 +197,14 @@ void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float right
                                                         float highPassFreq, float fadeInFrames, float fadeOutFrames)
 {
     // how many vertice line there are vertically (sample fade start, sample start, sample end, sample fade end)
-    int noVerticalVerticeLines = 4; 
+    int noVerticalVerticeLines = 4;
     // how many horizontal lines in the mesh (2 times cause there are symetrical bottom and top parts)
-    int noHorizontalVerticeLines = 2*(2+(FILTERS_FADE_DEFINITION*2)); 
+    int noHorizontalVerticeLines = 2 * (2 + (FILTERS_FADE_DEFINITION * 2));
 
     int noVertices = noVerticalVerticeLines * noHorizontalVerticeLines;
-    int noSquares = (noVerticalVerticeLines-1)*(noHorizontalVerticeLines-1);
-    int noTriangles = noSquares*2; // how many triangles we have to draw
-    int noTriangleIds = noTriangles*3; // how many ids we need to push to draw the triangles
+    int noSquares = (noVerticalVerticeLines - 1) * (noHorizontalVerticeLines - 1);
+    int noTriangles = noSquares * 2;     // how many triangles we have to draw
+    int noTriangleIds = noTriangles * 3; // how many ids we need to push to draw the triangles
 
     vertices.reserve(noVertices);
     triangleIds.reserve(noTriangleIds);
@@ -225,24 +214,77 @@ void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float right
 
     for (size_t i = 0; i < noVertices; i++)
     {
-       vertices.push_back({{0.0f, 0.0f}, // position
-                           {0.0f, 0.0f, 0.0f, 1.0f}, // color
-                           {0.0f, 0.0f}}); // texture positon
+        vertices.push_back({{0.0f, 0.0f},                                                             // position
+                            {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f}, // color
+                            {0.0f, 0.0f}});                                                           // texture positon
     }
 
     // NOTE: We count vertices from left to right and top to bottom (like western text reading order)
 
-    // set vertical vertice position of low pass filter fade out steps 
+    // set values of low pass filter fade out step lines
     for (int i = 0; i < FILTERS_FADE_DEFINITION; i++)
     {
-        float currentStepDbFade = (i+1)*FILTERS_FADE_STEP_DB;
-        float stepFreq = sp
-        // top mesh
-        setVerticeLineValue(VERTEX_POSITION_Y, HORIZONTAL_VERTEX_LINE, FILTERS_FADE_DEFINITION-1-i, );
-        // bottom mesh
-        setVerticeLineValue(VERTEX_POSITION_Y, HORIZONTAL_VERTEX_LINE, FILTERS_FADE_DEFINITION-1-i, );
+        float glDistanceToCenter = UnitConverter::freqToPositionRatio(lowPassGainReductionSteps[i]);
+        float textureDistanceToCenter = glDistanceToCenter * 0.5;
+        float alphaLevel =
+            juce::jlimit(0.0f, 1.0f, (float(FILTERS_FADE_DEFINITION - 1 - i) / float(FILTERS_FADE_DEFINITION)));
+
+        setVerticeLineValue(TEXTURE_POSITION_Y, HORIZONTAL_VERTEX_LINE, FILTERS_FADE_DEFINITION - 1 - i,
+                            0.5f + textureDistanceToCenter);
+        setVerticeLineValue(TEXTURE_POSITION_Y, HORIZONTAL_VERTEX_LINE,
+                            noHorizontalVerticeLines - FILTERS_FADE_DEFINITION + i, 0.5f - textureDistanceToCenter);
+
+        setVerticeLineValue(VERTEX_POSITION_Y, HORIZONTAL_VERTEX_LINE, FILTERS_FADE_DEFINITION - 1 - i,
+                            -glDistanceToCenter);
+        setVerticeLineValue(VERTEX_POSITION_Y, HORIZONTAL_VERTEX_LINE,
+                            noHorizontalVerticeLines - FILTERS_FADE_DEFINITION + i, glDistanceToCenter);
+
+        setVerticeLineValue(VERTEX_ALPHA_LEVEL, HORIZONTAL_VERTEX_LINE, FILTERS_FADE_DEFINITION - 1 - i, alphaLevel);
+        setVerticeLineValue(VERTEX_ALPHA_LEVEL, HORIZONTAL_VERTEX_LINE,
+                            noHorizontalVerticeLines - FILTERS_FADE_DEFINITION + i, alphaLevel);
     }
-    
+
+    int lastTopPartIndex = (noHorizontalVerticeLines >> 1) - 1;
+
+    // same for high pass filters
+    for (int i = 0; i < FILTERS_FADE_DEFINITION; i++)
+    {
+        float glDistanceToCenter = UnitConverter::freqToPositionRatio(highPassGainReductionSteps[i]);
+        float textureDistanceToCenter = glDistanceToCenter * 0.5;
+        float alphaLevel =
+            juce::jlimit(0.0f, 1.0f, (float(FILTERS_FADE_DEFINITION - 1 - i) / float(FILTERS_FADE_DEFINITION)));
+
+        setVerticeLineValue(TEXTURE_POSITION_Y, HORIZONTAL_VERTEX_LINE,
+                            lastTopPartIndex - FILTERS_FADE_DEFINITION + 1 + i, 0.5f + textureDistanceToCenter);
+        setVerticeLineValue(TEXTURE_POSITION_Y, HORIZONTAL_VERTEX_LINE, lastTopPartIndex + 1 + i,
+                            0.5f - textureDistanceToCenter);
+
+        setVerticeLineValue(VERTEX_POSITION_Y, HORIZONTAL_VERTEX_LINE,
+                            lastTopPartIndex - FILTERS_FADE_DEFINITION + 1 + i, -glDistanceToCenter);
+        setVerticeLineValue(VERTEX_POSITION_Y, HORIZONTAL_VERTEX_LINE, lastTopPartIndex + 1 + i, glDistanceToCenter);
+
+        setVerticeLineValue(VERTEX_ALPHA_LEVEL, HORIZONTAL_VERTEX_LINE,
+                            lastTopPartIndex - FILTERS_FADE_DEFINITION + 1 + i, alphaLevel);
+        setVerticeLineValue(VERTEX_ALPHA_LEVEL, HORIZONTAL_VERTEX_LINE, lastTopPartIndex + 1 + i, alphaLevel);
+    }
+
+    // set the two lines of the top and bottom part low pass filters frequencies
+    float lowPassGlPosition = UnitConverter::freqToPositionRatio(lastLowPassFreq);
+    setVerticeLineValue(VERTEX_POSITION_Y, HORIZONTAL_VERTEX_LINE, FILTERS_FADE_DEFINITION, -lowPassGlPosition);
+    setVerticeLineValue(VERTEX_POSITION_Y, HORIZONTAL_VERTEX_LINE,
+                        noHorizontalVerticeLines - FILTERS_FADE_DEFINITION - 1, lowPassGlPosition);
+    float lowPassTexturePos = lowPassGlPosition / 2.0f;
+    setVerticeLineValue(TEXTURE_POSITION_Y, HORIZONTAL_VERTEX_LINE, FILTERS_FADE_DEFINITION, 0.5f + lowPassTexturePos);
+    setVerticeLineValue(TEXTURE_POSITION_Y, HORIZONTAL_VERTEX_LINE,
+                        noHorizontalVerticeLines - FILTERS_FADE_DEFINITION - 1, 0.5f - lowPassTexturePos);
+
+    // same for high pass
+    float highPassGlPosition = UnitConverter::freqToPositionRatio(lastHighPassFreq);
+    setVerticeLineValue(VERTEX_POSITION_Y, HORIZONTAL_VERTEX_LINE, lastTopPartIndex, -highPassGlPosition);
+    setVerticeLineValue(VERTEX_POSITION_Y, HORIZONTAL_VERTEX_LINE, lastTopPartIndex + 1, highPassGlPosition);
+    float highPassTexturePos = highPassGlPosition / 2.0f;
+    setVerticeLineValue(TEXTURE_POSITION_Y, HORIZONTAL_VERTEX_LINE, lastTopPartIndex, 0.5f + highPassTexturePos);
+    setVerticeLineValue(TEXTURE_POSITION_Y, HORIZONTAL_VERTEX_LINE, lastTopPartIndex + 1, 0.5f - highPassGlPosition);
 
     //////////////////// BEGINNING OF OLD PART ////////////////////////////////////////////
 

@@ -191,7 +191,7 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
     {
         openGLContext.executeOnGLThread(
             [this, updateTask](juce::OpenGLContext &c) {
-                samples[updateTask->id]->loadVerticeData(updateTask->sample);
+                samples[updateTask->id]->reloadSampleData(updateTask->sample);
             },
             true);
 
@@ -256,7 +256,7 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
     {
         openGLContext.executeOnGLThread(
             [this, fadeChange](juce::OpenGLContext &c) {
-                samples[fadeChange->sampleId]->loadVerticeData(mixingBus.getTrack(fadeChange->sampleId));
+                samples[fadeChange->sampleId]->reloadSampleData(mixingBus.getTrack(fadeChange->sampleId));
             },
             true);
 
@@ -1356,7 +1356,7 @@ void ArrangementArea::refreshSampleOpenGlView(int index)
     {
         return;
     }
-    openGLContext.executeOnGLThread([this, index, sp](juce::OpenGLContext &c) { samples[index]->loadVerticeData(sp); },
+    openGLContext.executeOnGLThread([this, index, sp](juce::OpenGLContext &c) { samples[index]->reloadSampleData(sp); },
                                     true);
 }
 

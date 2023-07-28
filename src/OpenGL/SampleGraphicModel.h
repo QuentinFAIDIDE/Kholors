@@ -20,12 +20,10 @@ class SampleGraphicModel : public TexturedModel
     juce::int64 getFramePosition();
     juce::int64 getFrameLength();
     void setColor(juce::Colour &);
-    void loadVerticeData(std::shared_ptr<SamplePlayer> sp);
+    void reloadSampleData(std::shared_ptr<SamplePlayer> sp);
     std::vector<juce::Rectangle<float>> getPixelBounds(float viewPosition, float viewScale, float viewHeight);
 
   private:
-    int dragStartPosition;
-    int lastWidth;
     int getTextureIndex(int freqIndex, int timeIndex, int freqDuplicateShift, bool isLeftChannel);
 
     void generateAndUploadVerticesToGPU(float leftX, float rightX, float lowFreq, float highFreq, float fadeInFrames,
@@ -44,6 +42,28 @@ class SampleGraphicModel : public TexturedModel
      * @param channelCount How many channels this array contains.
      */
     void loadFftDataToTexture(std::shared_ptr<std::vector<float>> ffts, int fftCount, int channelCount);
+
+    /**
+     * @brief      Updates the filters gain reduction steps we store for visualization.
+     *             Will find for each FILTERS_FADE_STEP_DB decibels increment the freq at which
+     *             the filters are reducting volume to this intensity.
+     *
+     * @param      sp    The samplePlayer object that holds the filters.
+     */
+    void updateFiltersGainReductionSteps(std::shared_ptr<SamplePlayer> sp);
+
+    ///////////////////////////////
+
+    // the FILTERS_FADE_DEFINITION frequencies for which the volume is reduced
+    // by the low pass filter for each FILTERS_FADE_STEP_DB decibels per step.
+    std::vector<float> lowPassGainReductionSteps;
+
+    // the FILTERS_FADE_DEFINITION frequencies for which the volume is reduced
+    // by the high pass filter for each FILTERS_FADE_STEP_DB decibels per step.
+    std::vector<float> highPassGainReductionSteps;
+
+    int dragStartPosition;
+    int lastWidth;
 
     int numFfts;
     int numChannels;
