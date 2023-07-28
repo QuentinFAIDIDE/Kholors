@@ -146,6 +146,28 @@ class SamplePlayer : public juce::PositionableAudioSource
     float getDbGain();
 
     /**
+     * Return how many times the 12db/octave lowpass is repeated
+     */
+    int getLowPassRepeat();
+
+    /**
+     * Sets how many time the low pass filter repeats. Must be 
+     * between 1 and SAMPLEPLAYER_MAX_FILTER_REPEAT
+     */
+    void setLowPassRepeat(int repeat);
+
+    /**
+     * Return how many times the 12db/octave highpass is repeated
+     */
+    int getHighPassRepeat();
+
+    /**
+     * Sets how many time the high pass filter repeats. Must be 
+     * between 1 and SAMPLEPLAYER_MAX_FILTER_REPEAT
+     */
+    void setHighPassRepeat(int repeat);
+
+    /**
      * @brief       Find the frequency at which the filter
      *              (low pass or high pass) will have reduced
      *              the amplitude by the specified amount.

@@ -190,7 +190,7 @@ void SampleGraphicModel::updateStepFrequencies(SamplePlayer &sp)
                 false,
                 sp->getLowPassFreq(),
                 (i+1)*FILTERS_FADE_STEP_DB,
-                sp->getLPRepeat()
+                sp->getLowPassRepeat()
                 );
            );
         highPassFadeSteps.push_back(
@@ -198,7 +198,7 @@ void SampleGraphicModel::updateStepFrequencies(SamplePlayer &sp)
                 true,
                 sp->getHighPassFreq(),
                 (i+1)*FILTERS_FADE_STEP_DB,
-                sp->getHPRepeat()
+                sp->getHighPassRepeat()
                 );
            );
     }
