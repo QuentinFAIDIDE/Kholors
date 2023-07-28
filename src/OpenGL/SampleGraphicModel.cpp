@@ -9,6 +9,9 @@ using namespace juce::gl;
 
 #include "../Audio/UnitConverter.h"
 
+// how many additional point are draw beyond the filter limit to display the gain reduction over next freqs
+#define DEFAULT_FILTERS_FADE_DEFINITION 4
+
 SampleGraphicModel::SampleGraphicModel(std::shared_ptr<SamplePlayer> sp, juce::Colour col)
 {
     reuseTexture = false;
@@ -168,6 +171,23 @@ void SampleGraphicModel::loadVerticeData(std::shared_ptr<SamplePlayer> sp)
 void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float rightX, float lowPassFreq,
                                                         float highPassFreq, float fadeInFrames, float fadeOutFrames)
 {
+    // how many vertice line there are vertically (sample fade start, sample start, sample end, sample fade end)
+    int noVerticalVerticeLines = 4; 
+    // how many horizontal lines in the mesh (2 times cause there are symetrical bottom and top parts)
+    int noHorizontalVerticeLines = 2*(2+(DEFAULT_FILTERS_FADE_DEFINITION*2)); 
+
+    int noVertices = noVerticalVerticeLines * noHorizontalVerticeLines;
+    int noSquares = (noVerticalVerticeLines-1)*(noHorizontalVerticeLines-1);
+    int noTriangles = noSquares*2; // how many triangles we have to draw
+    int noTriangleIds = noTriangles*3; // how many ids we need to push to draw the triangles
+
+    vertices.reserve(noVertices);
+    triangleIds.reserve(noTriangleIds);
+
+    vertices.clear();
+    triangleIds.clear();
+
+    //////////////////// BEGINNING OF OLD PART ////////////////////////////////////////////
 
     vertices.reserve(8);
     triangleIds.reserve(6);
@@ -277,6 +297,8 @@ void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float right
 
     connectSquareFromVertexIds(1, 9, 10, 2);  // top sample part fade out to the right
     connectSquareFromVertexIds(5, 13, 14, 6); // bottom sample part fade out to the right
+
+    //////////////////// END OF OLD PART ////////////////////////////////////////////
 
     uploadVerticesToGpu();
 }
