@@ -286,118 +286,34 @@ void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float right
     setVerticeLineValue(TEXTURE_POSITION_Y, HORIZONTAL_VERTEX_LINE, lastTopPartIndex, 0.5f + highPassTexturePos);
     setVerticeLineValue(TEXTURE_POSITION_Y, HORIZONTAL_VERTEX_LINE, lastTopPartIndex + 1, 0.5f - highPassGlPosition);
 
-    //////////////////// BEGINNING OF OLD PART ////////////////////////////////////////////
+    // now we set the parameters of the four vertical lines of vertices
+    setVerticeLineValue(VERTEX_POSITION_X, VERTICAL_VERTEX_LINE, 0, leftX);
+    setVerticeLineValue(VERTEX_POSITION_X, VERTICAL_VERTEX_LINE, 1, leftX + fadeInFrames);
+    setVerticeLineValue(VERTEX_POSITION_X, VERTICAL_VERTEX_LINE, 2, rightX - fadeOutFrames);
+    setVerticeLineValue(VERTEX_POSITION_X, VERTICAL_VERTEX_LINE, 3, rightX);
 
-    vertices.reserve(8);
-    triangleIds.reserve(6);
-    vertices.clear();
-    triangleIds.clear();
+    setVerticeLineValue(TEXTURE_POSITION_X, VERTICAL_VERTEX_LINE, 0, bufferStartPosRatio);
+    setVerticeLineValue(TEXTURE_POSITION_X, VERTICAL_VERTEX_LINE, 1, bufferStartPosRatioAfterFadeIn);
+    setVerticeLineValue(TEXTURE_POSITION_X, VERTICAL_VERTEX_LINE, 2, bufferEndPosRatioBeforeFadeOut);
+    setVerticeLineValue(TEXTURE_POSITION_X, VERTICAL_VERTEX_LINE, 3, bufferEndPosRatio);
 
-    float lowPassPositionRatio = UnitConverter::freqToPositionRatio(lowPassFreq);
-    float highPassPositionRatio = UnitConverter::freqToPositionRatio(highPassFreq);
-    float halfLowPassPos = lowPassPositionRatio / 2.0;
-    float halfHighPassPos = highPassPositionRatio / 2.0;
+    setVerticeLineValue(VERTEX_ALPHA_LEVEL, VERTICAL_VERTEX_LINE, 0, 0.0f);
+    setVerticeLineValue(VERTEX_ALPHA_LEVEL, VERTICAL_VERTEX_LINE, 3, 0.0f);
 
-    // NOTE: each vertice data is 2 position values, 4 colors values, and 2 texture position values
+    // we loop over all squares to connect them together (the square connection actually append trangle ids to be picked
+    // by opengl)
+    for (int i = 0; i < noHorizontalVerticeLines - 1; i++)
+    {
+        int horizontalLineTopLeftVerticeId = i * noHorizontalVerticeLines;
+        int horizontalLineBottomLeftVerticeId = horizontalLineTopLeftVerticeId + noHorizontalVerticeLines;
 
-    // first 8 vertices are the main part, and the remaining 8 are
-    // the ones used to express fade in and fade out ramps (by blending to transparent on sides)
-
-    // upper left corner 0
-    vertices.push_back({{leftX + fadeInFrames, -lowPassPositionRatio},
-                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {bufferStartPosRatioAfterFadeIn, 0.5f + halfLowPassPos}});
-
-    // upper right corner 1
-    vertices.push_back({{rightX - fadeOutFrames, -lowPassPositionRatio},
-                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {bufferEndPosRatioBeforeFadeOut, 0.5f + halfLowPassPos}});
-
-    // right upper band bottom corner 2
-    vertices.push_back({{rightX - fadeOutFrames, -highPassPositionRatio},
-                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {bufferEndPosRatioBeforeFadeOut, 0.5f + halfHighPassPos}});
-
-    // left upper band bottom corner 3
-    vertices.push_back({{leftX + fadeInFrames, -highPassPositionRatio},
-                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {bufferStartPosRatioAfterFadeIn, 0.5f + halfHighPassPos}});
-
-    // left lower band top 4
-    vertices.push_back({{leftX + fadeInFrames, highPassPositionRatio},
-                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {bufferStartPosRatioAfterFadeIn, 0.5f - halfHighPassPos}});
-
-    // right lower band top 5
-    vertices.push_back({{rightX - fadeOutFrames, highPassPositionRatio},
-                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {bufferEndPosRatioBeforeFadeOut, 0.5f - halfHighPassPos}});
-
-    // lower right corner 6
-    vertices.push_back({{rightX - fadeOutFrames, lowPassPositionRatio},
-                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {bufferEndPosRatioBeforeFadeOut, 0.5f - halfLowPassPos}});
-
-    // lower left corner 7
-    vertices.push_back({{leftX + fadeInFrames, lowPassPositionRatio},
-                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f},
-                        {bufferStartPosRatioAfterFadeIn, 0.5f - halfLowPassPos}});
-
-    // alpha blended out versions
-
-    // fade in upper left corner 8
-    vertices.push_back({{leftX, -lowPassPositionRatio},
-                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 0.0f},
-                        {bufferStartPosRatio, 0.5f + halfLowPassPos}});
-
-    // fade out upper right corner 9
-    vertices.push_back({{rightX, -lowPassPositionRatio},
-                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 0.0f},
-                        {bufferEndPosRatio, 0.5f + halfLowPassPos}});
-
-    // fade out right upper band bottom corner 10
-    vertices.push_back({{rightX, -highPassPositionRatio},
-                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 0.0f},
-                        {bufferEndPosRatio, 0.5f + halfHighPassPos}});
-
-    // fade in left upper band bottom corner 11
-    vertices.push_back({{leftX, -highPassPositionRatio},
-                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 0.0f},
-                        {bufferStartPosRatio, 0.5f + halfHighPassPos}});
-
-    // fade in left lower band top 12
-    vertices.push_back({{leftX, highPassPositionRatio},
-                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 0.0f},
-                        {bufferStartPosRatio, 0.5f - halfHighPassPos}});
-
-    // fade out right lower band top 13
-    vertices.push_back({{rightX, highPassPositionRatio},
-                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 0.0f},
-                        {bufferEndPosRatio, 0.5f - halfHighPassPos}});
-
-    // fade out lower right corner 14
-    vertices.push_back({{rightX, lowPassPositionRatio},
-                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 0.0f},
-                        {bufferEndPosRatio, 0.5f - halfLowPassPos}});
-
-    // fade in lower left corner 15
-    vertices.push_back({{leftX, lowPassPositionRatio},
-                        {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 0.0f},
-                        {bufferStartPosRatio, 0.5f - halfLowPassPos}});
-
-    // connect the squares that are not part of the fade and fade out blends (core full color sample)
-    connectSquareFromVertexIds(0, 1, 2, 3);
-    connectSquareFromVertexIds(4, 5, 6, 7);
-
-    // connect the fade in and fade out squares
-
-    connectSquareFromVertexIds(8, 0, 3, 11);  // top sample part fade in to the left
-    connectSquareFromVertexIds(12, 4, 7, 15); // bottom sample part fade in to the left
-
-    connectSquareFromVertexIds(1, 9, 10, 2);  // top sample part fade out to the right
-    connectSquareFromVertexIds(5, 13, 14, 6); // bottom sample part fade out to the right
-
-    //////////////////// END OF OLD PART ////////////////////////////////////////////
+        for (int j = 0; j < noVerticalVerticeLines - 1; j++)
+        {
+            connectSquareFromVertexIds(horizontalLineTopLeftVerticeId + j, horizontalLineTopLeftVerticeId + j + 1,
+                                       horizontalLineBottomLeftVerticeId + j + 1,
+                                       horizontalLineBottomLeftVerticeId + j);
+        }
+    }
 
     uploadVerticesToGpu();
 }
