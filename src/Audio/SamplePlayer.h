@@ -151,7 +151,7 @@ class SamplePlayer : public juce::PositionableAudioSource
     int getLowPassRepeat();
 
     /**
-     * Sets how many time the low pass filter repeats. Must be 
+     * Sets how many time the low pass filter repeats. Must be
      * between 1 and SAMPLEPLAYER_MAX_FILTER_REPEAT
      */
     void setLowPassRepeat(int repeat);
@@ -162,7 +162,7 @@ class SamplePlayer : public juce::PositionableAudioSource
     int getHighPassRepeat();
 
     /**
-     * Sets how many time the high pass filter repeats. Must be 
+     * Sets how many time the high pass filter repeats. Must be
      * between 1 and SAMPLEPLAYER_MAX_FILTER_REPEAT
      */
     void setHighPassRepeat(int repeat);
@@ -173,12 +173,14 @@ class SamplePlayer : public juce::PositionableAudioSource
      *              the amplitude by the specified amount.
      *
      * @param[in]  isHighPass           True if the filter is high pass, false if low pass
-     * @param[in]  filterFreq           Frequency where the filter is applied (if we ignore knee, where the slope starts)
-     * @param[in]  dbReductionRequired  The db reduction we wish to have the frequency for. 
+     * @param[in]  filterFreq           Frequency where the filter is applied (if we ignore knee, where the slope
+     * starts)
+     * @param[in]  dbReductionRequired  The db reduction we wish to have the frequency for.
      * @param[in]  filterRepeat         How many times the base 12db/octave filter is repeated
-     * 
+     *
      */
-    static float freqForFilterDbReduction(bool isHighPass, float filterFreq, float dbReductionRequired, int filterRepeat);
+    static float freqForFilterDbReduction(bool isHighPass, float filterFreq, float dbReductionRequired,
+                                          int filterRepeat);
 
   private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SamplePlayer)
@@ -205,6 +207,12 @@ class SamplePlayer : public juce::PositionableAudioSource
     float lowPassFreq;
     // frequency of high pass filter. Disabled if equal to 0
     float highPassFreq;
+
+    // how many 12db/octave filters we successively apply for low pass filtering ?
+    int lowPassRepeat;
+
+    // how many 12db/octave filters we successively apply for high pass filtering ?
+    int highPassRepeat;
 
     BufferPtr audioBufferRef;
     bool isSampleSet;

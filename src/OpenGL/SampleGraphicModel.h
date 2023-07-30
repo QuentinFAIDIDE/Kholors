@@ -10,17 +10,90 @@
 #include "Vertex.h"
 #include "juce_opengl/opengl/juce_gl.h"
 
+enum VerticeProperty
+{
+    TEXTURE_POSITION_X,
+    TEXTURE_POSITION_Y,
+    VERTEX_POSITION_X,
+    VERTEX_POSITION_Y,
+    VERTEX_ALPHA_LEVEL
+};
+
+enum VerticeLineType
+{
+    HORIZONTAL_VERTEX_LINE,
+    VERTICAL_VERTEX_LINE
+};
+
 class SampleGraphicModel : public TexturedModel
 {
   public:
+    /**
+     * @brief      Constructs a new instance.
+     */
     SampleGraphicModel(std::shared_ptr<SamplePlayer>, juce::Colour);
+
+    /**
+     * @brief      Initializes the position drag of this  object.
+     */
     void initDrag();
-    void updateDrag(int);
+
+    /**
+     * @brief      Update position drag of this object.
+     *
+     * @param[in]  frameMove  How many audio frame the sample must be moved from prev pos.
+     */
+    void updateDrag(int frameMove);
+
+    /**
+     * @brief      Finds the intensity of the texture at this click position.
+     *
+     * @param[in]  x     horizontal texture position ratio (between 0 and 1)
+     * @param[in]  y     vertical texture position ratio (between 0 and 1)
+     *
+     * @return     texture intensity between 0 and 1
+     */
     float textureIntensity(float x, float y);
+
+    /**
+     * @brief      Get the position of this sample in the global
+     *             track in frames.
+     *
+     * @return     The frame position.
+     */
     juce::int64 getFramePosition();
+
+    /**
+     * @brief      Get the sample length in frames.
+     *
+     * @return     The frame length.
+     */
     juce::int64 getFrameLength();
+
+    /**
+     * @brief      Change the color of the sample
+     */
     void setColor(juce::Colour &);
+
+    /**
+     * @brief      Gather values from the sample player, sets
+     *             the properties in this object, and re-generate
+     *             the vertice data.
+     *
+     * @param[in]  sp    SamplePlayer to draw using this object.
+     */
     void reloadSampleData(std::shared_ptr<SamplePlayer> sp);
+
+    /**
+     * @brief      Gets the rectangle for the pixel bounds of the core sample
+     *             section (This will no include the filters fade out part)..
+     *
+     * @param[in]  viewPosition  The view position
+     * @param[in]  viewScale     The view scale
+     * @param[in]  viewHeight    The view height
+     *
+     * @return     The pixel bounds.
+     */
     std::vector<juce::Rectangle<float>> getPixelBounds(float viewPosition, float viewScale, float viewHeight);
 
   private:
@@ -52,6 +125,39 @@ class SampleGraphicModel : public TexturedModel
      */
     void updateFiltersGainReductionSteps(std::shared_ptr<SamplePlayer> sp);
 
+    /**
+     * @brief      For each sample object vertice in the specified line, set its values.
+     *
+     * @param[in]  targetPropertyToSet  The target property to set
+     * @param[in]  lineType             The line type
+     * @param[in]  lineIndex            The line index
+     * @param[in]  value                The value
+     */
+    void setVerticeLineValue(VerticeProperty targetPropertyToSet, VerticeLineType lineType, int lineIndex, float value);
+
+    /**
+     * @brief      Sets an individual vertex vertex property (position, color, texture position).
+     *
+     * @param      vertexToChange    The vertex to change
+     * @param[in]  propertyToChange  The property to change
+     * @param[in]  value             The value
+     */
+    void setVertexProperty(Vertex &vertexToChange, VerticeProperty propertyToChange, float value);
+
+    /**
+     * @brief      Return a reference to the upper left vertex (without filters fade out parts)
+     *
+     * @return     The upper left corner.
+     */
+    Vertex &getUpperLeftCorner();
+
+    /**
+     * @brief      Return a reference to the upper right vertex (without filters fade out parts)
+     *
+     * @return     The upper right corner.
+     */
+    Vertex &getUpperRightCorner();
+
     ///////////////////////////////
 
     // the FILTERS_FADE_DEFINITION frequencies for which the volume is reduced
@@ -72,6 +178,9 @@ class SampleGraphicModel : public TexturedModel
     float lastLowPassFreq, lastHighPassFreq;
     int horizontalScaleMultiplier;
     float lastFadeInFrameLength, lastFadeOutFrameLength;
+
+    // number of vertices lines in the mesh grid
+    int noVerticalVerticeLines, noHorizontalVerticeLines;
 
     // NOTE: the sample can be moved inside their audio buffer so their texture
     // position can change. On top of that, there is a fade in and fade out

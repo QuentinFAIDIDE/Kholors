@@ -13,6 +13,9 @@ SamplePlayer::SamplePlayer(int64_t position)
 
     audioBufferFrequencies = std::make_shared<std::vector<float>>();
 
+    lowPassRepeat = SAMPLEPLAYER_MAX_FILTER_REPEAT;
+    highPassRepeat = SAMPLEPLAYER_MAX_FILTER_REPEAT;
+
     setDbGain(0.0f);
     setLowPassFreq(lowPassFreq);
     setHighPassFreq(highPassFreq);
@@ -852,10 +855,14 @@ void SamplePlayer::applyFilters(const juce::AudioSourceChannelInfo &bufferToFill
         }
 
         float *audioSamples = bufferToFill.buffer->getWritePointer(channel);
-        for (size_t i = 0; i < SAMPLEPLAYER_MAX_FILTER_REPEAT; i++)
+        for (size_t i = 0; i < highPassRepeat; i++)
         {
             highPassFilters[i].processSamples(audioSamples + bufferToFill.startSample * sizeof(float),
                                               bufferToFill.numSamples);
+        }
+
+        for (size_t i = 0; i < lowPassRepeat; i++)
+        {
             lowPassFilters[i].processSamples(audioSamples + bufferToFill.startSample * sizeof(float),
                                              bufferToFill.numSamples);
         }
@@ -877,7 +884,8 @@ BufferPtr SamplePlayer::getBufferRef()
     return audioBufferRef;
 }
 
-float freqForFilterDbReduction(bool isHighPass, float filterFreq, float dbReductionRequired, int filterRepeat)
+float SamplePlayer::freqForFilterDbReduction(bool isHighPass, float filterFreq, float dbReductionRequired,
+                                             int filterRepeat)
 {
     // how many decibels per octave we loose per filter (since they are second order this is const)
     float defaultFilterSlope = 12.0;
@@ -912,4 +920,32 @@ float freqForFilterDbReduction(bool isHighPass, float filterFreq, float dbReduct
     }
 
     return response;
+}
+
+int SamplePlayer::getHighPassRepeat()
+{
+    return highPassRepeat;
+}
+
+void SamplePlayer::setHighPassRepeat(int repeat)
+{
+    if (repeat < 0 || repeat > SAMPLEPLAYER_MAX_FILTER_REPEAT)
+    {
+        return;
+    }
+    highPassRepeat = repeat;
+}
+
+int SamplePlayer::getLowPassRepeat()
+{
+    return lowPassRepeat;
+}
+
+void SamplePlayer::setLowPassRepeat(int v)
+{
+    if (v < 0 || v > SAMPLEPLAYER_MAX_FILTER_REPEAT)
+    {
+        return;
+    }
+    lowPassRepeat = v;
 }

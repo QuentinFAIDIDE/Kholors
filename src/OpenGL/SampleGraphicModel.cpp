@@ -4,6 +4,7 @@
 #include "Vertex.h"
 #include <algorithm>
 #include <memory>
+#include <stdexcept>
 
 using namespace juce::gl;
 
@@ -197,9 +198,9 @@ void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float right
                                                         float highPassFreq, float fadeInFrames, float fadeOutFrames)
 {
     // how many vertice line there are vertically (sample fade start, sample start, sample end, sample fade end)
-    int noVerticalVerticeLines = 4;
+    noVerticalVerticeLines = 4;
     // how many horizontal lines in the mesh (2 times cause there are symetrical bottom and top parts)
-    int noHorizontalVerticeLines = 2 * (2 + (FILTERS_FADE_DEFINITION * 2));
+    noHorizontalVerticeLines = 2 * (2 + (FILTERS_FADE_DEFINITION * 2));
 
     int noVertices = noVerticalVerticeLines * noHorizontalVerticeLines;
     int noSquares = (noVerticalVerticeLines - 1) * (noHorizontalVerticeLines - 1);
@@ -256,16 +257,18 @@ void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float right
 
         setVerticeLineValue(TEXTURE_POSITION_Y, HORIZONTAL_VERTEX_LINE,
                             lastTopPartIndex - FILTERS_FADE_DEFINITION + 1 + i, 0.5f + textureDistanceToCenter);
-        setVerticeLineValue(TEXTURE_POSITION_Y, HORIZONTAL_VERTEX_LINE, lastTopPartIndex + 1 + i,
+        setVerticeLineValue(TEXTURE_POSITION_Y, HORIZONTAL_VERTEX_LINE, lastTopPartIndex + FILTERS_FADE_DEFINITION - i,
                             0.5f - textureDistanceToCenter);
 
         setVerticeLineValue(VERTEX_POSITION_Y, HORIZONTAL_VERTEX_LINE,
                             lastTopPartIndex - FILTERS_FADE_DEFINITION + 1 + i, -glDistanceToCenter);
-        setVerticeLineValue(VERTEX_POSITION_Y, HORIZONTAL_VERTEX_LINE, lastTopPartIndex + 1 + i, glDistanceToCenter);
+        setVerticeLineValue(VERTEX_POSITION_Y, HORIZONTAL_VERTEX_LINE, lastTopPartIndex + FILTERS_FADE_DEFINITION - i,
+                            glDistanceToCenter);
 
         setVerticeLineValue(VERTEX_ALPHA_LEVEL, HORIZONTAL_VERTEX_LINE,
                             lastTopPartIndex - FILTERS_FADE_DEFINITION + 1 + i, alphaLevel);
-        setVerticeLineValue(VERTEX_ALPHA_LEVEL, HORIZONTAL_VERTEX_LINE, lastTopPartIndex + 1 + i, alphaLevel);
+        setVerticeLineValue(VERTEX_ALPHA_LEVEL, HORIZONTAL_VERTEX_LINE, lastTopPartIndex + FILTERS_FADE_DEFINITION - i,
+                            alphaLevel);
     }
 
     // set the two lines of the top and bottom part low pass filters frequencies
@@ -280,11 +283,13 @@ void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float right
 
     // same for high pass
     float highPassGlPosition = UnitConverter::freqToPositionRatio(lastHighPassFreq);
-    setVerticeLineValue(VERTEX_POSITION_Y, HORIZONTAL_VERTEX_LINE, lastTopPartIndex, -highPassGlPosition);
-    setVerticeLineValue(VERTEX_POSITION_Y, HORIZONTAL_VERTEX_LINE, lastTopPartIndex + 1, highPassGlPosition);
+    int topHighPassLineIndex = lastTopPartIndex - FILTERS_FADE_DEFINITION;
+    int botHighPassLineIndex = lastTopPartIndex + FILTERS_FADE_DEFINITION + 1;
+    setVerticeLineValue(VERTEX_POSITION_Y, HORIZONTAL_VERTEX_LINE, topHighPassLineIndex, -highPassGlPosition);
+    setVerticeLineValue(VERTEX_POSITION_Y, HORIZONTAL_VERTEX_LINE, botHighPassLineIndex, highPassGlPosition);
     float highPassTexturePos = highPassGlPosition / 2.0f;
-    setVerticeLineValue(TEXTURE_POSITION_Y, HORIZONTAL_VERTEX_LINE, lastTopPartIndex, 0.5f + highPassTexturePos);
-    setVerticeLineValue(TEXTURE_POSITION_Y, HORIZONTAL_VERTEX_LINE, lastTopPartIndex + 1, 0.5f - highPassGlPosition);
+    setVerticeLineValue(TEXTURE_POSITION_Y, HORIZONTAL_VERTEX_LINE, topHighPassLineIndex, 0.5f + highPassTexturePos);
+    setVerticeLineValue(TEXTURE_POSITION_Y, HORIZONTAL_VERTEX_LINE, botHighPassLineIndex, 0.5f - highPassTexturePos);
 
     // now we set the parameters of the four vertical lines of vertices
     setVerticeLineValue(VERTEX_POSITION_X, VERTICAL_VERTEX_LINE, 0, leftX);
@@ -304,8 +309,14 @@ void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float right
     // by opengl)
     for (int i = 0; i < noHorizontalVerticeLines - 1; i++)
     {
-        int horizontalLineTopLeftVerticeId = i * noHorizontalVerticeLines;
-        int horizontalLineBottomLeftVerticeId = horizontalLineTopLeftVerticeId + noHorizontalVerticeLines;
+        // we do not connect the top and bottom part (left and right audio channel drawing)
+        if (i == (noHorizontalVerticeLines >> 1) - 1)
+        {
+            continue;
+        }
+
+        int horizontalLineTopLeftVerticeId = i * noVerticalVerticeLines;
+        int horizontalLineBottomLeftVerticeId = horizontalLineTopLeftVerticeId + noVerticalVerticeLines;
 
         for (int j = 0; j < noVerticalVerticeLines - 1; j++)
         {
@@ -316,6 +327,16 @@ void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float right
     }
 
     uploadVerticesToGpu();
+}
+
+Vertex &SampleGraphicModel::getUpperLeftCorner()
+{
+    return vertices[FILTERS_FADE_DEFINITION * noVerticalVerticeLines];
+}
+
+Vertex &SampleGraphicModel::getUpperRightCorner()
+{
+    return vertices[((FILTERS_FADE_DEFINITION + 1) * noVerticalVerticeLines) - 1];
 }
 
 void SampleGraphicModel::connectSquareFromVertexIds(size_t topLeft, size_t topRight, size_t bottomRight,
@@ -351,8 +372,8 @@ int SampleGraphicModel::getTextureIndex(int freqIndex, int timeIndex, int freqDu
 // To run on opengl thread, will recolor track
 void SampleGraphicModel::setColor(juce::Colour &col)
 {
-    float leftX = vertices[8].position[0];
-    float rightX = vertices[9].position[0];
+    float leftX = getUpperLeftCorner().position[0];
+    float rightX = getUpperRightCorner().position[0];
     color = col;
     generateAndUploadVerticesToGPU(leftX, rightX, lastLowPassFreq, lastHighPassFreq, lastFadeInFrameLength,
                                    lastFadeOutFrameLength);
@@ -361,8 +382,8 @@ void SampleGraphicModel::setColor(juce::Colour &col)
 // Save position and width when selection dragging begins.
 void SampleGraphicModel::initDrag()
 {
-    dragStartPosition = vertices[8].position[0];
-    lastWidth = vertices[9].position[0] - vertices[8].position[0];
+    dragStartPosition = getUpperLeftCorner().position[0];
+    lastWidth = getUpperRightCorner().position[0] - getUpperLeftCorner().position[0];
 }
 
 // To run on opengl thread, will update track position to account
@@ -458,12 +479,12 @@ int SampleGraphicModel::isFilteredArea(float y)
 
 juce::int64 SampleGraphicModel::getFramePosition()
 {
-    return juce::int64(vertices[8].position[0]);
+    return juce::int64(getUpperLeftCorner().position[0]);
 }
 
 juce::int64 SampleGraphicModel::getFrameLength()
 {
-    return juce::int64(vertices[9].position[0] - vertices[8].position[0]);
+    return juce::int64(getUpperRightCorner().position[0] - getUpperLeftCorner().position[0]);
 }
 
 std::vector<juce::Rectangle<float>> SampleGraphicModel::getPixelBounds(float viewPosition, float viewScale,
@@ -476,13 +497,58 @@ std::vector<juce::Rectangle<float>> SampleGraphicModel::getPixelBounds(float vie
     std::vector<juce::Rectangle<float>> rectangles;
 
     rectangles.push_back(juce::Rectangle<float>(
-        (vertices[8].position[0] - viewPosition) / viewScale, (1.0 - freqRatioLowPass) * (viewHeight / 2.0),
-        (vertices[9].position[0] - vertices[8].position[0]) / viewScale, height / 2.0));
+        (getUpperLeftCorner().position[0] - viewPosition) / viewScale, (1.0 - freqRatioLowPass) * (viewHeight / 2.0),
+        (getUpperRightCorner().position[0] - getUpperLeftCorner().position[0]) / viewScale, height / 2.0));
 
-    rectangles.push_back(juce::Rectangle<float>((vertices[8].position[0] - viewPosition) / viewScale,
-                                                (viewHeight / 2.0) + ((freqRatioHighPass) * (viewHeight / 2.0)),
-                                                (vertices[9].position[0] - vertices[8].position[0]) / viewScale,
-                                                height / 2.0));
+    rectangles.push_back(juce::Rectangle<float>(
+        (getUpperLeftCorner().position[0] - viewPosition) / viewScale,
+        (viewHeight / 2.0) + ((freqRatioHighPass) * (viewHeight / 2.0)),
+        (getUpperRightCorner().position[0] - getUpperLeftCorner().position[0]) / viewScale, height / 2.0));
 
     return rectangles;
+}
+
+void SampleGraphicModel::setVertexProperty(Vertex &vertexToChange, VerticeProperty propertyToChange, float value)
+{
+    switch (propertyToChange)
+    {
+    case TEXTURE_POSITION_X:
+        vertexToChange.texturePosition[0] = value;
+        break;
+    case TEXTURE_POSITION_Y:
+        vertexToChange.texturePosition[1] = value;
+        break;
+    case VERTEX_POSITION_X:
+        vertexToChange.position[0] = value;
+        break;
+    case VERTEX_POSITION_Y:
+        vertexToChange.position[1] = value;
+        break;
+    case VERTEX_ALPHA_LEVEL:
+        vertexToChange.colour[3] = value;
+        break;
+    default:
+        throw new std::runtime_error("Calling setVertexProperty with undefined VerticeProperty parameter");
+    };
+}
+
+void SampleGraphicModel::setVerticeLineValue(VerticeProperty targetPropertyToSet, VerticeLineType lineType,
+                                             int lineIndex, float value)
+{
+    if (lineType == HORIZONTAL_VERTEX_LINE)
+    {
+        int firstLineIndex = lineIndex * noVerticalVerticeLines;
+        for (size_t i = 0; i < noVerticalVerticeLines; i++)
+        {
+            setVertexProperty(vertices[firstLineIndex + i], targetPropertyToSet, value);
+        }
+    }
+    else if (lineType == VERTICAL_VERTEX_LINE)
+    {
+        int firstColumnIndex = lineIndex;
+        for (size_t i = 0; i < noHorizontalVerticeLines; i++)
+        {
+            setVertexProperty(vertices[firstColumnIndex + (i * noVerticalVerticeLines)], targetPropertyToSet, value);
+        }
+    }
 }
