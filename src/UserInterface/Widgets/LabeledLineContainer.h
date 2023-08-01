@@ -4,7 +4,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <memory>
 
-#define LABELED_LINE_CONTAINER_DEFAULT_HEIGHT 25
+#define LABELED_LINE_CONTAINER_DEFAULT_HEIGHT 23
 #define LABELED_LINE_CONTAINER_PADDING 2
 
 class LabeledLineContainer : public juce::Component

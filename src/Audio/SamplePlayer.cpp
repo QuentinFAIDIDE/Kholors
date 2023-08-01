@@ -464,6 +464,8 @@ std::shared_ptr<SamplePlayer> SamplePlayer::createDuplicate(juce::int64 newPosit
     duplicate->setHighPassFreq(highPassFreq);
     duplicate->setFadeInLength(fadeInFrameLength);
     duplicate->setFadeOutLength(fadeOutFrameLength);
+    duplicate->setLowPassRepeat(lowPassRepeat);
+    duplicate->setHighPassRepeat(highPassRepeat);
     duplicate->gainValue = gainValue;
     return duplicate;
 }
@@ -511,6 +513,8 @@ std::shared_ptr<SamplePlayer> SamplePlayer::splitAtFrequency(float frequencyLimi
     duplicate->setHighPassFreq(highPassFreq);
     duplicate->setFadeInLength(fadeInFrameLength);
     duplicate->setFadeOutLength(fadeOutFrameLength);
+    duplicate->setLowPassRepeat(lowPassRepeat);
+    duplicate->setHighPassRepeat(highPassRepeat);
     duplicate->gainValue = gainValue;
 
     // we are now the high end part
@@ -546,6 +550,8 @@ std::shared_ptr<SamplePlayer> SamplePlayer::splitAtPosition(juce::int64 position
     duplicate->setHighPassFreq(highPassFreq);
     duplicate->setFadeInLength(fadeInFrameLength);
     duplicate->setFadeOutLength(fadeOutFrameLength);
+    duplicate->setLowPassRepeat(lowPassRepeat);
+    duplicate->setHighPassRepeat(highPassRepeat);
     duplicate->gainValue = gainValue;
 
     // we are now the first part

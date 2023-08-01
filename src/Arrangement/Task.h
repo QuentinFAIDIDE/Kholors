@@ -833,8 +833,33 @@ class SampleGainChange : public Task
 {
 
   public:
+    /**
+     * @brief      Constructs a new instance. This one will not induce
+     *             value change but rather ask for the actual value to be
+     *             set in this task object so that the creator of the task
+     *             can read back the value in the completed object. It will
+     *             not be recorded in history.
+     *
+     * @param[in]  id    The identifier
+     */
     SampleGainChange(int id);
+
+    /**
+     * @brief      Constructs a new instance. It will try to set this value
+     *             and will not be recorded in history.
+     *
+     * @param[in]  id      The identifier
+     * @param[in]  dbGain  The database gain
+     */
     SampleGainChange(int id, float dbGain);
+
+    /**
+     * @brief      This tasks is set completed when created and is recorded in history.
+     *
+     * @param[in]  id              The identifier
+     * @param[in]  previousGainDb  The previous gain database
+     * @param[in]  currentGainDb   The current gain database
+     */
     SampleGainChange(int id, float previousGainDb, float currentGainDb);
 
     /**
@@ -849,6 +874,61 @@ class SampleGainChange : public Task
 
     int sampleId;
     float previousDbGain, currentDbGain;
+    bool isBroadcastRequest;
+};
+
+class SampleFilterRepeatChange : public Task
+{
+  public:
+    /**
+     * @brief      Constructs a new instance. It will try to set this value
+     *             and will not be recorded in history.
+     *
+     * @param[in]  id    The identifier of the sample
+     * @param[in]  isLP  Indicates if it's for low pass (and if not, it's a high pass)
+     */
+    SampleFilterRepeatChange(int id, bool isLP);
+
+    /**
+     * @brief      Constructs a new instance. It will try to set this value
+     *             and will not be recorded in history.
+     *
+     * @param[in]  id      The identifier of the sample
+     * @param[in]  isLP    Indicates if it's for low pass (and if not, it's a high pass)
+     * @param[in]  repeat  The number of times the filter repeats
+     */
+    SampleFilterRepeatChange(int id, bool isLP, int repeat);
+
+    /**
+     * @brief      This tasks is set completed when created and is recorded in history.
+     *
+     * @param[in]  id              The identifier of the sample
+     * @param[in]  isLP  Indicates if it's for low pass (and if not, it's a high pass)
+     * @param[in]  previousRepeat  The previous repeat
+     * @param[in]  newRepeat       The new repeat
+     */
+    SampleFilterRepeatChange(int id, bool isLP, int previousRepeat, int newRepeat);
+
+    /**
+    Dumps the task data to a string as json
+    */
+    std::string marshal() override;
+
+    /**
+      Get the opposite task with flipped old and new value
+     */
+    std::vector<std::shared_ptr<Task>> getOppositeTasks() override;
+
+    // the identifier of the sample that we modify
+    int sampleId;
+
+    // the old and new filter repeat value (how many time the filter is repeated)
+    float previousFilterRepeat, newFilterRepeat;
+
+    // is this a low pass filter or a high pass ?
+    bool isLowPassFilter;
+
+    // is this task a request to broacast the actual value
     bool isBroadcastRequest;
 };
 

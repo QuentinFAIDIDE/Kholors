@@ -32,10 +32,25 @@ SampleProperties::SampleProperties(ActivityManager &am)
     gainInput->setUnit("dB");
     am.registerTaskListener(gainInput.get());
     gainInput->setActivityManager(&am);
-    fadeOutInput->setMinDragUpdate(1.0f);
     gainLine = std::make_shared<LabeledLineContainer>("Gain:", gainInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
                                                       SAMPLEPROPS_INPUT_WIDTH);
     addAndMakeVisible(*gainLine);
+
+    auto lpRepeatInput = std::make_shared<SampleFilterRepeatInput>(true);
+    lpRepeatInput->setUnit("dB/oct");
+    am.registerTaskListener(lpRepeatInput.get());
+    lpRepeatInput->setActivityManager(&am);
+    lpRepeatLine = std::make_shared<LabeledLineContainer>("LP:", lpRepeatInput, SAMPLEPROPS_MAX_LABEL_WIDTH >> 1,
+                                                          SAMPLEPROPS_INPUT_WIDTH);
+    addAndMakeVisible(*lpRepeatLine);
+
+    auto hpRepeatInput = std::make_shared<SampleFilterRepeatInput>(false);
+    hpRepeatInput->setUnit("dB/oct");
+    am.registerTaskListener(hpRepeatInput.get());
+    hpRepeatInput->setActivityManager(&am);
+    hpRepeatLine = std::make_shared<LabeledLineContainer>("HP:", hpRepeatInput, SAMPLEPROPS_MAX_LABEL_WIDTH >> 1,
+                                                          SAMPLEPROPS_INPUT_WIDTH);
+    addAndMakeVisible(*hpRepeatLine);
 
     am.registerTaskListener(this);
 }
@@ -55,6 +70,10 @@ void SampleProperties::resized()
     gainLine->setBounds(contentBounds.removeFromTop(LABELED_LINE_CONTAINER_DEFAULT_HEIGHT));
     fadeInLine->setBounds(contentBounds.removeFromTop(LABELED_LINE_CONTAINER_DEFAULT_HEIGHT));
     fadeOutLine->setBounds(contentBounds.removeFromTop(LABELED_LINE_CONTAINER_DEFAULT_HEIGHT));
+    lpRepeatLine->setBounds(contentBounds.removeFromTop(LABELED_LINE_CONTAINER_DEFAULT_HEIGHT)
+                                .removeFromLeft(contentBounds.getWidth() / 2));
+    auto lpBounds = lpRepeatLine->getBounds();
+    hpRepeatLine->setBounds(lpBounds.withX(lpBounds.getX() + lpBounds.getWidth()));
 }
 
 bool SampleProperties::taskHandler(std::shared_ptr<Task> task)
@@ -65,8 +84,11 @@ bool SampleProperties::taskHandler(std::shared_ptr<Task> task)
         auto fadeInInput = std::dynamic_pointer_cast<SampleFadeInput>(fadeInLine->getContent());
         auto fadeOutInput = std::dynamic_pointer_cast<SampleFadeInput>(fadeOutLine->getContent());
         auto gainInput = std::dynamic_pointer_cast<SampleGainInput>(gainLine->getContent());
+        auto lpRepeatInput = std::dynamic_pointer_cast<SampleFilterRepeatInput>(lpRepeatLine->getContent());
+        auto hpRepeatInput = std::dynamic_pointer_cast<SampleFilterRepeatInput>(hpRepeatLine->getContent());
 
-        if (fadeInInput == nullptr || fadeOutInput == nullptr || gainInput == nullptr)
+        if (fadeInInput == nullptr || fadeOutInput == nullptr || gainInput == nullptr || lpRepeatLine == nullptr ||
+            hpRepeatLine == nullptr)
         {
             return false;
         }
@@ -74,6 +96,8 @@ bool SampleProperties::taskHandler(std::shared_ptr<Task> task)
         fadeInInput->setSampleIds(selectionUpdateTask->newSelectedTracks);
         fadeOutInput->setSampleIds(selectionUpdateTask->newSelectedTracks);
         gainInput->setSampleIds(selectionUpdateTask->newSelectedTracks);
+        lpRepeatInput->setSampleIds(selectionUpdateTask->newSelectedTracks);
+        hpRepeatInput->setSampleIds(selectionUpdateTask->newSelectedTracks);
     }
 
     return false;

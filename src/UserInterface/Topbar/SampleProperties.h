@@ -18,6 +18,8 @@ class SampleProperties : public juce::Component, public TaskListener
     std::shared_ptr<LabeledLineContainer> gainLine;
     std::shared_ptr<LabeledLineContainer> fadeInLine;
     std::shared_ptr<LabeledLineContainer> fadeOutLine;
+    std::shared_ptr<LabeledLineContainer> lpRepeatLine;
+    std::shared_ptr<LabeledLineContainer> hpRepeatLine;
 };
 
 #endif // DEF_SAMPLE_PROPERTIES_HPP

@@ -315,6 +315,50 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
         return true;
     }
 
+    auto filterRepeatChange = std::dynamic_pointer_cast<SampleFilterRepeatChange>(task);
+    if (filterRepeatChange != nullptr && !filterRepeatChange->isCompleted() && !filterRepeatChange->hasFailed())
+    {
+        if (filterRepeatChange->sampleId < 0 || filterRepeatChange->sampleId >= tracks.size() ||
+            tracks[filterRepeatChange->sampleId] == nullptr)
+        {
+            return false;
+        }
+
+        if (filterRepeatChange->isLowPassFilter)
+        {
+            filterRepeatChange->previousFilterRepeat = tracks[filterRepeatChange->sampleId]->getLowPassRepeat();
+        }
+        else
+        {
+            filterRepeatChange->previousFilterRepeat = tracks[filterRepeatChange->sampleId]->getHighPassRepeat();
+        }
+
+        if (!filterRepeatChange->isBroadcastRequest)
+        {
+            if (filterRepeatChange->isLowPassFilter)
+            {
+                tracks[filterRepeatChange->sampleId]->setLowPassRepeat(filterRepeatChange->newFilterRepeat);
+            }
+            else
+            {
+                tracks[filterRepeatChange->sampleId]->setHighPassRepeat(filterRepeatChange->newFilterRepeat);
+            }
+        }
+
+        if (filterRepeatChange->isLowPassFilter)
+        {
+            filterRepeatChange->newFilterRepeat = tracks[filterRepeatChange->sampleId]->getLowPassRepeat();
+        }
+        else
+        {
+            filterRepeatChange->newFilterRepeat = tracks[filterRepeatChange->sampleId]->getHighPassRepeat();
+        }
+
+        filterRepeatChange->setCompleted(true);
+        activityManager.broadcastNestedTaskNow(filterRepeatChange);
+        return true;
+    }
+
     return false;
 }
 

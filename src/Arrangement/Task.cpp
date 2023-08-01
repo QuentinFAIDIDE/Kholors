@@ -891,3 +891,59 @@ std::vector<std::shared_ptr<Task>> SampleGainChange::getOppositeTasks()
     tasks.push_back(task);
     return tasks;
 }
+
+//////////////////////////////////////////////////////////////////////////
+
+SampleFilterRepeatChange::SampleFilterRepeatChange(int id, bool isLP)
+{
+    sampleId = id;
+    previousFilterRepeat = 0;
+    newFilterRepeat = 0;
+    isLowPassFilter = isLP;
+    isBroadcastRequest = true;
+    recordableInHistory = false;
+}
+
+SampleFilterRepeatChange::SampleFilterRepeatChange(int id, bool isLP, int repeat)
+{
+    sampleId = id;
+    previousFilterRepeat = 0;
+    newFilterRepeat = repeat;
+    isLowPassFilter = isLP;
+    isBroadcastRequest = false;
+    recordableInHistory = false;
+}
+
+SampleFilterRepeatChange::SampleFilterRepeatChange(int id, bool isLP, int previousRepeat, int newRepeat)
+{
+    sampleId = id;
+    previousFilterRepeat = previousRepeat;
+    newFilterRepeat = newRepeat;
+    isLowPassFilter = isLP;
+    isBroadcastRequest = false;
+    recordableInHistory = true;
+}
+
+std::string SampleFilterRepeatChange::marshal()
+{
+    json taskj = {{"object", "task"},
+                  {"task", "sample_filter_repeat_change"},
+                  {"is_broadcast_request", isBroadcastRequest},
+                  {"sample_id", sampleId},
+                  {"previous_repeat", previousFilterRepeat},
+                  {"new_repeat", newFilterRepeat},
+                  {"is_low_pass", isLowPassFilter},
+                  {"is_completed", isCompleted()},
+                  {"failed", hasFailed()},
+                  {"recordable_in_history", recordableInHistory},
+                  {"is_part_of_reversion", isPartOfReversion}};
+    return taskj.dump();
+}
+
+std::vector<std::shared_ptr<Task>> SampleFilterRepeatChange::getOppositeTasks()
+{
+    std::vector<std::shared_ptr<Task>> tasks;
+    auto task = std::make_shared<SampleFilterRepeatChange>(sampleId, previousFilterRepeat);
+    tasks.push_back(task);
+    return tasks;
+}

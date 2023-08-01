@@ -412,3 +412,211 @@ void SampleGainInput::startDragging()
 {
     initialValues = currentValues;
 }
+
+/////////////////////////////////////////////////////////////
+
+#define DB_FILTER_SLOPE 12.0f
+#define FILTER_REPEAT_DB_MIN DB_FILTER_SLOPE
+#define FILTER_REPEAT_DB_MAX (DB_FILTER_SLOPE * SAMPLEPLAYER_MAX_FILTER_REPEAT)
+
+SampleFilterRepeatInput::SampleFilterRepeatInput(bool isLp)
+    : NumericInput(true, FILTER_REPEAT_DB_MIN, FILTER_REPEAT_DB_MAX, DB_FILTER_SLOPE), iteratingOverSelection(false),
+      isForLowPassFilter(isLp)
+{
+}
+
+void SampleFilterRepeatInput::setSampleIds(std::set<size_t> &ids)
+{
+    if (iteratingOverSelection)
+    {
+        std::cerr << "Wew ! Selection was updated while iterating over input samples!! This is not cool and should be "
+                     "fixed by the clumsy developer!"
+                  << std::endl;
+    }
+
+    bool newSelectionIsSubset = std::includes(sampleIds.begin(), sampleIds.end(), ids.begin(), ids.end());
+
+    sampleIds = ids;
+    displayedSampleId = -1;
+    if (sampleIds.size() > 0)
+    {
+        displayedSampleId = *sampleIds.begin();
+    }
+
+    // it's just usueless and slow to update map of initial values
+    // when the new selection is a subset. It creates super slow
+    // group deletion.
+    if (!newSelectionIsSubset)
+    {
+        initialValues.clear();
+        currentValues.clear();
+        fetchValueIfPossible();
+    }
+}
+
+void SampleFilterRepeatInput::fetchValueIfPossible()
+{
+    if (getActivityManager() != nullptr && sampleIds.size() > 0)
+    {
+        // a copy of the selected set for more safety
+        std::set<size_t> actualSelectedIds = sampleIds;
+        auto it = actualSelectedIds.begin();
+        iteratingOverSelection = true;
+        for (it = actualSelectedIds.begin(); it != actualSelectedIds.end(); it++)
+        {
+            // emit a task that gets the initial value
+            auto task = std::make_shared<SampleFilterRepeatChange>(*it, isForLowPassFilter);
+            getActivityManager()->broadcastTask(task);
+        }
+        iteratingOverSelection = false;
+    }
+    if (getActivityManager() != nullptr)
+    {
+        setValue(0);
+    }
+}
+
+bool SampleFilterRepeatInput::taskHandler(std::shared_ptr<Task> task)
+{
+    // no need to parse tasks if we have no assigned id
+    if (sampleIds.size() == 0)
+    {
+        return false;
+    }
+
+    // we are interested in completed SampleFilterRepeatChange tasks
+    auto updateTask = std::dynamic_pointer_cast<SampleFilterRepeatChange>(task);
+    if (updateTask != nullptr && updateTask->isCompleted() && !updateTask->hasFailed() &&
+        sampleIds.find(updateTask->sampleId) != sampleIds.end())
+    {
+        if (isForLowPassFilter)
+        {
+            if (updateTask->isLowPassFilter)
+            {
+                if (updateTask->sampleId == displayedSampleId)
+                {
+                    setValue(DB_FILTER_SLOPE * updateTask->newFilterRepeat);
+                }
+                currentValues[updateTask->sampleId] = updateTask->newFilterRepeat;
+            }
+        }
+        else
+        {
+            if (!updateTask->isLowPassFilter)
+            {
+                if (updateTask->sampleId == displayedSampleId)
+                {
+                    setValue(DB_FILTER_SLOPE * updateTask->newFilterRepeat);
+                }
+                currentValues[updateTask->sampleId] = updateTask->newFilterRepeat;
+            }
+        }
+        // we won't prevent event from being broadcasted further to allow for multiple inputs  to exist
+        return false;
+    }
+
+    return false;
+}
+
+void SampleFilterRepeatInput::emitFinalDragTask()
+{
+    // the pile of tasks to broadcast
+    std::vector<std::shared_ptr<SampleFilterRepeatChange>> tasks;
+
+    // true if we need to abort due to missing intiial or current value
+    // for selection
+    bool missingValue = false;
+
+    auto selectedSamplesCopy = sampleIds;
+    auto it = selectedSamplesCopy.begin();
+    iteratingOverSelection = true;
+
+    int taskGroupId = Task::getNewTaskGroupIndex();
+
+    for (it = selectedSamplesCopy.begin(); it != selectedSamplesCopy.end(); it++)
+    {
+        // emit the final tasks (already completed) so that we record to be able to revert
+        auto task = std::make_shared<SampleFilterRepeatChange>(*it, isForLowPassFilter, 1, 1);
+        task->setTaskGroupIndex(taskGroupId);
+
+        // if we're missing initial or final value, abort
+        if (initialValues.find(*it) == initialValues.end() || currentValues.find(*it) == currentValues.end())
+        {
+            missingValue = true;
+            break;
+        }
+
+        task->previousFilterRepeat = initialValues[*it];
+        task->newFilterRepeat = currentValues[*it];
+
+        // save task to be posted later when we know we're not missing any sample id value
+        tasks.push_back(task);
+    }
+
+    // abort if we're missing stuff
+    if (missingValue)
+    {
+        std::cerr << "Severe problem: missing multisample input values, aborted updated!!!" << std::endl;
+        return;
+    }
+
+    // broadcast final task
+    for (int i = 0; i < tasks.size(); i++)
+    {
+        getActivityManager()->broadcastTask(tasks[i]);
+    }
+
+    iteratingOverSelection = false;
+}
+
+void SampleFilterRepeatInput::emitIntermediateDragTask(float newValue)
+{
+    // list of tasks to post
+    std::vector<std::shared_ptr<SampleFilterRepeatChange>> tasks;
+
+    // convert the db value to an int
+    int filterRepeat = (int)std::round(newValue / DB_FILTER_SLOPE);
+
+    // true if we need to abort due to missing intiial or current value
+    // for selection
+    bool missingValue = false;
+
+    auto selectedSamplesCopy = sampleIds;
+    auto it = selectedSamplesCopy.begin();
+    iteratingOverSelection = true;
+
+    for (it = selectedSamplesCopy.begin(); it != selectedSamplesCopy.end(); it++)
+    {
+        std::shared_ptr<SampleFilterRepeatChange> task;
+
+        // if we're missing initial or final value, abort
+        if (initialValues.find(*it) == initialValues.end() || currentValues.find(*it) == currentValues.end())
+        {
+            missingValue = true;
+            break;
+        }
+
+        task = std::make_shared<SampleFilterRepeatChange>(*it, isForLowPassFilter, filterRepeat);
+
+        tasks.push_back(task);
+    }
+
+    // abort if we're missing stuff
+    if (missingValue)
+    {
+        std::cerr << "Severe problem: missing multisample input values, aborted intermediate updated!!!" << std::endl;
+        return;
+    }
+
+    for (int i = 0; i < tasks.size(); i++)
+    {
+        getActivityManager()->broadcastTask(tasks[i]);
+    }
+
+    iteratingOverSelection = false;
+}
+
+void SampleFilterRepeatInput::startDragging()
+{
+    initialValues = currentValues;
+}
