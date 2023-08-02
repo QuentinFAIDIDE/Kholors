@@ -176,9 +176,16 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
                 // https://docs.juce.com/master/tutorial_spectrum_analyser.html
 
                 // map the index to magnify important frequencies
-                auto logIndexFft = UnitConverter::magnifyFftIndex(k);
+                float logIndexFft = UnitConverter::magnifyFftIndex(k);
 
-                (*audioBufferFrequencies)[fftIndex + k] = inputOutputData[logIndexFft];
+                // try to do a linear interpolation between the two indexes
+                size_t belowIndex = (size_t)std::floor(logIndexFft);
+                size_t aboveIndex = (size_t)std::ceil(logIndexFft);
+                float interpolationPosition = logIndexFft - std::floor(logIndexFft);
+
+                (*audioBufferFrequencies)[fftIndex + k] =
+                    (inputOutputData[belowIndex] * (1.0f - interpolationPosition)) +
+                    (inputOutputData[aboveIndex] * (interpolationPosition));
             }
         }
     }
