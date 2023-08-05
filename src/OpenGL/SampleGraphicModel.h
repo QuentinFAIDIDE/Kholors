@@ -105,7 +105,7 @@ class SampleGraphicModel : public TexturedModel
     void connectSquareFromVertexIds(size_t, size_t, size_t, size_t);
 
     void uploadVerticesToGpu();
-    int isFilteredArea(float y);
+    int isFullyFilteredArea(float y);
 
     /**
      * Read the data from the stored fft, and load it into the texture array
@@ -157,6 +157,17 @@ class SampleGraphicModel : public TexturedModel
      * @return     The upper right corner.
      */
     Vertex &getUpperRightCorner();
+
+    /**
+     * @brief      Gets the filtering level. It's 0 if the area is unfiltered, and goes
+     *             from 1 to FILTERS_FADE_DEFINITION for the filtered area. If equal to
+     *              FILTERS_FADE_DEFINITION+1, it means that it's totally filtered.
+     *
+     * @param[in]  yPosition  The y position between 0 and 1 from top to bottom.
+     *
+     * @return     The filtering level between 0 and  FILTERS_FADE_DEFINITION+1.
+     */
+    int getFilteringLevel(float yPosition);
 
     ///////////////////////////////
 

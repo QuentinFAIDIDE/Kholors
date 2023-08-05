@@ -423,7 +423,7 @@ float SampleGraphicModel::textureIntensity(float x, float y)
         return 0.0f;
     }
 
-    if (isFilteredArea(y))
+    if (isFullyFilteredArea(y))
     {
         return 0.0f;
     }
@@ -455,26 +455,79 @@ float SampleGraphicModel::textureIntensity(float x, float y)
                                          (bufferEndPosRatio - bufferEndPosRatioBeforeFadeOut)));
     }
 
+    int filteringLevelAtClick = getFilteringLevel(y);
+    float intensityMultiplier = (1.0f - (float(filteringLevelAtClick) / (FILTERS_FADE_DEFINITION + 1)));
+    intensity = intensity * intensityMultiplier;
+
     return intensity;
 }
 
-int SampleGraphicModel::isFilteredArea(float y)
+int SampleGraphicModel::isFullyFilteredArea(float y)
 {
-    // Here, the "top" is in the sense of the frequency, i.e., on-screen position.
-    // The "top" value is therefore lower in value to that of the "bottom" in the
-    // coordinates system (taken from the Juce library) !
+    return getFilteringLevel(y) == FILTERS_FADE_DEFINITION + 1;
+}
 
-    float leftChannelTop = 0.5 - (0.5 * UnitConverter::freqToPositionRatio(lastLowPassFreq));
-    float leftChannelBottom = 0.5 - (0.5 * UnitConverter::freqToPositionRatio(lastHighPassFreq));
+int SampleGraphicModel::getFilteringLevel(float yPosition)
+{
+    // the position inside the channel (as opposed from the yPosition view that covers both channels)
+    float yChannelPosition;
 
-    float rightChannelTop = 0.5 + (0.5 * UnitConverter::freqToPositionRatio(lastHighPassFreq));
-    float rightChannelBottom = 0.5 + (0.5 * UnitConverter::freqToPositionRatio(lastLowPassFreq));
-
-    if (y < leftChannelTop || (y > leftChannelBottom && y < rightChannelTop) || y > rightChannelBottom)
+    if (yPosition < 0.5f)
     {
-        return true;
+        yChannelPosition = 1.0f - (yPosition * 2.0f);
     }
-    return false;
+    else
+    {
+        yChannelPosition = 2.0f * (yPosition - 0.5f);
+    }
+
+    // find out if inside the inner area
+    if (yChannelPosition >= UnitConverter::freqToPositionRatio(lastHighPassFreq) &&
+        yChannelPosition <= UnitConverter::freqToPositionRatio(lastLowPassFreq))
+    {
+        return 0;
+    }
+
+    // find out if inside one of the high pass fade out steps area
+    float lastHighPassFreqStep = highPassGainReductionSteps[FILTERS_FADE_DEFINITION - 1];
+    if (yChannelPosition >= UnitConverter::freqToPositionRatio(lastHighPassFreqStep) &&
+        yChannelPosition <= UnitConverter::freqToPositionRatio(lastHighPassFreq))
+    {
+        for (int i = 0; i < FILTERS_FADE_DEFINITION - 1; i++)
+        {
+            float lowestBandFreqPos = UnitConverter::freqToPositionRatio(highPassGainReductionSteps[i + 1]);
+            float highestBandFreqPos = UnitConverter::freqToPositionRatio(highPassGainReductionSteps[i]);
+
+            if (yChannelPosition >= lowestBandFreqPos && yChannelPosition <= highestBandFreqPos)
+            {
+                return 2 + i;
+            }
+        }
+        // if we found no match in the inner bands, it means the value is between the lowest step and the filter freq
+        return 1;
+    }
+
+    // find out if inside one if the low pass fade out steps area
+    float lastLowPassFreqStep = lowPassGainReductionSteps[FILTERS_FADE_DEFINITION - 1];
+    if (yChannelPosition >= UnitConverter::freqToPositionRatio(lastLowPassFreq) &&
+        yChannelPosition <= UnitConverter::freqToPositionRatio(lastLowPassFreqStep))
+    {
+        for (int i = 0; i < FILTERS_FADE_DEFINITION - 1; i++)
+        {
+            float lowestBandFreqPos = UnitConverter::freqToPositionRatio(lowPassGainReductionSteps[i]);
+            float highestBandFreqPos = UnitConverter::freqToPositionRatio(lowPassGainReductionSteps[i + 1]);
+
+            if (yChannelPosition >= lowestBandFreqPos && yChannelPosition <= highestBandFreqPos)
+            {
+                return 2 + i;
+            }
+        }
+        // if we found no match in the inner bands, it means the value is between the lowest step and the filter freq
+        return 1;
+    }
+
+    // if none of the above matched, we're in the filtered out area
+    return FILTERS_FADE_DEFINITION + 1;
 }
 
 juce::int64 SampleGraphicModel::getFramePosition()
