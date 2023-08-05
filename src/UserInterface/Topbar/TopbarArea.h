@@ -8,6 +8,7 @@
 // your module headers visible.
 #include <juce_gui_extra/juce_gui_extra.h>
 
+#include <memory>
 #include <mutex>
 #include <thread>
 
@@ -36,7 +37,7 @@ class TopbarArea : public juce::AnimatedAppComponent, public TaskListener
 {
   public:
     //==============================================================================
-    TopbarArea(ActivityManager &);
+    TopbarArea(ActivityManager &, juce::Component &);
     ~TopbarArea();
 
     //==============================================================================

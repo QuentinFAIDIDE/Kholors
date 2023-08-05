@@ -2,8 +2,13 @@
 
 #include "../Config.h"
 
+#define POPUP_MENU_IDEAL_HEIGHT 18;
+#define POPUP_MENU_SEPARATOR_IDEAL_HEIGHT 4;
+
 KholorsLookAndFeel::KholorsLookAndFeel()
 {
+    setColour(juce::PopupMenu::ColourIds::backgroundColourId, COLOR_BACKGROUND_HIGHLIGHT);
+    setColour(juce::PopupMenu::ColourIds::highlightedBackgroundColourId, COLOR_BACKGROUND_HIGHLIGHT.brighter(0.2f));
 }
 
 void KholorsLookAndFeel::drawTabButton(juce::TabBarButton &tb, juce::Graphics &g, bool isMouseOver, bool isMouseDown)
@@ -19,4 +24,9 @@ void KholorsLookAndFeel::drawTabButton(juce::TabBarButton &tb, juce::Graphics &g
     }
 
     g.drawText(tb.getButtonText(), bounds.reduced(4, 0), juce::Justification::centred, true);
+}
+
+juce::Font KholorsLookAndFeel::getPopupMenuFont()
+{
+    return juce::Font(DEFAULT_FONT_SIZE);
 }

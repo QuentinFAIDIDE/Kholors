@@ -6,11 +6,9 @@
 #include "../../Arrangement/ActivityManager.h"
 
 /**
- * @brief      This class describes a menu bar component. Note that
- *             we inherit both the component and model to be more
- *             concise.
+ * @brief      This class describes the topbar menu bar.
  */
-class MenuBar : public juce::MenuBarComponent, juce::MenuBarModel
+class MenuBar : public juce::Component
 {
   public:
     /**
@@ -18,34 +16,66 @@ class MenuBar : public juce::MenuBarComponent, juce::MenuBarModel
      *
      * @param      am    A reference to the activity manager we can send tasks to.
      */
-    MenuBar(ActivityManager &am);
+    MenuBar(ActivityManager &am, juce::Component &parentComp);
 
     /**
-     * @brief      Gets the menu bar names.
+     * @brief      Called when this components needs repainting.
      *
-     * @return     The menu bar names.
+     * @param      g     The graphics object allowing to drawn on screen.
      */
-    juce::StringArray getMenuBarNames() override;
+    void paint(juce::Graphics &g) override;
 
     /**
-     * @brief      Gets the menu for index.
+     * @brief      Called when the mouse is clicked over that component.
      *
-     * @param[in]  topLevelMenuIndex  The top level menu index
-     * @param[in]  menuName           The menu name
-     *
-     * @return     The menu for index.
+     * @param[in]  me    Mouse event object.
      */
-    juce::PopupMenu getMenuForIndex(int topLevelMenuIndex, const juce::String &menuName) override;
+    void mouseDown(const juce::MouseEvent &me) override;
 
     /**
-     * @brief      This is called when a menu item has been clicked on.
+     * @brief      Called when the mouse is moved over the component.
      *
-     * @param[in]  menuItemID         The menu item id
-     * @param[in]  topLevelMenuIndex  The top level menu index
+     * @param[in]  me    Mouse event object.
      */
-    void menuItemSelected(int menuItemID, int topLevelMenuIndex) override;
+    void mouseMove(const juce::MouseEvent &me) override;
+
+    /**
+     * @brief      Called when the mouse exits the component.
+     */
+    void mouseExit(const juce::MouseEvent &me) override;
 
   private:
+    // reference to the activity manager to send it tasks on menu clicks
+    ActivityManager &activityManager;
+
+    // parent to give to menu bars (on linux/wayland/hyprland using default one is buggy as hell)
+    juce::Component &parentComponent;
+
+    // id of the menu item that is open
+    int openedMenuId;
+
+    // id set to the id of the id the mouse is over
+    int mouseOverId;
+
+    // cached menu rectangles in local coordinates for click use
+    std::map<int, juce::Rectangle<int>> menuItemsRectangles;
+
+    ///////////
+
+    /**
+     * @brief      Draws a menu item.
+     *
+     * @param[in]  id      The identifier of the menu. Starts at 1 from left to right.
+     * @param[in]  text    The text of the menu.
+     * @param      bounds  The bounds from which we remove space from the left to get area to draw at.
+     * @param      g       graphics context to draw
+     */
+    void drawMenuItem(int id, std::string text, juce::Rectangle<int> &bounds, juce::Graphics &g);
+
+    void openFileMenu();
+    void openHelpMenu();
+    void openVersionningMenu();
+    void openEditMenu();
 };
 
 #endif // DEF_MENU_BAR_HPP

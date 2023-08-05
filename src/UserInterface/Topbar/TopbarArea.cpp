@@ -1,10 +1,11 @@
 #include "TopbarArea.h"
 #include "MenuBar.h"
 
-TopbarArea::TopbarArea(ActivityManager &am)
+TopbarArea::TopbarArea(ActivityManager &am, juce::Component &mainWindow)
     : leftComponentsContainer(am), rightComponentsContainer(am), playButton(am), stopButton(am), loopButton(am),
-      menuBar(am)
+      menuBar(am, mainWindow)
 {
+
     isHidden = true;
     isAnimationRunning = false;
     notifBaseX = 0;
@@ -53,13 +54,13 @@ void TopbarArea::paint(juce::Graphics &g)
 
     // we then draw a card at half the outter margins
     juce::Rectangle<float> cardInsideArea =
-        bounds.reduced(TOPBAR_OUTTER_MARGINS >> 1, TOPBAR_OUTTER_MARGINS >> 1).toFloat();
+        getLocalBounds().reduced(TOPBAR_OUTTER_MARGINS >> 1, TOPBAR_OUTTER_MARGINS >> 1).toFloat();
     g.setColour(COLOR_BACKGROUND_LIGHTER);
     g.fillRoundedRectangle(cardInsideArea, TOPBAR_BORDER_RADIUS);
     g.setColour(COLOR_LABELS_BORDER);
     g.drawRoundedRectangle(cardInsideArea, TOPBAR_BORDER_RADIUS, 0.4);
 
-    int imageY = (bounds.getHeight() / 2.0) - (logo.getHeight() / 2.0);
+    int imageY = (getLocalBounds().getHeight() / 2.0) - (logo.getHeight() / 2.0);
 
     g.drawImageAt(logo, TOPBAR_OUTTER_MARGINS, imageY);
 }
@@ -227,7 +228,8 @@ void TopbarArea::resized()
     area.removeFromLeft(leftSection.getWidth() + logo.getWidth());
     area.removeFromRight(rightComponentsContainer.getWidth());
 
-    menuBar.setBounds(area.removeFromTop(TOPBAR_MENU_HEIGHT));
+    auto areaCopy = area;
+    menuBar.setBounds(areaCopy.removeFromTop(TOPBAR_MENU_HEIGHT));
 
     int centerAreaXDelta = (area.getWidth() - (TOPBAR_ICONS_GAP * 2) - (3 * TOPBAR_ICONS_BUTTONS_WIDTH)) / 2;
     int centerAreaYDelta = (area.getHeight() - (1 * TOPBAR_ICONS_BUTTONS_WIDTH)) / 2;

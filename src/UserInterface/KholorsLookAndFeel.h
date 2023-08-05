@@ -8,6 +8,7 @@ class KholorsLookAndFeel : public juce::LookAndFeel_V4
   public:
     KholorsLookAndFeel();
     void drawTabButton(juce::TabBarButton &, juce::Graphics &, bool isMouseOver, bool isMouseDown) override;
+    juce::Font getPopupMenuFont() override;
 };
 
 #endif // DEF_LOOKANDFEEL_HPP
