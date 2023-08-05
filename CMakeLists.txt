@@ -9,6 +9,7 @@
 # CMake's behaviour is compatible with the named version. This is a standard CMake command, so more
 # information can be found in the CMake docs.
 cmake_minimum_required(VERSION 3.15)
+set(CMAKE_CXX_STANDARD 17)
 
 # For clang tidy and vscode to file compilation args
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) 

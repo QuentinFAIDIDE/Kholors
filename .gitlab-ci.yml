@@ -1,7 +1,7 @@
 image: registry.gitlab.com/faidide/juce-test-01/kholors-builder:v1.33.0
 
 cache:
-  - key: juce
+  - key: "juce-7.0.6"
     paths:
       - JUCE/
   - key: $CI_COMMIT_REF_SLUG
@@ -11,7 +11,7 @@ cache:
       - build/
 
 before_script:
-  - if [[ ! -d ./JUCE ]]; then git clone --depth 1 --branch 7.0.2 https://github.com/juce-framework/JUCE.git ; fi
+  - if [[ ! -d ./JUCE ]]; then git clone --depth 1 --branch 7.0.6 https://github.com/juce-framework/JUCE.git ; fi
   - if [[ ! -d ./build ]]; then mkdir build ; fi
   - export CCACHE_BASEDIR="$PWD"
   - export CCACHE_DIR="$PWD/ccache"
