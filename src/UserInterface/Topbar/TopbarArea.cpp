@@ -1,7 +1,9 @@
 #include "TopbarArea.h"
+#include "MenuBar.h"
 
 TopbarArea::TopbarArea(ActivityManager &am)
-    : leftComponentsContainer(am), rightComponentsContainer(am), playButton(am), stopButton(am), loopButton(am)
+    : leftComponentsContainer(am), rightComponentsContainer(am), playButton(am), stopButton(am), loopButton(am),
+      menuBar(am)
 {
     isHidden = true;
     isAnimationRunning = false;
@@ -18,6 +20,7 @@ TopbarArea::TopbarArea(ActivityManager &am)
     addAndMakeVisible(playButton);
     addAndMakeVisible(stopButton);
     addAndMakeVisible(loopButton);
+    addAndMakeVisible(menuBar);
 }
 
 TopbarArea::~TopbarArea()
@@ -223,6 +226,8 @@ void TopbarArea::resized()
     area.reduce(TOPBAR_OUTTER_MARGINS, TOPBAR_OUTTER_MARGINS);
     area.removeFromLeft(leftSection.getWidth() + logo.getWidth());
     area.removeFromRight(rightComponentsContainer.getWidth());
+
+    menuBar.setBounds(area.removeFromTop(TOPBAR_MENU_HEIGHT));
 
     int centerAreaXDelta = (area.getWidth() - (TOPBAR_ICONS_GAP * 2) - (3 * TOPBAR_ICONS_BUTTONS_WIDTH)) / 2;
     int centerAreaYDelta = (area.getHeight() - (1 * TOPBAR_ICONS_BUTTONS_WIDTH)) / 2;
