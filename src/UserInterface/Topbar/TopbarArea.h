@@ -37,7 +37,7 @@ class TopbarArea : public juce::AnimatedAppComponent, public TaskListener
 {
   public:
     //==============================================================================
-    TopbarArea(ActivityManager &, juce::Component &);
+    TopbarArea(ActivityManager &);
     ~TopbarArea();
 
     //==============================================================================

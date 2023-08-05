@@ -7,7 +7,7 @@
 
 //==============================================================================
 MainComponent::MainComponent()
-    : mixingBus(activityManager), arrangementArea(mixingBus, activityManager), topbarArea(activityManager, *this),
+    : mixingBus(activityManager), arrangementArea(mixingBus, activityManager), topbarArea(activityManager),
       actionTabs(juce::TabbedButtonBar::Orientation::TabsAtTop)
 {
 

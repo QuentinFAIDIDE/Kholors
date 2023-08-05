@@ -1,9 +1,9 @@
 #include "TopbarArea.h"
 #include "MenuBar.h"
 
-TopbarArea::TopbarArea(ActivityManager &am, juce::Component &mainWindow)
+TopbarArea::TopbarArea(ActivityManager &am)
     : leftComponentsContainer(am), rightComponentsContainer(am), playButton(am), stopButton(am), loopButton(am),
-      menuBar(am, mainWindow)
+      menuBar(am)
 {
 
     isHidden = true;

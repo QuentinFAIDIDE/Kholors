@@ -34,8 +34,7 @@
 #define OPENED_MENU_BOTTOM_LINE_WIDTH 2
 #define POPUP_MENU_Y_SHIFT 2
 
-MenuBar::MenuBar(ActivityManager &am, juce::Component &parentWindow)
-    : activityManager(am), parentComponent(parentWindow)
+MenuBar::MenuBar(ActivityManager &am) : activityManager(am)
 {
     openedMenuId = 0;
     mouseOverId = 0;
@@ -166,21 +165,20 @@ void MenuBar::openFileMenu()
     menu.addItem(FILE_MENU_ITEM_ID_NEW, "New");
     menu.addSeparator();
     menu.addItem(FILE_MENU_ITEM_ID_QUIT, "Quit");
+    menu.setLookAndFeel(&getLookAndFeel());
 
     juce::Rectangle<int> targetArea;
     targetArea.setX(getScreenX() + menuItemsRectangles[FILE_MENU_ID].getX());
     targetArea.setY(getScreenY() + menuItemsRectangles[FILE_MENU_ID].getY() +
                     menuItemsRectangles[FILE_MENU_ID].getHeight() + POPUP_MENU_Y_SHIFT);
 
-    menu.showMenuAsync(
-        juce::PopupMenu::Options().withParentComponent(&parentComponent).withTargetScreenArea(targetArea),
-        [this](int id) {
-            // only reset if another menu didn't open meanwhile
-            if (openedMenuId == FILE_MENU_ID)
-            {
-                openedMenuId = 0;
-            }
-        });
+    menu.showMenuAsync(juce::PopupMenu::Options().withTargetScreenArea(targetArea), [this](int id) {
+        // only reset if another menu didn't open meanwhile
+        if (openedMenuId == FILE_MENU_ID)
+        {
+            openedMenuId = 0;
+        }
+    });
 }
 
 void MenuBar::openEditMenu()
@@ -190,21 +188,20 @@ void MenuBar::openEditMenu()
     juce::PopupMenu menu;
     menu.addItem(EDIT_MENU_ITEM_ID_UNDO, "Undo");
     menu.addItem(EDIT_MENU_ITEM_ID_REDO, "Redo");
+    menu.setLookAndFeel(&getLookAndFeel());
 
     juce::Rectangle<int> targetArea;
     targetArea.setX(getScreenX() + menuItemsRectangles[EDIT_MENU_ID].getX());
     targetArea.setY(getScreenY() + menuItemsRectangles[EDIT_MENU_ID].getY() +
                     menuItemsRectangles[EDIT_MENU_ID].getHeight() + POPUP_MENU_Y_SHIFT);
 
-    menu.showMenuAsync(
-        juce::PopupMenu::Options().withParentComponent(&parentComponent).withTargetScreenArea(targetArea),
-        [this](int id) {
-            // only reset if another menu didn't open meanwhile
-            if (openedMenuId == EDIT_MENU_ID)
-            {
-                openedMenuId = 0;
-            }
-        });
+    menu.showMenuAsync(juce::PopupMenu::Options().withTargetScreenArea(targetArea), [this](int id) {
+        // only reset if another menu didn't open meanwhile
+        if (openedMenuId == EDIT_MENU_ID)
+        {
+            openedMenuId = 0;
+        }
+    });
 }
 
 void MenuBar::openVersionningMenu()
@@ -212,29 +209,29 @@ void MenuBar::openVersionningMenu()
     openedMenuId = VERSIONNING_MENU_ID;
 
     juce::PopupMenu menu;
-    menu.addItem(VERSIONNING_MENU_ITEM_ID_INIT, "Initialize repository");
+    menu.addItem(VERSIONNING_MENU_ITEM_ID_INIT, "Initialize");
     menu.addSeparator();
-    menu.addItem(VERSIONNING_MENU_ITEM_ID_COMMIT, "Commit current changes");
-    menu.addItem(VERSIONNING_MENU_ITEM_ID_RESET, "Reset to last commit");
+    menu.addItem(VERSIONNING_MENU_ITEM_ID_COMMIT, "Commit changes");
+    menu.addItem(VERSIONNING_MENU_ITEM_ID_RESET, "Reset changes");
     menu.addSeparator();
-    menu.addItem(VERSIONNING_MENU_ITEM_ID_REVERT, "Revert to a previous commit");
-    menu.addItem(VERSIONNING_MENU_ITEM_ID_CREATE_BRANCH, "Create branch from here");
-    menu.addItem(VERSIONNING_MENU_ITEM_ID_CHANGE_BRANCH, "Change branch");
+    menu.addItem(VERSIONNING_MENU_ITEM_ID_REVERT, "Revert");
+    menu.addItem(VERSIONNING_MENU_ITEM_ID_CREATE_BRANCH, "Branch");
+    menu.addItem(VERSIONNING_MENU_ITEM_ID_CHANGE_BRANCH, "Switch branch");
+
+    menu.setLookAndFeel(&getLookAndFeel());
 
     juce::Rectangle<int> targetArea;
     targetArea.setX(getScreenX() + menuItemsRectangles[VERSIONNING_MENU_ID].getX());
     targetArea.setY(getScreenY() + menuItemsRectangles[VERSIONNING_MENU_ID].getY() +
                     menuItemsRectangles[VERSIONNING_MENU_ID].getHeight() + POPUP_MENU_Y_SHIFT);
 
-    menu.showMenuAsync(
-        juce::PopupMenu::Options().withParentComponent(&parentComponent).withTargetScreenArea(targetArea),
-        [this](int id) {
-            // only reset if another menu didn't open meanwhile
-            if (openedMenuId == VERSIONNING_MENU_ID)
-            {
-                openedMenuId = 0;
-            }
-        });
+    menu.showMenuAsync(juce::PopupMenu::Options().withTargetScreenArea(targetArea), [this](int id) {
+        // only reset if another menu didn't open meanwhile
+        if (openedMenuId == VERSIONNING_MENU_ID)
+        {
+            openedMenuId = 0;
+        }
+    });
 }
 
 void MenuBar::openHelpMenu()
@@ -246,19 +243,18 @@ void MenuBar::openHelpMenu()
     menu.addItem(HELP_MENU_ITEM_ID_SHORTCUTS, "Show shortcuts");
     menu.addSeparator();
     menu.addItem(HELP_MENU_ITEM_ID_ABOUT, "About this version");
+    menu.setLookAndFeel(&getLookAndFeel());
 
     juce::Rectangle<int> targetArea;
     targetArea.setX(getScreenX() + menuItemsRectangles[HELP_MENU_ID].getX());
     targetArea.setY(getScreenY() + menuItemsRectangles[HELP_MENU_ID].getY() +
                     menuItemsRectangles[HELP_MENU_ID].getHeight() + POPUP_MENU_Y_SHIFT);
 
-    menu.showMenuAsync(
-        juce::PopupMenu::Options().withParentComponent(&parentComponent).withTargetScreenArea(targetArea),
-        [this](int id) {
-            // only reset if another menu didn't open meanwhile
-            if (openedMenuId == HELP_MENU_ID)
-            {
-                openedMenuId = 0;
-            }
-        });
+    menu.showMenuAsync(juce::PopupMenu::Options().withTargetScreenArea(targetArea), [this](int id) {
+        // only reset if another menu didn't open meanwhile
+        if (openedMenuId == HELP_MENU_ID)
+        {
+            openedMenuId = 0;
+        }
+    });
 }

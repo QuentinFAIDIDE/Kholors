@@ -16,7 +16,7 @@ class MenuBar : public juce::Component
      *
      * @param      am    A reference to the activity manager we can send tasks to.
      */
-    MenuBar(ActivityManager &am, juce::Component &parentComp);
+    MenuBar(ActivityManager &am);
 
     /**
      * @brief      Called when this components needs repainting.
@@ -47,9 +47,6 @@ class MenuBar : public juce::Component
   private:
     // reference to the activity manager to send it tasks on menu clicks
     ActivityManager &activityManager;
-
-    // parent to give to menu bars (on linux/wayland/hyprland using default one is buggy as hell)
-    juce::Component &parentComponent;
 
     // id of the menu item that is open
     int openedMenuId;
