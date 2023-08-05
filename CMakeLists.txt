@@ -24,11 +24,62 @@ endif(CCACHE_FOUND)
 # to use gdb
 set(CMAKE_BUILD_TYPE Debug)
 
+# This tried to set the version from git
+# based on this wicked genius work: https://www.mattkeeter.com/blog/2018-01-06-versioning/
+
+# If I don't do this, I might miss the tag the CI pushed for my previous change
+execute_process(COMMAND git pull origin --tags
+                ERROR_QUIET)
+
+execute_process(COMMAND git log --pretty=format:'%h' -n 1
+                OUTPUT_VARIABLE GIT_REV
+                ERROR_QUIET)
+
+# Check whether we got any revision (which isn't
+# always the case, e.g. when someone downloaded a zip
+# file from Github instead of a checkout)
+if ("${GIT_REV}" STREQUAL "")
+    set(GIT_REV "N/A")
+    set(GIT_DIFF "")
+    set(GIT_TAG "N/A")
+    set(GIT_BRANCH "N/A")
+else()
+    execute_process(
+        COMMAND bash -c "git diff --quiet --exit-code || echo +"
+        OUTPUT_VARIABLE GIT_DIFF)
+    execute_process(
+        COMMAND git describe --exact-match --tags
+        OUTPUT_VARIABLE GIT_TAG ERROR_QUIET)
+    execute_process(
+        COMMAND git rev-parse --abbrev-ref HEAD
+        OUTPUT_VARIABLE GIT_BRANCH)
+
+    string(STRIP "${GIT_REV}" GIT_REV)
+    string(SUBSTRING "${GIT_REV}" 1 7 GIT_REV)
+    string(STRIP "${GIT_DIFF}" GIT_DIFF)
+    string(STRIP "${GIT_TAG}" GIT_TAG)
+    string(REPLACE "v" "" GIT_VERSION_TAG "${GIT_TAG}")
+    string(STRIP "${GIT_BRANCH}" GIT_BRANCH)
+endif()
+
+set(VERSION "const char* GIT_REV=\"${GIT_REV}${GIT_DIFF}\";
+const char* GIT_TAG=\"${GIT_TAG}\";
+const char* GIT_BRANCH=\"${GIT_BRANCH}\";")
+
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/version.cpp)
+    file(READ ${CMAKE_CURRENT_SOURCE_DIR}/src/version.cpp VERSION_)
+else()
+    set(VERSION_ "")
+endif()
+
+if (NOT "${VERSION}" STREQUAL "${VERSION_}")
+    file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/src/version.cpp "${VERSION}")
+endif()
+
 # The top-level CMakeLists.txt file for a project must contain a literal, direct call to the
 # `project()` command. `project()` sets up some helpful variables that describe source/binary
 # directories, and the current project version. This is a standard CMake command.
-
-project(Kholors VERSION 0.0.1)
+project(Kholors VERSION ${GIT_VERSION_TAG})
 
 # If you've installed JUCE somehow (via a package manager, or directly using the CMake install
 # target), you'll need to tell this project that it depends on the installed copy of JUCE. If you've

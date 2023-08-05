@@ -7,7 +7,7 @@
 
 //==============================================================================
 MainComponent::MainComponent()
-    : mixingBus(activityManager), arrangementArea(mixingBus, activityManager), notificationArea(activityManager),
+    : mixingBus(activityManager), arrangementArea(mixingBus, activityManager), topbarArea(activityManager),
       actionTabs(juce::TabbedButtonBar::Orientation::TabsAtTop)
 {
 
@@ -16,7 +16,7 @@ MainComponent::MainComponent()
     configureLookAndFeel();
 
     activityManager.registerTaskListener(&mixingBus);
-    activityManager.registerTaskListener(&notificationArea);
+    activityManager.registerTaskListener(&topbarArea);
     activityManager.registerTaskListener(&audioLibraryTab);
 
     // initialize audio app with two outputs
@@ -34,7 +34,7 @@ MainComponent::MainComponent()
 
     // make subwidgets visible
     addAndMakeVisible(arrangementArea);
-    addAndMakeVisible(notificationArea);
+    addAndMakeVisible(topbarArea);
     addAndMakeVisible(actionTabs);
 
     // set the mixingBus callback to repaint arrangement area
@@ -44,7 +44,7 @@ MainComponent::MainComponent()
     });
 
     // spread the mixing bus data source for the visualizer
-    notificationArea.setDataSource(mixingBus.getMixbusDataSource());
+    topbarArea.setDataSource(mixingBus.getMixbusDataSource());
 
     // instanciate the loop values with what the mixbus has.
     // empty comstructor = request to broacast current value from Mixbus class
@@ -98,7 +98,7 @@ void MainComponent::resized()
     localBounds.setX(0);
     localBounds.setY(0);
     localBounds.setHeight(NOTIF_HEIGHT + NOTIF_OUTTER_MARGINS + NOTIF_OUTTER_MARGINS);
-    notificationArea.setBounds(localBounds);
+    topbarArea.setBounds(localBounds);
     // set arrangement area to a arrangementAreaHeight band at
     // middle of the screen
     localBounds.setX(0);
