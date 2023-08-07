@@ -932,4 +932,16 @@ class SampleFilterRepeatChange : public Task
     bool isBroadcastRequest;
 };
 
+/**
+ * @brief      This class describes a quitting task. It will
+ *             exit the software and close the window.
+ */
+class QuittingTask : public SilentTask
+{
+    /**
+    Dumps the task data to a string as json
+    */
+    std::string marshal() override;
+};
+
 #endif // DEF_ACTION_HPP

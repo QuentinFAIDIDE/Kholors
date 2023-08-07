@@ -1,5 +1,6 @@
 #include "MenuBar.h"
 #include "../../Config.h"
+#include <memory>
 
 #define FILE_MENU_ID 1
 #define FILE_MENU_TEXT "File"
@@ -177,6 +178,12 @@ void MenuBar::openFileMenu()
         if (openedMenuId == FILE_MENU_ID)
         {
             openedMenuId = 0;
+        }
+
+        if (id == FILE_MENU_ITEM_ID_QUIT)
+        {
+            auto quitTask = std::make_shared<QuittingTask>();
+            activityManager.broadcastTask(quitTask);
         }
     });
 }

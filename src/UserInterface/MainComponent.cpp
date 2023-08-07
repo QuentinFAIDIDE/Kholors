@@ -13,6 +13,8 @@ MainComponent::MainComponent()
 
     arrangementAreaHeight = FREQTIME_VIEW_HEIGHT;
 
+    activityManager.registerTaskListener(this);
+
     configureLookAndFeel();
 
     activityManager.registerTaskListener(&mixingBus);
@@ -197,4 +199,17 @@ void MainComponent::mouseDrag(const juce::MouseEvent &me)
         resized();
         repaint();
     }
+}
+
+bool MainComponent::taskHandler(std::shared_ptr<Task> task)
+{
+    auto quitTask = std::dynamic_pointer_cast<QuittingTask>(task);
+    if (quitTask != nullptr)
+    {
+        juce::JUCEApplicationBase::quit();
+        quitTask->setCompleted(true);
+        return true;
+    }
+
+    return false;
 }

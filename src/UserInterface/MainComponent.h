@@ -23,7 +23,7 @@
     This component lives inside our window, and this is where you should put all
     your controls and content.
 */
-class MainComponent : public juce::AudioAppComponent, public juce::DragAndDropContainer
+class MainComponent : public juce::AudioAppComponent, public juce::DragAndDropContainer, public TaskListener
 {
   public:
     //==============================================================================
@@ -40,6 +40,8 @@ class MainComponent : public juce::AudioAppComponent, public juce::DragAndDropCo
     void releaseResources() override;
     void getNextAudioBlock(const juce::AudioSourceChannelInfo &) override;
     void configureApp(Config &conf);
+
+    bool taskHandler(std::shared_ptr<Task> task) override;
 
     void mouseMove(const juce::MouseEvent &me) override;
     void mouseUp(const juce::MouseEvent &me) override;
