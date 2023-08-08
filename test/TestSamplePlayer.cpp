@@ -9,7 +9,7 @@ int testSamplePlayerWithSample(std::string path, int blockSize, int offset, int 
     // This is because importing config will add this package
     // to the numerous one that are rebuilt for importing
     // config.
-    juce::dsp::FFT fft(10);
+    juce::dsp::FFT fft(9);
 
     // load wav file
     juce::File testTonality(path);

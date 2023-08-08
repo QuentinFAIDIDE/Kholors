@@ -8,7 +8,7 @@ std::shared_ptr<SamplePlayer> loadFile(std::string path)
     // This is because importing config will add this package
     // to the numerous one that are rebuilt for importing
     // config.
-    juce::dsp::FFT fft(10);
+    juce::dsp::FFT fft(9);
 
     // load wav file
     juce::File testTonality(path);
