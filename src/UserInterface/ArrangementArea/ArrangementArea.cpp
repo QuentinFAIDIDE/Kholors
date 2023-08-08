@@ -300,6 +300,8 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
 
         taxonomyManager.reset();
 
+        updateShadersPositionUniforms(false);
+
         repaint();
 
         resetTask->markStepDoneAndCheckCompletion();
