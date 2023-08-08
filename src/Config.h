@@ -136,14 +136,13 @@
 #define KEYMAP_UNDO "ctrl + z"
 #define KEYMAP_REDO "ctrl + shift + z"
 
-#define FREQVIEW_SAMPLE_FFT_ORDER 10
+#define FREQVIEW_SAMPLE_FFT_ORDER 9
 // total number of fft frequency values. Given that the real part of the result is half of it
 // the effective number of frequency bins from 1 to AUDIO_FRAMERATE (samplerate)
 // is half that.
 #define FREQVIEW_SAMPLE_FFT_SIZE (1 << FREQVIEW_SAMPLE_FFT_ORDER)
 // How many frequencies we will store for each fft.
 #define FREQVIEW_SAMPLE_FFT_SCOPE_SIZE 4096
-#define FREQVIEW_SAMPLE_FFT_RESOLUTION_PIXELS 3
 
 // A and B are used to normalize log10
 #define FFT_MAGNIFY_A 0.00009990793
