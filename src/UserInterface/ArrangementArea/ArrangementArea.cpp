@@ -32,19 +32,7 @@ ArrangementArea::ArrangementArea(MixingBus &mb, ActivityManager &am)
 {
     activityManager.registerTaskListener(this);
 
-    // save reference to the sample manager
-    // initialize grid and position
-    viewPosition = 0;
-    viewScale = 100;
-    lastMouseX = 0;
-    lastMouseY = 0;
-    lastPlayCursorPosition = 0;
-    trackMovingInitialPosition = -1;
-
-    tempoGrid.updateView(viewPosition, viewScale);
-
-    tempo = DEFAULT_TEMPO;
-    tempoGrid.updateTempo(DEFAULT_TEMPO);
+    resetArrangement();
 
     // broadcast tempo value as a task
     std::shared_ptr<NumericInputUpdateTask> tempoUpdate = std::make_shared<NumericInputUpdateTask>(NUM_INPUT_ID_TEMPO);
@@ -68,6 +56,28 @@ ArrangementArea::ArrangementArea(MixingBus &mb, ActivityManager &am)
 
     addAndMakeVisible(frequencyGrid);
     addAndMakeVisible(tempoGrid);
+}
+
+void ArrangementArea::resetArrangement()
+{
+    // save reference to the sample manager
+    // initialize grid and position
+    viewPosition = 0;
+    viewScale = 100;
+    lastMouseX = 0;
+    lastMouseY = 0;
+    lastPlayCursorPosition = 0;
+    trackMovingInitialPosition = -1;
+
+    tempoGrid.updateView(viewPosition, viewScale);
+
+    tempo = DEFAULT_TEMPO;
+    tempoGrid.updateTempo(DEFAULT_TEMPO);
+
+    selectedTracks.clear();
+    copyAndBroadcastSelection(true);
+
+    samples.clear();
 }
 
 ArrangementArea::~ArrangementArea()
@@ -272,6 +282,27 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
                 samples[filterRepChange->sampleId]->reloadSampleData(mixingBus.getTrack(filterRepChange->sampleId));
             },
             true);
+
+        return false;
+    }
+
+    auto resetTask = std::dynamic_pointer_cast<ResetTask>(task);
+    if (resetTask != nullptr)
+    {
+        resetArrangement();
+
+        // broadcast tempo value as a task
+        std::shared_ptr<NumericInputUpdateTask> tempoUpdate =
+            std::make_shared<NumericInputUpdateTask>(NUM_INPUT_ID_TEMPO);
+        tempoUpdate->newValue = tempo;
+        tempoUpdate->setCompleted(true);
+        activityManager.broadcastNestedTaskNow(tempoUpdate);
+
+        taxonomyManager.reset();
+
+        repaint();
+
+        resetTask->markStepDoneAndCheckCompletion();
 
         return false;
     }

@@ -959,3 +959,35 @@ std::string QuittingTask::marshal()
                   {"is_part_of_reversion", isPartOfReversion}};
     return taskj.dump();
 }
+
+/////////////////////////////////////////////
+
+ResetTask::ResetTask()
+{
+    noStepsRemaining = RESET_TASK_NO_STEPS;
+}
+
+void ResetTask::markStepDoneAndCheckCompletion()
+{
+    if (isCompleted())
+    {
+        return;
+    }
+
+    noStepsRemaining--;
+    if (noStepsRemaining <= 0)
+    {
+        setCompleted(true);
+    }
+}
+
+std::string ResetTask::marshal()
+{
+    json taskj = {{"object", "task"},
+                  {"task", "reset"},
+                  {"is_completed", isCompleted()},
+                  {"failed", hasFailed()},
+                  {"recordable_in_history", recordableInHistory},
+                  {"is_part_of_reversion", isPartOfReversion}};
+    return taskj.dump();
+}

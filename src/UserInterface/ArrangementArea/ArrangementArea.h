@@ -66,6 +66,11 @@ class ArrangementArea : public juce::Component,
     ArrangementArea(MixingBus &, ActivityManager &);
     ~ArrangementArea();
 
+    /**
+     * @brief      Reset the state of the arrangement area view.
+     */
+    void resetArrangement();
+
     //==============================================================================
     bool taskHandler(std::shared_ptr<Task> task) override;
     void paint(juce::Graphics &) override;

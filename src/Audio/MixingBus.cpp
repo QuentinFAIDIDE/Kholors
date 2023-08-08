@@ -11,12 +11,29 @@
 // initialize the MixingBus, as well as Thread and audio inherited
 // behaviours.
 MixingBus::MixingBus(ActivityManager &am)
-    : Thread("Mixbus Loader Thread"), activityManager(am), playCursor(0), totalFrameLength(0), numChannels(2),
-      isPlaying(false), loopingToggledOn(false), loopSectionStartFrame(22050), loopSectionEndFrame(44100),
-      forwardFFT(FREQVIEW_SAMPLE_FFT_ORDER), uiState(am.getAppState().getUiState())
+    : Thread("Mixbus Loader Thread"), activityManager(am), numChannels(2), forwardFFT(FREQVIEW_SAMPLE_FFT_ORDER),
+      uiState(am.getAppState().getUiState())
 {
     // initialize format manager
     formatManager.registerBasicFormats();
+
+    reset();
+
+    // create instance of mixbusDataSource
+    mixbusDataSource = std::make_shared<MixbusDataSource>();
+
+    // start the background thread that makes malloc/frees
+    startThread();
+}
+
+void MixingBus::reset()
+{
+    playCursor = 0;
+    totalFrameLength = 0;
+    isPlaying = false;
+    loopingToggledOn = false;
+    loopSectionStartFrame = 22050;
+    loopSectionEndFrame = 44100;
 
     // set master bus gain
     masterGain.setGainDecibels(0.0f);
@@ -31,11 +48,7 @@ MixingBus::MixingBus(ActivityManager &am)
 
     lastDrawnCursor = 0;
 
-    // create instance of mixbusDataSource
-    mixbusDataSource = std::make_shared<MixbusDataSource>();
-
-    // start the background thread that makes malloc/frees
-    startThread();
+    tracks.clear();
 }
 
 MixingBus::~MixingBus()
@@ -357,6 +370,28 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
         filterRepeatChange->setCompleted(true);
         activityManager.broadcastNestedTaskNow(filterRepeatChange);
         return true;
+    }
+
+    auto resetTask = std::dynamic_pointer_cast<ResetTask>(task);
+    if (resetTask != nullptr)
+    {
+
+        // get audio thread lock
+        const juce::ScopedLock lock(mixbusMutex);
+
+        reset();
+        notify();
+
+        auto loopResetTask = std::make_shared<LoopMovingTask>();
+        loopResetTask->isBroadcastRequest = false;
+        loopResetTask->currentLoopBeginFrame = loopSectionStartFrame;
+        loopResetTask->currentLoopEndFrame = loopSectionEndFrame;
+        loopResetTask->setCompleted(true);
+        activityManager.broadcastNestedTaskNow(loopResetTask);
+
+        resetTask->markStepDoneAndCheckCompletion();
+
+        return false;
     }
 
     return false;

@@ -44,6 +44,11 @@ class TaxonomyManager
 
     std::set<int> getGroupSamples(int groupId);
 
+    /**
+     * @brief      Resets the object.
+     */
+    void reset();
+
   private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TaxonomyManager)
 

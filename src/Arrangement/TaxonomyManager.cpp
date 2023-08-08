@@ -29,6 +29,33 @@ TaxonomyManager::TaxonomyManager()
     }
 }
 
+void TaxonomyManager::reset()
+{
+    samples.clear();
+    groups.clear();
+
+    // as we speak, these should have no effect because
+    // clear does not change capacity
+    samples.reserve(DEFAULT_TAXONOMY_VECTOR_SIZE);
+    groups.reserve(DEFAULT_TAXONOMY_VECTOR_SIZE);
+
+    for (int i = 0; i < DEFAULT_TAXONOMY_VECTOR_SIZE; i++)
+    {
+        SampleMetadata sm;
+        sm.name = "Sample " + std::to_string(i);
+        sm.groupId = i;
+        sm.sampleId = i;
+        samples.push_back(sm);
+
+        SampleGroup sg;
+        sg.groupId = i;
+        sg.name = "Group " + std::to_string(i);
+        sg.sampleIds.insert(i);
+        sg.color = colourPalette[i % colourPalette.size()];
+        groups.push_back(sg);
+    }
+}
+
 void TaxonomyManager::extendElementsArrays(int index)
 {
     samples.reserve(index + DEFAULT_TAXONOMY_VECTOR_ROOM);

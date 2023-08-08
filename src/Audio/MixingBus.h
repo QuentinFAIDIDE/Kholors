@@ -32,6 +32,9 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
     MixingBus(ActivityManager &);
     ~MixingBus();
 
+    // reset the state of the mixbus to a fresh new one
+    void reset();
+
     // this is the handler for the app's broadcasted tasks
     bool taskHandler(std::shared_ptr<Task> task) override;
 

@@ -10,6 +10,8 @@ using json = nlohmann::json;
 
 #define MAX_TASK_INDEX 1048576
 
+#define RESET_TASK_NO_STEPS 2
+
 /**
   Unused as of now.
  */
@@ -938,10 +940,31 @@ class SampleFilterRepeatChange : public Task
  */
 class QuittingTask : public SilentTask
 {
+  public:
     /**
     Dumps the task data to a string as json
     */
     std::string marshal() override;
+};
+
+/**
+ * @brief      This class describes a reset task that is in charge
+ *             of resetting the whole software state as if it was
+ *             just started.
+ */
+class ResetTask : public Task
+{
+  public:
+    ResetTask();
+
+    void markStepDoneAndCheckCompletion();
+
+    /**
+    Dumps the task data to a string as json
+    */
+    std::string marshal() override;
+
+    int noStepsRemaining;
 };
 
 #endif // DEF_ACTION_HPP

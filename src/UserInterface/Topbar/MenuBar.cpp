@@ -185,6 +185,12 @@ void MenuBar::openFileMenu()
             auto quitTask = std::make_shared<QuittingTask>();
             activityManager.broadcastTask(quitTask);
         }
+
+        if (id == FILE_MENU_ITEM_ID_NEW)
+        {
+            auto resetTask = std::make_shared<ResetTask>();
+            activityManager.broadcastTask(resetTask);
+        }
     });
 }
 
