@@ -17,10 +17,10 @@ MixingBus::MixingBus(ActivityManager &am)
     // initialize format manager
     formatManager.registerBasicFormats();
 
-    reset();
-
     // create instance of mixbusDataSource
     mixbusDataSource = std::make_shared<MixbusDataSource>();
+
+    reset();
 
     // start the background thread that makes malloc/frees
     startThread();
@@ -34,6 +34,8 @@ void MixingBus::reset()
     loopingToggledOn = false;
     loopSectionStartFrame = 22050;
     loopSectionEndFrame = 44100;
+
+    mixbusDataSource->setPosition(playCursor);
 
     // set master bus gain
     masterGain.setGainDecibels(0.0f);
@@ -388,6 +390,9 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
         loopResetTask->currentLoopEndFrame = loopSectionEndFrame;
         loopResetTask->setCompleted(true);
         activityManager.broadcastNestedTaskNow(loopResetTask);
+
+        auto loopToggle = std::make_shared<LoopToggleTask>(false);
+        activityManager.broadcastNestedTaskNow(loopToggle);
 
         resetTask->markStepDoneAndCheckCompletion();
 
