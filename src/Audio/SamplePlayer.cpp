@@ -138,6 +138,8 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
     // This represent maybe 1 / 40 th of a second of signal that are ignored.
     // We should process it in the future.
 
+    int maxFftIndex = (FREQVIEW_SAMPLE_FFT_SIZE >> 1) - 1;
+
     // for each channel
     for (size_t i = 0; i < numChannels; i++)
     {
@@ -182,6 +184,17 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
                 size_t belowIndex = (size_t)std::floor(logIndexFft);
                 size_t aboveIndex = (size_t)std::ceil(logIndexFft);
                 float interpolationPosition = logIndexFft - std::floor(logIndexFft);
+
+                // tried to prevent reading irrelevant data due to ceiling errors
+                if (aboveIndex > maxFftIndex)
+                {
+                    aboveIndex = maxFftIndex;
+                }
+
+                if (belowIndex > maxFftIndex)
+                {
+                    belowIndex = maxFftIndex;
+                }
 
                 (*audioBufferFrequencies)[fftIndex + k] =
                     (inputOutputData[belowIndex] * (1.0f - interpolationPosition)) +

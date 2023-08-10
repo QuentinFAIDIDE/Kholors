@@ -736,6 +736,7 @@ void MixingBus::checkForCursorRedraw()
     if (abs(lastDrawnCursor - playCursor) > FREQVIEW_MIN_REDRAW_DISTANCE_FRAMES)
     {
         lastDrawnCursor = playCursor;
+        const juce::MessageManagerLock mmLock;
         trackRepaintCallback();
     }
 }
