@@ -2,6 +2,8 @@
 #include "../../Config.h"
 #include <memory>
 
+#include "../Dialogs/GitInitRepoDialog.h"
+
 #define FILE_MENU_ID 1
 #define FILE_MENU_TEXT "File"
 #define FILE_MENU_ITEM_ID_QUIT 1000
@@ -243,6 +245,18 @@ void MenuBar::openVersionningMenu()
         if (openedMenuId == VERSIONNING_MENU_ID)
         {
             openedMenuId = 0;
+        }
+
+        if (id == VERSIONNING_MENU_ITEM_ID_INIT)
+        {
+            juce::DialogWindow::LaunchOptions launchOptions;
+            launchOptions.dialogTitle = "Instantiate a new track";
+            launchOptions.content.set(new GitInitRepoDialog(), true);
+            launchOptions.escapeKeyTriggersCloseButton = true;
+            launchOptions.useNativeTitleBar = true;
+            launchOptions.resizable = false;
+            launchOptions.useBottomRightCornerResizer = false;
+            launchOptions.launchAsync();
         }
     });
 }

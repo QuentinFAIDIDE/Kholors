@@ -81,6 +81,7 @@ void MainComponent::configureLookAndFeel()
     // set roboto as default font
     appLookAndFeel.setDefaultSansSerifTypeface(tface);
     setLookAndFeel(&appLookAndFeel);
+    juce::LookAndFeel::setDefaultLookAndFeel(&appLookAndFeel);
 }
 
 //==============================================================================

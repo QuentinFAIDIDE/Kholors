@@ -4,6 +4,7 @@
 #include "Marshalable.h"
 #include "TaxonomyManager.h"
 #include "UserInterfaceState.h"
+#include <optional>
 
 /**
 AppState is responsible for states, ie
