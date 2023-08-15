@@ -1,6 +1,7 @@
 #ifndef DEF_INSTANTIATE_GIT_DIALOG_HPP
 #define DEF_INSTANTIATE_GIT_DIALOG_HPP
 
+#include "../../Arrangement/ActivityManager.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include <regex>
@@ -18,7 +19,7 @@ class GitInitRepoDialog : public juce::Component, juce::Button::Listener, juce::
     /**
      * @brief      Constructs a new instance.
      */
-    GitInitRepoDialog();
+    GitInitRepoDialog(ActivityManager &am);
 
     /**
      * @brief      Juce paint callback.
@@ -54,8 +55,10 @@ class GitInitRepoDialog : public juce::Component, juce::Button::Listener, juce::
     juce::TextButton confirmButton;
     juce::TextEditor nameEntry;
 
-    std::string content;
+    std::string chosenTrackName;
     std::regex contentValidationRegex;
+
+    ActivityManager &activityManager;
 
     /////////////////////////////////////////
 

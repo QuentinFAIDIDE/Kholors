@@ -155,6 +155,8 @@ void MainComponent::configureApp(Config &conf)
         std::cerr << "Audio Device Settings updated" << std::endl;
         printAudioDeviceSettings();
     }
+
+    sharedConfig.get() = conf;
 }
 
 void MainComponent::mouseMove(const juce::MouseEvent &event)

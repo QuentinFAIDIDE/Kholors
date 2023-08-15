@@ -16,6 +16,12 @@
 
 std::vector<std::string> Config::mandatoryParameters = {"profile", "apiVersion", "AudioLibraryLocations"};
 
+Config::Config()
+{
+    invalid = true;
+    errMsg = "Not initialized";
+}
+
 Config::Config(std::string configFilePath)
 {
     // parsing yaml file in the try, setting as invalid in the catch
@@ -49,9 +55,9 @@ Config::Config(std::string configFilePath)
 
         parseProfileName(config);
 
-        getConfigDirectory(config);
+        parseConfigDirectory(config);
 
-        getDataDirectory(config);
+        parseDataDirectory(config);
 
         parseBufferSize(config);
 
@@ -239,23 +245,24 @@ std::string Config::getErrMessage() const
     return errMsg;
 }
 
-void Config::getConfigDirectory(YAML::Node &config)
+void Config::parseConfigDirectory(YAML::Node &config)
 {
-    std::string path = getProvidedOrDefaultPath(config, "configDirectory", ".kholors");
+    std::string path = findConfigPathOrProvideDefault(config, "configDirectory", ".kholors");
     createFolderIfNotExists(path);
     configDirectoryPath = path;
 }
 
-void Config::getDataDirectory(YAML::Node &config)
+void Config::parseDataDirectory(YAML::Node &config)
 {
-    std::string path = getProvidedOrDefaultPath(config, "dataDirectory", "Kholors");
+    std::string path = findConfigPathOrProvideDefault(config, "dataDirectory", "Kholors");
     createFolderIfNotExists(path);
     dataLibraryPath = path;
 }
 
 // defaultPathFromHome must not begin with a slash or dot, use raw folder
 // name eg. "Data" or ".datadir"
-std::string Config::getProvidedOrDefaultPath(YAML::Node &config, std::string paramName, std::string defaultPathFromHome)
+std::string Config::findConfigPathOrProvideDefault(YAML::Node &config, std::string paramName,
+                                                   std::string defaultPathFromHome)
 {
     // if the directory path config is set, use this dir
     if (config[paramName])

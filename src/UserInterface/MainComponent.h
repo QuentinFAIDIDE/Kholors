@@ -71,6 +71,8 @@ class MainComponent : public juce::AudioAppComponent, public juce::DragAndDropCo
     EmptyTab sampleProcessingTab;
     EmptyTab masteringTab;
 
+    juce::SharedResourcePointer<Config> sharedConfig;
+
     KholorsLookAndFeel appLookAndFeel;
     void configureLookAndFeel();
 

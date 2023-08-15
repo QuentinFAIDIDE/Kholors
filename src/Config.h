@@ -82,6 +82,7 @@
 #define COLOR_SELECT_AREA juce::Colour(54, 210, 210)
 #define COLOR_OPAQUE_BICOLOR_LIST_1 COLOR_APP_BACKGROUND
 #define COLOR_OPAQUE_BICOLOR_LIST_2 COLOR_APP_BACKGROUND
+#define COLOR_DIALOG_BACKGROUND juce::Colour(30, 30, 30)
 
 #define COLOR_UNITS COLOR_TEXT_DARKER.withAlpha(0.7f)
 
@@ -160,6 +161,15 @@
 
 #define ACTIVITY_HISTORY_RING_BUFFER_SIZE 4096
 
+// TODO: move that into main config once we're sure of the color
+#define DIALOG_FOOTER_AREA_HEIGHT 48
+#define DIALOG_FOOTER_BUTTONS_SPACING 12
+#define DIALOG_FOOTER_BUTTONS_WIDTH 90
+#define DIALOG_FOOTER_BUTTONS_HEIGHT 28
+#define DIALOG_TEXT_ENTRY_HEIGHT 30
+#define DIALOG_TEXT_ENTRY_TOP_PADDING 8
+#define REPO_NAME_VALIDATION_REGEX "[A-Za-z-_]{3,30}"
+
 #ifndef DEF_CONFIG_HPP
 #define DEF_CONFIG_HPP
 
@@ -168,19 +178,94 @@
 #include <string>
 #include <vector>
 
+/**
+ * @brief      Config class that parses a YAML config file and store
+ *             its value for access. It can be either constructed with
+ *             a path to a config file or initilized empty and assigned
+ *             using the copy constructor of another config object that
+ *             parsed the config file.
+ *
+ */
 class Config
 {
   public:
+    /**
+     * @brief      Contructs a new instance that will set its value
+     *             by parsing the config file.
+     *
+     * @param[in]  path    The path to the config file to be parsed.
+     */
     Config(std::string);
 
+    /**
+     * @brief      Contructs an empty instance of the class. It needs
+     *             to be populated with the assignment operator = from
+     *             a COnfig object initialized wiith a config file path
+     *             to be usable.
+     */
+    Config();
+
+    /**
+     * @brief      Determines if invalid.
+     *
+     * @return     True if invalid, False otherwise.
+     */
     bool isInvalid() const;
+
+    /**
+     * @brief      Gets the profile name.
+     *
+     * @return     The profile name.
+     */
     std::string getProfileName() const;
+
+    /**
+     * @brief      Gets the number audio libs user set up.
+     *
+     * @return     The number audio libs.
+     */
     int getNumAudioLibs() const;
+
+    /**
+     * @brief      Gets the audio library name for this index.
+     * @return     The audio library name.
+     */
     std::string getAudioLibName(unsigned long) const;
+
+    /**
+     * @brief      Gets the audio library path for this index.
+     *
+     * @return     The audio library path.
+     */
     std::string getAudioLibPath(unsigned long) const;
+
+    /**
+     * @brief      return a boolean indicating if the library at this index
+     *             is set up to ignore usage count on samples inisde of it.
+     */
     bool audioLibIgnoreCount(unsigned long) const;
+
+    /**
+     * @brief      Gets the error message of the failed config parsing.
+     *
+     * @return     The error message.
+     */
     std::string getErrMessage() const;
+
+    /**
+     * @brief      Gets the path to the data folder. This is the
+     *             ~/Kholors one that lives in the user home, as opposed
+     *             to the config folder that is prefixed with a . and is in lowercap: ~/.kholors
+     *
+     * @return     The data folder path.
+     */
     std::string getDataFolderPath() const;
+
+    /**
+     * @brief      Get the size of the audio buffer user picked.
+     *
+     * @return     The buffer size.
+     */
     int getBufferSize() const;
 
   private:
@@ -204,9 +289,21 @@ class Config
     void parseProfileName(YAML::Node &);
     void parseBufferSize(YAML::Node &);
 
-    void getConfigDirectory(YAML::Node &);
-    void getDataDirectory(YAML::Node &);
-    std::string getProvidedOrDefaultPath(YAML::Node &, std::string, std::string);
+    void parseConfigDirectory(YAML::Node &);
+    void parseDataDirectory(YAML::Node &);
+
+    /**
+     * @brief      Return the path based on parameter name paramName in config
+     *             or return the home folder followed by defaultPathFromHome.
+     *
+     * @param      config                 YAML config path to try to find value in
+     * @param[in]  paramName              Parameter to look for in the config.
+     * @param[in]  defaultPathFromHome    Path to add to home and return if paramName not set in config
+     *
+     * @return     The provided or default path.
+     */
+    std::string findConfigPathOrProvideDefault(YAML::Node &config, std::string paramName,
+                                               std::string defaultPathFromHome);
 
     void createFolderIfNotExists(std::string);
 

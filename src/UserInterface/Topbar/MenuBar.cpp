@@ -223,8 +223,10 @@ void MenuBar::openVersionningMenu()
 {
     openedMenuId = VERSIONNING_MENU_ID;
 
+    bool isRepoAlreadyInitialized = activityManager.getAppState().getRepoDirectory().has_value();
+
     juce::PopupMenu menu;
-    menu.addItem(VERSIONNING_MENU_ITEM_ID_INIT, "Initialize");
+    menu.addItem(VERSIONNING_MENU_ITEM_ID_INIT, "Initialize", !isRepoAlreadyInitialized, false);
     menu.addSeparator();
     menu.addItem(VERSIONNING_MENU_ITEM_ID_COMMIT, "Commit changes");
     menu.addItem(VERSIONNING_MENU_ITEM_ID_RESET, "Reset changes");
@@ -251,7 +253,7 @@ void MenuBar::openVersionningMenu()
         {
             juce::DialogWindow::LaunchOptions launchOptions;
             launchOptions.dialogTitle = "Instantiate a new track";
-            launchOptions.content.set(new GitInitRepoDialog(), true);
+            launchOptions.content.set(new GitInitRepoDialog(activityManager), true);
             launchOptions.escapeKeyTriggersCloseButton = true;
             launchOptions.useNativeTitleBar = true;
             launchOptions.resizable = false;

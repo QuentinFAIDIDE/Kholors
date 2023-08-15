@@ -10,7 +10,7 @@ using json = nlohmann::json;
 
 #define MAX_TASK_INDEX 1048576
 
-#define RESET_TASK_NO_STEPS 2
+#define RESET_TASK_NO_STEPS 3
 
 /**
   Unused as of now.
@@ -965,6 +965,23 @@ class ResetTask : public Task
     std::string marshal() override;
 
     int noStepsRemaining;
+};
+
+/**
+ * @brief      A task responsible for triggering
+ *             track saving and git repository initialization.
+ */
+class GitRepoInitTask : public Task
+{
+  public:
+    GitRepoInitTask(std::string name);
+
+    /**
+    Dumps the task data to a string as json
+    */
+    std::string marshal() override;
+
+    std::string name;
 };
 
 #endif // DEF_ACTION_HPP

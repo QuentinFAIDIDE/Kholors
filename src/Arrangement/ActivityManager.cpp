@@ -1,10 +1,11 @@
 #include "ActivityManager.h"
 #include <memory>
 
-ActivityManager::ActivityManager()
+ActivityManager::ActivityManager() : appState(*this)
 {
     taskBroadcastStopped = false;
     historyNextIndex = 0;
+    registerTaskListener(&appState);
 }
 
 ActivityManager::~ActivityManager()

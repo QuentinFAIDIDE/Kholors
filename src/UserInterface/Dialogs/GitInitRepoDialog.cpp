@@ -1,20 +1,12 @@
 #include "GitInitRepoDialog.h"
+#include <memory>
 #include <regex>
-
-// TODO: move that into main config once we're sure of the color
-#define COLOR_DIALOG_BACKGROUND juce::Colour(30, 30, 30)
-#define DIALOG_FOOTER_AREA_HEIGHT 48
-#define DIALOG_FOOTER_BUTTONS_SPACING 12
-#define DIALOG_FOOTER_BUTTONS_WIDTH 90
-#define DIALOG_FOOTER_BUTTONS_HEIGHT 28
-#define DIALOG_TEXT_ENTRY_HEIGHT 30
-#define DIALOG_TEXT_ENTRY_TOP_PADDING 8
-#define REPO_NAME_VALIDATION_REGEX "[A-Za-z-_]{3,30}"
 
 #include "../../Config.h"
 #include "../Section.h"
 
-GitInitRepoDialog::GitInitRepoDialog() : contentValidationRegex(REPO_NAME_VALIDATION_REGEX)
+GitInitRepoDialog::GitInitRepoDialog(ActivityManager &am)
+    : contentValidationRegex(REPO_NAME_VALIDATION_REGEX), activityManager(am)
 {
 
     addAndMakeVisible(closeButton);
@@ -86,6 +78,11 @@ void GitInitRepoDialog::buttonClicked(juce::Button *clickedButton)
     {
         closeDialog();
     }
+    if (clickedButton == &confirmButton)
+    {
+        auto trackInitTask = std::make_shared<GitRepoInitTask>(chosenTrackName);
+        activityManager.broadcastTask(trackInitTask);
+    }
 }
 
 void GitInitRepoDialog::closeDialog()
@@ -97,7 +94,7 @@ void GitInitRepoDialog::closeDialog()
 /** Called when the user changes the text in some way. */
 void GitInitRepoDialog::textEditorTextChanged(juce::TextEditor &te)
 {
-    content = te.getText().toStdString();
+    chosenTrackName = te.getText().toStdString();
     confirmButton.setEnabled(nameIsValid());
 }
 
@@ -108,5 +105,5 @@ void GitInitRepoDialog::textEditorReturnKeyPressed(juce::TextEditor &)
 
 bool GitInitRepoDialog::nameIsValid()
 {
-    return std::regex_match(content, contentValidationRegex);
+    return std::regex_match(chosenTrackName, contentValidationRegex);
 }
