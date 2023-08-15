@@ -52,6 +52,8 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
     auto resetTask = std::dynamic_pointer_cast<ResetTask>(task);
     if (resetTask != nullptr && !resetTask->isCompleted())
     {
+        git.setWorkingDirectory("");
+        repositoryFolder.reset();
         resetTask->markStepDoneAndCheckCompletion();
         return false;
     }
@@ -75,6 +77,13 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
         // mark task as complete and rebroadcast it
         initGitTask->setCompleted(true);
         activityManager.broadcastNestedTaskNow(initGitTask);
+
+        // notify user of the sucess :)
+        auto notifTask = std::make_shared<NotificationTask>(
+            std::string("The project repository was sucessfully initialized! \nMake sure to "
+                        "commit changes as often as possible from the versionning menu."));
+        activityManager.broadcastNestedTaskNow(notifTask);
+
         return true;
     }
 
@@ -133,16 +142,32 @@ std::string AppState::initializeRepository(std::string name)
 
     repositoryFolder = newRepoFolder;
 
-    // TODO:
-    // save settings
-    // save history
-    // create content folder
-    // create recordings folder
-    // create frozen folder
-    // create exports folder
-    // create samples folder
-    // for each sample, dump it to the Samples folder
-    // TODO: run a git init
+    dumpProjectFiles();
+    git.setWorkingDirectory(repositoryFolder->getFullPathName().toStdString());
+    git.init();
+    git.add("main.json");
+    git.add("samples.json");
+    git.commit("initial commit");
 
     return "";
+}
+
+void AppState::dumpProjectFiles()
+{
+    if (!repositoryFolder.has_value())
+    {
+        return;
+    }
+
+    // Dump main.json
+    std::string settingsJSON = marshal();
+    juce::File mainJsonFile = repositoryFolder->getFullPathName() + "/main.json";
+    mainJsonFile.create();
+    mainJsonFile.replaceWithText(settingsJSON);
+
+    // TODO: Dump samples.json
+    std::string samplesJSON = "";
+    juce::File samplesJsonFile = repositoryFolder->getFullPathName() + "/samples.json";
+    samplesJsonFile.create();
+    samplesJsonFile.replaceWithText(samplesJSON);
 }

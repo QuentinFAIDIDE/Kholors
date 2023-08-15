@@ -1,6 +1,7 @@
 #ifndef DEF_APPSTATE_HPP
 #define DEF_APPSTATE_HPP
 
+#include "GitWrapper.h"
 #include "Marshalable.h"
 #include "TaskListener.h"
 #include "TaxonomyManager.h"
@@ -77,12 +78,19 @@ class AppState : public Marshalable, public TaskListener
      */
     std::string initializeRepository(std::string name);
 
+    /**
+     * @brief      Dumps project files to the current repository folder.
+     */
+    void dumpProjectFiles();
+
   private:
     TaxonomyManager taxonomy;
     UserInterfaceState uiState;
-    std::optional<juce::File> repositoryFolder;
     ActivityManager &activityManager;
     juce::SharedResourcePointer<Config> sharedConfig;
+    GitWrapper git;
+
+    std::optional<juce::File> repositoryFolder;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AppState)
