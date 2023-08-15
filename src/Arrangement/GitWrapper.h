@@ -1,6 +1,8 @@
 #ifndef DEF_GIT_WRAPPER_HPP
 #define DEF_GIT_WRAPPER_HPP
 
+#include <git2.h>
+#include <git2/repository.h>
 #include <string>
 
 /**
@@ -13,6 +15,16 @@ class GitWrapper
 {
   public:
     /**
+     * @brief      Constructs a new instance.
+     */
+    GitWrapper();
+
+    /**
+     * @brief      Destroys the object.
+     */
+    ~GitWrapper();
+
+    /**
      * @brief      Sets the working directory.
      *
      * @param[in]  path  The path
@@ -21,9 +33,18 @@ class GitWrapper
 
     /**
      * @brief      Initializes the git repository in this working
-     *             directory. (similar to git init)
+     *             directory. (similar to git init).
+     *             Return an empty string if no error, or the error message
+     *             otherwise.
      */
-    void init();
+    std::string init();
+
+    /**
+     * @brief      Open git repository at current path.
+     *
+     * @return     The error or an empty string if there were none.
+     */
+    std::string open();
 
     /**
      * @brief      Add a file to the current commit (similar to git add).
@@ -45,6 +66,10 @@ class GitWrapper
      * @return     The branch.
      */
     std::string getBranch();
+
+  private:
+    std::string repositoryPath;
+    git_repository *libgitRepo;
 };
 
 #endif // DEF_GIT_WRAPPER_HPP
