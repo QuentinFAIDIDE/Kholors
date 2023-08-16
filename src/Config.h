@@ -168,7 +168,10 @@
 #define DIALOG_FOOTER_BUTTONS_HEIGHT 28
 #define DIALOG_TEXT_ENTRY_HEIGHT 30
 #define DIALOG_TEXT_ENTRY_TOP_PADDING 8
+
 #define REPO_NAME_VALIDATION_REGEX "[A-Za-z-_]{3,30}"
+#define MAIL_REGEX "^[A-Za-z-_\\.]{2,40}@[A-Za-z-_]{2,40}.[a-z]{2,4}$"
+#define NAME_REGEX "[A-Za-z à-üÀ-Ü]{3,30}"
 
 #ifndef DEF_CONFIG_HPP
 #define DEF_CONFIG_HPP
@@ -268,6 +271,20 @@ class Config
      */
     int getBufferSize() const;
 
+    /**
+     * @brief      Gets the mail.
+     *
+     * @return     The mail.
+     */
+    std::string getMail() const;
+
+    /**
+     * @brief      Gets the name.
+     *
+     * @return     The name.
+     */
+    std::string getName() const;
+
   private:
     bool invalid;
     std::string errMsg;
@@ -277,6 +294,8 @@ class Config
     std::vector<bool> audioLibIgnoreCounts;
     std::string configDirectoryPath;
     std::string dataLibraryPath;
+    std::string name;
+    std::string mail;
     int bufferSize;
 
     void checkMandatoryParameters(YAML::Node &);
@@ -287,8 +306,9 @@ class Config
     void parseAudioLibLocationName(YAML::Node &);
     void parseAudioLibLocationIgnoreCount(YAML::Node &);
     void parseProfileName(YAML::Node &);
+    void parseName(YAML::Node &);
+    void parseMail(YAML::Node &);
     void parseBufferSize(YAML::Node &);
-
     void parseConfigDirectory(YAML::Node &);
     void parseDataDirectory(YAML::Node &);
 

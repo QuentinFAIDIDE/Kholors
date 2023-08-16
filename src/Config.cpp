@@ -11,10 +11,12 @@
 #include <exception>
 #include <iostream>
 #include <numeric>
+#include <regex>
 #include <stdexcept>
 #include <string>
 
-std::vector<std::string> Config::mandatoryParameters = {"profile", "apiVersion", "AudioLibraryLocations"};
+std::vector<std::string> Config::mandatoryParameters = {"name", "mail", "profile", "apiVersion",
+                                                        "AudioLibraryLocations"};
 
 Config::Config()
 {
@@ -54,6 +56,10 @@ Config::Config(std::string configFilePath)
         parseAudioLibraryLocations(config);
 
         parseProfileName(config);
+
+        parseName(config);
+
+        parseMail(config);
 
         parseConfigDirectory(config);
 
@@ -195,6 +201,44 @@ void Config::parseProfileName(YAML::Node &config)
     else
     {
         profile = config["profile"].as<std::string>();
+    }
+}
+
+void Config::parseName(YAML::Node &config)
+{
+    if (!config["name"] || !config["name"].IsScalar())
+    {
+        throw std::runtime_error(std::string("Missing or invalid name field"));
+    }
+
+    name = config["name"].as<std::string>();
+    if (!std::regex_match(name, std::regex(NAME_REGEX)))
+    {
+        throw std::runtime_error(std::string("Unrecognised name format"));
+    }
+}
+
+std::string Config::getName() const
+{
+    return name;
+}
+
+std::string Config::getMail() const
+{
+    return mail;
+}
+
+void Config::parseMail(YAML::Node &config)
+{
+    if (!config["mail"] || !config["mail"].IsScalar())
+    {
+        throw std::runtime_error(std::string("Missing or invalid mail field"));
+    }
+
+    mail = config["mail"].as<std::string>();
+    if (!std::regex_match(mail, std::regex(MAIL_REGEX)))
+    {
+        throw std::runtime_error(std::string("Unrecognised mail format"));
     }
 }
 

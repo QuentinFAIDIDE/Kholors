@@ -144,10 +144,30 @@ std::string AppState::initializeRepository(std::string name)
 
     dumpProjectFiles();
     git.setWorkingDirectory(repositoryFolder->getFullPathName().toStdString());
-    git.init();
-    git.add("main.json");
-    git.add("samples.json");
-    git.commit("initial commit");
+
+    std::string error = git.init();
+    if (error != "")
+    {
+        return "git init problem: " + error;
+    }
+
+    error = git.add("main.json");
+    if (error != "")
+    {
+        return "git add problem: " + error;
+    }
+
+    error = git.add("samples.json");
+    if (error != "")
+    {
+        return "git add problem: " + error;
+    }
+
+    error = git.commit("initial commit");
+    if (error != "")
+    {
+        return "git add problem: " + error;
+    }
 
     return "";
 }

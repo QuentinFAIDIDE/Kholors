@@ -203,6 +203,7 @@ target_link_libraries(Kholors
         juce::juce_opengl
         yaml-cpp
         nlohmann_json::nlohmann_json
+        git2
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

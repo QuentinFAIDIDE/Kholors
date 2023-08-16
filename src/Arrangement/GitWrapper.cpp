@@ -1,4 +1,5 @@
 #include "GitWrapper.h"
+#include <git2/commit.h>
 #include <git2/errors.h>
 #include <git2/index.h>
 #include <git2/repository.h>
@@ -90,6 +91,7 @@ std::string GitWrapper::add(std::string filenameRelativeFromDirectory)
     ret = git_index_add_all(index, &file, GIT_INDEX_ADD_DEFAULT, nullptr, nullptr);
     if (ret != 0)
     {
+        git_index_free(index);
         return git_error_last()->message;
     }
 
@@ -97,11 +99,14 @@ std::string GitWrapper::add(std::string filenameRelativeFromDirectory)
     ret = git_index_write(index);
     if (ret != 0)
     {
+        git_index_free(index);
         return git_error_last()->message;
     }
 
     // free the only malloc'd item here (by git_repository_index)
     git_index_free(index);
+
+    return "";
 }
 
 std::string GitWrapper::commit(std::string commitMessage)
@@ -136,6 +141,12 @@ std::string GitWrapper::commit(std::string commitMessage)
     ret = git_index_write_tree(&tree_oid, index);
     if (ret != 0)
     {
+        git_index_free(index);
+        if (parent != nullptr)
+        {
+            git_object_free(parent);
+            git_reference_free(ref);
+        }
         return git_error_last()->message;
     }
 
@@ -143,6 +154,12 @@ std::string GitWrapper::commit(std::string commitMessage)
     ret = git_index_write(index);
     if (ret != 0)
     {
+        git_index_free(index);
+        if (parent != nullptr)
+        {
+            git_object_free(parent);
+            git_reference_free(ref);
+        }
         return git_error_last()->message;
     }
 
@@ -151,14 +168,27 @@ std::string GitWrapper::commit(std::string commitMessage)
     ret = git_tree_lookup(&tree, libgitRepo, &tree_oid);
     if (ret != 0)
     {
+        git_index_free(index);
+        if (parent != nullptr)
+        {
+            git_object_free(parent);
+            git_reference_free(ref);
+        }
         return git_error_last()->message;
     }
 
     // sign the repository
     git_signature *signature;
-    ret = git_signature_now(&signature, sharedConfig.getName(), sharedConfig.getMail());
+    ret = git_signature_now(&signature, sharedConfig->getName().c_str(), sharedConfig->getMail().c_str());
     if (ret != 0)
     {
+        git_index_free(index);
+        git_tree_free(tree);
+        if (parent != nullptr)
+        {
+            git_object_free(parent);
+            git_reference_free(ref);
+        }
         return git_error_last()->message;
     }
 
@@ -168,14 +198,25 @@ std::string GitWrapper::commit(std::string commitMessage)
                               tree, parent ? 1 : 0, parent);
     if (ret != 0)
     {
+        git_index_free(index);
+        git_signature_free(signature);
+        git_tree_free(tree);
+        if (parent != nullptr)
+        {
+            git_object_free(parent);
+            git_reference_free(ref);
+        }
         return git_error_last()->message;
     }
 
     git_index_free(index);
     git_signature_free(signature);
     git_tree_free(tree);
-    git_object_free(parent);
-    git_reference_free(ref);
+    if (parent != nullptr)
+    {
+        git_object_free(parent);
+        git_reference_free(ref);
+    }
     return "";
 }
 
