@@ -1,4 +1,6 @@
 apiVersion: v0
+name: Aziz Azaf
+mail: aziz.azaf@bernouilli-grenoble.com
 AudioLibraryLocations:
-- name: Samples
-  path: /home/folder/samples
+  - name: Samples
+    path: /home/folder/samples
