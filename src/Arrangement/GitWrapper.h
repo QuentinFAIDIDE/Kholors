@@ -1,8 +1,11 @@
 #ifndef DEF_GIT_WRAPPER_HPP
 #define DEF_GIT_WRAPPER_HPP
 
+#include "../Config.h"
+
 #include <git2.h>
 #include <git2/repository.h>
+#include <juce_gui_extra/juce_gui_extra.h>
 #include <string>
 
 /**
@@ -50,18 +53,24 @@ class GitWrapper
      * @brief      Add a file to the current commit (similar to git add).
      *
      * @param[in]  filenameRelativeFromDirectory  The filename relative from directory
+     *
+     * @return     The error or an empty string if there were none.
      */
-    void add(std::string filenameRelativeFromDirectory);
+    std::string add(std::string filenameRelativeFromDirectory);
 
     /**
      * @brief      Commit files added. Similar to a git commit.
      *
      * @param[in]  commitMessage  The commit message
+     *
+     * @return     The error or an empty string if there were none.
      */
-    void commit(std::string commitMessage);
+    std::string commit(std::string commitMessage);
 
     /**
      * @brief      Gets the branch the repo on the working directory is on.
+     *             Throw a runtime_error on unexpected git errors ! Watch
+     *             out to catch it !
      *
      * @return     The branch.
      */
@@ -70,6 +79,8 @@ class GitWrapper
   private:
     std::string repositoryPath;
     git_repository *libgitRepo;
+
+    juce::SharedResourcePointer<Config> sharedConfig;
 };
 
 #endif // DEF_GIT_WRAPPER_HPP
