@@ -1,7 +1,6 @@
 #ifndef DEF_NUMERIC_INPUT_ID_HPP
 #define DEF_NUMERIC_INPUT_ID_HPP
 
-#include "Marshalable.h"
 #include <cstdint>
 #include <map>
 #include <set>
@@ -21,7 +20,7 @@ enum FixedNumericInputId
  *             for numeric inputs, and also initialize
  *             itself with the fixed one (eg: tempo).
  */
-class NumericInputManager : public Marshalable
+class NumericInputManager
 {
   public:
     /**
@@ -45,19 +44,6 @@ class NumericInputManager : public Marshalable
      * @param[in]  i     the id to free
      */
     void freeId(int i);
-
-    /**
-     * @brief      backup the data within a string.
-     *
-     * @return     string representation of the data.
-     */
-    std::string marshal() override;
-
-    /**
-     * @brief      parse this object from a string.
-     *
-     */
-    Marshalable *unmarshal(std::string &) override;
 
   private:
     // the lowest unallocated numeric input id

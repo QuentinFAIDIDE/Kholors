@@ -29,13 +29,3 @@ void NumericInputManager::freeId(int i)
     numericInputIds.erase(i);
     numericInputDescriptions.erase(i);
 }
-
-std::string NumericInputManager::marshal()
-{
-    // TODO
-}
-
-Marshalable *NumericInputManager::unmarshal(std::string &)
-{
-    // TODO
-}

@@ -5,8 +5,6 @@
 #include "Marshalable.h"
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <memory>
-#include <nlohmann/json.hpp>
-using json = nlohmann::json;
 
 #define MAX_TASK_INDEX 1048576
 
@@ -64,7 +62,7 @@ class Task : public Marshalable
     /**
       Parse the task from a string.
      */
-    Marshalable *unmarshal(std::string &) override;
+    void unmarshal(std::string &) override;
 
     /**
       Has the task been completed already ?

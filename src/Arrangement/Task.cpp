@@ -4,6 +4,9 @@
 
 int Task::taskGroupIndexIterator = 0;
 
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 Task::Task()
 {
     completed = false;
@@ -35,9 +38,9 @@ std::string Task::marshal()
     return taskj.dump();
 }
 
-Marshalable *Task::unmarshal(std::string &)
+void Task::unmarshal(std::string &)
 {
-    return nullptr;
+    return;
 }
 
 bool Task::isCompleted()

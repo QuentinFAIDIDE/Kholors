@@ -2,10 +2,14 @@
 
 #include "ActivityManager.h"
 #include "Marshalable.h"
+#include "NumericInputId.h"
 #include "Task.h"
 #include "TaxonomyManager.h"
 #include "UserInterfaceState.h"
 #include <memory>
+
+#include <stdexcept>
+#define APP_STATE_API_VERSION "v0"
 
 AppState::AppState(ActivityManager &am) : activityManager(am)
 {
@@ -22,13 +26,33 @@ TaxonomyManager &AppState::getTaxonomy()
 
 std::string AppState::marshal()
 {
-    // TODO
-    return "none";
+    json appjson = {
+        {"api_version", APP_STATE_API_VERSION},
+        {"tempo", tempo},
+    };
+    return appjson.dump();
 }
 
-Marshalable *AppState::unmarshal(std::string &s)
+void AppState::unmarshal(std::string &s)
 {
-    return nullptr;
+    json appjson = json::parse(s);
+
+    if (appjson.find("api_version") == appjson.end() || !appjson["api_version"].is_string())
+    {
+        throw std::runtime_error("Undefined api_version or wrong format in app json");
+    }
+
+    if (appjson["api_version"] != APP_STATE_API_VERSION)
+    {
+        throw std::runtime_error("Unsupported app file api version");
+    }
+
+    if (appjson.find("tempo") == appjson.end() || !appjson["tempo"].is_number())
+    {
+        throw std::runtime_error("Undefined tempo or wrong format in app json");
+    }
+
+    tempo = (float)appjson["tempo"];
 }
 
 UserInterfaceState &AppState::getUiState()
@@ -54,6 +78,7 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
     {
         git.setWorkingDirectory("");
         repositoryFolder.reset();
+        tempo = DEFAULT_TEMPO;
         resetTask->markStepDoneAndCheckCompletion();
         return false;
     }
@@ -85,6 +110,15 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
         activityManager.broadcastNestedTaskNow(notifTask);
 
         return true;
+    }
+
+    // mirror tempo updates here
+    auto tempoUpdate = std::dynamic_pointer_cast<NumericInputUpdateTask>(task);
+    if (tempoUpdate != nullptr && tempoUpdate->numericalInputId == NUM_INPUT_ID_TEMPO && tempoUpdate->isCompleted())
+    {
+        tempo = tempoUpdate->newValue;
+        std::cout << "tempo was updated to " << tempo << std::endl;
+        return false;
     }
 
     return false;
@@ -151,13 +185,25 @@ std::string AppState::initializeRepository(std::string name)
         return "git init problem: " + error;
     }
 
-    error = git.add("main.json");
+    error = git.add("app.json");
     if (error != "")
     {
         return "git add problem: " + error;
     }
 
-    error = git.add("samples.json");
+    error = git.add("taxonomy.json");
+    if (error != "")
+    {
+        return "git add problem: " + error;
+    }
+
+    error = git.add("mixbus.json");
+    if (error != "")
+    {
+        return "git add problem: " + error;
+    }
+
+    error = git.add("ui.json");
     if (error != "")
     {
         return "git add problem: " + error;
@@ -181,13 +227,25 @@ void AppState::dumpProjectFiles()
 
     // Dump main.json
     std::string settingsJSON = marshal();
-    juce::File mainJsonFile = repositoryFolder->getFullPathName() + "/main.json";
+    juce::File mainJsonFile = repositoryFolder->getFullPathName() + "/app.json";
     mainJsonFile.create();
     mainJsonFile.replaceWithText(settingsJSON);
 
-    // TODO: Dump samples.json
+    // Dump taxonomy.json
+    std::string taxonomyJSON = "";
+    juce::File mainTaxonomyFile = repositoryFolder->getFullPathName() + "/taxonomy.json";
+    mainTaxonomyFile.create();
+    mainTaxonomyFile.replaceWithText(taxonomyJSON);
+
+    // TODO: Dump that
     std::string samplesJSON = "";
-    juce::File samplesJsonFile = repositoryFolder->getFullPathName() + "/samples.json";
+    juce::File samplesJsonFile = repositoryFolder->getFullPathName() + "/mixbus.json";
     samplesJsonFile.create();
     samplesJsonFile.replaceWithText(samplesJSON);
+
+    // TODO: Dump that
+    std::string uiJSON = "";
+    juce::File uiJsonFile = repositoryFolder->getFullPathName() + "/ui.json";
+    uiJsonFile.create();
+    uiJsonFile.replaceWithText(uiJSON);
 }

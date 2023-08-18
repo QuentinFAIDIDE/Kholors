@@ -7,6 +7,38 @@
 #define DEFAULT_TAXONOMY_VECTOR_SIZE 8192
 #define DEFAULT_TAXONOMY_VECTOR_ROOM 1024
 
+using json = nlohmann::json;
+
+void to_json(json &j, const SampleGroup &sg)
+{
+    j = json{{"group_id", sg.groupId},
+             {"name", sg.name},
+             {"sample_ids", sg.sampleIds},
+             {"color", sg.color.toString().toStdString()}};
+}
+
+void from_json(const json &j, SampleGroup &sg)
+{
+    j.at("group_id").get_to(sg.groupId);
+    j.at("name").get_to(sg.name);
+    j.at("sample_ids").get_to(sg.sampleIds);
+    std::string strColor;
+    j.at("color").get_to(strColor);
+    sg.color = juce::Colour::fromString(strColor);
+}
+
+void to_json(json &j, const SampleMetadata &sg)
+{
+    j = json{{"sample_id", sg.sampleId}, {"group_id", sg.groupId}, {"name", sg.name}};
+}
+
+void from_json(const json &j, SampleMetadata &sg)
+{
+    j.at("sample_id").get_to(sg.sampleId);
+    j.at("group_id").get_to(sg.groupId);
+    j.at("name").get_to(sg.name);
+}
+
 TaxonomyManager::TaxonomyManager()
 {
     samples.reserve(DEFAULT_TAXONOMY_VECTOR_SIZE);
@@ -54,6 +86,22 @@ void TaxonomyManager::reset()
         sg.color = colourPalette[i % colourPalette.size()];
         groups.push_back(sg);
     }
+}
+
+std::string TaxonomyManager::marshal()
+{
+    json output = {{"samples", samples}, {"groups", groups}};
+}
+
+void TaxonomyManager::unmarshal(std::string &s)
+{
+    json input = json::parse(s);
+
+    auto samplesJSON = input.at("samples");
+    samples = samplesJSON.template get<std::vector<SampleMetadata>>();
+
+    auto groupsJSON = input.at("groups");
+    groups = groupsJSON.template get<std::vector<SampleGroup>>();
 }
 
 void TaxonomyManager::extendElementsArrays(int index)

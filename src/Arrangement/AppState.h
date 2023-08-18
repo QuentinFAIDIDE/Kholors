@@ -39,7 +39,7 @@ class AppState : public Marshalable, public TaskListener
     /**
     Initialize this struct from another text.
     */
-    Marshalable *unmarshal(std::string &) override final;
+    void unmarshal(std::string &) override final;
 
     /**
     Get the state where the User Interface is at. The state
@@ -79,7 +79,7 @@ class AppState : public Marshalable, public TaskListener
     std::string initializeRepository(std::string name);
 
     /**
-     * @brief      Dumps project files to the current repository folder.
+     * @brief      Dumps project files into the json and settings in the struct.
      */
     void dumpProjectFiles();
 
@@ -89,6 +89,7 @@ class AppState : public Marshalable, public TaskListener
     ActivityManager &activityManager;
     juce::SharedResourcePointer<Config> sharedConfig;
     GitWrapper git;
+    float tempo;
 
     std::optional<juce::File> repositoryFolder;
 
