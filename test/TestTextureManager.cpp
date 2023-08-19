@@ -31,8 +31,8 @@ std::shared_ptr<SamplePlayer> loadFile(std::string path)
     }
 
     // allocate a buffer
-    BufferPtr newBuffer =
-        new ReferenceCountedBuffer(testTonality.getFileName(), (int)reader->numChannels, (int)reader->lengthInSamples);
+    BufferPtr newBuffer = new ReferenceCountedBuffer(testTonality.getFileName(), (int)reader->numChannels,
+                                                     (int)reader->lengthInSamples, testTonality.getFullPathName());
 
     // read file into buffer
     reader->read(newBuffer->getAudioSampleBuffer(), 0, (int)reader->lengthInSamples, 0, true, true);
