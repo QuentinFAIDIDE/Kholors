@@ -72,16 +72,25 @@ class AppState : public Marshalable, public TaskListener
     bool taskHandler(std::shared_ptr<Task> task) override;
 
     /**
-     * @brief      Initializes a repository with that name and
-     *             return error msg. If everything went ok, errMsg
-     *             is empty.
+     * @brief      Initializes a repository with that name.
      */
-    std::string initializeRepository(std::string name);
+    void initializeRepository(std::string name);
 
     /**
      * @brief      Dumps project files into the json and settings in the struct.
      */
     void dumpProjectFiles();
+
+    /**
+     * @brief      Sets the external application state file handlers. These are Marshalable
+     *             that can dump and load jsons to restore software states.
+     *             Commonly set in the desktop app to the ArrangemeentArea for ui, and MixbingBus
+     *             for mixbus state handler.
+     *
+     * @param      uiStateHandler      The state handler
+     * @param      mixbusStateHandler  The mixbus state handler
+     */
+    void setExternalAppStateFileHandlers(Marshalable *uiStateHandler, Marshalable *mixbusStateHandler);
 
   private:
     TaxonomyManager taxonomy;
@@ -90,6 +99,10 @@ class AppState : public Marshalable, public TaskListener
     juce::SharedResourcePointer<Config> sharedConfig;
     GitWrapper git;
     float tempo;
+
+    Marshalable *uiStateFileHandler;
+    Marshalable *mixbusStateFileHandler;
+    Marshalable *taxonomyStateFileHandler;
 
     std::optional<juce::File> repositoryFolder;
 

@@ -880,8 +880,8 @@ void MixingBus::importNewFile(std::shared_ptr<SampleCreateTask> task)
         if (duration < SAMPLE_MAX_DURATION_SEC && reader->lengthInSamples > SAMPLE_MIN_DURATION_FRAMES)
         {
             // allocate a buffer
-            BufferPtr newBuffer =
-                new ReferenceCountedBuffer(file.getFileName(), (int)reader->numChannels, (int)reader->lengthInSamples);
+            BufferPtr newBuffer = new ReferenceCountedBuffer(file.getFileName(), (int)reader->numChannels,
+                                                             (int)reader->lengthInSamples, file.getFullPathName());
 
             // do the actual reading
             reader->read(newBuffer->getAudioSampleBuffer(), 0, (int)reader->lengthInSamples, 0, true, true);

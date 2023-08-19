@@ -39,6 +39,11 @@ enum SampleDirection
     LOW_FREQS_TO_TOP,
 };
 
+/**
+ * @brief      This class describes a sample border, and its direction (depending
+ *             on if it's on left (top) or right (bottom) audio channel, it's in
+ *             opposite directions).
+ */
 class SampleBorder
 {
   public:
@@ -50,19 +55,19 @@ class SampleBorder
     SampleDirection direction;
 };
 
-//==============================================================================
-/*
-    This component lives inside our window, and this is where you should put all
-    your controls and content.
-*/
+/**
+ * @brief      This class describes a component where the arrangement of the samples
+ *             is performed, mostly through posting tasks to activityManager.
+ *             It also manages its sub widget for tempo grid and labels.
+ */
 class ArrangementArea : public juce::Component,
                         public juce::FileDragAndDropTarget,
                         public juce::DragAndDropTarget,
                         public juce::OpenGLRenderer,
-                        public TaskListener
+                        public TaskListener,
+                        public Marshalable
 {
   public:
-    //==============================================================================
     ArrangementArea(MixingBus &, ActivityManager &);
     ~ArrangementArea();
 
@@ -71,28 +76,131 @@ class ArrangementArea : public juce::Component,
      */
     void resetArrangement();
 
-    //==============================================================================
+    /**
+     * @brief      Handle the tasks that this component is managing (has to perform filtering).
+     *
+     * @param[in]  task  The task
+     *
+     */
     bool taskHandler(std::shared_ptr<Task> task) override;
+
+    /**
+     * @brief      Paint the content below and inside the opengl context.
+     *             Inherited from Juce component.
+     */
     void paint(juce::Graphics &) override;
+
+    /**
+     * @brief      Paints components, but on top of children widgets.
+     *             Useful to keep labels on top of grids.
+     *
+     */
     void paintOverChildren(juce::Graphics &) override;
+
+    /**
+     * @brief     Inherited from juce component, called when this
+     *            components is created or resied to position child components.
+     */
     void resized() override;
+
+    /**
+     * @brief    Called when mouse is clicked
+     */
     void mouseDown(const juce::MouseEvent &) override;
+
+    /**
+     * @brief      Called when mouse button is released
+     */
     void mouseUp(const juce::MouseEvent &) override;
+
+    /**
+     * @brief     Called when user is initiating a drag movement (click+move)
+     */
     void mouseDrag(const juce::MouseEvent &) override;
+
+    /**
+     * @brief      Called when mouse is moved, and I seem to recall, not dragged (no mouse button clicked).
+     */
     void mouseMove(const juce::MouseEvent &) override;
-    bool isInterestedInFileDrag(const juce::StringArray &) override;
-    void filesDropped(const juce::StringArray &, int, int) override;
+
+    /**
+     * @brief      Determines whether the specified file is eligible for file drag.
+     *
+     * @param[in]  file    the file string path
+     *
+     * @return     True if interested in this file drag, False otherwise.
+     */
+    bool isInterestedInFileDrag(const juce::StringArray &file) override;
+
+    /**
+     * @brief      Called when files are dropped on the compoennt.
+     *
+     * @param[in]  filePath  The file path
+     * @param[in]  x         x coordinates in pixels
+     * @param[in]  y         y coordiantes in pixel
+     */
+    void filesDropped(const juce::StringArray &filePath, int x, int y) override;
+
+    /**
+     * @brief     Called when a key is pressed.
+     */
     bool keyPressed(const juce::KeyPress &) override;
+
+    /**
+     * @brief     Called when any key is pressed or released.
+     */
     bool keyStateChanged(bool) override;
 
+    /**
+     * @brief      Called when wheel is rolled.
+     */
     void mouseWheelMove(const juce::MouseEvent &e, const juce::MouseWheelDetails &wheel) override;
 
+    /**
+     * @brief      Determines whether the specified drag source details is eligible for drag.
+     *
+     * @param[in]  dragSourceDetails  The drag source details
+     *
+     * @return     True if the specified drag source details is eligible for drag source, False otherwise.
+     */
     bool isInterestedInDragSource(const SourceDetails &dragSourceDetails) override;
+
+    /**
+     * @brief      Called when items are dropped over hte cmponent
+     *
+     * @param[in]  dragSourceDetails  The drag source details
+     */
     void itemDropped(const SourceDetails &dragSourceDetails) override;
 
+    /**
+     * @brief      Called when opengl context is created.
+     */
     void newOpenGLContextCreated() override;
+
+    /**
+     * @brief      Renders openGL context
+     */
     void renderOpenGL() override;
+
+    /**
+     * @brief      Called when opengl context is closed.
+     */
     void openGLContextClosing() override;
+
+    /**
+     * @brief      Dump a JSON formatted string representing UI state
+     *
+     * @return     A JSON string representing ui state.
+     */
+    std::string marshal() override;
+
+    /**
+     * @brief      Parse the json formatted string to restore the state
+     *             it describes.
+     *
+     * @param      s     a JSON formatted string that was generated by marshal of this class
+     */
+    void unmarshal(std::string &s) override;
 
   private:
     //==============================================================================
@@ -171,7 +279,7 @@ class ArrangementArea : public juce::Component,
     // update)
     std::vector<SampleAreaRectangle> onScreenLabelsPixelsCoordsBuffer, onScreenLabelsPixelsCoords;
     // buffer and vector for the coordinates of the selected samples on screen
-    std::vector<SampleAreaRectangle> selectedSamplesCoordsBuffer, selectedSamplesCoords;
+    std::vector<SampleAreaRectangle> selectedSamplesCoordsBuffer, cropSelectedSamplesPosition;
 
     std::map<int, int> dragDistanceMap;
     std::map<int, float> initFiltersFreqs;
@@ -184,30 +292,108 @@ class ArrangementArea : public juce::Component,
     void paintSplitLocation(juce::Graphics &g);
     void paintSelectionArea(juce::Graphics &g);
 
-    SampleAreaRectangle addLabelAndPreventOverlaps(std::vector<SampleAreaRectangle> &existingLabels, int x, int y,
+    /**
+     * @brief      Adds label to vector of sample areas and prevent overlaps.
+     *
+     * @param                                      existingLabels  The existing labels
+     * @param[in]  sampleBeginPixelCoords          x coordinates of the sample beginning on screen in pixels
+     * @param[in]  sampleEndPixelCoords            x coordinates of where the sample ends on screen in pixels
+     * @param[in]  sampleIndex                     The sample index
+     *
+     * @return     The sample area rectangle.
+     */
+    SampleAreaRectangle addLabelAndPreventOverlaps(std::vector<SampleAreaRectangle> &existingLabels,
+                                                   int sampleBeginPixelCoords, int sampleEndPixelCoords,
                                                    int sampleIndex);
+
+    /**
+     * @brief      Test if the rectangle intersect with the others.
+     */
     bool rectangleIntersects(SampleAreaRectangle &, std::vector<SampleAreaRectangle> &);
 
     void handleMiddleButterDown(const juce::MouseEvent &);
     void handleLeftButtonDown(const juce::MouseEvent &);
     void handleLeftButtonUp(const juce::MouseEvent &);
-    int getTrackClicked();
+
+    /**
+     * @brief      Used saved mouse position to determined which track is undermouse cursor
+     *
+     * @return     The id of the sample clicked.
+     */
+    int getSampleIdUnderCursor();
+
+    /**
+     * @brief      Will copy the selected track ids, and iteratively remove them by posting the deletion task.
+     *             Will group the tasks for efficiency.
+     */
     void deleteSelectedTracks();
-    float polylens(float);
 
-    void displaySample(std::shared_ptr<SamplePlayer> sample, std::shared_ptr<SampleCreateTask> task);
-    void syncSampleColor(int sampleIndex);
+    /**
+     * @brief      Create the sample on the openGL model side and against the taxonomy.
+     *
+     * @param[in]  sample  The sample id
+     * @param[in]  task    The task that describe the sample creation process (duplication, restoring, new, etc...)
+     */
+    void createNewSampleMeshAndTaxonomy(std::shared_ptr<SamplePlayer> sample, std::shared_ptr<SampleCreateTask> task);
 
-    bool buildShaders();
-    bool buildShader(std::unique_ptr<juce::OpenGLShaderProgram> &, std::string, std::string);
-    void updateShadersPositionUniforms(bool fromGlThread = false);
-    void updateShadersPositions();
-    void updateGridPixelValues();
+    /**
+     * @bref       Take the taxonomy color for this sample and send it to openGL.
+     *
+     * @param[in]  sampleIndex  The sample index
+     */
+    void setSampleColorFromTaxonomy(int sampleIndex);
 
+    /**
+     * @brief      Called by arrangement area to build all openGL shader programs;
+     *
+     * @return     True on sucess.
+     */
+    bool buildAllShaders();
+
+    /**
+     * @brief      Builds a shader. Called by buildAllShaders
+     *
+     * @param      shader             The shader
+     * @param[in]  vertexShaderTxt    The vertex shader source code text
+     * @param[in]  fragmentShaderTxt  The fragment shader source code text
+     *
+     * @return     True on sucess.
+     */
+    bool buildShader(std::unique_ptr<juce::OpenGLShaderProgram> &shader, std::string vertexShaderTxt,
+                     std::string fragmentShaderTxt);
+
+    /**
+     * @brief      Will call openGL shaders uniforms updates from the current thread if fromGlThread is true,
+     *             or will lock the Gl thread to do it if fromGlThread is false.
+     */
+    void shaderUniformUpdateThreadWrapper(bool fromGlThread = false);
+
+    /**
+     * @brief      Update view position and grid variables before sending them to the openGL
+     *             shaders as uniforms. Reminder: uniform are variables that are used inside
+     *             opengl shaders.
+     */
+    void updateShadersViewAndGridUniforms();
+
+    /**
+     * @brief      Calculates the shaders grid uniforms variables.
+     */
+    void computeShadersGridUniformsVars();
+
+    /**
+     * @brief      Initializes dragging of the selected tracks.
+     */
     void initSelectedTracksDrag();
+
+    /**
+     * @brief      Update currently performed selected tracks dragging.
+     */
     void updateSelectedTracksDrag(int);
 
-    void addSelectedSamples();
+    /**
+     * @brief      Add samples under the selection area to selection.
+     */
+    void addToSelectionFromSelectionArea();
 
     /**
      * @brief      Saves initial selection gain ramps (fade in and fade out)
@@ -235,21 +421,75 @@ class ArrangementArea : public juce::Component,
      */
     void emitFilterDragTasks(bool isLowPass);
 
+    /**
+     * @brief    Will get the lowest track
+     *           position in audio frames from the selected tracks. It returns 0
+     *           if no track is selected.
+     *
+     * @return   Audio frame position of the leftmost sample.
+     */
     int64_t lowestStartPosInSelection();
 
     bool mouseOverPlayCursor();
+
     juce::Optional<SampleBorder> mouseOverSelectionBorder();
+
+    /**
+     * @brief      Change cursor image based on ui state and cursor position.
+     */
     void updateMouseCursor();
 
-    void cropSampleEdgeHorizontally(bool cropFront);
-    void cropSampleBordersVertically(bool isInnerBorder);
+    /**
+     * @brief      Will iterate over selected tracks and try moving the left or right edge.
+     *
+     * @param[in]  cropFront  Are we cropping the beginning or the end ?
+     */
+    void cropSelectedSamplesPos(bool cropFront);
 
-    bool overlapSampleArea(SampleAreaRectangle &, int, int);
+    /**
+     * @brief      Iterate over selection and change filters freqs based on side cropped
+     *             and mouse cursor position.
+     *
+     * @param[in]  isInnerBorder  Indicates if dragging the inner border (low pass) or not.
+     */
+    void cropSelectedSamplesFreqs(bool isInnerBorder);
 
-    bool updateViewResizing(juce::Point<int> &);
+    /**
+     * @brief      Test if the rectangles overlaps the sample area with some margin allowed.
+     *
+     * @param      rectangleToTest  The rectangle to test in pixel coordinates
+     * @param[in]  sampleIdToTest   The sample identifier to test
+     * @param[in]  marginsAllowed   The margins allowed (added to the sample pixel coordinates)
+     *
+     * @return     true if overlaps, false if not
+     */
+    bool overlapSampleArea(SampleAreaRectangle &rectangleToTest, int sampleIdToTest, int marginsAllowed);
 
+    /**
+     * @brief      Compute the new view scale and view position based on mouse movements.
+     *
+     * @param      The new mouse position
+     *
+     * @return     true if viewPosition and viewScale changed and we would need a repaint, false if not.
+     */
+    bool updateViewResizing(juce::Point<int> &newMousePosition);
+
+    /**
+     * @brief      Get the samplePlayer object from mixbus for this sample and pass it to the openGL
+     *             mesh so that it can update the properties displayed on screen.
+     *
+     * @param[in]  index  The index
+     */
     void refreshSampleOpenGlView(int index);
-    void recolorSelection(std::shared_ptr<SampleGroupRecolor>);
+
+    /**
+     * @brief      Called when a task is received to recolor a group. It will get all the group sample ids
+     *             and call the function that pulls the taxonomy color in the openGL mesh.
+     *
+     * @param[in]  task   the SampleGroupRecolor task that was received and that instruct which group gets
+     *                    recolored.
+     */
+    void recolorSelection(std::shared_ptr<SampleGroupRecolor> task);
 
     /**
     Makes a copy of the set of selected tracks and broadcast it

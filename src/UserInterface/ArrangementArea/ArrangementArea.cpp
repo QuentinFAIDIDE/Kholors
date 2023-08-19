@@ -149,7 +149,7 @@ void ArrangementArea::paintSelection(juce::Graphics &g)
         }
     }
 
-    selectedSamplesCoords.swap(selectedSamplesCoordsBuffer);
+    cropSelectedSamplesPosition.swap(selectedSamplesCoordsBuffer);
 }
 
 bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
@@ -157,7 +157,7 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
     std::shared_ptr<SampleDisplayTask> sc = std::dynamic_pointer_cast<SampleDisplayTask>(task);
     if (sc != nullptr && !sc->isCompleted() && !sc->hasFailed())
     {
-        displaySample(sc->sample, sc->creationTask);
+        createNewSampleMeshAndTaxonomy(sc->sample, sc->creationTask);
         return true;
     }
 
@@ -248,7 +248,7 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
                 tempoGrid.updateTempo(tempo);
 
                 // this one has the side effect of uploading new tempo grid widths for the background shader
-                updateShadersPositionUniforms();
+                shaderUniformUpdateThreadWrapper();
 
                 numFieldUpdateTask->setCompleted(true);
                 activityManager.broadcastNestedTaskNow(numFieldUpdateTask);
@@ -300,7 +300,7 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
 
         taxonomyManager.reset();
 
-        updateShadersPositionUniforms(false);
+        shaderUniformUpdateThreadWrapper(false);
 
         repaint();
 
@@ -390,43 +390,43 @@ juce::Optional<SampleBorder> ArrangementArea::mouseOverSelectionBorder()
     }
 
     // iterate over on screen selected samples
-    for (size_t i = 0; i < selectedSamplesCoords.size(); i++)
+    for (size_t i = 0; i < cropSelectedSamplesPosition.size(); i++)
     {
         // if our click is in bounds of this sample
-        if (selectedSamplesCoords[i].expanded(PLAYCURSOR_GRAB_WIDTH).contains(lastMouseX, lastMouseY))
+        if (cropSelectedSamplesPosition[i].expanded(PLAYCURSOR_GRAB_WIDTH).contains(lastMouseX, lastMouseY))
         {
 
             SampleDirection direction = LOW_FREQS_TO_TOP;
-            if (selectedSamplesCoords[i].getPartId() == 0)
+            if (cropSelectedSamplesPosition[i].getPartId() == 0)
             {
                 direction = LOW_FREQS_TO_BOTTOM;
             }
 
             // switch on the border
-            if (abs(selectedSamplesCoords[i].getX() - lastMouseX) < PLAYCURSOR_GRAB_WIDTH)
+            if (abs(cropSelectedSamplesPosition[i].getX() - lastMouseX) < PLAYCURSOR_GRAB_WIDTH)
             {
                 return juce::Optional<SampleBorder>(
-                    SampleBorder(selectedSamplesCoords[i].getSampleIndex(), BORDER_LEFT, direction));
+                    SampleBorder(cropSelectedSamplesPosition[i].getSampleIndex(), BORDER_LEFT, direction));
             }
 
-            if (abs(selectedSamplesCoords[i].getX() + selectedSamplesCoords[i].getWidth() - lastMouseX) <
+            if (abs(cropSelectedSamplesPosition[i].getX() + cropSelectedSamplesPosition[i].getWidth() - lastMouseX) <
                 PLAYCURSOR_GRAB_WIDTH)
             {
                 return juce::Optional<SampleBorder>(
-                    SampleBorder(selectedSamplesCoords[i].getSampleIndex(), BORDER_RIGHT, direction));
+                    SampleBorder(cropSelectedSamplesPosition[i].getSampleIndex(), BORDER_RIGHT, direction));
             }
 
-            if (abs(selectedSamplesCoords[i].getY() - lastMouseY) < PLAYCURSOR_GRAB_WIDTH)
+            if (abs(cropSelectedSamplesPosition[i].getY() - lastMouseY) < PLAYCURSOR_GRAB_WIDTH)
             {
                 return juce::Optional<SampleBorder>(
-                    SampleBorder(selectedSamplesCoords[i].getSampleIndex(), BORDER_UPPER, direction));
+                    SampleBorder(cropSelectedSamplesPosition[i].getSampleIndex(), BORDER_UPPER, direction));
             }
 
-            if (abs(selectedSamplesCoords[i].getY() + selectedSamplesCoords[i].getHeight() - lastMouseY) <
+            if (abs(cropSelectedSamplesPosition[i].getY() + cropSelectedSamplesPosition[i].getHeight() - lastMouseY) <
                 PLAYCURSOR_GRAB_WIDTH)
             {
                 return juce::Optional<SampleBorder>(
-                    SampleBorder(selectedSamplesCoords[i].getSampleIndex(), BORDER_LOWER, direction));
+                    SampleBorder(cropSelectedSamplesPosition[i].getSampleIndex(), BORDER_LOWER, direction));
             }
         }
     }
@@ -613,7 +613,7 @@ void ArrangementArea::resized()
     bounds = getBounds();
     if (shadersCompiled)
     {
-        updateShadersPositionUniforms();
+        shaderUniformUpdateThreadWrapper();
     }
 
     tempoGrid.setBounds(getLocalBounds());
@@ -627,7 +627,7 @@ void ArrangementArea::newOpenGLContextCreated()
     texturedPositionedShader.reset(new juce::OpenGLShaderProgram(openGLContext));
     backgroundGridShader.reset(new juce::OpenGLShaderProgram(openGLContext));
     // Compile and link the shader
-    if (buildShaders())
+    if (buildAllShaders())
     {
         shadersCompiled = true;
 
@@ -637,7 +637,7 @@ void ArrangementArea::newOpenGLContextCreated()
         texturedPositionedShader->setUniform("ourTexture", 0);
         texturedPositionedShader->setUniform("alphaMask", 1);
 
-        updateShadersPositionUniforms(true);
+        shaderUniformUpdateThreadWrapper(true);
 
         // log some info about openGL version and all
         logOpenGLInfoCallback(openGLContext);
@@ -658,7 +658,7 @@ void ArrangementArea::newOpenGLContextCreated()
     }
 }
 
-bool ArrangementArea::buildShaders()
+bool ArrangementArea::buildAllShaders()
 {
     bool builtTexturedShader = buildShader(texturedPositionedShader, sampleVertexShader, sampleFragmentShader);
     if (!builtTexturedShader)
@@ -682,26 +682,26 @@ bool ArrangementArea::buildShader(std::unique_ptr<juce::OpenGLShaderProgram> &sh
     return sh->addVertexShader(vertexShader) && sh->addFragmentShader(fragmentShader) && sh->link();
 }
 
-void ArrangementArea::updateShadersPositionUniforms(bool fromGlThread)
+void ArrangementArea::shaderUniformUpdateThreadWrapper(bool fromGlThread)
 {
     // send the new view positions to opengl thread
     if (!fromGlThread)
     {
-        openGLContext.executeOnGLThread([this](juce::OpenGLContext &) { updateShadersPositions(); }, false);
+        openGLContext.executeOnGLThread([this](juce::OpenGLContext &) { updateShadersViewAndGridUniforms(); }, false);
     }
     else
     {
-        updateShadersPositions();
+        updateShadersViewAndGridUniforms();
     }
 }
 
-void ArrangementArea::updateShadersPositions()
+void ArrangementArea::updateShadersViewAndGridUniforms()
 {
     texturedPositionedShader->use();
     texturedPositionedShader->setUniform("viewPosition", (GLfloat)viewPosition);
     texturedPositionedShader->setUniform("viewWidth", (GLfloat)(bounds.getWidth() * viewScale));
 
-    updateGridPixelValues();
+    computeShadersGridUniformsVars();
 
     backgroundGridShader->use();
     backgroundGridShader->setUniform("grid0PixelShift", (GLint)grid0PixelShift);
@@ -716,7 +716,7 @@ void ArrangementArea::updateShadersPositions()
     backgroundGridShader->setUniform("viewHeightPixels", (GLfloat)(bounds.getHeight()));
 }
 
-void ArrangementArea::updateGridPixelValues()
+void ArrangementArea::computeShadersGridUniformsVars()
 {
     int framesPerMinutes = (60 * 44100);
 
@@ -758,7 +758,8 @@ void ArrangementArea::openGLContextClosing()
 {
 }
 
-void ArrangementArea::displaySample(std::shared_ptr<SamplePlayer> sp, std::shared_ptr<SampleCreateTask> task)
+void ArrangementArea::createNewSampleMeshAndTaxonomy(std::shared_ptr<SamplePlayer> sp,
+                                                     std::shared_ptr<SampleCreateTask> task)
 {
     // create graphic objects from the sample
     if (task->reuseNewId)
@@ -789,7 +790,7 @@ void ArrangementArea::displaySample(std::shared_ptr<SamplePlayer> sp, std::share
     if (task->isDuplication())
     {
         taxonomyManager.copyTaxonomy(task->getDuplicateTargetId(), task->getAllocatedIndex());
-        syncSampleColor(task->getAllocatedIndex());
+        setSampleColorFromTaxonomy(task->getAllocatedIndex());
 
         // refresh properties of the track we just splitted (it changed size of filters)
         if (task->getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_FREQUENCY ||
@@ -915,7 +916,7 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
         }
         else
         {
-            clickedTrack = getTrackClicked();
+            clickedTrack = getSampleIdUnderCursor();
             if (clickedTrack != -1)
             {
                 // if ctrl is not pressed, we clear selection set
@@ -1010,7 +1011,7 @@ void ArrangementArea::saveInitialSelectionGainRamps()
  * @return     Index of the sample clicked in the tracks/samples arrays. -1 if
  * no match.
  */
-int ArrangementArea::getTrackClicked()
+int ArrangementArea::getSampleIdUnderCursor()
 {
     size_t nTracks = samples.size();
     int64_t trackPosition;
@@ -1227,19 +1228,19 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
         viewUpdated = updateViewResizing(newPosition);
         break;
     case UI_STATE_MOUSE_DRAG_SAMPLE_START:
-        cropSampleEdgeHorizontally(true);
+        cropSelectedSamplesPos(true);
         break;
 
     case UI_STATE_MOUSE_DRAG_SAMPLE_LENGTH:
-        cropSampleEdgeHorizontally(false);
+        cropSelectedSamplesPos(false);
         break;
 
     case UI_STATE_MOUSE_DRAG_MONO_LOWPASS:
-        cropSampleBordersVertically(false);
+        cropSelectedSamplesFreqs(false);
         break;
 
     case UI_STATE_MOUSE_DRAG_MONO_HIGHPASS:
-        cropSampleBordersVertically(true);
+        cropSelectedSamplesFreqs(true);
         break;
 
     case UI_STATE_DEFAULT:
@@ -1248,12 +1249,12 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
             activityManager.getAppState().setUiState(UI_STATE_SELECT_AREA_WITH_MOUSE);
             startSelectX = newPosition.getX();
             startSelectY = newPosition.getY();
-            addSelectedSamples();
+            addToSelectionFromSelectionArea();
         }
         break;
 
     case UI_STATE_SELECT_AREA_WITH_MOUSE:
-        addSelectedSamples();
+        addToSelectionFromSelectionArea();
         repaint();
         break;
 
@@ -1274,12 +1275,12 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
     // if updated view or in cursor moving mode, repaint
     if (viewUpdated || activityManager.getAppState().getUiState() == UI_STATE_CURSOR_MOVING)
     {
-        updateShadersPositionUniforms();
+        shaderUniformUpdateThreadWrapper();
         repaint();
     }
 }
 
-void ArrangementArea::addSelectedSamples()
+void ArrangementArea::addToSelectionFromSelectionArea()
 {
     currentSelectionRect = juce::Rectangle<float>(juce::Point<float>(startSelectX, startSelectY),
                                                   juce::Point<float>(lastMouseX, lastMouseY));
@@ -1337,12 +1338,12 @@ void ArrangementArea::mouseWheelMove(const juce::MouseEvent &e, const juce::Mous
 
             tempoGrid.updateView(viewPosition, viewScale);
             repaint();
-            updateShadersPositionUniforms(false);
+            shaderUniformUpdateThreadWrapper(false);
         }
     }
 }
 
-void ArrangementArea::cropSampleBordersVertically(bool innerBorders)
+void ArrangementArea::cropSelectedSamplesFreqs(bool innerBorders)
 {
     // compute the frequency to set in the filter
     float filterFreq = UnitConverter::verticalPositionToFrequency(lastMouseY, getBounds().getHeight());
@@ -1499,7 +1500,7 @@ void ArrangementArea::mouseMove(const juce::MouseEvent &jme)
     updateMouseCursor();
 }
 
-void ArrangementArea::cropSampleEdgeHorizontally(bool cropFront)
+void ArrangementArea::cropSelectedSamplesPos(bool cropFront)
 {
     // compute distange to beginning
     int distanceInFrames = (lastMouseX - dragLastPosition) * viewScale;
@@ -1702,7 +1703,7 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key)
     return false;
 }
 
-void ArrangementArea::syncSampleColor(int sampleIndex)
+void ArrangementArea::setSampleColorFromTaxonomy(int sampleIndex)
 {
     openGLContext.executeOnGLThread(
         [this, sampleIndex](juce::OpenGLContext &c) {
@@ -1711,9 +1712,6 @@ void ArrangementArea::syncSampleColor(int sampleIndex)
         true);
 }
 
-// lowestStartPosInSelection will get the lowest track
-// position in the selected tracks. It returns 0
-// if no track is selected.
 int64_t ArrangementArea::lowestStartPosInSelection()
 {
     int lowestTrackPos = 0;
@@ -1954,7 +1952,7 @@ void ArrangementArea::recolorSelection(std::shared_ptr<SampleGroupRecolor> task)
     std::set<int>::iterator it;
     for (it = samplesToRefreshDIsplay.begin(); it != samplesToRefreshDIsplay.end(); it++)
     {
-        syncSampleColor(*it);
+        setSampleColorFromTaxonomy(*it);
     }
     repaint();
 }
@@ -1974,4 +1972,17 @@ void ArrangementArea::copyAndBroadcastSelection(bool fromWithinTask)
     {
         activityManager.broadcastTask(selectionUpdate);
     }
+}
+
+std::string ArrangementArea::marshal()
+{
+    json output = {{"view_position", viewPosition}, {"view_scale", viewScale}};
+    return output.dump();
+}
+
+void ArrangementArea::unmarshal(std::string &s)
+{
+    json input = json::parse(s);
+    input.at("view_position").get_to(viewPosition);
+    input.at("view_scale").get_to(viewScale);
 }

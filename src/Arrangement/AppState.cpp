@@ -14,10 +14,20 @@
 AppState::AppState(ActivityManager &am) : activityManager(am)
 {
     uiState = UI_STATE_DEFAULT;
+
+    taxonomyStateFileHandler = &taxonomy;
+    mixbusStateFileHandler = nullptr;
+    uiStateFileHandler = nullptr;
 }
 
 AppState::~AppState()
 {
+}
+
+void AppState::setExternalAppStateFileHandlers(Marshalable *uiStateHandler, Marshalable *mixbusStateHandler)
+{
+    uiStateFileHandler = uiStateHandler;
+    mixbusStateFileHandler = mixbusStateHandler;
 }
 
 TaxonomyManager &AppState::getTaxonomy()
@@ -87,12 +97,16 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
     auto initGitTask = std::dynamic_pointer_cast<GitRepoInitTask>(task);
     if (initGitTask != nullptr && !initGitTask->isCompleted())
     {
-        auto errMsg = initializeRepository(initGitTask->name);
-
-        if (errMsg != "")
+        try
         {
-            auto notifTask = std::make_shared<NotificationTask>(std::string(errMsg));
+            initializeRepository(initGitTask->name);
+        }
+        catch (std::runtime_error err)
+        {
+            auto notifTask = std::make_shared<NotificationTask>(std::string(err.what()));
             activityManager.broadcastNestedTaskNow(notifTask);
+
+            std::cerr << "Error while trying to initialize project: " << err.what() << std::endl;
 
             initGitTask->setFailed(true);
             return true;
@@ -125,31 +139,31 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
     return false;
 }
 
-std::string AppState::initializeRepository(std::string name)
+void AppState::initializeRepository(std::string name)
 {
     // abort task if project already initialized
     if (repositoryFolder.has_value())
     {
-        return "This project was already initialized.";
+        throw std::runtime_error("unable to initiliaze a project that was already initialized");
     }
     // abort if the folder already exists
     if (sharedConfig->isInvalid())
     {
-        return "Config was not initialized.";
+        throw std::runtime_error("unable to initialize repository folder because config object was not initialized.");
     }
 
     // ensure Data folder exists
     juce::File dataFolder(sharedConfig->getDataFolderPath());
     if (!dataFolder.exists() || !dataFolder.isDirectory())
     {
-        return "Data folder missing or invalid: " + sharedConfig->getDataFolderPath();
+        throw std::runtime_error(std::string("Data folder missing or invalid: ") + sharedConfig->getDataFolderPath());
     }
 
     // ensure Projects folder exists
     juce::File projectsFolder(dataFolder.getFullPathName() + "/Projects");
     if (projectsFolder.exists() && !projectsFolder.isDirectory())
     {
-        return "Projects folder is not a directory!";
+        throw std::runtime_error("Projects folder to save in is not a directory!");
     }
 
     // if it doesn't exists, create it
@@ -158,7 +172,7 @@ std::string AppState::initializeRepository(std::string name)
         auto result = projectsFolder.createDirectory();
         if (result.failed())
         {
-            return "Unable to create Projects folder: " + result.getErrorMessage().toStdString();
+            throw std::runtime_error("Unable to create Projects folder: " + result.getErrorMessage().toStdString());
         }
     }
 
@@ -166,86 +180,54 @@ std::string AppState::initializeRepository(std::string name)
     juce::File newRepoFolder(projectsFolder.getFullPathName().toStdString() + "/" + name);
     if (newRepoFolder.exists())
     {
-        return "A repository with that name already exists";
+        throw std::runtime_error("A repository with that name already exists");
     }
 
     auto result = newRepoFolder.createDirectory();
     if (result.failed())
     {
-        return "Failed to create project folder: " + result.getErrorMessage().toStdString();
+        throw std::runtime_error("Failed to create project folder: " + result.getErrorMessage().toStdString());
     }
 
     repositoryFolder = newRepoFolder;
 
     dumpProjectFiles();
+
     git.setWorkingDirectory(repositoryFolder->getFullPathName().toStdString());
 
-    std::string error = git.init();
-    if (error != "")
-    {
-        return "git init problem: " + error;
-    }
+    git.init();
 
-    error = git.add("app.json");
-    if (error != "")
-    {
-        return "git add problem: " + error;
-    }
+    git.add("app.json");
+    git.add("taxonomy.json");
+    git.add("mixbus.json");
+    git.add("ui.json");
 
-    error = git.add("taxonomy.json");
-    if (error != "")
-    {
-        return "git add problem: " + error;
-    }
-
-    error = git.add("mixbus.json");
-    if (error != "")
-    {
-        return "git add problem: " + error;
-    }
-
-    error = git.add("ui.json");
-    if (error != "")
-    {
-        return "git add problem: " + error;
-    }
-
-    error = git.commit("initial commit");
-    if (error != "")
-    {
-        return "git add problem: " + error;
-    }
-
-    return "";
+    git.commit("initial commit");
 }
 
 void AppState::dumpProjectFiles()
 {
     if (!repositoryFolder.has_value())
     {
-        return;
+        throw std::runtime_error("unable to dump project files since no project folder has been set");
     }
 
-    // Dump main.json
     std::string settingsJSON = marshal();
     juce::File mainJsonFile = repositoryFolder->getFullPathName() + "/app.json";
     mainJsonFile.create();
     mainJsonFile.replaceWithText(settingsJSON);
 
-    // Dump taxonomy.json
-    std::string taxonomyJSON = "";
+    std::string taxonomyJSON = taxonomyStateFileHandler->marshal();
     juce::File mainTaxonomyFile = repositoryFolder->getFullPathName() + "/taxonomy.json";
     mainTaxonomyFile.create();
     mainTaxonomyFile.replaceWithText(taxonomyJSON);
 
-    // TODO: Dump that
-    std::string samplesJSON = "";
+    std::string samplesJSON = mixbusStateFileHandler->marshal();
     juce::File samplesJsonFile = repositoryFolder->getFullPathName() + "/mixbus.json";
     samplesJsonFile.create();
     samplesJsonFile.replaceWithText(samplesJSON);
 
-    // TODO: Dump that
-    std::string uiJSON = "";
+    std::string uiJSON = uiStateFileHandler->marshal();
     juce::File uiJsonFile = repositoryFolder->getFullPathName() + "/ui.json";
     uiJsonFile.create();
     uiJsonFile.replaceWithText(uiJSON);

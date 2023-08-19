@@ -15,8 +15,9 @@
 class ReferenceCountedBuffer : public juce::ReferenceCountedObject
 {
   public:
-    ReferenceCountedBuffer(const juce::String &nameToUse, int numChannels, int numSamples)
-        : name(nameToUse), buffer(numChannels, numSamples)
+    ReferenceCountedBuffer(const juce::String &nameToUse, int numChannels, int numSamples,
+                           const juce::String fullFilePath)
+        : name(nameToUse), buffer(numChannels, numSamples), fullPath(fullFilePath)
     {
     }
 
@@ -34,9 +35,15 @@ class ReferenceCountedBuffer : public juce::ReferenceCountedObject
         return name.toStdString();
     };
 
+    std::string getPath()
+    {
+        return fullPath.toStdString();
+    };
+
   private:
     juce::String name;
     juce::AudioSampleBuffer buffer;
+    juce::String fullPath;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ReferenceCountedBuffer)
 };

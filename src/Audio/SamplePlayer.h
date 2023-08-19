@@ -211,9 +211,11 @@ class SamplePlayer : public juce::PositionableAudioSource
     // a buffer value we keep off the stack for no reason
     int bufferInitialPosition;
 
-    // bufferStart is the index from which starts the played section
+    // bufferStart is the index from which starts the played section in audio frames
+    // inside the audio buffer.
     int bufferStart;
-    // bufferEnd is the index above which the buffer is not read anymore.
+
+    // bufferEnd is the index in audio frames of the audio buffer above which the buffer is not read anymore.
     // Note that this is effectively the index of the last included audio frame.
     int bufferEnd;
 
@@ -222,6 +224,7 @@ class SamplePlayer : public juce::PositionableAudioSource
 
     // frequency of low pass filter. Disabled if equal to AUDIO_FRAMERATE
     float lowPassFreq;
+
     // frequency of high pass filter. Disabled if equal to 0
     float highPassFreq;
 
@@ -233,7 +236,6 @@ class SamplePlayer : public juce::PositionableAudioSource
 
     BufferPtr audioBufferRef;
     bool isSampleSet;
-    juce::Colour colour;
 
     // the sample gain (not in db but in Gain)
     float gainValue;

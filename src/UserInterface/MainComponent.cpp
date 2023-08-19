@@ -50,10 +50,17 @@ MainComponent::MainComponent()
 
     // instanciate the loop values with what the mixbus has.
     // empty comstructor = request to broacast current value from Mixbus class
+    // NOTE: these are here because it's the sole place where we know both classes
+    // that handle the loop and the one that display it are initialized and the communication
+    // can happen. We could and we probably already initiate the value passing on both ends,
+    // but it's a good practice to have the ultimate way that will always work whathever the refactor
+    // here. Passing this value through the task many times has no overhead.
     auto getLoopStateTask = std::make_shared<LoopToggleTask>();
-    auto getLoopPositioNTask = std::make_shared<LoopMovingTask>();
+    auto getLoopPositionTask = std::make_shared<LoopMovingTask>();
     activityManager.broadcastTask(getLoopStateTask);
-    activityManager.broadcastTask(getLoopPositioNTask);
+    activityManager.broadcastTask(getLoopPositionTask);
+
+    activityManager.getAppState().setExternalAppStateFileHandlers(&arrangementArea, &mixingBus);
 }
 
 void MainComponent::printAudioDeviceSettings()

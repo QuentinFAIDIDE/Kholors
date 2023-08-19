@@ -10,6 +10,7 @@
  */
 class Marshalable
 {
+  public:
     virtual std::string marshal() = 0;
     virtual void unmarshal(std::string &) = 0;
 };

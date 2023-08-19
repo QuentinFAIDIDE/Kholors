@@ -3,6 +3,7 @@
 
 #include <iterator>
 #include <memory>
+#include <stdexcept>
 
 int SamplePlayer::maxFilterFreq = (AUDIO_FRAMERATE >> 1) - 1;
 
@@ -32,6 +33,112 @@ SamplePlayer::~SamplePlayer()
 {
 }
 
+json SamplePlayer::toJSON()
+{
+    const juce::SpinLock::ScopedLockType lock(playerMutex);
+
+    std::string filename = "";
+    std::string filePath = "";
+    int bufferLen = 0;
+
+    if (audioBufferRef->getAudioSampleBuffer() != nullptr)
+    {
+        filename = audioBufferRef->getName();
+        filePath = audioBufferRef->getPath();
+        bufferLen = audioBufferRef->getAudioSampleBuffer()->getNumSamples();
+    }
+
+    json output = {{"file_name", filename},
+                   {"file_path", filePath},
+                   {"editing_position", editingPosition},
+                   {"buffer_start", bufferStart},
+                   {"buffer_end", bufferEnd},
+                   {"audio_buffer_len", bufferLen}, // length of the audio buffer and not the local samplePlayer length
+                   {"low_pass_freq", lowPassFreq},
+                   {"high_pass_freq", highPassFreq},
+                   {"gain", gainValue},
+                   {"low_pass_repeat", lowPassRepeat},
+                   {"high_pass_repeat", highPassRepeat}};
+
+    return output;
+}
+
+void SamplePlayer::setupFromJSON(json &stateToRestore)
+{
+
+    // NOTE: the sample buffer, ie file_name and file_path is already loaded
+    // by mixbus
+
+    std::string path;
+    stateToRestore.at("file_path").get_to(path);
+
+    // abort if the sample was not loaded
+    if (audioBufferRef.get() == nullptr)
+    {
+        throw std::runtime_error("A sample player had no buffer set when loaded!");
+    }
+
+    // throw an error if the sample loaded has a different size than the one
+    // that was loaded at the moment the json was generated
+    int desiredBufferLen;
+    stateToRestore.at("audio_buffer_len").get_to(desiredBufferLen);
+    if (desiredBufferLen != audioBufferRef->getAudioSampleBuffer()->getNumSamples())
+    {
+        throw std::runtime_error("A sample player was loaded with a disk file that has different size: " + path);
+    }
+
+    stateToRestore.at("editing_position").get_to(editingPosition);
+
+    int desiredBufferStartFrame, desiredBufferEndFrame;
+    stateToRestore.at("buffer_start").get_to(desiredBufferStartFrame);
+    stateToRestore.at("buffer_end").get_to(desiredBufferEndFrame);
+
+    if (desiredBufferStartFrame < 0 || desiredBufferStartFrame >= desiredBufferLen)
+    {
+        throw std::runtime_error("A sample player was loaded with invalid buffer start frame");
+    }
+
+    if (desiredBufferEndFrame < 0 || desiredBufferEndFrame >= desiredBufferLen)
+    {
+        throw std::runtime_error("A sample player was loaded with invalid buffer end frame");
+    }
+
+    bufferStart = desiredBufferStartFrame;
+    bufferEnd = desiredBufferEndFrame;
+
+    float desiredLowPassFreq, desiredHighPassFreq;
+    stateToRestore.at("low_pass_freq").get_to(desiredLowPassFreq);
+    stateToRestore.at("high_pass_freq").get_to(desiredHighPassFreq);
+    if (desiredLowPassFreq < 0 || desiredLowPassFreq > float(AUDIO_FRAMERATE >> 1) + 0.1f)
+    {
+        throw std::runtime_error("invalid low pass freq");
+    }
+    if (desiredHighPassFreq < 0 || desiredHighPassFreq > float(AUDIO_FRAMERATE >> 1) + 0.1f)
+    {
+        throw std::runtime_error("invalid high pass freq");
+    }
+    setLowPassFreq(desiredLowPassFreq);
+    setHighPassFreq(desiredHighPassFreq);
+
+    float desiredGain;
+    int desiredLowPassRepeat, desiredHighPassRepeat;
+    stateToRestore.at("gain").get_to(desiredGain);
+    stateToRestore.at("low_pass_repeat").get_to(desiredLowPassRepeat);
+    stateToRestore.at("high_pass_repeat").get_to(desiredHighPassRepeat);
+    if (desiredLowPassRepeat <= 0 || desiredLowPassRepeat > SAMPLEPLAYER_MAX_FILTER_REPEAT)
+    {
+        throw std::runtime_error("low pass filter repeat out of range");
+    }
+    if (desiredHighPassRepeat <= 0 || desiredHighPassRepeat > SAMPLEPLAYER_MAX_FILTER_REPEAT)
+    {
+        throw std::runtime_error("high pass filter repeat out of range");
+    }
+
+    setLowPassRepeat(desiredLowPassRepeat);
+    setHighPassRepeat(desiredHighPassRepeat);
+    gainValue = desiredGain;
+}
+
 void SamplePlayer::setDbGain(float gainDb)
 {
     gainValue = juce::Decibels::decibelsToGain(gainDb);
@@ -44,7 +151,7 @@ float SamplePlayer::getDbGain()
 
 void SamplePlayer::setGainRamp(float ms)
 {
-    // TODO: this should get the sample player lock as well as other functions in this class.
+
     int frameLength = ms * (float(AUDIO_FRAMERATE) / 1000.0);
     if (frameLength <= 0)
     {

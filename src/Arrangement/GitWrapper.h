@@ -6,6 +6,7 @@
 #include <git2.h>
 #include <git2/repository.h>
 #include <juce_gui_extra/juce_gui_extra.h>
+#include <stdexcept>
 #include <string>
 
 /**
@@ -37,40 +38,33 @@ class GitWrapper
     /**
      * @brief      Initializes the git repository in this working
      *             directory. (similar to git init).
-     *             Return an empty string if no error, or the error message
-     *             otherwise.
      */
-    std::string init();
+    void init();
 
     /**
      * @brief      Open git repository at current path.
      *
-     * @return     The error or an empty string if there were none.
      */
-    std::string open();
+    void open();
 
     /**
      * @brief      Add a file to the current commit (similar to git add).
      *
      * @param[in]  filenameRelativeFromDirectory  The filename relative from directory
-     *
-     * @return     The error or an empty string if there were none.
      */
-    std::string add(std::string filenameRelativeFromDirectory);
+    void add(std::string filenameRelativeFromDirectory);
 
     /**
      * @brief      Commit files added. Similar to a git commit.
      *
      * @param[in]  commitMessage  The commit message
      *
-     * @return     The error or an empty string if there were none.
      */
-    std::string commit(std::string commitMessage);
+    void commit(std::string commitMessage);
 
     /**
      * @brief      Gets the branch the repo on the working directory is on.
-     *             Throw a runtime_error on unexpected git errors ! Watch
-     *             out to catch it !
+     *             Throw a runtime_error on unexpected git errors.
      *
      * @return     The branch.
      */
