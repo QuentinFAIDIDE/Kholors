@@ -47,7 +47,7 @@ class TopbarArea : public juce::AnimatedAppComponent, public TaskListener
     void paintOverChildren(juce::Graphics &) override;
     void resized() override;
     // local
-    void notifyError(const juce::String &);
+    void notifyMessage(const juce::String &);
     // Timer inherited
     void update() override;
 

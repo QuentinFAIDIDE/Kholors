@@ -40,7 +40,7 @@ bool TopbarArea::taskHandler(std::shared_ptr<Task> task)
 
     if (notif != nullptr && !notif->isCompleted() && !notif->hasFailed())
     {
-        notifyError(notif->getMessage());
+        notifyMessage(notif->getMessage());
         return true;
     }
 
@@ -243,7 +243,7 @@ void TopbarArea::resized()
 };
 
 // must be called from messagemanager thread
-void TopbarArea::notifyError(const juce::String &msg)
+void TopbarArea::notifyMessage(const juce::String &msg)
 {
     // get a read lock
     queueRwMutex.enterRead();
@@ -269,7 +269,7 @@ void TopbarArea::notifyError(const juce::String &msg)
     // exit the writing lock
     queueRwMutex.exitWrite();
 
-    std::cerr << "New error notification at " << timestamp << ": " << msg << std::endl;
+    std::cerr << "New notification at " << timestamp << ": " << msg << std::endl;
 
     repaint();
 }
