@@ -91,6 +91,7 @@ void TaxonomyManager::reset()
 std::string TaxonomyManager::marshal()
 {
     json output = {{"samples", samples}, {"groups", groups}};
+    return output.dump();
 }
 
 void TaxonomyManager::unmarshal(std::string &s)

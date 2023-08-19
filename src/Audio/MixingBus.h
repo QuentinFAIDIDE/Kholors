@@ -26,7 +26,7 @@
 #define TASK_QUEUE_RESERVED_SIZE 16
 
 //==============================================================================
-class MixingBus : public juce::PositionableAudioSource, public TaskListener, private juce::Thread
+class MixingBus : public juce::PositionableAudioSource, public TaskListener, public Marshalable, private juce::Thread
 {
   public:
     MixingBus(ActivityManager &);
@@ -70,6 +70,20 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
      */
     std::shared_ptr<MixbusDataSource> getMixbusDataSource();
 
+    /**
+     * @brief      Dump the state of the Mixbus into a JSON string.
+     *
+     * @return     a JSON format string describing the state of the mixbus.
+     */
+    std::string marshal() override;
+
+    /**
+     * @brief      Parse the JSON string and restore the mixbus state.
+     *
+     * @param      s     A string representing the mixbus.
+     */
+    void unmarshal(std::string &s) override;
+
   private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MixingBus)
     // TODO: add a readahead buffer
@@ -79,8 +93,8 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
 
     // file formats manager
     juce::AudioFormatManager formatManager;
-    // play cursom position in audio frames, as well as furthest frame
-    int playCursor, totalFrameLength;
+    // play cursom position in audio frames
+    int playCursor;
 
     // number of channels
     juce::int64 numChannels;
@@ -132,7 +146,7 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
 
     // A list of SamplePlayer objects that inherits PositionableAudioSource
     // and are objects that play buffers at some position
-    juce::Array<std::shared_ptr<SamplePlayer>> tracks;
+    juce::Array<std::shared_ptr<SamplePlayer>> samplePlayers;
     // callback to repaint when tracks were updated
     std::function<void()> trackRepaintCallback;
 
@@ -144,9 +158,6 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pri
 
     // mutex to swap the path and access tracks
     juce::CriticalSection pathMutex, mixbusMutex;
-
-    // stack of files to import
-    std::vector<std::shared_ptr<SampleCreateTask>> importTaskQueue;
 
     // master bus gain
     juce::dsp::Gain<float> masterGain;

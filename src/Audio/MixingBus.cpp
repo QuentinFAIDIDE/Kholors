@@ -8,6 +8,8 @@
 #include <iostream>
 #include <memory>
 
+#include <stdexcept>
+
 // initialize the MixingBus, as well as Thread and audio inherited
 // behaviours.
 MixingBus::MixingBus(ActivityManager &am)
@@ -29,7 +31,6 @@ MixingBus::MixingBus(ActivityManager &am)
 void MixingBus::reset()
 {
     playCursor = 0;
-    totalFrameLength = 0;
     isPlaying = false;
     loopingToggledOn = false;
     loopSectionStartFrame = 22050;
@@ -50,7 +51,7 @@ void MixingBus::reset()
 
     lastDrawnCursor = 0;
 
-    tracks.clear();
+    samplePlayers.clear();
 }
 
 MixingBus::~MixingBus()
@@ -59,9 +60,9 @@ MixingBus::~MixingBus()
     stopThread(4000);
 
     // delete all tracks
-    for (size_t i = 0; i < tracks.size(); i++)
+    for (size_t i = 0; i < samplePlayers.size(); i++)
     {
-        auto track = tracks.getUnchecked(i);
+        auto track = samplePlayers.getUnchecked(i);
         if (track != nullptr)
         {
             // this will unset the buffer
@@ -74,6 +75,98 @@ MixingBus::~MixingBus()
 
     // delete all buffers
     checkForBuffersToFree();
+}
+
+std::string MixingBus::marshal()
+{
+    const juce::ScopedLock lock(mixbusMutex);
+
+    json samplePlayersJSON;
+    for (int i = 0; i < samplePlayers.size(); i++)
+    {
+        if (samplePlayers[i] != nullptr)
+        {
+            samplePlayersJSON.push_back(samplePlayers[i]->toJSON());
+        }
+        else
+        {
+            samplePlayersJSON.push_back(nullptr);
+        }
+    }
+
+    json output = {{"loop_start_frame", loopSectionStartFrame},
+                   {"loop_end_frame", loopSectionEndFrame},
+                   {"loop_is_on", loopingToggledOn},
+                   {"play_cursor_position_frame", playCursor},
+                   {"master_gain", masterGain.getGainLinear()},
+                   {"sample_players", samplePlayersJSON}};
+
+    return output.dump();
+}
+
+void MixingBus::unmarshal(std::string &s)
+{
+    const juce::ScopedLock lock(mixbusMutex);
+
+    isPlaying = false;
+
+    json input = json::parse(s);
+
+    auto loopStartEntry = input.at("loop_start_frame");
+    loopSectionStartFrame = loopStartEntry.template get<int64_t>();
+
+    auto loopEndEntry = input.at("loop_end_frame");
+    loopSectionEndFrame = loopEndEntry.template get<int64_t>();
+
+    auto loopIsOnEntry = input.at("loop_is_on");
+    loopingToggledOn = loopIsOnEntry.template get<bool>();
+
+    auto playCursorEntry = input.at("play_cursor_position_frame");
+    playCursor = playCursorEntry.template get<int>();
+
+    auto masterGainEntry = input.at("master_gain");
+    float masterGainLinear = masterGainEntry.template get<float>();
+    masterGain.setGainLinear(masterGainLinear);
+
+    auto samplePlayersEntry = input.at("sample_players");
+
+    if (!samplePlayersEntry.is_array())
+    {
+        throw std::runtime_error("Receive a json sample player list that is not an array!");
+    }
+
+    samplePlayers.clear();
+    samplePlayers.ensureStorageAllocated(samplePlayersEntry.size());
+    for (int i = 0; i < samplePlayersEntry.size(); i++)
+    {
+        // we leave the previously existing gaps so that the sample ids stay the same
+        if (samplePlayersEntry[i].is_null())
+        {
+            samplePlayers.add(nullptr);
+        }
+        else
+        {
+            std::string filePath;
+            samplePlayersEntry[i].at("file_path").get_to(filePath);
+
+            std::shared_ptr<SampleCreateTask> task = std::make_shared<SampleCreateTask>(filePath, 0);
+            activityManager.broadcastNestedTaskNow(task);
+
+            if (task->hasFailed())
+            {
+                throw std::runtime_error("A sample failed to be loaded.");
+            }
+
+            samplePlayers[i]->setupFromJSON(samplePlayersEntry[i]);
+
+            auto updateViewTask = std::make_shared<SampleUpdateTask>(i, samplePlayers[i]);
+            activityManager.broadcastNestedTaskNow(updateViewTask);
+            if (updateViewTask->hasFailed())
+            {
+                throw std::runtime_error("A sample failed to have its view updated.");
+            }
+        }
+    }
 }
 
 std::shared_ptr<MixbusDataSource> MixingBus::getMixbusDataSource()
@@ -107,15 +200,16 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
     auto moveTask = std::dynamic_pointer_cast<SampleMovingTask>(task);
     if (moveTask != nullptr && !moveTask->isCompleted() && !moveTask->hasFailed())
     {
-        if (tracks[moveTask->id] != nullptr)
+        if (samplePlayers[moveTask->id] != nullptr)
         {
-            tracks[moveTask->id]->move(tracks[moveTask->id]->getEditingPosition() + moveTask->dragDistance);
+            samplePlayers[moveTask->id]->move(samplePlayers[moveTask->id]->getEditingPosition() +
+                                              moveTask->dragDistance);
             moveTask->setCompleted(true);
             moveTask->setFailed(false);
 
             // we need to tell arrangement are to update
             std::shared_ptr<SampleUpdateTask> sut =
-                std::make_shared<SampleUpdateTask>(moveTask->id, tracks[moveTask->id]);
+                std::make_shared<SampleUpdateTask>(moveTask->id, samplePlayers[moveTask->id]);
             activityManager.broadcastNestedTaskNow(sut);
 
             trackRepaintCallback();
@@ -261,8 +355,8 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
     if (fadeChangeTask != nullptr && !fadeChangeTask->isCompleted())
     {
         // do nothing if the sample doesn't exist
-        if (fadeChangeTask->sampleId < 0 || fadeChangeTask->sampleId >= tracks.size() ||
-            tracks[fadeChangeTask->sampleId] == nullptr)
+        if (fadeChangeTask->sampleId < 0 || fadeChangeTask->sampleId >= samplePlayers.size() ||
+            samplePlayers[fadeChangeTask->sampleId] == nullptr)
         {
             return false;
         }
@@ -270,8 +364,8 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
         // broadcast result if it's what we need to do
         if (fadeChangeTask->isBroadcastRequest)
         {
-            fadeChangeTask->currentFadeInFrameLen = tracks[fadeChangeTask->sampleId]->getFadeInLength();
-            fadeChangeTask->currentFadeOutFrameLen = tracks[fadeChangeTask->sampleId]->getFadeOutLength();
+            fadeChangeTask->currentFadeInFrameLen = samplePlayers[fadeChangeTask->sampleId]->getFadeInLength();
+            fadeChangeTask->currentFadeOutFrameLen = samplePlayers[fadeChangeTask->sampleId]->getFadeOutLength();
             fadeChangeTask->setCompleted(true);
             activityManager.broadcastNestedTaskNow(fadeChangeTask);
             return true;
@@ -281,18 +375,18 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
         if (!fadeChangeTask->onlyFadeOut)
         {
             bool fadeInUpdate =
-                tracks[fadeChangeTask->sampleId]->setFadeInLength(fadeChangeTask->currentFadeInFrameLen);
+                samplePlayers[fadeChangeTask->sampleId]->setFadeInLength(fadeChangeTask->currentFadeInFrameLen);
             hasUpdated = fadeInUpdate;
 
-            fadeChangeTask->currentFadeInFrameLen = tracks[fadeChangeTask->sampleId]->getFadeInLength();
+            fadeChangeTask->currentFadeInFrameLen = samplePlayers[fadeChangeTask->sampleId]->getFadeInLength();
         }
 
         if (!fadeChangeTask->onlyFadeIn)
         {
             bool fadeOutUpdate =
-                tracks[fadeChangeTask->sampleId]->setFadeOutLength(fadeChangeTask->currentFadeOutFrameLen);
+                samplePlayers[fadeChangeTask->sampleId]->setFadeOutLength(fadeChangeTask->currentFadeOutFrameLen);
             hasUpdated = hasUpdated || fadeOutUpdate;
-            fadeChangeTask->currentFadeOutFrameLen = tracks[fadeChangeTask->sampleId]->getFadeOutLength();
+            fadeChangeTask->currentFadeOutFrameLen = samplePlayers[fadeChangeTask->sampleId]->getFadeOutLength();
         }
 
         fadeChangeTask->setCompleted(true);
@@ -313,17 +407,17 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
     if (gainChangeTask != nullptr && !gainChangeTask->isCompleted() && !gainChangeTask->hasFailed())
     {
         // do nothing if the sample doesn't exist
-        if (gainChangeTask->sampleId < 0 || gainChangeTask->sampleId >= tracks.size() ||
-            tracks[gainChangeTask->sampleId] == nullptr)
+        if (gainChangeTask->sampleId < 0 || gainChangeTask->sampleId >= samplePlayers.size() ||
+            samplePlayers[gainChangeTask->sampleId] == nullptr)
         {
             return false;
         }
 
         if (!gainChangeTask->isBroadcastRequest)
         {
-            tracks[gainChangeTask->sampleId]->setDbGain(gainChangeTask->currentDbGain);
+            samplePlayers[gainChangeTask->sampleId]->setDbGain(gainChangeTask->currentDbGain);
         }
-        gainChangeTask->currentDbGain = tracks[gainChangeTask->sampleId]->getDbGain();
+        gainChangeTask->currentDbGain = samplePlayers[gainChangeTask->sampleId]->getDbGain();
 
         gainChangeTask->setCompleted(true);
         activityManager.broadcastNestedTaskNow(gainChangeTask);
@@ -333,40 +427,40 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
     auto filterRepeatChange = std::dynamic_pointer_cast<SampleFilterRepeatChange>(task);
     if (filterRepeatChange != nullptr && !filterRepeatChange->isCompleted() && !filterRepeatChange->hasFailed())
     {
-        if (filterRepeatChange->sampleId < 0 || filterRepeatChange->sampleId >= tracks.size() ||
-            tracks[filterRepeatChange->sampleId] == nullptr)
+        if (filterRepeatChange->sampleId < 0 || filterRepeatChange->sampleId >= samplePlayers.size() ||
+            samplePlayers[filterRepeatChange->sampleId] == nullptr)
         {
             return false;
         }
 
         if (filterRepeatChange->isLowPassFilter)
         {
-            filterRepeatChange->previousFilterRepeat = tracks[filterRepeatChange->sampleId]->getLowPassRepeat();
+            filterRepeatChange->previousFilterRepeat = samplePlayers[filterRepeatChange->sampleId]->getLowPassRepeat();
         }
         else
         {
-            filterRepeatChange->previousFilterRepeat = tracks[filterRepeatChange->sampleId]->getHighPassRepeat();
+            filterRepeatChange->previousFilterRepeat = samplePlayers[filterRepeatChange->sampleId]->getHighPassRepeat();
         }
 
         if (!filterRepeatChange->isBroadcastRequest)
         {
             if (filterRepeatChange->isLowPassFilter)
             {
-                tracks[filterRepeatChange->sampleId]->setLowPassRepeat(filterRepeatChange->newFilterRepeat);
+                samplePlayers[filterRepeatChange->sampleId]->setLowPassRepeat(filterRepeatChange->newFilterRepeat);
             }
             else
             {
-                tracks[filterRepeatChange->sampleId]->setHighPassRepeat(filterRepeatChange->newFilterRepeat);
+                samplePlayers[filterRepeatChange->sampleId]->setHighPassRepeat(filterRepeatChange->newFilterRepeat);
             }
         }
 
         if (filterRepeatChange->isLowPassFilter)
         {
-            filterRepeatChange->newFilterRepeat = tracks[filterRepeatChange->sampleId]->getLowPassRepeat();
+            filterRepeatChange->newFilterRepeat = samplePlayers[filterRepeatChange->sampleId]->getLowPassRepeat();
         }
         else
         {
-            filterRepeatChange->newFilterRepeat = tracks[filterRepeatChange->sampleId]->getHighPassRepeat();
+            filterRepeatChange->newFilterRepeat = samplePlayers[filterRepeatChange->sampleId]->getHighPassRepeat();
         }
 
         filterRepeatChange->setCompleted(true);
@@ -404,24 +498,24 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
 
 void MixingBus::cropSample(std::shared_ptr<SampleTimeCropTask> task)
 {
-    if (tracks[task->id] != nullptr)
+    if (samplePlayers[task->id] != nullptr)
     {
 
-        int initialFadeIn = tracks[task->id]->getFadeInLength();
-        int initialFadeOut = tracks[task->id]->getFadeOutLength();
+        int initialFadeIn = samplePlayers[task->id]->getFadeInLength();
+        int initialFadeOut = samplePlayers[task->id]->getFadeOutLength();
 
         if (task->movingBeginning)
         {
-            tracks[task->id]->tryMovingStart(task->dragDistance);
+            samplePlayers[task->id]->tryMovingStart(task->dragDistance);
         }
         else
         {
-            tracks[task->id]->tryMovingEnd(task->dragDistance);
+            samplePlayers[task->id]->tryMovingEnd(task->dragDistance);
         }
 
         // if the fade changed due to resize, broadcast the change
-        int finalFadeIn = tracks[task->id]->getFadeInLength();
-        int finalFadeOut = tracks[task->id]->getFadeOutLength();
+        int finalFadeIn = samplePlayers[task->id]->getFadeInLength();
+        int finalFadeOut = samplePlayers[task->id]->getFadeOutLength();
 
         // record the initial and final fade in and out, because if they were
         // altered by resize, we might need to post a SampleFadeChange
@@ -435,7 +529,7 @@ void MixingBus::cropSample(std::shared_ptr<SampleTimeCropTask> task)
         task->setFailed(false);
 
         // we need to tell arrangement are to update
-        std::shared_ptr<SampleUpdateTask> sut = std::make_shared<SampleUpdateTask>(task->id, tracks[task->id]);
+        std::shared_ptr<SampleUpdateTask> sut = std::make_shared<SampleUpdateTask>(task->id, samplePlayers[task->id]);
         activityManager.broadcastNestedTaskNow(sut);
 
         // if the fade length changed, make the ui widgets update!
@@ -458,22 +552,22 @@ void MixingBus::cropSample(std::shared_ptr<SampleTimeCropTask> task)
 
 void MixingBus::cropSample(std::shared_ptr<SampleFreqCropTask> task)
 {
-    if (tracks[task->id] != nullptr)
+    if (samplePlayers[task->id] != nullptr)
     {
         if (task->isLowPass)
         {
-            tracks[task->id]->setLowPassFreq(task->finalFrequency);
+            samplePlayers[task->id]->setLowPassFreq(task->finalFrequency);
         }
         else
         {
-            tracks[task->id]->setHighPassFreq(task->finalFrequency);
+            samplePlayers[task->id]->setHighPassFreq(task->finalFrequency);
         }
 
         task->setCompleted(true);
         task->setFailed(false);
 
         // we need to tell arrangement are to update
-        std::shared_ptr<SampleUpdateTask> sut = std::make_shared<SampleUpdateTask>(task->id, tracks[task->id]);
+        std::shared_ptr<SampleUpdateTask> sut = std::make_shared<SampleUpdateTask>(task->id, samplePlayers[task->id]);
         activityManager.broadcastNestedTaskNow(sut);
 
         trackRepaintCallback();
@@ -529,11 +623,11 @@ void MixingBus::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
     const juce::ScopedLock lock(mixbusMutex);
     // prepare all inputs
-    for (size_t i = 0; i < tracks.size(); i++)
+    for (size_t i = 0; i < samplePlayers.size(); i++)
     {
-        if (tracks.getUnchecked(i) != nullptr)
+        if (samplePlayers.getUnchecked(i) != nullptr)
         {
-            tracks.getUnchecked(i)->prepareToPlay(samplesPerBlockExpected, sampleRate);
+            samplePlayers.getUnchecked(i)->prepareToPlay(samplesPerBlockExpected, sampleRate);
         }
     }
 
@@ -555,11 +649,11 @@ void MixingBus::releaseResources()
     const juce::ScopedLock lock(mixbusMutex);
 
     // call all inputs releaseResources
-    for (size_t i = 0; i < tracks.size(); i++)
+    for (size_t i = 0; i < samplePlayers.size(); i++)
     {
-        if (tracks.getUnchecked(i) != nullptr)
+        if (samplePlayers.getUnchecked(i) != nullptr)
         {
-            tracks.getUnchecked(i)->releaseResources();
+            samplePlayers.getUnchecked(i)->releaseResources();
         }
     }
 
@@ -578,7 +672,7 @@ void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFi
     const juce::ScopedLock sl(mixbusMutex);
 
     // if there is more then one input track and we are playing
-    if (tracks.size() > 0 && isPlaying)
+    if (samplePlayers.size() > 0 && isPlaying)
     {
 
         // get if possible a pointer to the set of selected tracks
@@ -595,9 +689,9 @@ void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFi
 
         // get a pointer to a new processed input buffer from first source
         // we will append into this one to mix tracks together
-        if (tracks.getUnchecked(0) != nullptr)
+        if (samplePlayers.getUnchecked(0) != nullptr)
         {
-            tracks.getUnchecked(0)->getNextAudioBlock(bufferToFill);
+            samplePlayers.getUnchecked(0)->getNextAudioBlock(bufferToFill);
 
             // if the track is currently selected sum its volume
             if (selectedTracks != nullptr && selectedTracks->find(0) != selectedTracks->end())
@@ -615,7 +709,7 @@ void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFi
             bufferToFill.clearActiveBufferRegion();
         }
 
-        if (tracks.size() > 1)
+        if (samplePlayers.size() > 1)
         {
             // initialize buffer
             audioThreadBuffer.setSize(juce::jmax(1, bufferToFill.buffer->getNumChannels()),
@@ -627,14 +721,14 @@ void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFi
             juce::AudioSourceChannelInfo copyBufferDest(&audioThreadBuffer, 0, bufferToFill.numSamples);
 
             // for each input source
-            for (size_t i = 1; i < tracks.size(); i++)
+            for (size_t i = 1; i < samplePlayers.size(); i++)
             {
-                if (tracks.getUnchecked(i) == nullptr)
+                if (samplePlayers.getUnchecked(i) == nullptr)
                 {
                     continue;
                 }
                 // get the next audio block in the buffer
-                tracks.getUnchecked(i)->getNextAudioBlock(copyBufferDest);
+                samplePlayers.getUnchecked(i)->getNextAudioBlock(copyBufferDest);
                 // abort whenever the buffer is empty
                 if (audioThreadBuffer.getNumSamples() != 0)
                 {
@@ -825,17 +919,17 @@ void MixingBus::importNewFile(std::shared_ptr<SampleCreateTask> task)
                 // sources)
                 if (task->reuseNewId)
                 {
-                    tracks.set(task->getAllocatedIndex(), newSample);
+                    samplePlayers.set(task->getAllocatedIndex(), newSample);
                     newTrackIndex = task->getAllocatedIndex();
                 }
                 else
                 {
-                    tracks.add(newSample);
-                    newTrackIndex = tracks.size() - 1;
+                    samplePlayers.add(newSample);
+                    newTrackIndex = samplePlayers.size() - 1;
                 }
                 // add the buffer the array of audio buffers and set its position
                 buffers.add(newBuffer);
-                tracks[newTrackIndex]->setNextReadPosition(playCursor);
+                samplePlayers[newTrackIndex]->setNextReadPosition(playCursor);
             }
 
             task->setAllocatedIndex(newTrackIndex);
@@ -894,12 +988,12 @@ void MixingBus::setNextReadPosition(juce::int64 nextReadPosition)
     mixbusDataSource->setPosition(playCursor);
 
     // tell all samplePlayers to update positions
-    for (size_t i = 0; i < tracks.size(); i++)
+    for (size_t i = 0; i < samplePlayers.size(); i++)
     {
-        if (tracks.getUnchecked(i) != nullptr)
+        if (samplePlayers.getUnchecked(i) != nullptr)
         {
             // tell the track to reconsider its position
-            tracks.getUnchecked(i)->setNextReadPosition(nextReadPosition);
+            samplePlayers.getUnchecked(i)->setNextReadPosition(nextReadPosition);
         }
     }
 }
@@ -912,8 +1006,7 @@ juce::int64 MixingBus::getNextReadPosition() const
 
 juce::int64 MixingBus::getTotalLength() const
 {
-    // TODO: simply returns total length of the entire track in frames
-    return totalFrameLength;
+    return 0;
 }
 
 bool MixingBus::isLooping() const
@@ -938,7 +1031,7 @@ void MixingBus::pauseIfCursorNotInBound()
 // note that it includes deleted tracks in the count
 size_t MixingBus::getNumTracks() const
 {
-    return tracks.size();
+    return samplePlayers.size();
 }
 
 std::shared_ptr<SamplePlayer> MixingBus::getTrack(int index) const
@@ -947,7 +1040,7 @@ std::shared_ptr<SamplePlayer> MixingBus::getTrack(int index) const
     // to prevent using a lock when reading.
 
     // get pointer to the value at index
-    return tracks.getUnchecked(index);
+    return samplePlayers.getUnchecked(index);
 }
 
 void MixingBus::setTrackRepaintCallback(std::function<void()> f)
@@ -957,7 +1050,7 @@ void MixingBus::setTrackRepaintCallback(std::function<void()> f)
 
 void MixingBus::deleteSample(std::shared_ptr<SampleDeletionTask> deletionTask)
 {
-    if (deletionTask->id < 0 || deletionTask->id >= tracks.size() || tracks[deletionTask->id] == nullptr)
+    if (deletionTask->id < 0 || deletionTask->id >= samplePlayers.size() || samplePlayers[deletionTask->id] == nullptr)
     {
         deletionTask->setCompleted(true);
         deletionTask->setFailed(true);
@@ -966,12 +1059,12 @@ void MixingBus::deleteSample(std::shared_ptr<SampleDeletionTask> deletionTask)
 
     // we save a reference to this sample in the tasks list to restore it if
     // users wants to.
-    deletionTask->deletedSample = tracks[deletionTask->id];
+    deletionTask->deletedSample = samplePlayers[deletionTask->id];
 
     // clear this sample
     {
         const juce::ScopedLock lock(mixbusMutex);
-        tracks.set(deletionTask->id, std::shared_ptr<SamplePlayer>(nullptr));
+        samplePlayers.set(deletionTask->id, std::shared_ptr<SamplePlayer>(nullptr));
     }
 
     // clear the activityManager view
@@ -985,14 +1078,15 @@ void MixingBus::deleteSample(std::shared_ptr<SampleDeletionTask> deletionTask)
 
 void MixingBus::restoreSample(std::shared_ptr<SampleRestoreTask> task)
 {
-    if (task->id < 0 || task->id >= tracks.size() || tracks[task->id] != nullptr || task->sampleToRestore == nullptr)
+    if (task->id < 0 || task->id >= samplePlayers.size() || samplePlayers[task->id] != nullptr ||
+        task->sampleToRestore == nullptr)
     {
         task->setCompleted(true);
         task->setFailed(true);
         return;
     }
 
-    tracks.set(task->id, task->sampleToRestore);
+    samplePlayers.set(task->id, task->sampleToRestore);
 
     std::shared_ptr<SampleRestoreDisplayTask> displayTask =
         std::make_shared<SampleRestoreDisplayTask>(task->id, task->sampleToRestore);
@@ -1006,7 +1100,7 @@ void MixingBus::duplicateTrack(std::shared_ptr<SampleCreateTask> task)
 {
     // Note: this runs from the background thread
 
-    if (task->getDuplicateTargetId() < 0 || task->getDuplicateTargetId() >= tracks.size())
+    if (task->getDuplicateTargetId() < 0 || task->getDuplicateTargetId() >= samplePlayers.size())
     {
 
         task->setFailed(true);
@@ -1014,7 +1108,7 @@ void MixingBus::duplicateTrack(std::shared_ptr<SampleCreateTask> task)
     }
 
     // get a reference to the buffer to duplicate
-    std::shared_ptr<SamplePlayer> targetToDuplicate = tracks[task->getDuplicateTargetId()];
+    std::shared_ptr<SamplePlayer> targetToDuplicate = samplePlayers[task->getDuplicateTargetId()];
 
     if (targetToDuplicate == nullptr)
     {
@@ -1060,16 +1154,16 @@ void MixingBus::duplicateTrack(std::shared_ptr<SampleCreateTask> task)
         if (task->reuseNewId)
         {
             newTrackIndex = task->getAllocatedIndex();
-            tracks.set(task->getAllocatedIndex(), newSample);
+            samplePlayers.set(task->getAllocatedIndex(), newSample);
         }
         else
         {
             // add new SamplePlayer to the tracks list (positionable audio
             // sources)
-            tracks.add(newSample);
-            newTrackIndex = tracks.size() - 1;
+            samplePlayers.add(newSample);
+            newTrackIndex = samplePlayers.size() - 1;
         }
-        tracks[newTrackIndex]->setNextReadPosition(playCursor);
+        samplePlayers[newTrackIndex]->setNextReadPosition(playCursor);
     }
 
     task->setAllocatedIndex(newTrackIndex);

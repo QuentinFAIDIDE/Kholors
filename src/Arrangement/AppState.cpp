@@ -15,6 +15,7 @@ AppState::AppState(ActivityManager &am) : activityManager(am)
 {
     uiState = UI_STATE_DEFAULT;
 }
+
 AppState::~AppState()
 {
 }

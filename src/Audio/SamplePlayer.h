@@ -16,6 +16,9 @@
 
 #include "../Config.h"
 
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 class SamplePlayer : public juce::PositionableAudioSource
 {
   public:
@@ -181,6 +184,20 @@ class SamplePlayer : public juce::PositionableAudioSource
      */
     static float freqForFilterDbReduction(bool isHighPass, float filterFreq, float dbReductionRequired,
                                           int filterRepeat);
+
+    /**
+     * @brief      Will drop all of this track properties to a JSON object.
+     *
+     * @return     Json representation of the object.
+     */
+    json toJSON();
+
+    /**
+     * @brief      Will restore the sample player state as its defined in this object.
+     *
+     * @param      object  The object containing the state to be restored.
+     */
+    void setupFromJSON(json &object);
 
   private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SamplePlayer)
