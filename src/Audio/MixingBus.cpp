@@ -101,7 +101,7 @@ std::string MixingBus::marshal()
                    {"master_gain", masterGain.getGainLinear()},
                    {"sample_players", samplePlayersJSON}};
 
-    return output.dump();
+    return output.dump(JSON_STATE_SAVING_INDENTATION);
 }
 
 void MixingBus::unmarshal(std::string &s)

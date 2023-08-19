@@ -41,7 +41,7 @@ std::string AppState::marshal()
         {"api_version", APP_STATE_API_VERSION},
         {"tempo", tempo},
     };
-    return appjson.dump();
+    return appjson.dump(JSON_STATE_SAVING_INDENTATION);
 }
 
 void AppState::unmarshal(std::string &s)

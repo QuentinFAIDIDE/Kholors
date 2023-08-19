@@ -7,6 +7,8 @@
 #define DEFAULT_TAXONOMY_VECTOR_SIZE 8192
 #define DEFAULT_TAXONOMY_VECTOR_ROOM 1024
 
+#include "../Config.h"
+
 using json = nlohmann::json;
 
 void to_json(json &j, const SampleGroup &sg)
@@ -91,7 +93,7 @@ void TaxonomyManager::reset()
 std::string TaxonomyManager::marshal()
 {
     json output = {{"samples", samples}, {"groups", groups}};
-    return output.dump();
+    return output.dump(JSON_STATE_SAVING_INDENTATION);
 }
 
 void TaxonomyManager::unmarshal(std::string &s)

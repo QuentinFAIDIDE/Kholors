@@ -173,6 +173,8 @@
 #define MAIL_REGEX "^[A-Za-z-_\\.]{2,40}@[A-Za-z-_]{2,40}.[a-z]{2,4}$"
 #define NAME_REGEX "[A-Za-z à-üÀ-Ü]{3,30}"
 
+#define JSON_STATE_SAVING_INDENTATION 4
+
 #ifndef DEF_CONFIG_HPP
 #define DEF_CONFIG_HPP
 

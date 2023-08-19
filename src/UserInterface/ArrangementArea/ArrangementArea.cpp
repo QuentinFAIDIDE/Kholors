@@ -1977,7 +1977,7 @@ void ArrangementArea::copyAndBroadcastSelection(bool fromWithinTask)
 std::string ArrangementArea::marshal()
 {
     json output = {{"view_position", viewPosition}, {"view_scale", viewScale}};
-    return output.dump();
+    return output.dump(JSON_STATE_SAVING_INDENTATION);
 }
 
 void ArrangementArea::unmarshal(std::string &s)
