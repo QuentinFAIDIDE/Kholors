@@ -19,6 +19,7 @@ GitWrapper::~GitWrapper()
     if (libgitRepo != nullptr)
     {
         git_repository_free(libgitRepo);
+        libgitRepo = nullptr;
     }
     git_libgit2_shutdown();
 }
@@ -30,6 +31,7 @@ void GitWrapper::setWorkingDirectory(std::string path)
     if (libgitRepo != nullptr)
     {
         git_repository_free(libgitRepo);
+        libgitRepo = nullptr;
     }
 }
 
