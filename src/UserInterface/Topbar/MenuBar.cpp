@@ -252,7 +252,7 @@ void MenuBar::openVersionningMenu()
         if (id == VERSIONNING_MENU_ITEM_ID_INIT)
         {
             juce::DialogWindow::LaunchOptions launchOptions;
-            launchOptions.dialogTitle = "Instantiate a new track";
+            launchOptions.dialogTitle = "Instantiate a new project";
             launchOptions.content.set(new GitInitRepoDialog(activityManager), true);
             launchOptions.escapeKeyTriggersCloseButton = true;
             launchOptions.useNativeTitleBar = true;

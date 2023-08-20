@@ -1,8 +1,7 @@
 #ifndef DEF_INSTANTIATE_GIT_DIALOG_HPP
 #define DEF_INSTANTIATE_GIT_DIALOG_HPP
 
-#include "../../Arrangement/ActivityManager.h"
-#include <juce_gui_basics/juce_gui_basics.h>
+#include "LineEntryDialog.h"
 
 #include <regex>
 
@@ -13,57 +12,55 @@
  * @brief      This class describes a git repository instanciation dialog for current
  *             song opened in arrangement.
  */
-class GitInitRepoDialog : public juce::Component, juce::Button::Listener, juce::TextEditor::Listener
+class GitInitRepoDialog : public LineEntryDialog
 {
   public:
-    /**
-     * @brief      Constructs a new instance.
-     */
     GitInitRepoDialog(ActivityManager &am);
 
     /**
-     * @brief      Juce paint callback.
+     * @brief      Gets the text entry validation regular expression.
      *
+     * @return     A regular expression that passes if text inside text entry component is okay.
      */
-    void paint(juce::Graphics &g) override;
+    std::regex getEntryRegex();
 
     /**
-     * @brief      Juce positioning callback.
-     */
-    void resized() override;
-
-    /**
-     * @brief      Closes self by trying to reach parent juce::DialogWindow.
-     */
-    void closeDialog();
-
-    /**
-     * @brief      Called when a button is clicked.
+     * @brief      Gets the text entry description.
      *
-     * @param      button  The button
+     * @return     The text entry description.
      */
-    void buttonClicked(juce::Button *button) override;
+    std::string getTextEntryDescription();
 
-    /** Called when the user changes the text in some way. */
-    void textEditorTextChanged(juce::TextEditor &) override;
+    /**
+     * @brief      Gets the dialog width.
+     *
+     * @return     The dialog width.
+     */
+    int getDialogWidth();
 
-    /** Called when the user presses the return key. */
-    void textEditorReturnKeyPressed(juce::TextEditor &) override;
+    /**
+     * @brief      Gets the dialog height.
+     *
+     * @return     The dialog height.
+     */
+    int getDialogHeight();
+
+    /**
+     * @brief      Gets the line of text displayed above text entry
+     *             that describe what to enter.
+     *
+     * @return     The dialog instructions.
+     */
+    std::string getDialogInstructions();
+
+    /**
+     * @brief      Performs dialog task when user click the confirm button.
+     *
+     * @param[in]  dialogEntry  The dialog entry text.
+     */
+    void performDialogTask(std::string dialogEntry);
 
   private:
-    juce::TextButton closeButton;
-    juce::TextButton confirmButton;
-    juce::TextEditor nameEntry;
-
-    std::string chosenTrackName;
-    std::regex contentValidationRegex;
-
-    ActivityManager &activityManager;
-
-    /////////////////////////////////////////
-
-    bool nameIsValid();
-
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GitInitRepoDialog)
 };
