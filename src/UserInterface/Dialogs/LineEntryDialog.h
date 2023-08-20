@@ -114,7 +114,6 @@ class LineEntryDialog : public juce::Component, juce::Button::Listener, juce::Te
 
     bool nameIsValid();
 
-    //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LineEntryDialog)
 };
 

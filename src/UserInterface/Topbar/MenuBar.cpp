@@ -167,10 +167,14 @@ void MenuBar::openFileMenu()
 {
     openedMenuId = FILE_MENU_ID;
 
+    juce::PopupMenu recentFilesMenu;
+    recentFilesMenu.addItem(10000, "To be implemented...", false, false);
+
     juce::PopupMenu menu;
     menu.addItem(FILE_MENU_ITEM_ID_NEW, "New");
+    menu.addSeparator();
     menu.addItem(FILE_MENU_ITEM_ID_OPEN, "Open");
-    menu.addItem(FILE_MENU_ITEM_ID_OPEN_RECENT, "Open Recent");
+    menu.addSubMenu("Open Recent", recentFilesMenu, true);
     menu.addSeparator();
     menu.addItem(FILE_MENU_ITEM_ID_QUIT, "Quit");
     menu.setLookAndFeel(&getLookAndFeel());
