@@ -1,7 +1,9 @@
 #include "GitWrapper.h"
+#include <git2/branch.h>
 #include <git2/commit.h>
 #include <git2/errors.h>
 #include <git2/index.h>
+#include <git2/refs.h>
 #include <git2/repository.h>
 #include <git2/signature.h>
 #include <git2/tree.h>
@@ -43,9 +45,9 @@ void GitWrapper::init()
     }
 
     int ret = git_repository_init(&libgitRepo, repositoryPath.c_str(), 0);
-    if (ret < 0)
+    if (ret != 0)
     {
-        std::runtime_error(std::string("git init error on git_repository_init: ") + git_error_last()->message);
+        throw std::runtime_error(std::string("git init error on git_repository_init: ") + git_error_last()->message);
     }
 }
 
@@ -53,14 +55,14 @@ void GitWrapper::open()
 {
     if (repositoryPath == "")
     {
-        std::runtime_error(std::string("git open error: no repository path set"));
+        throw std::runtime_error(std::string("git open error: no repository path set"));
     }
 
     int error = git_repository_open(&libgitRepo, repositoryPath.c_str());
 
-    if (error < 0)
+    if (error != 0)
     {
-        std::runtime_error(std::string("git open error on git_repository_open: ") + git_error_last()->message);
+        throw std::runtime_error(std::string("git open error on git_repository_open: ") + git_error_last()->message);
     }
 }
 
@@ -242,4 +244,119 @@ std::string GitWrapper::getBranch()
     git_reference_free(head);
 
     return branch;
+}
+
+RepositoryStatistics GitWrapper::getRepositoryStatistics(std::string pathToRepository)
+{
+
+    // this is the response object that holds various statistics
+    RepositoryStatistics response;
+    response.name = juce::File(pathToRepository).getFileName().toStdString();
+
+    // we first open the repo
+    git_repository *repo = nullptr;
+    int ret = git_repository_open(&repo, pathToRepository.c_str());
+    if (ret != 0)
+    {
+        throw std::runtime_error(std::string("git stats error on git_repository_open: ") + git_error_last()->message);
+    }
+
+    // gather commit and branch stats and intercept exception to free repo libgit2 object
+    try
+    {
+        recordRepoCommitStats(repo, response);
+        countRepoBranches(repo, response);
+    }
+    catch (std::runtime_error err)
+    {
+        git_repository_free(repo);
+        throw err;
+    }
+
+    git_repository_free(repo);
+
+    return response;
+}
+
+void GitWrapper::recordRepoCommitStats(git_repository *repo, RepositoryStatistics &destinationStatsStruct)
+{
+    destinationStatsStruct.noCommits = 0;
+
+    git_revwalk *walk;
+    int ret = git_revwalk_new(&walk, repo);
+    if (ret != 0)
+    {
+        throw std::runtime_error(std::string("git stats error on git_revwalk_new: ") + git_error_last()->message);
+    }
+
+    ret = git_revwalk_push_head(walk);
+    if (ret != 0)
+    {
+        git_revwalk_free(walk);
+        throw std::runtime_error(std::string("git stats error on git_revwalk_push_head: ") + git_error_last()->message);
+    }
+
+    // iterate over all commit revisions
+    git_oid oid;
+    while (git_revwalk_next(&oid, walk) == 0)
+    {
+        git_commit *currentCommit;
+
+        ret = git_commit_lookup(&currentCommit, repo, &oid);
+        if (ret != 0)
+        {
+            git_revwalk_free(walk);
+            throw std::runtime_error(std::string("git stats error on git_commit_lookup: ") + git_error_last()->message);
+        }
+
+        // get the timestamp of the commit
+        std::time_t commitTime = (std::time_t)git_commit_time(currentCommit);
+
+        // update the first and last commits in the statistics structure
+        if (destinationStatsStruct.noCommits == 0 || destinationStatsStruct.firstCommitDate > commitTime)
+        {
+            destinationStatsStruct.firstCommitDate = commitTime;
+        }
+        if (destinationStatsStruct.noCommits == 0 || destinationStatsStruct.lastCommitDate < commitTime)
+        {
+            destinationStatsStruct.lastCommitDate = commitTime;
+        }
+
+        destinationStatsStruct.noCommits++;
+        git_commit_free(currentCommit);
+    }
+    git_revwalk_free(walk);
+}
+
+void GitWrapper::countRepoBranches(git_repository *repo, RepositoryStatistics &destinationStatsStruct)
+{
+    destinationStatsStruct.noBranches = 0;
+
+    // instanciate branch iterator
+    git_branch_iterator *branchIterator;
+    int ret = git_branch_iterator_new(&branchIterator, repo, GIT_BRANCH_LOCAL);
+    if (ret != 0)
+    {
+        throw std::runtime_error(std::string("git stats error on git_branch_iterator_new: ") +
+                                 git_error_last()->message);
+    }
+
+    // iterate over branches and increment count
+    git_reference *ref;
+    git_branch_t branchType;
+    ret = git_branch_next(&ref, &branchType, branchIterator);
+    while (ret == 0)
+    {
+        destinationStatsStruct.noBranches++;
+        git_reference_free(ref);
+    }
+
+    // free the branch object
+    git_branch_iterator_free(branchIterator);
+
+    // check if we exited the loop due to an error
+    if (ret != 0 && ret != GIT_ITEROVER)
+    {
+        throw std::runtime_error(std::string("git stats error on git_branch_next: ") + git_error_last()->message);
+    }
 }

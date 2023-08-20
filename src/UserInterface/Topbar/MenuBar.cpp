@@ -9,6 +9,8 @@
 #define FILE_MENU_TEXT "File"
 #define FILE_MENU_ITEM_ID_QUIT 1000
 #define FILE_MENU_ITEM_ID_NEW 1001
+#define FILE_MENU_ITEM_ID_OPEN 1002
+#define FILE_MENU_ITEM_ID_OPEN_RECENT 1003
 
 #define EDIT_MENU_ID 2
 #define EDIT_MENU_TEXT "Edit"
@@ -167,6 +169,8 @@ void MenuBar::openFileMenu()
 
     juce::PopupMenu menu;
     menu.addItem(FILE_MENU_ITEM_ID_NEW, "New");
+    menu.addItem(FILE_MENU_ITEM_ID_OPEN, "Open");
+    menu.addItem(FILE_MENU_ITEM_ID_OPEN_RECENT, "Open Recent");
     menu.addSeparator();
     menu.addItem(FILE_MENU_ITEM_ID_QUIT, "Quit");
     menu.setLookAndFeel(&getLookAndFeel());
@@ -229,12 +233,12 @@ void MenuBar::openVersionningMenu()
     juce::PopupMenu menu;
     menu.addItem(VERSIONNING_MENU_ITEM_ID_INIT, "Initialize", !isRepoAlreadyInitialized, false);
     menu.addSeparator();
-    menu.addItem(VERSIONNING_MENU_ITEM_ID_COMMIT, "Commit changes", isRepoAlreadyInitialized, false);
-    menu.addItem(VERSIONNING_MENU_ITEM_ID_RESET, "Reset changes");
+    menu.addItem(VERSIONNING_MENU_ITEM_ID_COMMIT, "Commit and save changes", isRepoAlreadyInitialized, false);
+    menu.addItem(VERSIONNING_MENU_ITEM_ID_RESET, "Revert to last commit", isRepoAlreadyInitialized, false);
     menu.addSeparator();
-    menu.addItem(VERSIONNING_MENU_ITEM_ID_REVERT, "Revert");
-    menu.addItem(VERSIONNING_MENU_ITEM_ID_CREATE_BRANCH, "Branch");
-    menu.addItem(VERSIONNING_MENU_ITEM_ID_CHANGE_BRANCH, "Switch branch");
+    menu.addItem(VERSIONNING_MENU_ITEM_ID_REVERT, "Revert to a previous commit", isRepoAlreadyInitialized, false);
+    menu.addItem(VERSIONNING_MENU_ITEM_ID_CREATE_BRANCH, "New branch", isRepoAlreadyInitialized, false);
+    menu.addItem(VERSIONNING_MENU_ITEM_ID_CHANGE_BRANCH, "Switch branch", isRepoAlreadyInitialized, false);
 
     menu.setLookAndFeel(&getLookAndFeel());
 

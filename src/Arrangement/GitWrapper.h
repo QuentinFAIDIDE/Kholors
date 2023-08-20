@@ -9,6 +9,15 @@
 #include <stdexcept>
 #include <string>
 
+struct RepositoryStatistics
+{
+    std::string name;
+    int noCommits;
+    int noBranches;
+    std::time_t firstCommitDate;
+    std::time_t lastCommitDate;
+};
+
 /**
  * @brief      This class describes a git wrapper.
  *             It will initialize git repositories, add file
@@ -70,11 +79,36 @@ class GitWrapper
      */
     std::string getBranch();
 
+    /**
+     * @brief      Gets repository statistics for the repo in the folder at provided path.
+     *
+     * @param[in]  pathToRepository  The path on disk to the repository.
+     *
+     * @return     A structure describing various statistics like commit counts and last modification date.
+     */
+    RepositoryStatistics getRepositoryStatistics(std::string pathToRepository);
+
   private:
     std::string repositoryPath;
     git_repository *libgitRepo;
 
     juce::SharedResourcePointer<Config> sharedConfig;
+
+    /**
+     * @brief      Walks all commits and records their count, as well as first and last timestamp.
+     *
+     * @param      repo                    The repository already opened (libgit2 object)
+     * @param      destinationStatsStruct  The destination statistics structure
+     */
+    void recordRepoCommitStats(git_repository *repo, RepositoryStatistics &destinationStatsStruct);
+
+    /**
+     * @brief      Counts the number of branches in the repository.
+     *
+     * @param      repo                    The repository already opened (libgit2 object)
+     * @param      destinationStatsStruct  The destination statistics structure
+     */
+    void countRepoBranches(git_repository *repo, RepositoryStatistics &destinationStatsStruct);
 };
 
 #endif // DEF_GIT_WRAPPER_HPP
