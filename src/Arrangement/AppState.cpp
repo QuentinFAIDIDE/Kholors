@@ -112,9 +112,8 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
             return true;
         }
 
-        // save existing state
-        // initialize git in there
-        // mark task as complete and rebroadcast it
+        // mark task as complete and rebroadcast it in case some ui component that comes
+        // before in the taskListeners queue need to update state
         initGitTask->setCompleted(true);
         activityManager.broadcastNestedTaskNow(initGitTask);
 
@@ -122,6 +121,43 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
         auto notifTask = std::make_shared<NotificationTask>(
             std::string("The project repository was sucessfully initialized! \nMake sure to "
                         "commit changes as often as possible from the versionning menu."));
+        activityManager.broadcastNestedTaskNow(notifTask);
+
+        return true;
+    }
+
+    auto commitTask = std::dynamic_pointer_cast<GitCommitTask>(task);
+    if (commitTask != nullptr && !commitTask->isCompleted())
+    {
+        try
+        {
+            dumpProjectFiles();
+            git.add("app.json");
+            git.add("taxonomy.json");
+            git.add("mixbus.json");
+            git.add("ui.json");
+            git.commit(commitTask->message);
+
+            activityManager.clearTaskHistory();
+        }
+        catch (std::runtime_error err)
+        {
+            auto notifTask = std::make_shared<NotificationTask>(std::string(err.what()));
+            activityManager.broadcastNestedTaskNow(notifTask);
+
+            std::cerr << "Error while trying to initialize project: " << err.what() << std::endl;
+
+            commitTask->setFailed(true);
+            return true;
+        }
+
+        // rebroadcasted as completed for ui components that are listeners and are before this
+        // component in the task listeners list to update if required
+        commitTask->setCompleted(true);
+        activityManager.broadcastNestedTaskNow(commitTask);
+
+        // notify user of the sucess :)
+        auto notifTask = std::make_shared<NotificationTask>(std::string("Your changes were successfully committed."));
         activityManager.broadcastNestedTaskNow(notifTask);
 
         return true;

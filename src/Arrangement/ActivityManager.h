@@ -68,6 +68,19 @@ class ActivityManager
      */
     void redoLastActivity();
 
+    /**
+     * @brief      Clear all the tasks in history. Mostly used
+     *             to prevent calling undo after a commit from AppState.
+     *             We don't want users to undo commited changes to prevent
+     *             situations where the app crash and we cannot replay history at restart
+     *             because an undo has restored a pointer to a previously deleted
+     *             ressource that was not saved on disk and was persisted in the task.
+     *             Beware of race condition with history and canceledTasks if you decide
+     *             to call this function from a new place (it is currently called when the lock
+     *             for broadcastLock is locked, so we don't take it!).
+     */
+    void clearTaskHistory();
+
   private:
     std::shared_ptr<Task> history[ACTIVITY_HISTORY_RING_BUFFER_SIZE]; // ring buffer with the last executed tasks
     int historyNextIndex;                                             // the index of the next recorded history entry

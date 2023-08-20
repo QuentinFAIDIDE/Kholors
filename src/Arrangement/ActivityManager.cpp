@@ -238,3 +238,18 @@ void ActivityManager::redoLastActivity()
         }
     }
 }
+
+void ActivityManager::clearTaskHistory()
+{
+    std::stack<std::shared_ptr<Task>> emptyTaskStack;
+    canceledTasks.swap(emptyTaskStack);
+
+    // this will free a lot of stuff since we dereference smart pointers
+    for (int i = 0; i < ACTIVITY_HISTORY_RING_BUFFER_SIZE; i++)
+    {
+        history[i] = nullptr;
+    }
+
+    // this is quite useless but I like it like this
+    historyNextIndex = 0;
+}

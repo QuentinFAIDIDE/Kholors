@@ -982,4 +982,21 @@ class GitRepoInitTask : public Task
     std::string name;
 };
 
+/**
+ * @brief      A task responsible for triggering
+ *             track saving and commiting.
+ */
+class GitCommitTask : public Task
+{
+  public:
+    GitCommitTask(std::string s);
+
+    /**
+    Dumps the task data to a string as json
+    */
+    std::string marshal() override;
+
+    std::string message;
+};
+
 #endif // DEF_ACTION_HPP

@@ -1013,3 +1013,22 @@ std::string GitRepoInitTask::marshal()
                   {"is_part_of_reversion", isPartOfReversion}};
     return taskj.dump();
 }
+
+///////////////////////////////////////////////////
+
+GitCommitTask::GitCommitTask(std::string n)
+{
+    message = n;
+}
+
+std::string GitCommitTask::marshal()
+{
+    json taskj = {{"object", "task"},
+                  {"task", "git_commit_project"},
+                  {"is_completed", isCompleted()},
+                  {"failed", hasFailed()},
+                  {"message", message},
+                  {"recordable_in_history", recordableInHistory},
+                  {"is_part_of_reversion", isPartOfReversion}};
+    return taskj.dump();
+}

@@ -2,6 +2,7 @@
 #include "../../Config.h"
 #include <memory>
 
+#include "../Dialogs/GitCommitDialog.h"
 #include "../Dialogs/GitInitRepoDialog.h"
 
 #define FILE_MENU_ID 1
@@ -228,7 +229,7 @@ void MenuBar::openVersionningMenu()
     juce::PopupMenu menu;
     menu.addItem(VERSIONNING_MENU_ITEM_ID_INIT, "Initialize", !isRepoAlreadyInitialized, false);
     menu.addSeparator();
-    menu.addItem(VERSIONNING_MENU_ITEM_ID_COMMIT, "Commit changes");
+    menu.addItem(VERSIONNING_MENU_ITEM_ID_COMMIT, "Commit changes", isRepoAlreadyInitialized, false);
     menu.addItem(VERSIONNING_MENU_ITEM_ID_RESET, "Reset changes");
     menu.addSeparator();
     menu.addItem(VERSIONNING_MENU_ITEM_ID_REVERT, "Revert");
@@ -254,6 +255,18 @@ void MenuBar::openVersionningMenu()
             juce::DialogWindow::LaunchOptions launchOptions;
             launchOptions.dialogTitle = "Instantiate a new project";
             launchOptions.content.set(new GitInitRepoDialog(activityManager), true);
+            launchOptions.escapeKeyTriggersCloseButton = true;
+            launchOptions.useNativeTitleBar = true;
+            launchOptions.resizable = false;
+            launchOptions.useBottomRightCornerResizer = false;
+            launchOptions.launchAsync();
+        }
+
+        if (id == VERSIONNING_MENU_ITEM_ID_COMMIT)
+        {
+            juce::DialogWindow::LaunchOptions launchOptions;
+            launchOptions.dialogTitle = "Save and commit your changes";
+            launchOptions.content.set(new GitCommitDialog(activityManager), true);
             launchOptions.escapeKeyTriggersCloseButton = true;
             launchOptions.useNativeTitleBar = true;
             launchOptions.resizable = false;

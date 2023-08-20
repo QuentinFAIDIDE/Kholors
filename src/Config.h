@@ -169,9 +169,10 @@
 #define DIALOG_TEXT_ENTRY_HEIGHT 30
 #define DIALOG_TEXT_ENTRY_TOP_PADDING 8
 
-#define REPO_NAME_VALIDATION_REGEX "[A-Za-z-_]{3,30}"
-#define MAIL_REGEX "^[A-Za-z-_\\.]{2,40}@[A-Za-z-_]{2,40}.[a-z]{2,4}$"
+#define REPO_NAME_VALIDATION_REGEX "[A-Za-zà-üÀ-Ü0-9_-]{3,30}"
+#define MAIL_REGEX "^[A-Za-z0-9_\\.-]{2,40}@[A-Za-z-_]{2,40}.[a-z]{2,4}$"
 #define NAME_REGEX "[A-Za-z à-üÀ-Ü]{3,30}"
+#define GIT_COMMIT_REGEX "[A-Za-z à-üÀ-Ü _%,;\\.:-]{3,130}"
 
 #define JSON_STATE_SAVING_INDENTATION 4
 
