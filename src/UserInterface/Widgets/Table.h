@@ -117,7 +117,7 @@ class TableDataFrame
      *
      * @return     The row.
      */
-    virtual std::vector<TableCell> getRow(int n) = 0;
+    virtual std::vector<TableCell> &getRow(int n) = 0;
 
     /**
      * @brief      Gets the format of the dataframe, as a vector of
@@ -125,7 +125,7 @@ class TableDataFrame
      *
      * @return     The format of the dataframe
      */
-    virtual std::vector<std::pair<TableType, TableColumnAlignment>> getFormat() = 0;
+    virtual std::vector<std::pair<TableType, TableColumnAlignment>> &getFormat() = 0;
 
     /**
      * @brief      Gets the ordering, as a pair of column id and a boolean
@@ -134,7 +134,7 @@ class TableDataFrame
      *
      * @return     The ordering.
      */
-    virtual std::optional<std::pair<int, bool>> getOrdering() = 0;
+    virtual std::optional<std::pair<int, bool>> &getOrdering() = 0;
 
     /**
      * @brief      Tried to set the specified ordering. If suceeding, the
@@ -147,16 +147,29 @@ class TableDataFrame
      * @return     true if suceeded, false if failed.
      */
     virtual bool trySettingOrdering(std::pair<int, bool> ordering) = 0;
+
+    /**
+     * @brief      Gets the header as a list of column names.
+     *
+     * @return     The vector of string column names.
+     */
+    virtual std::vector<std::string> &getColumnNames() = 0;
 };
 
 /**
  * @brief      Class that displays a set of rows for a table. It can be used
  *             for both headers and content and holds one component per cell.
  */
-class TableRowsContainer : public juce::Component
+class TableRowsPainter : public juce::Component
 {
   public:
-    TableRowsContainer();
+    TableRowsPainter(std::vector<std::pair<TableType, TableColumnAlignment>> &format);
+    void paint(juce::Graphics &g);
+    void clear();
+    void addRow(std::vector<TableCell> &row);
+
+  private:
+    std::vector<int> columnsWidth;
 };
 
 /**
@@ -186,8 +199,8 @@ class Table : public juce::Component
     std::vector<int> columnsWidth;
 
     juce::Viewport contentViewport;
-    TableRowsContainer header;
-    TableRowsContainer content;
+    TableRowsPainter header;
+    TableRowsPainter content;
 };
 
 #endif // DEF_TABLE_HPP

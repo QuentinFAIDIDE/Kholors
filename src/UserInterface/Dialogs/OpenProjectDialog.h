@@ -3,6 +3,28 @@
 
 #include "../../Arrangement/ActivityManager.h"
 #include "../Section.h"
+#include "../Widgets/Table.h"
+
+class ProjectsDataFrame : public TableDataFrame
+{
+  public:
+    ProjectsDataFrame(std::string projectFolderPath);
+    int getMaxRowNumber();
+    std::vector<TableCell> &getRow(int n);
+    std::vector<std::pair<TableType, TableColumnAlignment>> &getFormat();
+    std::optional<std::pair<int, bool>> &getOrdering();
+    bool trySettingOrdering(std::pair<int, bool> ordering);
+    std::vector<std::string> &getColumnNames();
+
+  private:
+    std::vector<std::string> projectsFoldersNames;
+    std::vector<std::time_t> projectsFoldersLastModifiedTimeSec;
+    std::vector<std::time_t> projectsFoldersCreatedTimeSec;
+    std::map<std::string, std::vector<TableCell>> rowsCache;
+    std::optional<std::pair<int, bool>> ordering;
+    std::vector<std::pair<TableType, TableColumnAlignment>> format;
+    std::vector<std::string> colNames;
+};
 
 class OpenProjectDialog : public juce::Component, juce::Button::Listener
 {
@@ -37,16 +59,10 @@ class OpenProjectDialog : public juce::Component, juce::Button::Listener
      */
     void buttonClicked(juce::Button *button) override;
 
-    /**
-     * @brief      Return the activity manager for this object.
-     *
-     * @return     The activity manager.
-     */
-    ActivityManager &getActivityManager();
-
   private:
     juce::TextButton closeButton;
     juce::TextButton confirmButton;
+
     Table projectsTable;
 
     juce::SharedResourcePointer<Config> sharedConfig;
