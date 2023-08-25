@@ -16,14 +16,20 @@ class ProjectsDataFrame : public TableDataFrame
     bool trySettingOrdering(std::pair<int, bool> ordering);
     std::vector<std::string> &getColumnNames();
 
+    bool sortByCreationDate(int a, int b) const;
+    bool sortByLastEditDate(int a, int b) const;
+
   private:
-    std::vector<std::string> projectsFoldersNames;
-    std::vector<std::time_t> projectsFoldersLastModifiedTimeSec;
-    std::vector<std::time_t> projectsFoldersCreatedTimeSec;
-    std::map<std::string, std::vector<TableCell>> rowsCache;
-    std::optional<std::pair<int, bool>> ordering;
-    std::vector<std::pair<TableType, TableColumnAlignment>> format;
-    std::vector<std::string> colNames;
+    std::vector<std::string> projectsFoldersNames; /**< projects folder names (in loading order) */
+    std::vector<std::time_t>
+        projectsFoldersLastModifiedTimeSec; /**< projects folder last edit timestamps (in loading order) */
+    std::vector<std::time_t>
+        projectsFoldersCreatedTimeSec; /**< projects folder creation timestamps (in loading order) */
+    std::map<std::string, std::vector<TableCell>> rowsCache; /**< rows that are cached */
+    std::optional<std::pair<int, bool>> ordering; /**< column index of ordering and bool to know if ascending */
+    std::vector<std::pair<TableType, TableColumnAlignment>> format; /**< column types and alignments */
+    std::vector<std::string> colNames;                              /**< header col names */
+    std::vector<int> orderedIds; /**< indexes of projectsFoldersNames rows that are sorted in specified ordering */
 };
 
 class OpenProjectDialog : public juce::Component, juce::Button::Listener
