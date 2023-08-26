@@ -49,43 +49,29 @@ class TableCell
 {
   public:
     /**
-     * @brief      Constructs a new instance.
-     */
-    TableCell();
-
-    /**
      * @brief      Sets as text. One of the function that set value and
      *             determines type of the cell.
      */
-    void setAsText(std::string s);
+    TableCell(std::string s);
 
     /**
      * @brief      Sets as integer. One of the function that set value and
      *             determines type of the cell.
      */
-    void setAsInteger(int i);
+    TableCell(int i);
 
     /**
      * @brief      Sets as float. One of the function that set value and
      *             determines type of the cell.
      */
-    void setAsFloat(float f);
+    TableCell(float f);
 
     /**
      * @brief      Sets as component. One of the function that set value and
      *             determines type of the cell.
      */
-    void setAsComponent(std::shared_ptr<juce::Component> c);
+    TableCell(std::shared_ptr<juce::Component> c);
 
-    /**
-     * @brief      Get a shared reference to the component, being either built from
-     *             the value or directly the component passed to setAsComponent.
-     *
-     * @return     The component.
-     */
-    std::shared_ptr<juce::Component> getComponent();
-
-  private:
     TableType type;
     std::string textValue;
     int integerValue;
@@ -111,7 +97,7 @@ class TableDataFrame
     virtual int getMaxRowNumber() = 0;
 
     /**
-     * @brief      Gets the row at index.
+     * @brief      Gets the row at index. Index as in table line index starting at 0.
      *
      * @param[in]  n     0 starting row number of the row.
      *

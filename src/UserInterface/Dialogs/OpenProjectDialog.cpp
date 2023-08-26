@@ -1,5 +1,10 @@
 #include "OpenProjectDialog.h"
+#include <ctime>
+#include <iomanip>
 #include <stdexcept>
+#include <vector>
+
+#include "../../Config.h"
 
 OpenProjectDialog::OpenProjectDialog(ActivityManager &am) : activityManager(am)
 {
@@ -82,10 +87,52 @@ int ProjectsDataFrame::getMaxRowNumber()
 
 std::vector<TableCell> &ProjectsDataFrame::getRow(int n)
 {
+    if (n < 0 || n >= orderedIds.size())
+    {
+        throw std::runtime_error("Tried to access a data frame row out of range!");
+    }
+
+    // translate this index to its ordering
+    int dataFrameIndex = orderedIds[n];
+
+    // if it's in cache return it directly
+    auto rowInCache = rowsCache.find(dataFrameIndex);
+    if (rowInCache != rowsCache.end())
+    {
+        return rowInCache->second;
+    }
+
+    // if it's not in cache first build it
+    rowsCache[dataFrameIndex] = std::vector<TableCell>();
+
+    rowsCache[dataFrameIndex].push_back(TableCell(projectsFoldersNames[dataFrameIndex]));
+    rowsCache[dataFrameIndex].push_back(TableCell(formatDatetime(projectsFoldersCreatedTimeSec[dataFrameIndex])));
+    rowsCache[dataFrameIndex].push_back(TableCell(formatDatetime(projectsFoldersLastModifiedTimeSec[dataFrameIndex])));
+
+    // TODO: add git integration
+    rowsCache[dataFrameIndex].push_back(TableCell("")); // first commit date
+    rowsCache[dataFrameIndex].push_back(TableCell("")); // last commit date
+    rowsCache[dataFrameIndex].push_back(TableCell(0));  // # of commits
+    rowsCache[dataFrameIndex].push_back(TableCell(0));  // # of branches
+
+    // finally return it
+    return rowsCache[dataFrameIndex];
+}
+
+std::string ProjectsDataFrame::formatDatetime(std::time_t &t)
+{
+    // interesting discussion on formatting a date in C++:
+    // https://stackoverflow.com/questions/16357999/current-date-and-time-as-string
+
+    auto createLocalTime = *std::localtime(&projectsFoldersCreatedTimeSec[t]);
+    std::ostringstream oss;
+    oss << std::put_time(&createLocalTime, DATETIME_FORMAT_1);
+    return oss.str();
 }
 
 std::vector<std::pair<TableType, TableColumnAlignment>> &ProjectsDataFrame::getFormat()
 {
+    return format;
 }
 
 std::optional<std::pair<int, bool>> &ProjectsDataFrame::getOrdering()

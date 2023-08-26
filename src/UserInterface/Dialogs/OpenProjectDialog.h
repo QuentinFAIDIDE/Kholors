@@ -24,12 +24,23 @@ class ProjectsDataFrame : public TableDataFrame
     std::vector<std::time_t>
         projectsFoldersLastModifiedTimeSec; /**< projects folder last edit timestamps (in loading order) */
     std::vector<std::time_t>
-        projectsFoldersCreatedTimeSec; /**< projects folder creation timestamps (in loading order) */
-    std::map<std::string, std::vector<TableCell>> rowsCache; /**< rows that are cached */
-    std::optional<std::pair<int, bool>> ordering; /**< column index of ordering and bool to know if ascending */
+        projectsFoldersCreatedTimeSec;               /**< projects folder creation timestamps (in loading order) */
+    std::map<int, std::vector<TableCell>> rowsCache; /**< rows that are cached */
+    std::optional<std::pair<int, bool>> ordering;    /**< column index of ordering and bool to know if ascending */
     std::vector<std::pair<TableType, TableColumnAlignment>> format; /**< column types and alignments */
     std::vector<std::string> colNames;                              /**< header col names */
-    std::vector<int> orderedIds; /**< indexes of projectsFoldersNames rows that are sorted in specified ordering */
+    std::vector<int> orderedIds;                                    /**<
+                                                                     vector of indexes of projectsFoldersNames rows that are sorted in specified ordering.
+                                                                    */
+
+    /**
+     * @brief      Formats timestamp into appropriate time
+     *
+     * @param      t    Unix timestamp in seconds.
+     *
+     * @return     stringified time in configured format.
+     */
+    std::string formatDatetime(std::time_t &t);
 };
 
 class OpenProjectDialog : public juce::Component, juce::Button::Listener
