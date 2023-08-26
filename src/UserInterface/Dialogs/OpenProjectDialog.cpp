@@ -6,24 +6,59 @@
 
 #include "../../Config.h"
 
-OpenProjectDialog::OpenProjectDialog(ActivityManager &am) : activityManager(am)
+OpenProjectDialog::OpenProjectDialog(ActivityManager &am)
+    : activityManager(am), rowManager(sharedConfig.get().getDataFolderPath() + "/Projects"),
+      projectsTable("Projects", TableSelectionMode::TABLE_SELECTION_NONE, rowManager)
 {
+
+    addAndMakeVisible(closeButton);
+    closeButton.setButtonText("Cancel");
+
+    addAndMakeVisible(confirmButton);
+    confirmButton.setButtonText("Confirm");
+    confirmButton.setEnabled(false);
+
+    closeButton.addListener(this);
+    confirmButton.addListener(this);
+
+    addAndMakeVisible(projectsTable);
 }
 
 void OpenProjectDialog::paint(juce::Graphics &g)
 {
+    g.setColour(COLOR_BACKGROUND);
+    g.fillAll();
 }
 
 void OpenProjectDialog::resized()
 {
+    auto bounds = getLocalBounds();
+    auto buttonArea = bounds.removeFromBottom(DIALOG_FOOTER_AREA_HEIGHT);
+
+    // remove side margins and center vertically for buttons
+    buttonArea.reduce(DIALOG_FOOTER_BUTTONS_SPACING, (DIALOG_FOOTER_AREA_HEIGHT - DIALOG_FOOTER_BUTTONS_HEIGHT) / 2);
+
+    // position buttons
+    confirmButton.setBounds(buttonArea.removeFromRight(DIALOG_FOOTER_BUTTONS_WIDTH));
+    buttonArea.removeFromRight(DIALOG_FOOTER_BUTTONS_SPACING);
+    closeButton.setBounds(buttonArea.removeFromRight(DIALOG_FOOTER_BUTTONS_WIDTH));
+
+    // position table
+    projectsTable.setBounds(bounds);
 }
 
 void OpenProjectDialog::closeDialog()
 {
+    if (juce::DialogWindow *dw = findParentComponentOfClass<juce::DialogWindow>())
+        dw->exitModalState(0);
 }
 
 void OpenProjectDialog::buttonClicked(juce::Button *button)
 {
+    if (button == &closeButton || button == &confirmButton)
+    {
+        closeDialog();
+    }
 }
 
 ///////////////////////////////////////////////////////

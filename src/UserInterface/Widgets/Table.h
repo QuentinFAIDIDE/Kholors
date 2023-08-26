@@ -7,6 +7,12 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
+#define TABLE_TITLE_SECTION_HEIGHT 30
+#define TABLE_OUTTER_MARGINS 4
+#define TABLE_CORNERS_RADIUS 2
+#define TABLE_ROW_HEIGHT 15
+#define COLOR_TABLE_BACKGROUND juce::Colour(32, 23, 32)
+
 enum TableType
 {
     TABLE_COLUMN_TYPE_TEXT,
@@ -114,6 +120,14 @@ class TableDataFrame
     virtual std::vector<std::pair<TableType, TableColumnAlignment>> &getFormat() = 0;
 
     /**
+     * @brief      Gets the format of the dataframe header, it's a vector of string the size
+     *             of the regular format basically.
+     *
+     * @return     The format of the dataframe
+     */
+    virtual std::vector<std::pair<TableType, TableColumnAlignment>> &getHeaderFormat() = 0;
+
+    /**
      * @brief      Gets the ordering, as a pair of column id and a boolean
      *             indicating if ascending. It can return nothing, meaning there are no ordering
      *             available.
@@ -170,7 +184,7 @@ class Table : public juce::Component
     Table(std::string tableName, TableSelectionMode selectionType, TableDataFrame &df);
 
     /**
-     * @brief      Paints the component. Called by the juce library.
+     * @brief      Paints the component, the title and the card appearance. Called by the juce library.
      */
     void paint(juce::Graphics &g) override;
 
@@ -180,13 +194,13 @@ class Table : public juce::Component
     void resized() override;
 
   private:
-    TableSelectionMode selectionMode;
-    TableDataFrame &dataFrame;
-    std::vector<int> columnsWidth;
+    TableSelectionMode selectionMode; /**< tell if we allow to select one, many, or none rows **/
+    TableDataFrame &dataFrame;        /**< object that will give us rows content **/
+    std::string name;                 /**< name of the table **/
 
-    juce::Viewport contentViewport;
-    TableRowsPainter header;
-    TableRowsPainter content;
+    juce::Viewport contentViewport; /**< the scrollable are where the content rows are displayed **/
+    TableRowsPainter header;        /**< header section **/
+    TableRowsPainter content;       /**< component that displayed the list of rows **/
 };
 
 #endif // DEF_TABLE_HPP
