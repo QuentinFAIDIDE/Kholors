@@ -267,7 +267,7 @@ void TableRowsPainter::paint(juce::Graphics &g)
         juce::Rectangle<int> rowRectangle(getLocalBounds().getWidth(), TABLE_ROW_HEIGHT);
         rowRectangle.setPosition(0, mouseOverRow * TABLE_ROW_HEIGHT);
 
-        g.setColour(juce::Colours::white.withAlpha(0.05f));
+        g.setColour(juce::Colours::white.withAlpha(0.025f));
         g.fillRect(rowRectangle);
     }
 }
