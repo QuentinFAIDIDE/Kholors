@@ -26,7 +26,11 @@ Table::Table(std::string tableName, TableSelectionMode selectionType, TableDataF
 
     header.addRow(headerRow);
 
-    for (int i = 0; i < bufferingSize; i++)
+    int maxRowIndex = df.getMaxRowIndex();
+
+    int maxIter = std::min(maxRowIndex + 1, bufferingSize);
+
+    for (int i = 0; i < maxIter; i++)
     {
         content.addRow(df.getRow(i));
     }
@@ -143,6 +147,8 @@ TableRowsPainter::TableRowsPainter(std::vector<std::pair<TableType, TableColumnA
     {
         columnsWidth.push_back(0);
     }
+
+    refreshRowCellsPositions();
 }
 
 void TableRowsPainter::refreshRowCellsPositions()

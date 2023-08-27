@@ -8,6 +8,9 @@
 
 #define PROJECT_TABLE_BUFFER_SIZE 100
 
+#define DIALOG_OPEN_PROJECT_WIDTH 300
+#define DIALOG_OPEN_PROJECT_HEIGHT 500
+
 OpenProjectDialog::OpenProjectDialog(ActivityManager &am)
     : activityManager(am), rowManager(sharedConfig.get().getDataFolderPath() + "/Projects"),
       projectsTable("Projects", TableSelectionMode::TABLE_SELECTION_NONE, rowManager, PROJECT_TABLE_BUFFER_SIZE)
@@ -24,6 +27,8 @@ OpenProjectDialog::OpenProjectDialog(ActivityManager &am)
     confirmButton.addListener(this);
 
     addAndMakeVisible(projectsTable);
+
+    setSize(DIALOG_OPEN_PROJECT_WIDTH, DIALOG_OPEN_PROJECT_HEIGHT);
 }
 
 void OpenProjectDialog::paint(juce::Graphics &g)
@@ -124,9 +129,9 @@ std::vector<std::string> &ProjectsDataFrame::getColumnNames()
     return colNames;
 }
 
-int ProjectsDataFrame::getMaxRowNumber()
+int ProjectsDataFrame::getMaxRowIndex()
 {
-    return projectsFoldersNames.size();
+    return projectsFoldersNames.size() - 1;
 }
 
 std::vector<std::shared_ptr<TableCell>> ProjectsDataFrame::getRow(int n)
@@ -178,7 +183,7 @@ std::string ProjectsDataFrame::formatDatetime(std::time_t &t)
     // interesting discussion on formatting a date in C++:
     // https://stackoverflow.com/questions/16357999/current-date-and-time-as-string
 
-    auto createLocalTime = *std::localtime(&projectsFoldersCreatedTimeSec[t]);
+    auto createLocalTime = *std::localtime(&t);
     std::ostringstream oss;
     oss << std::put_time(&createLocalTime, DATETIME_FORMAT_1);
     return oss.str();

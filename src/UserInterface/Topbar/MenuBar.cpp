@@ -4,6 +4,7 @@
 
 #include "../Dialogs/GitCommitDialog.h"
 #include "../Dialogs/GitInitRepoDialog.h"
+#include "../Dialogs/OpenProjectDialog.h"
 
 #define FILE_MENU_ID 1
 #define FILE_MENU_TEXT "File"
@@ -201,6 +202,18 @@ void MenuBar::openFileMenu()
         {
             auto resetTask = std::make_shared<ResetTask>();
             activityManager.broadcastTask(resetTask);
+        }
+
+        if (id == FILE_MENU_ITEM_ID_OPEN)
+        {
+            juce::DialogWindow::LaunchOptions launchOptions;
+            launchOptions.dialogTitle = "Open existing project";
+            launchOptions.content.set(new OpenProjectDialog(activityManager), true);
+            launchOptions.escapeKeyTriggersCloseButton = true;
+            launchOptions.useNativeTitleBar = true;
+            launchOptions.resizable = false;
+            launchOptions.useBottomRightCornerResizer = false;
+            launchOptions.launchAsync();
         }
     });
 }

@@ -11,13 +11,13 @@ class ProjectsDataFrame : public TableDataFrame
     ProjectsDataFrame(std::string projectFolderPath);
 
     /**
-     * @brief      Gets the maximum number of rows this data loader delivers.
+     * @brief      Gets the maximum index of row this data loader delivers.
      *             We can assume at some point we will allow to return -1 to indicate it's infinite
      *             or not known.
      *
-     * @return     The maximum row number.
+     * @return     The maximum row index.
      */
-    int getMaxRowNumber() override;
+    int getMaxRowIndex() override;
 
     /**
      * @brief      Gets the row at index. Index as in table line index starting at 0.
