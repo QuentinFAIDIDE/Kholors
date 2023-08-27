@@ -1,6 +1,7 @@
 #ifndef DEF_TABLE_HPP
 #define DEF_TABLE_HPP
 
+#include "juce_core/system/juce_PlatformDefs.h"
 #include <memory>
 #include <set>
 #include <string>
@@ -51,26 +52,26 @@ class TableSelectionListener
  * @brief      This class describes a table cell container that can hold many
  *             types and that builds the appropriate component (if its type is not component).
  */
-class TableCell
+class TableCell : juce::Component
 {
   public:
     /**
      * @brief      Sets as text. One of the function that set value and
      *             determines type of the cell.
      */
-    TableCell(std::string s);
+    TableCell(std::string s, TableColumnAlignment align);
 
     /**
      * @brief      Sets as integer. One of the function that set value and
      *             determines type of the cell.
      */
-    TableCell(int i);
+    TableCell(int i, TableColumnAlignment align);
 
     /**
      * @brief      Sets as float. One of the function that set value and
      *             determines type of the cell.
      */
-    TableCell(float f);
+    TableCell(float f, TableColumnAlignment align);
 
     /**
      * @brief      Sets as component. One of the function that set value and
@@ -78,11 +79,36 @@ class TableCell
      */
     TableCell(std::shared_ptr<juce::Component> c);
 
+    /**
+     * @brief      Gets the juce UI component.
+     *
+     * @return     The component.
+     */
+    std::shared_ptr<juce::Component> getComponent();
+
+    /**
+     * @brief      Juce painting callback.
+     */
+    void paint(juce::Graphics &g) override;
+
+    /**
+     * @brief      juce resize component (that we use for placing components)
+     */
+    void resized() override;
+
+  private:
     TableType type;
-    std::string textValue;
-    int integerValue;
-    float floatValue;
-    std::shared_ptr<juce::Component> component;
+    TableColumnAlignment alignment;
+    std::string content;
+    std::shared_ptr<juce::Component> subComponent;
+    juce::Justification justification;
+
+    /**
+     * @brief      Sets the juce justification for text based on alignment.
+     */
+    void setJustification();
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TableCell)
 };
 
 /**
@@ -154,6 +180,9 @@ class TableDataFrame
      * @return     The vector of string column names.
      */
     virtual std::vector<std::string> &getColumnNames() = 0;
+
+  private:
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TableDataFrame)
 };
 
 /**
@@ -169,7 +198,9 @@ class TableRowsPainter : public juce::Component
     void addRow(std::vector<TableCell> &row);
 
   private:
-    std::vector<int> columnsWidth;
+    int noColumns;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TableRowsPainter)
 };
 
 /**
@@ -201,6 +232,8 @@ class Table : public juce::Component
     juce::Viewport contentViewport; /**< the scrollable are where the content rows are displayed **/
     TableRowsPainter header;        /**< header section **/
     TableRowsPainter content;       /**< component that displayed the list of rows **/
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Table)
 };
 
 #endif // DEF_TABLE_HPP

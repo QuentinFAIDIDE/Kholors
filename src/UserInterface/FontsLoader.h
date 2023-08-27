@@ -8,6 +8,9 @@ struct FontsLoader
     FontsLoader();
 
     juce::Font monospaceFont;
+
+  private:
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FontsLoader)
 };
 
 #endif // DEF_CUSTOM_FONTS_HPP

@@ -81,10 +81,12 @@ class ProjectsDataFrame : public TableDataFrame
     std::map<int, std::vector<TableCell>> rowsCache; /**< rows that are cached */
     std::optional<std::pair<int, bool>> ordering;    /**< column index of ordering and bool to know if ascending */
     std::vector<std::pair<TableType, TableColumnAlignment>> format; /**< column types and alignments */
-    std::vector<std::string> colNames;                              /**< header col names */
-    std::vector<int> orderedIds;                                    /**<
-                                                                     vector of indexes of projectsFoldersNames rows that are sorted in specified ordering.
-                                                                    */
+    std::vector<std::pair<TableType, TableColumnAlignment>>
+        headerFormat;                  /**< column types and alignments for header row */
+    std::vector<std::string> colNames; /**< header col names */
+    std::vector<int> orderedIds;       /**<
+                                        vector of indexes of projectsFoldersNames rows that are sorted in specified ordering.
+                                       */
 
     /**
      * @brief      Formats timestamp into appropriate time

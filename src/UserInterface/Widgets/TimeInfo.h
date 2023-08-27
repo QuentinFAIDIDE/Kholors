@@ -105,6 +105,8 @@ class TimeInfo : public juce::Component
      *             for values and units.
      */
     void paintMulticolorTimeText(juce::Graphics &g);
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TimeInfo)
 };
 
 #endif // DEF_TIME_INFO_HPP

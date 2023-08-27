@@ -104,6 +104,13 @@ ProjectsDataFrame::ProjectsDataFrame(std::string projectFolderPath)
     format.push_back(std::pair<TableType, TableColumnAlignment>(TABLE_COLUMN_TYPE_INT, TABLE_COLUMN_ALIGN_RIGHT));
     format.push_back(std::pair<TableType, TableColumnAlignment>(TABLE_COLUMN_TYPE_INT, TABLE_COLUMN_ALIGN_RIGHT));
 
+    // and from that compute the header format
+    for (int i = 0; i < format.size(); i++)
+    {
+        headerFormat.push_back(
+            std::pair<TableType, TableColumnAlignment>(TableType::TABLE_COLUMN_TYPE_TEXT, format[i].second));
+    }
+
     if (!trySettingOrdering(std::pair<int, bool>(1, false)))
     {
         throw std::runtime_error("default ordering from dataframe constructor was not implemented");
@@ -168,6 +175,11 @@ std::string ProjectsDataFrame::formatDatetime(std::time_t &t)
 std::vector<std::pair<TableType, TableColumnAlignment>> &ProjectsDataFrame::getFormat()
 {
     return format;
+}
+
+std::vector<std::pair<TableType, TableColumnAlignment>> &ProjectsDataFrame::getHeaderFormat()
+{
+    return headerFormat;
 }
 
 std::optional<std::pair<int, bool>> &ProjectsDataFrame::getOrdering()

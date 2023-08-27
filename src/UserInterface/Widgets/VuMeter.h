@@ -130,6 +130,8 @@ class VuMeter : public juce::Component
      Might fail to get the lock and do nothing.
      */
     void updateValue();
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VuMeter)
 };
 
 #endif // DEF_VU_METER_HPP
