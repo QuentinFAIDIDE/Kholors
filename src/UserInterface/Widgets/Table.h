@@ -52,7 +52,7 @@ class TableSelectionListener
  * @brief      This class describes a table cell container that can hold many
  *             types and that builds the appropriate component (if its type is not component).
  */
-class TableCell : juce::Component
+class TableCell : public juce::Component
 {
   public:
     /**
@@ -181,6 +181,13 @@ class TableDataFrame
      */
     virtual std::vector<std::string> &getColumnNames() = 0;
 
+    /**
+     * @brief      Gets the columns width for specific total width.
+     *
+     * @return     The columns width.
+     */
+    virtual std::vector<int> getColumnsWidth(int totalWidth) = 0;
+
   private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TableDataFrame)
 };
@@ -196,9 +203,15 @@ class TableRowsPainter : public juce::Component
     void paint(juce::Graphics &g);
     void clear();
     void addRow(std::vector<TableCell> &row);
+    void setColumnsWidth(std::vector<int> columnsWdith);
 
   private:
     int noColumns;
+    std::vector<std::vector<TableCell *>> rows;
+    std::vector<int> columnsWidth;
+    std::vector<juce::Rectangle<int>> rowCellsPositions;
+
+    void refreshRowCellsPositions();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TableRowsPainter)
 };
