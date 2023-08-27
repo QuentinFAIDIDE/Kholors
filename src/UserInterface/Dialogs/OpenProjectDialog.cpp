@@ -8,7 +8,7 @@
 
 #define PROJECT_TABLE_BUFFER_SIZE 100
 
-#define DIALOG_OPEN_PROJECT_WIDTH 300
+#define DIALOG_OPEN_PROJECT_WIDTH 1000
 #define DIALOG_OPEN_PROJECT_HEIGHT 500
 
 OpenProjectDialog::OpenProjectDialog(ActivityManager &am)
@@ -115,7 +115,7 @@ ProjectsDataFrame::ProjectsDataFrame(std::string projectFolderPath)
     for (int i = 0; i < format.size(); i++)
     {
         headerFormat.push_back(
-            std::pair<TableType, TableColumnAlignment>(TableType::TABLE_COLUMN_TYPE_TEXT, format[i].second));
+            std::pair<TableType, TableColumnAlignment>(TableType::TABLE_COLUMN_TYPE_TEXT, TABLE_COLUMN_ALIGN_LEFT));
     }
 
     if (!trySettingOrdering(std::pair<int, bool>(1, false)))

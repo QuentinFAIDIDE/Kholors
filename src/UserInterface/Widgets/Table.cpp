@@ -6,8 +6,8 @@
 #include <string>
 
 Table::Table(std::string tableName, TableSelectionMode selectionType, TableDataFrame &df, int bufSize)
-    : selectionMode(selectionType), dataFrame(df), name(tableName), header(dataFrame.getFormat()),
-      content(dataFrame.getHeaderFormat()), bufferingSize(bufSize)
+    : selectionMode(selectionType), dataFrame(df), name(tableName), header(dataFrame.getHeaderFormat()),
+      content(dataFrame.getFormat()), bufferingSize(bufSize)
 {
     contentViewport.setViewedComponent(&content, false);
 
@@ -15,7 +15,7 @@ Table::Table(std::string tableName, TableSelectionMode selectionType, TableDataF
     addAndMakeVisible(contentViewport);
 
     // build a header with column names
-    auto format = dataFrame.getFormat();
+    auto format = dataFrame.getHeaderFormat();
     auto colnames = dataFrame.getColumnNames();
     std::vector<std::shared_ptr<TableCell>> headerRow;
     for (int i = 0; i < colnames.size(); i++)
@@ -40,8 +40,14 @@ void Table::paint(juce::Graphics &g)
 {
     auto bounds = getLocalBounds().reduced(TABLE_OUTTER_MARGINS);
 
-    g.setColour(COLOR_TABLE_BACKGROUND);
+    g.setColour(COLOR_BACKGROUND);
+    g.fillAll();
+
+    g.setColour(COLOR_BACKGROUND_LIGHTER);
     g.fillRoundedRectangle(bounds.toFloat(), TABLE_CORNERS_RADIUS);
+
+    g.setColour(COLOR_TEXT.darker(0.6f));
+    g.drawRoundedRectangle(bounds.toFloat(), TABLE_CORNERS_RADIUS, 0.5f);
 
     auto titleArea = bounds.removeFromTop(TABLE_TITLE_SECTION_HEIGHT);
     g.setColour(COLOR_TEXT);
@@ -53,6 +59,8 @@ void Table::resized()
     auto bounds = getLocalBounds().reduced(TABLE_OUTTER_MARGINS);
 
     bounds.removeFromTop(TABLE_TITLE_SECTION_HEIGHT);
+
+    bounds.reduce(TABLE_HEADER_AND_CONTENT_INNER_MARGINS, 0);
 
     header.setBounds(bounds.removeFromTop(TABLE_ROW_HEIGHT));
     contentViewport.setBounds(bounds);
@@ -66,7 +74,7 @@ void Table::resized()
 
 TableDataFrame::TableDataFrame()
 {
-    // Juce copy/move constructor removal macro require this apparently
+    // Juce copy/move constructor removal macro require this apparently, otherwise childs can't init
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -123,8 +131,11 @@ void TableCell::paint(juce::Graphics &g)
 {
     if (type != TableType::TABLE_COLUMN_TYPE_COMPONENT)
     {
-        g.drawText(content, getLocalBounds(), justification, true);
+        g.setColour(COLOR_TEXT);
+        g.drawText(content, getLocalBounds().reduced(TABLE_CELL_INNER_MARGINS, 0), justification, true);
     }
+    g.setColour(COLOR_TEXT.withAlpha(0.5f));
+    g.drawLine(juce::Line(getLocalBounds().getBottomLeft(), getLocalBounds().getBottomRight()).toFloat(), 0.5f);
 }
 
 void TableCell::resized()
