@@ -12,8 +12,9 @@
 #define TABLE_OUTTER_MARGINS 5
 #define TABLE_CORNERS_RADIUS 8
 #define TABLE_ROW_HEIGHT 30
-#define TABLE_CELL_INNER_MARGINS 7
+#define TABLE_CELL_INNER_MARGINS 12
 #define TABLE_HEADER_AND_CONTENT_INNER_MARGINS 8
+#define TABLE_CONTENT_ALPHA 0.75f
 
 enum TableType
 {
@@ -93,6 +94,13 @@ class TableCell : public juce::Component
     void paint(juce::Graphics &g) override;
 
     /**
+     * @brief      Sets the text color.
+     *
+     * @param[in]  col   The new value
+     */
+    void setTextColor(juce::Colour col);
+
+    /**
      * @brief      juce resize component (that we use for placing components)
      */
     void resized() override;
@@ -103,6 +111,7 @@ class TableCell : public juce::Component
     std::string content;
     std::shared_ptr<juce::Component> subComponent;
     juce::Justification justification;
+    juce::Colour textColor;
 
     /**
      * @brief      Sets the juce justification for text based on alignment.
@@ -202,20 +211,31 @@ class TableDataFrame
 class TableRowsPainter : public juce::Component
 {
   public:
-    TableRowsPainter(std::vector<std::pair<TableType, TableColumnAlignment>> &format);
-    void paint(juce::Graphics &g);
+    TableRowsPainter(std::vector<std::pair<TableType, TableColumnAlignment>> &format, TableSelectionMode rowSelectMode);
+    void paint(juce::Graphics &g) override;
     void clear();
     void addRow(std::vector<std::shared_ptr<TableCell>> row);
     void setColumnsWidth(std::vector<int> columnsWdith);
     int getRowCount();
+    int getWidth();
+    void updateSize();
+    void setTextColor(juce::Colour col);
+    void mouseEnter(const juce::MouseEvent &me) override;
+    void mouseMove(const juce::MouseEvent &me) override;
+    void mouseExit(const juce::MouseEvent &me) override;
+    void mouseDown(const juce::MouseEvent &me) override;
 
   private:
     int noColumns;
     std::vector<std::vector<std::shared_ptr<TableCell>>> rows;
     std::vector<int> columnsWidth;
     std::vector<juce::Rectangle<int>> rowCellsPositions;
+    juce::Colour textColor;
+    TableSelectionMode rowSelectionMode;
+    int mouseOverRow;
 
     void refreshRowCellsPositions();
+    void updateMouseRowHover(const juce::MouseEvent &me);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TableRowsPainter)
 };

@@ -6,9 +6,11 @@
 #include <string>
 
 Table::Table(std::string tableName, TableSelectionMode selectionType, TableDataFrame &df, int bufSize)
-    : selectionMode(selectionType), dataFrame(df), name(tableName), header(dataFrame.getHeaderFormat()),
-      content(dataFrame.getFormat()), bufferingSize(bufSize)
+    : selectionMode(selectionType), dataFrame(df), name(tableName),
+      header(dataFrame.getHeaderFormat(), TableSelectionMode::TABLE_SELECTION_NONE),
+      content(dataFrame.getFormat(), TableSelectionMode::TABLE_SELECTION_ONE), bufferingSize(bufSize)
 {
+    contentViewport.setScrollBarsShown(true, false);
     contentViewport.setViewedComponent(&content, false);
 
     addAndMakeVisible(header);
@@ -23,6 +25,8 @@ Table::Table(std::string tableName, TableSelectionMode selectionType, TableDataF
         auto cellPointer = std::make_shared<TableCell>(colnames[i], format[i].second);
         headerRow.push_back(cellPointer);
     }
+
+    content.setTextColor(COLOR_TEXT.withAlpha(TABLE_CONTENT_ALPHA));
 
     header.addRow(headerRow);
 
@@ -85,6 +89,7 @@ TableCell::TableCell(std::string s, TableColumnAlignment align) : justification(
     alignment = align;
     type = TableType::TABLE_COLUMN_TYPE_TEXT;
     setJustification();
+    textColor = COLOR_TEXT;
 }
 
 TableCell::TableCell(int i, TableColumnAlignment align) : justification(juce::Justification::centred)
@@ -93,6 +98,7 @@ TableCell::TableCell(int i, TableColumnAlignment align) : justification(juce::Ju
     alignment = align;
     type = TableType::TABLE_COLUMN_TYPE_INT;
     setJustification();
+    textColor = COLOR_TEXT;
 }
 
 TableCell::TableCell(float f, TableColumnAlignment align) : justification(juce::Justification::centred)
@@ -100,6 +106,7 @@ TableCell::TableCell(float f, TableColumnAlignment align) : justification(juce::
     alignment = align;
     type = TableType::TABLE_COLUMN_TYPE_FLOAT;
     setJustification();
+    textColor = COLOR_TEXT;
 }
 
 TableCell::TableCell(std::shared_ptr<juce::Component> c) : justification(juce::Justification::centred)
@@ -107,6 +114,13 @@ TableCell::TableCell(std::shared_ptr<juce::Component> c) : justification(juce::J
     subComponent = c;
     type = TableType::TABLE_COLUMN_TYPE_COMPONENT;
     addAndMakeVisible(subComponent.get());
+    textColor = COLOR_TEXT;
+}
+
+void TableCell::setTextColor(juce::Colour col)
+{
+    textColor = col;
+    repaint();
 }
 
 void TableCell::setJustification()
@@ -131,7 +145,7 @@ void TableCell::paint(juce::Graphics &g)
 {
     if (type != TableType::TABLE_COLUMN_TYPE_COMPONENT)
     {
-        g.setColour(COLOR_TEXT);
+        g.setColour(textColor);
         g.drawText(content, getLocalBounds().reduced(TABLE_CELL_INNER_MARGINS, 0), justification, true);
     }
     g.setColour(COLOR_TEXT.withAlpha(0.5f));
@@ -148,8 +162,13 @@ void TableCell::resized()
 
 /////////////////////////////////////////////////////////////////////////////////
 
-TableRowsPainter::TableRowsPainter(std::vector<std::pair<TableType, TableColumnAlignment>> &format)
+TableRowsPainter::TableRowsPainter(std::vector<std::pair<TableType, TableColumnAlignment>> &format,
+                                   TableSelectionMode selectionM)
+    : rowSelectionMode(selectionM)
 {
+    // TODO: implement hitTest instead so that we can pass clicks to component inside cells
+    setInterceptsMouseClicks(true, false);
+
     noColumns = format.size();
 
     // we fill columns width with zeros, it will
@@ -159,7 +178,30 @@ TableRowsPainter::TableRowsPainter(std::vector<std::pair<TableType, TableColumnA
         columnsWidth.push_back(0);
     }
 
+    textColor = COLOR_TEXT;
+
     refreshRowCellsPositions();
+    updateSize();
+}
+
+void TableRowsPainter::setTextColor(juce::Colour col)
+{
+    textColor = col;
+
+    for (int i = 0; i < rows.size(); i++)
+    {
+        int yOffset = i * TABLE_ROW_HEIGHT;
+        for (int j = 0; j < rows[i].size(); j++)
+        {
+            rows[i][j]->setTextColor(textColor);
+        }
+    }
+    repaint();
+}
+
+void TableRowsPainter::updateSize()
+{
+    setSize(getWidth(), getRowCount() * TABLE_ROW_HEIGHT);
 }
 
 void TableRowsPainter::refreshRowCellsPositions()
@@ -175,6 +217,16 @@ void TableRowsPainter::refreshRowCellsPositions()
     }
 }
 
+int TableRowsPainter::getWidth()
+{
+    int width = 0;
+    for (int i = 0; i < columnsWidth.size(); i++)
+    {
+        width += columnsWidth[i];
+    }
+    return width;
+}
+
 void TableRowsPainter::setColumnsWidth(std::vector<int> cols)
 {
 
@@ -185,9 +237,10 @@ void TableRowsPainter::setColumnsWidth(std::vector<int> cols)
 
     columnsWidth = cols;
 
+    // refresh the position of the cells
     refreshRowCellsPositions();
 
-    // compute position of all cells
+    // compute position of all cells in the row
     for (int i = 0; i < rows.size(); i++)
     {
         int yOffset = i * TABLE_ROW_HEIGHT;
@@ -197,18 +250,27 @@ void TableRowsPainter::setColumnsWidth(std::vector<int> cols)
         }
     }
 
+    updateSize();
     repaint();
 }
 
 void TableRowsPainter::paint(juce::Graphics &g)
 {
-    // TODO: paint stealthy separator lines
+    if (rowSelectionMode != TableSelectionMode::TABLE_SELECTION_NONE && mouseOverRow != -1)
+    {
+        juce::Rectangle<int> rowRectangle(getLocalBounds().getWidth(), TABLE_ROW_HEIGHT);
+        rowRectangle.setPosition(0, mouseOverRow * TABLE_ROW_HEIGHT);
+
+        g.setColour(juce::Colours::white.withAlpha(0.2f));
+        g.fillRect(rowRectangle);
+    }
 }
 
 void TableRowsPainter::clear()
 {
     rows.clear();
-    deleteAllChildren();
+    removeAllChildren();
+    updateSize();
     repaint();
 }
 
@@ -227,10 +289,58 @@ void TableRowsPainter::addRow(std::vector<std::shared_ptr<TableCell>> row)
         rows[rows.size() - 1].push_back(row[i]);
         addAndMakeVisible(row[i].get());
         row[i]->setBounds(rowCellsPositions[i].withY(yOffset));
+        row[i]->setTextColor(textColor);
     }
+
+    updateSize();
 }
 
 int TableRowsPainter::getRowCount()
 {
     return rows.size();
+}
+
+void TableRowsPainter::mouseEnter(const juce::MouseEvent &me)
+{
+    std::cout << "moiii" << std::endl;
+    updateMouseRowHover(me);
+}
+
+void TableRowsPainter::mouseMove(const juce::MouseEvent &me)
+{
+    std::cout << "moooo" << std::endl;
+    updateMouseRowHover(me);
+}
+
+void TableRowsPainter::mouseDown(const juce::MouseEvent &me)
+{
+    std::cout << "cliii" << std::endl;
+}
+
+void TableRowsPainter::mouseExit(const juce::MouseEvent &me)
+{
+    int oldMouseOver = mouseOverRow;
+
+    mouseOverRow = -1;
+
+    if (oldMouseOver != mouseOverRow)
+    {
+        repaint();
+    }
+}
+
+void TableRowsPainter::updateMouseRowHover(const juce::MouseEvent &me)
+{
+    int oldMouseOver = mouseOverRow;
+
+    mouseOverRow = (me.position.y) / TABLE_ROW_HEIGHT;
+    if (mouseOverRow >= getRowCount())
+    {
+        mouseOverRow = -1;
+    }
+
+    if (oldMouseOver != mouseOverRow)
+    {
+        repaint();
+    }
 }
