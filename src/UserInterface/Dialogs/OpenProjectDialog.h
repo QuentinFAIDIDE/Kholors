@@ -17,7 +17,7 @@ class ProjectsDataFrame : public TableDataFrame
      *
      * @return     The maximum row number.
      */
-    int getMaxRowNumber();
+    int getMaxRowNumber() override;
 
     /**
      * @brief      Gets the row at index. Index as in table line index starting at 0.
@@ -26,7 +26,7 @@ class ProjectsDataFrame : public TableDataFrame
      *
      * @return     The row.
      */
-    std::vector<TableCell> &getRow(int n);
+    std::vector<std::shared_ptr<TableCell>> getRow(int n) override;
 
     /**
      * @brief      Gets the format of the dataframe, as a vector of
@@ -34,7 +34,7 @@ class ProjectsDataFrame : public TableDataFrame
      *
      * @return     The format of the dataframe
      */
-    std::vector<std::pair<TableType, TableColumnAlignment>> &getFormat();
+    std::vector<std::pair<TableType, TableColumnAlignment>> &getFormat() override;
 
     /**
      * @brief      Gets the format of the dataframe header, it's a vector of string the size
@@ -42,7 +42,7 @@ class ProjectsDataFrame : public TableDataFrame
      *
      * @return     The format of the dataframe
      */
-    std::vector<std::pair<TableType, TableColumnAlignment>> &getHeaderFormat();
+    std::vector<std::pair<TableType, TableColumnAlignment>> &getHeaderFormat() override;
 
     /**
      * @brief      Gets the ordering, as a pair of column id and a boolean
@@ -51,7 +51,7 @@ class ProjectsDataFrame : public TableDataFrame
      *
      * @return     The ordering.
      */
-    std::optional<std::pair<int, bool>> &getOrdering();
+    std::optional<std::pair<int, bool>> &getOrdering() override;
 
     /**
      * @brief      Tried to set the specified ordering. If suceeding, the
@@ -63,23 +63,30 @@ class ProjectsDataFrame : public TableDataFrame
      *
      * @return     true if suceeded, false if failed.
      */
-    bool trySettingOrdering(std::pair<int, bool> ordering);
+    bool trySettingOrdering(std::pair<int, bool> ordering) override;
 
     /**
      * @brief      Gets the header as a list of column names.
      *
      * @return     The vector of string column names.
      */
-    std::vector<std::string> &getColumnNames();
+    std::vector<std::string> &getColumnNames() override;
+
+    /**
+     * @brief      Gets the columns width for specific total width.
+     *
+     * @return     The columns width.
+     */
+    std::vector<int> getColumnsWidth(int totalWidth) override;
 
   private:
     std::vector<std::string> projectsFoldersNames; /**< projects folder names (in loading order) */
     std::vector<std::time_t>
         projectsFoldersLastModifiedTimeSec; /**< projects folder last edit timestamps (in loading order) */
     std::vector<std::time_t>
-        projectsFoldersCreatedTimeSec;               /**< projects folder creation timestamps (in loading order) */
-    std::map<int, std::vector<TableCell>> rowsCache; /**< rows that are cached */
-    std::optional<std::pair<int, bool>> ordering;    /**< column index of ordering and bool to know if ascending */
+        projectsFoldersCreatedTimeSec; /**< projects folder creation timestamps (in loading order) */
+    std::map<int, std::vector<std::shared_ptr<TableCell>>> rowsCache; /**< rows that are cached */
+    std::optional<std::pair<int, bool>> ordering; /**< column index of ordering and bool to know if ascending */
     std::vector<std::pair<TableType, TableColumnAlignment>> format; /**< column types and alignments */
     std::vector<std::pair<TableType, TableColumnAlignment>>
         headerFormat;                  /**< column types and alignments for header row */

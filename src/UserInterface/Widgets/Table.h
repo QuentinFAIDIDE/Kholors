@@ -119,6 +119,8 @@ class TableCell : public juce::Component
 class TableDataFrame
 {
   public:
+    TableDataFrame();
+
     /**
      * @brief      Gets the maximum number of rows this data loader delivers.
      *             We can assume at some point we will allow to return -1 to indicate it's infinite
@@ -135,7 +137,7 @@ class TableDataFrame
      *
      * @return     The row.
      */
-    virtual std::vector<TableCell> &getRow(int n) = 0;
+    virtual std::vector<std::shared_ptr<TableCell>> getRow(int n) = 0;
 
     /**
      * @brief      Gets the format of the dataframe, as a vector of
@@ -202,12 +204,13 @@ class TableRowsPainter : public juce::Component
     TableRowsPainter(std::vector<std::pair<TableType, TableColumnAlignment>> &format);
     void paint(juce::Graphics &g);
     void clear();
-    void addRow(std::vector<TableCell> &row);
+    void addRow(std::vector<std::shared_ptr<TableCell>> row);
     void setColumnsWidth(std::vector<int> columnsWdith);
+    int getRowCount();
 
   private:
     int noColumns;
-    std::vector<std::vector<TableCell *>> rows;
+    std::vector<std::vector<std::shared_ptr<TableCell>>> rows;
     std::vector<int> columnsWidth;
     std::vector<juce::Rectangle<int>> rowCellsPositions;
 
@@ -225,7 +228,7 @@ class Table : public juce::Component
     /**
      * @brief      Constructs a new instance.
      */
-    Table(std::string tableName, TableSelectionMode selectionType, TableDataFrame &df);
+    Table(std::string tableName, TableSelectionMode selectionType, TableDataFrame &df, int bufferingSize);
 
     /**
      * @brief      Paints the component, the title and the card appearance. Called by the juce library.
@@ -245,6 +248,8 @@ class Table : public juce::Component
     juce::Viewport contentViewport; /**< the scrollable are where the content rows are displayed **/
     TableRowsPainter header;        /**< header section **/
     TableRowsPainter content;       /**< component that displayed the list of rows **/
+
+    int bufferingSize; /**< How many rows are loaded per bulk **/
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Table)
 };

@@ -6,9 +6,11 @@
 
 #include "../../Config.h"
 
+#define PROJECT_TABLE_BUFFER_SIZE 100
+
 OpenProjectDialog::OpenProjectDialog(ActivityManager &am)
     : activityManager(am), rowManager(sharedConfig.get().getDataFolderPath() + "/Projects"),
-      projectsTable("Projects", TableSelectionMode::TABLE_SELECTION_NONE, rowManager)
+      projectsTable("Projects", TableSelectionMode::TABLE_SELECTION_NONE, rowManager, PROJECT_TABLE_BUFFER_SIZE)
 {
 
     addAndMakeVisible(closeButton);
@@ -127,7 +129,7 @@ int ProjectsDataFrame::getMaxRowNumber()
     return projectsFoldersNames.size();
 }
 
-std::vector<TableCell> &ProjectsDataFrame::getRow(int n)
+std::vector<std::shared_ptr<TableCell>> ProjectsDataFrame::getRow(int n)
 {
     if (n < 0 || n >= orderedIds.size())
     {
@@ -145,17 +147,27 @@ std::vector<TableCell> &ProjectsDataFrame::getRow(int n)
     }
 
     // if it's not in cache first build it
-    rowsCache[dataFrameIndex] = std::vector<TableCell>();
+    rowsCache[dataFrameIndex] = std::vector<std::shared_ptr<TableCell>>();
+    rowsCache[dataFrameIndex].reserve(7);
 
-    rowsCache[dataFrameIndex].push_back(TableCell(projectsFoldersNames[dataFrameIndex]));
-    rowsCache[dataFrameIndex].push_back(TableCell(formatDatetime(projectsFoldersCreatedTimeSec[dataFrameIndex])));
-    rowsCache[dataFrameIndex].push_back(TableCell(formatDatetime(projectsFoldersLastModifiedTimeSec[dataFrameIndex])));
+    rowsCache[dataFrameIndex].emplace_back(std::make_shared<TableCell>(projectsFoldersNames[dataFrameIndex],
+                                                                       TableColumnAlignment::TABLE_COLUMN_ALIGN_LEFT));
+    rowsCache[dataFrameIndex].emplace_back(std::make_shared<TableCell>(
+        formatDatetime(projectsFoldersCreatedTimeSec[dataFrameIndex]), TableColumnAlignment::TABLE_COLUMN_ALIGN_RIGHT));
+    rowsCache[dataFrameIndex].emplace_back(
+        std::make_shared<TableCell>(formatDatetime(projectsFoldersLastModifiedTimeSec[dataFrameIndex]),
+                                    TableColumnAlignment::TABLE_COLUMN_ALIGN_RIGHT));
 
     // TODO: add git integration
-    rowsCache[dataFrameIndex].push_back(TableCell("")); // first commit date
-    rowsCache[dataFrameIndex].push_back(TableCell("")); // last commit date
-    rowsCache[dataFrameIndex].push_back(TableCell(0));  // # of commits
-    rowsCache[dataFrameIndex].push_back(TableCell(0));  // # of branches
+    rowsCache[dataFrameIndex].emplace_back(
+        std::make_shared<TableCell>(std::string(""),
+                                    TableColumnAlignment::TABLE_COLUMN_ALIGN_CENTER)); // first commit date
+    rowsCache[dataFrameIndex].emplace_back(
+        std::make_shared<TableCell>("", TableColumnAlignment::TABLE_COLUMN_ALIGN_CENTER)); // last commit date
+    rowsCache[dataFrameIndex].emplace_back(
+        std::make_shared<TableCell>(0, TableColumnAlignment::TABLE_COLUMN_ALIGN_CENTER)); // # of commits
+    rowsCache[dataFrameIndex].emplace_back(
+        std::make_shared<TableCell>(0, TableColumnAlignment::TABLE_COLUMN_ALIGN_CENTER)); // # of branches
 
     // finally return it
     return rowsCache[dataFrameIndex];
@@ -240,4 +252,20 @@ bool ProjectsDataFrame::trySettingOrdering(std::pair<int, bool> desiredOrdering)
     {
         return false;
     }
+}
+
+std::vector<int> ProjectsDataFrame::getColumnsWidth(int totalWidth)
+{
+    // temporary measure, in the future, we want to do better
+    // TODO: enhance that algo
+
+    int cellWidth = totalWidth / 7;
+
+    std::vector<int> columnWidth(7);
+    for (int i = 0; i < 7; i++)
+    {
+        columnWidth[i] = cellWidth;
+    }
+
+    return columnWidth;
 }

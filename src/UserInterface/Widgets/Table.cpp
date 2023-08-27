@@ -1,12 +1,13 @@
 #include "Table.h"
 
 #include "../../Config.h"
+#include <memory>
 #include <stdexcept>
 #include <string>
 
-Table::Table(std::string tableName, TableSelectionMode selectionType, TableDataFrame &df)
+Table::Table(std::string tableName, TableSelectionMode selectionType, TableDataFrame &df, int bufSize)
     : selectionMode(selectionType), dataFrame(df), name(tableName), header(dataFrame.getFormat()),
-      content(dataFrame.getHeaderFormat())
+      content(dataFrame.getHeaderFormat()), bufferingSize(bufSize)
 {
     contentViewport.setViewedComponent(&content, false);
 
@@ -16,13 +17,19 @@ Table::Table(std::string tableName, TableSelectionMode selectionType, TableDataF
     // build a header with column names
     auto format = dataFrame.getFormat();
     auto colnames = dataFrame.getColumnNames();
-    std::vector<TableCell> headerRow;
+    std::vector<std::shared_ptr<TableCell>> headerRow;
     for (int i = 0; i < colnames.size(); i++)
     {
-        headerRow.push_back(TableCell(colnames[i], format[i].second));
+        auto cellPointer = std::make_shared<TableCell>(colnames[i], format[i].second);
+        headerRow.push_back(cellPointer);
     }
 
     header.addRow(headerRow);
+
+    for (int i = 0; i < bufferingSize; i++)
+    {
+        content.addRow(df.getRow(i));
+    }
 }
 
 void Table::paint(juce::Graphics &g)
@@ -49,6 +56,13 @@ void Table::resized()
     auto columnsWidth = dataFrame.getColumnsWidth(bounds.getWidth());
     header.setColumnsWidth(columnsWidth);
     content.setColumnsWidth(columnsWidth);
+}
+
+/////////////////////////////////////////////////////////////////////////
+
+TableDataFrame::TableDataFrame()
+{
+    // Juce copy/move constructor removal macro require this apparently
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -181,7 +195,7 @@ void TableRowsPainter::clear()
     repaint();
 }
 
-void TableRowsPainter::addRow(std::vector<TableCell> &row)
+void TableRowsPainter::addRow(std::vector<std::shared_ptr<TableCell>> row)
 {
     if (row.size() != noColumns)
     {
@@ -193,8 +207,13 @@ void TableRowsPainter::addRow(std::vector<TableCell> &row)
 
     for (int i = 0; i < row.size(); i++)
     {
-        rows[rows.size() - 1].push_back(&row[i]);
-        addAndMakeVisible(row[i]);
-        row[i].setBounds(rowCellsPositions[i].withY(yOffset));
+        rows[rows.size() - 1].push_back(row[i]);
+        addAndMakeVisible(row[i].get());
+        row[i]->setBounds(rowCellsPositions[i].withY(yOffset));
     }
+}
+
+int TableRowsPainter::getRowCount()
+{
+    return rows.size();
 }
