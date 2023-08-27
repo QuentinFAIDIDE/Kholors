@@ -85,6 +85,7 @@ TableDataFrame::TableDataFrame()
 
 TableCell::TableCell(std::string s, TableColumnAlignment align) : justification(juce::Justification::centred)
 {
+    setInterceptsMouseClicks(false, false);
     content = s;
     alignment = align;
     type = TableType::TABLE_COLUMN_TYPE_TEXT;
@@ -94,6 +95,7 @@ TableCell::TableCell(std::string s, TableColumnAlignment align) : justification(
 
 TableCell::TableCell(int i, TableColumnAlignment align) : justification(juce::Justification::centred)
 {
+    setInterceptsMouseClicks(false, false);
     content = std::to_string(i);
     alignment = align;
     type = TableType::TABLE_COLUMN_TYPE_INT;
@@ -103,6 +105,7 @@ TableCell::TableCell(int i, TableColumnAlignment align) : justification(juce::Ju
 
 TableCell::TableCell(float f, TableColumnAlignment align) : justification(juce::Justification::centred)
 {
+    setInterceptsMouseClicks(false, false);
     alignment = align;
     type = TableType::TABLE_COLUMN_TYPE_FLOAT;
     setJustification();
@@ -111,6 +114,7 @@ TableCell::TableCell(float f, TableColumnAlignment align) : justification(juce::
 
 TableCell::TableCell(std::shared_ptr<juce::Component> c) : justification(juce::Justification::centred)
 {
+    setInterceptsMouseClicks(false, false);
     subComponent = c;
     type = TableType::TABLE_COLUMN_TYPE_COMPONENT;
     addAndMakeVisible(subComponent.get());
@@ -166,6 +170,8 @@ TableRowsPainter::TableRowsPainter(std::vector<std::pair<TableType, TableColumnA
                                    TableSelectionMode selectionM)
     : rowSelectionMode(selectionM)
 {
+    mouseOverRow = -1;
+
     // TODO: implement hitTest instead so that we can pass clicks to component inside cells
     setInterceptsMouseClicks(true, false);
 
@@ -261,7 +267,7 @@ void TableRowsPainter::paint(juce::Graphics &g)
         juce::Rectangle<int> rowRectangle(getLocalBounds().getWidth(), TABLE_ROW_HEIGHT);
         rowRectangle.setPosition(0, mouseOverRow * TABLE_ROW_HEIGHT);
 
-        g.setColour(juce::Colours::white.withAlpha(0.2f));
+        g.setColour(juce::Colours::white.withAlpha(0.05f));
         g.fillRect(rowRectangle);
     }
 }
@@ -302,19 +308,17 @@ int TableRowsPainter::getRowCount()
 
 void TableRowsPainter::mouseEnter(const juce::MouseEvent &me)
 {
-    std::cout << "moiii" << std::endl;
     updateMouseRowHover(me);
 }
 
 void TableRowsPainter::mouseMove(const juce::MouseEvent &me)
 {
-    std::cout << "moooo" << std::endl;
     updateMouseRowHover(me);
 }
 
 void TableRowsPainter::mouseDown(const juce::MouseEvent &me)
 {
-    std::cout << "cliii" << std::endl;
+    // TODO: row select handling
 }
 
 void TableRowsPainter::mouseExit(const juce::MouseEvent &me)
