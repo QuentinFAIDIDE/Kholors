@@ -171,6 +171,7 @@ TableRowsPainter::TableRowsPainter(std::vector<std::pair<TableType, TableColumnA
     : rowSelectionMode(selectionM)
 {
     mouseOverRow = -1;
+    clickedRow = -1;
 
     // TODO: implement hitTest instead so that we can pass clicks to component inside cells
     setInterceptsMouseClicks(true, false);
@@ -262,7 +263,15 @@ void TableRowsPainter::setColumnsWidth(std::vector<int> cols)
 
 void TableRowsPainter::paint(juce::Graphics &g)
 {
-    if (rowSelectionMode != TableSelectionMode::TABLE_SELECTION_NONE && mouseOverRow != -1)
+    if (rowSelectionMode != TableSelectionMode::TABLE_SELECTION_NONE && clickedRow != -1)
+    {
+        juce::Rectangle<int> rowRectangle(getLocalBounds().getWidth(), TABLE_ROW_HEIGHT);
+        rowRectangle.setPosition(0, mouseOverRow * TABLE_ROW_HEIGHT);
+
+        g.setColour(juce::Colours::white.withAlpha(0.05f));
+        g.fillRect(rowRectangle);
+    }
+    else if (rowSelectionMode != TableSelectionMode::TABLE_SELECTION_NONE && mouseOverRow != -1)
     {
         juce::Rectangle<int> rowRectangle(getLocalBounds().getWidth(), TABLE_ROW_HEIGHT);
         rowRectangle.setPosition(0, mouseOverRow * TABLE_ROW_HEIGHT);
@@ -318,16 +327,42 @@ void TableRowsPainter::mouseMove(const juce::MouseEvent &me)
 
 void TableRowsPainter::mouseDown(const juce::MouseEvent &me)
 {
+    int oldClickedRow = clickedRow;
+    clickedRow = (me.position.y) / TABLE_ROW_HEIGHT;
+    if (clickedRow >= getRowCount())
+    {
+        clickedRow = -1;
+    }
+
+    if (oldClickedRow != clickedRow)
+    {
+        repaint();
+    }
+
+    // TODO: row select handling
+}
+
+void TableRowsPainter::mouseUp(const juce::MouseEvent &me)
+{
+    int oldClickedRow = clickedRow;
+    clickedRow = -1;
+    if (oldClickedRow != clickedRow)
+    {
+        repaint();
+    }
+
     // TODO: row select handling
 }
 
 void TableRowsPainter::mouseExit(const juce::MouseEvent &me)
 {
     int oldMouseOver = mouseOverRow;
+    int oldClickedRow = clickedRow;
 
     mouseOverRow = -1;
+    clickedRow = -1;
 
-    if (oldMouseOver != mouseOverRow)
+    if (oldMouseOver != mouseOverRow || oldClickedRow != clickedRow)
     {
         repaint();
     }

@@ -224,6 +224,7 @@ class TableRowsPainter : public juce::Component
     void mouseMove(const juce::MouseEvent &me) override;
     void mouseExit(const juce::MouseEvent &me) override;
     void mouseDown(const juce::MouseEvent &me) override;
+    void mouseUp(const juce::MouseEvent &me) override;
 
   private:
     int noColumns;
@@ -233,6 +234,7 @@ class TableRowsPainter : public juce::Component
     juce::Colour textColor;
     TableSelectionMode rowSelectionMode;
     int mouseOverRow;
+    int clickedRow;
 
     void refreshRowCellsPositions();
     void updateMouseRowHover(const juce::MouseEvent &me);
