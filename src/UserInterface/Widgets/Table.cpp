@@ -12,6 +12,7 @@ Table::Table(std::string tableName, TableSelectionMode selectionType, TableDataF
 {
     contentViewport.setScrollBarsShown(true, false);
     contentViewport.setViewedComponent(&content, false);
+    contentViewport.setScrollListener(this);
 
     addAndMakeVisible(header);
     addAndMakeVisible(contentViewport);
@@ -74,6 +75,17 @@ void Table::resized()
     auto columnsWidth = dataFrame.getColumnsWidth(bounds.getWidth());
     header.setColumnsWidth(columnsWidth);
     content.setColumnsWidth(columnsWidth);
+}
+
+void Table::receiveViewportUpdate(const juce::Rectangle<int> &newVisibleArea,
+                                  const juce::Rectangle<int> childComponentArea)
+{
+    juce::Rectangle<int> childArea = childComponentArea; /** copying the const member because we modify it */
+    auto loadingPlaceholder = childArea.removeFromBottom(TABLE_ROW_HEIGHT);
+    if (newVisibleArea.intersects(loadingPlaceholder))
+    {
+        std::cout << "viewing loading placeholder!" << std::endl;
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////

@@ -1,7 +1,7 @@
 #ifndef DEF_TABLE_HPP
 #define DEF_TABLE_HPP
 
-#include "juce_core/system/juce_PlatformDefs.h"
+#include "CallbackViewport.h"
 #include <memory>
 #include <set>
 #include <string>
@@ -335,7 +335,7 @@ class TableRowsPainter : public juce::Component
 /**
  * @brief      Table component to display data frames with eventually widgets.
  */
-class Table : public juce::Component
+class Table : public juce::Component, public ViewportScrollListener
 {
   public:
     /**
@@ -353,14 +353,23 @@ class Table : public juce::Component
      */
     void resized() override;
 
+    /**
+     * @brief called when the rows content viewport we're listening to get scrolled.
+     *
+     * @param newVisibleArea
+     * @param childComponentArea
+     */
+    void receiveViewportUpdate(const juce::Rectangle<int> &newVisibleArea,
+                               const juce::Rectangle<int> childComponentArea) override;
+
   private:
     TableSelectionMode selectionMode; /**< tell if we allow to select one, many, or none rows **/
     TableDataFrame &dataFrame;        /**< object that will give us rows content **/
     std::string name;                 /**< name of the table **/
 
-    juce::Viewport contentViewport; /**< the scrollable are where the content rows are displayed **/
-    TableRowsPainter header;        /**< header section **/
-    TableRowsPainter content;       /**< component that displayed the list of rows **/
+    CallbackViewport contentViewport; /**< the scrollable are where the content rows are displayed **/
+    TableRowsPainter header;          /**< header section **/
+    TableRowsPainter content;         /**< component that displayed the list of rows **/
 
     int bufferingSize; /**< How many rows are loaded per bulk **/
 
