@@ -16,6 +16,8 @@ Table::Table(std::string tableName, TableSelectionMode selectionType, TableDataF
     addAndMakeVisible(header);
     addAndMakeVisible(contentViewport);
 
+    header.showLoadPlaceholder(false);
+
     // build a header with column names
     auto format = dataFrame.getHeaderFormat();
     auto colnames = dataFrame.getColumnNames();
@@ -25,16 +27,16 @@ Table::Table(std::string tableName, TableSelectionMode selectionType, TableDataF
         auto cellPointer = std::make_shared<TableCell>(colnames[i], format[i].second);
         headerRow.push_back(cellPointer);
     }
-
-    content.setTextColor(COLOR_TEXT.withAlpha(TABLE_CONTENT_ALPHA));
-
     header.addRow(headerRow);
 
+    // instanciate the actual data frame rows
+    content.setTextColor(COLOR_TEXT.withAlpha(TABLE_CONTENT_ALPHA));
     int maxRowIndex = df.getMaxRowIndex();
-
-    int maxIter = std::min(maxRowIndex + 1, bufferingSize);
-
-    for (int i = 0; i < maxIter; i++)
+    int noShownRows = std::min(maxRowIndex + 1, bufferingSize);
+    // if there will be more rows that can be loaded, we show the loading placeholder
+    content.showLoadPlaceholder(noShownRows != maxRowIndex + 1);
+    // add initial rows
+    for (int i = 0; i < noShownRows; i++)
     {
         content.addRow(df.getRow(i));
     }
@@ -106,6 +108,7 @@ TableCell::TableCell(int i, TableColumnAlignment align) : justification(juce::Ju
 TableCell::TableCell(float f, TableColumnAlignment align) : justification(juce::Justification::centred)
 {
     setInterceptsMouseClicks(false, false);
+    content = std::to_string(f);
     alignment = align;
     type = TableType::TABLE_COLUMN_TYPE_FLOAT;
     setJustification();
@@ -168,10 +171,8 @@ void TableCell::resized()
 
 TableRowsPainter::TableRowsPainter(std::vector<std::pair<TableType, TableColumnAlignment>> &format,
                                    TableSelectionMode selectionM)
-    : rowSelectionMode(selectionM)
+    : rowSelectionMode(selectionM), hoverRowIndex(-1), clickedRowIndex(-1), showingLoadPlaceholder(true)
 {
-    mouseOverRow = -1;
-    clickedRow = -1;
 
     // TODO: implement hitTest instead so that we can pass clicks to component inside cells
     setInterceptsMouseClicks(true, false);
@@ -197,7 +198,6 @@ void TableRowsPainter::setTextColor(juce::Colour col)
 
     for (int i = 0; i < rows.size(); i++)
     {
-        int yOffset = i * TABLE_ROW_HEIGHT;
         for (int j = 0; j < rows[i].size(); j++)
         {
             rows[i][j]->setTextColor(textColor);
@@ -208,7 +208,7 @@ void TableRowsPainter::setTextColor(juce::Colour col)
 
 void TableRowsPainter::updateSize()
 {
-    setSize(getWidth(), getRowCount() * TABLE_ROW_HEIGHT);
+    setSize(getWidth(), (getRowCount() + int(showingLoadPlaceholder)) * TABLE_ROW_HEIGHT);
 }
 
 void TableRowsPainter::refreshRowCellsPositions()
@@ -263,21 +263,29 @@ void TableRowsPainter::setColumnsWidth(std::vector<int> cols)
 
 void TableRowsPainter::paint(juce::Graphics &g)
 {
-    if (rowSelectionMode != TableSelectionMode::TABLE_SELECTION_NONE && clickedRow != -1)
+    if (rowSelectionMode != TableSelectionMode::TABLE_SELECTION_NONE && clickedRowIndex != -1)
     {
         juce::Rectangle<int> rowRectangle(getLocalBounds().getWidth(), TABLE_ROW_HEIGHT);
-        rowRectangle.setPosition(0, mouseOverRow * TABLE_ROW_HEIGHT);
+        rowRectangle.setPosition(0, hoverRowIndex * TABLE_ROW_HEIGHT);
 
         g.setColour(juce::Colours::white.withAlpha(0.05f));
         g.fillRect(rowRectangle);
     }
-    else if (rowSelectionMode != TableSelectionMode::TABLE_SELECTION_NONE && mouseOverRow != -1)
+    else if (rowSelectionMode != TableSelectionMode::TABLE_SELECTION_NONE && hoverRowIndex != -1)
     {
         juce::Rectangle<int> rowRectangle(getLocalBounds().getWidth(), TABLE_ROW_HEIGHT);
-        rowRectangle.setPosition(0, mouseOverRow * TABLE_ROW_HEIGHT);
+        rowRectangle.setPosition(0, hoverRowIndex * TABLE_ROW_HEIGHT);
 
         g.setColour(juce::Colours::white.withAlpha(0.025f));
         g.fillRect(rowRectangle);
+    }
+
+    if (showingLoadPlaceholder)
+    {
+        juce::Rectangle<int> rowRectangle(getLocalBounds().getWidth(), TABLE_ROW_HEIGHT);
+        rowRectangle.setPosition(0, getRowCount() * TABLE_ROW_HEIGHT);
+        g.setColour(COLOR_TEXT.withAlpha(0.5f));
+        g.drawText("Loading...", rowRectangle, juce::Justification::centred, true);
     }
 }
 
@@ -327,14 +335,14 @@ void TableRowsPainter::mouseMove(const juce::MouseEvent &me)
 
 void TableRowsPainter::mouseDown(const juce::MouseEvent &me)
 {
-    int oldClickedRow = clickedRow;
-    clickedRow = (me.position.y) / TABLE_ROW_HEIGHT;
-    if (clickedRow >= getRowCount())
+    int oldClickedRow = clickedRowIndex;
+    clickedRowIndex = (me.position.y) / TABLE_ROW_HEIGHT;
+    if (clickedRowIndex >= getRowCount())
     {
-        clickedRow = -1;
+        clickedRowIndex = -1;
     }
 
-    if (oldClickedRow != clickedRow)
+    if (oldClickedRow != clickedRowIndex)
     {
         repaint();
     }
@@ -344,9 +352,9 @@ void TableRowsPainter::mouseDown(const juce::MouseEvent &me)
 
 void TableRowsPainter::mouseUp(const juce::MouseEvent &me)
 {
-    int oldClickedRow = clickedRow;
-    clickedRow = -1;
-    if (oldClickedRow != clickedRow)
+    int oldClickedRow = clickedRowIndex;
+    clickedRowIndex = -1;
+    if (oldClickedRow != clickedRowIndex)
     {
         repaint();
     }
@@ -356,13 +364,13 @@ void TableRowsPainter::mouseUp(const juce::MouseEvent &me)
 
 void TableRowsPainter::mouseExit(const juce::MouseEvent &me)
 {
-    int oldMouseOver = mouseOverRow;
-    int oldClickedRow = clickedRow;
+    int oldMouseOver = hoverRowIndex;
+    int oldClickedRow = clickedRowIndex;
 
-    mouseOverRow = -1;
-    clickedRow = -1;
+    hoverRowIndex = -1;
+    clickedRowIndex = -1;
 
-    if (oldMouseOver != mouseOverRow || oldClickedRow != clickedRow)
+    if (oldMouseOver != hoverRowIndex || oldClickedRow != clickedRowIndex)
     {
         repaint();
     }
@@ -370,16 +378,26 @@ void TableRowsPainter::mouseExit(const juce::MouseEvent &me)
 
 void TableRowsPainter::updateMouseRowHover(const juce::MouseEvent &me)
 {
-    int oldMouseOver = mouseOverRow;
+    int oldMouseOver = hoverRowIndex;
 
-    mouseOverRow = (me.position.y) / TABLE_ROW_HEIGHT;
-    if (mouseOverRow >= getRowCount())
+    hoverRowIndex = (me.position.y) / TABLE_ROW_HEIGHT;
+    if (hoverRowIndex >= getRowCount())
     {
-        mouseOverRow = -1;
+        hoverRowIndex = -1;
     }
 
-    if (oldMouseOver != mouseOverRow)
+    if (oldMouseOver != hoverRowIndex)
     {
+        repaint();
+    }
+}
+
+void TableRowsPainter::showLoadPlaceholder(bool isPlaceholderShown)
+{
+    if (showingLoadPlaceholder != isPlaceholderShown)
+    {
+        showingLoadPlaceholder = isPlaceholderShown;
+        updateSize();
         repaint();
     }
 }

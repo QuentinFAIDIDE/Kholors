@@ -211,30 +211,120 @@ class TableDataFrame
 class TableRowsPainter : public juce::Component
 {
   public:
+    /**
+     * @brief Construct a new Table Rows Painter object
+     *
+     * @param format created by a TableDataFrame, describe our table format
+     * @param rowSelectMode tells if rows can be selected, and if by one or many
+     */
     TableRowsPainter(std::vector<std::pair<TableType, TableColumnAlignment>> &format, TableSelectionMode rowSelectMode);
+
+    /**
+     * @brief juce painting callback
+     *
+     * @param g juce graphics context
+     */
     void paint(juce::Graphics &g) override;
+
+    /**
+     * @brief clear all rows shown
+     *
+     */
     void clear();
+
+    /**
+     * @brief Add a new rows to be displayed
+     *
+     * @param row content of the row, as a vector of TableCell
+     */
     void addRow(std::vector<std::shared_ptr<TableCell>> row);
+
+    /**
+     * @brief Set the columns width
+     *
+     * @param columnsWdith
+     */
     void setColumnsWidth(std::vector<int> columnsWdith);
+
+    /**
+     * @brief Get the Row count
+     *
+     * @return int how many rows are displayed
+     */
     int getRowCount();
+
+    /**
+     * @brief Get the width of the component
+     *
+     * @return int
+     */
     int getWidth();
-    void updateSize();
+
+    /**
+     * @brief Set the Text Color
+     *
+     * @param col
+     */
     void setTextColor(juce::Colour col);
+
+    /**
+     * @brief tells if the loading placeholder is shown
+     *
+     * @param isPlaceholderShown a boolean telling if we should show loading placeholder
+     */
+    void showLoadPlaceholder(bool isPlaceholderShown);
+
+    /**
+     * @brief juce callback for when mouse enter the component
+     *
+     * @param me mouse event object
+     */
     void mouseEnter(const juce::MouseEvent &me) override;
+
+    /**
+     * @brief juce callback for when mouse is moved inside component
+     *
+     * @param me mouse event object
+     */
     void mouseMove(const juce::MouseEvent &me) override;
+
+    /**
+     * @brief juce callback for when mouse exit the component
+     *
+     * @param me mouse event object
+     */
     void mouseExit(const juce::MouseEvent &me) override;
+
+    /**
+     * @brief juce callback for when mouse is clicked
+     *
+     * @param me mouse event object
+     */
     void mouseDown(const juce::MouseEvent &me) override;
+
+    /**
+     * @brief juce callback for when mouse is released
+     *
+     * @param me mouse event object
+     */
     void mouseUp(const juce::MouseEvent &me) override;
 
   private:
-    int noColumns;
-    std::vector<std::vector<std::shared_ptr<TableCell>>> rows;
-    std::vector<int> columnsWidth;
-    std::vector<juce::Rectangle<int>> rowCellsPositions;
-    juce::Colour textColor;
-    TableSelectionMode rowSelectionMode;
-    int mouseOverRow;
-    int clickedRow;
+    int noColumns;                                             /**< how many columns are shown */
+    std::vector<std::vector<std::shared_ptr<TableCell>>> rows; /**< reference to rows objects */
+    std::vector<int> columnsWidth;                             /**< width of the columns */
+    std::vector<juce::Rectangle<int>> rowCellsPositions; /**< Rectangle with pixel pos of each row relative to top */
+    juce::Colour textColor;                              /**< color used to draw text */
+    TableSelectionMode rowSelectionMode;                 /**< tells selection mode (none, one, many) */
+    int hoverRowIndex;                                   /**< row id which mouse is over, -1 if none */
+    int clickedRowIndex;                                 /**< row id currently clicked, -1 if none */
+    bool showingLoadPlaceholder;                         /**< are we showing the loading placeholder ? */
+
+    /**
+     * @brief refresh the size of the widget based on how many rows there are
+     *
+     */
+    void updateSize();
 
     void refreshRowCellsPositions();
     void updateMouseRowHover(const juce::MouseEvent &me);
