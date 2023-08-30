@@ -8,7 +8,7 @@
 Table::Table(std::string tableName, TableSelectionMode selectionType, TableDataFrame &df, int bufSize)
     : selectionMode(selectionType), dataFrame(df), name(tableName),
       header(dataFrame.getHeaderFormat(), TableSelectionMode::TABLE_SELECTION_NONE),
-      content(dataFrame.getFormat(), TableSelectionMode::TABLE_SELECTION_ONE), bufferingSize(bufSize)
+      content(dataFrame.getFormat(), selectionType), bufferingSize(bufSize)
 {
     contentViewport.setScrollBarsShown(true, false);
     contentViewport.setViewedComponent(&content, false);
@@ -318,11 +318,22 @@ void TableRowsPainter::paint(juce::Graphics &g)
         g.setColour(COLOR_TEXT.withAlpha(0.5f));
         g.drawText("Loading...", rowRectangle, juce::Justification::centred, true);
     }
+
+    g.setColour(COLOR_TEXT.withAlpha(0.5f));
+    auto selectIter = selectedRowIndexes.begin();
+    juce::Rectangle<int> rowRectangle(getLocalBounds().getWidth(), TABLE_ROW_HEIGHT);
+    while (selectIter != selectedRowIndexes.end())
+    {
+        g.drawRect(rowRectangle.withY((*selectIter) * TABLE_ROW_HEIGHT), 2);
+
+        selectIter++;
+    }
 }
 
 void TableRowsPainter::clear()
 {
     rows.clear();
+    selectedRowIndexes.clear();
     removeAllChildren();
     updateComponentHeight();
     repaint();
@@ -375,10 +386,26 @@ void TableRowsPainter::mouseDown(const juce::MouseEvent &me)
 
     if (oldClickedRow != clickedRowIndex)
     {
+        if (rowSelectionMode != TableSelectionMode::TABLE_SELECTION_NONE && clickedRowIndex != -1)
+        {
+
+            if (selectedRowIndexes.find(clickedRowIndex) == selectedRowIndexes.end())
+            {
+
+                if (rowSelectionMode == TableSelectionMode::TABLE_SELECTION_ONE)
+                {
+                    selectedRowIndexes.clear();
+                }
+                selectedRowIndexes.insert(clickedRowIndex);
+            }
+            else
+            {
+                selectedRowIndexes.erase(clickedRowIndex);
+            }
+        }
+
         repaint();
     }
-
-    // TODO: row select handling
 }
 
 void TableRowsPainter::mouseUp(const juce::MouseEvent &me)

@@ -38,18 +38,6 @@ enum TableSelectionMode
     TABLE_SELECTION_MANY
 };
 
-class Table;
-
-/**
- * @brief      This class describes a table selection listener. It registers to the Table
- *             object that will call it back whenever the selection is changed.
- */
-class TableSelectionListener
-{
-  public:
-    virtual void receiveTableSelection(std::set<int> selectedRowIndexes) = 0;
-};
-
 /**
  * @brief      This class describes a table cell container that can hold many
  *             types and that builds the appropriate component (if its type is not component).
@@ -319,6 +307,7 @@ class TableRowsPainter : public juce::Component
     int hoverRowIndex;                                   /**< row id which mouse is over, -1 if none */
     int clickedRowIndex;                                 /**< row id currently clicked, -1 if none */
     bool showingLoadPlaceholder;                         /**< are we showing the loading placeholder ? */
+    std::set<int> selectedRowIndexes;                    /**< Index of rows that are currently selected */
 
     /**
      * @brief refresh the size of the widget based on how many rows there are

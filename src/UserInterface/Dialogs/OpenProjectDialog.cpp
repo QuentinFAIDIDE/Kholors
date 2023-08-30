@@ -13,7 +13,7 @@
 
 OpenProjectDialog::OpenProjectDialog(ActivityManager &am)
     : activityManager(am), rowManager(sharedConfig.get().getDataFolderPath() + "/Projects"),
-      projectsTable("Projects", TableSelectionMode::TABLE_SELECTION_NONE, rowManager, PROJECT_TABLE_BUFFER_SIZE)
+      projectsTable("Projects", TableSelectionMode::TABLE_SELECTION_ONE, rowManager, PROJECT_TABLE_BUFFER_SIZE)
 {
 
     addAndMakeVisible(closeButton);
