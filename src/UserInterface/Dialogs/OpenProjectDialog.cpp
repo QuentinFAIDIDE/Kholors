@@ -6,7 +6,7 @@
 
 #include "../../Config.h"
 
-#define PROJECT_TABLE_BUFFER_SIZE 100
+#define PROJECT_TABLE_BUFFER_SIZE 50
 
 #define DIALOG_OPEN_PROJECT_WIDTH 1000
 #define DIALOG_OPEN_PROJECT_HEIGHT 500
@@ -155,8 +155,9 @@ std::vector<std::shared_ptr<TableCell>> ProjectsDataFrame::getRow(int n)
     rowsCache[dataFrameIndex] = std::vector<std::shared_ptr<TableCell>>();
     rowsCache[dataFrameIndex].reserve(7);
 
-    rowsCache[dataFrameIndex].emplace_back(std::make_shared<TableCell>(projectsFoldersNames[dataFrameIndex],
-                                                                       TableColumnAlignment::TABLE_COLUMN_ALIGN_LEFT));
+    rowsCache[dataFrameIndex].emplace_back(
+        std::make_shared<TableCell>(std::to_string(n) + " - " + projectsFoldersNames[dataFrameIndex],
+                                    TableColumnAlignment::TABLE_COLUMN_ALIGN_LEFT));
     rowsCache[dataFrameIndex].emplace_back(std::make_shared<TableCell>(
         formatDatetime(projectsFoldersCreatedTimeSec[dataFrameIndex]), TableColumnAlignment::TABLE_COLUMN_ALIGN_RIGHT));
     rowsCache[dataFrameIndex].emplace_back(

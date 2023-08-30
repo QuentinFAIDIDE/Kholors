@@ -69,10 +69,14 @@ void Table::resized()
 
     bounds.reduce(TABLE_HEADER_AND_CONTENT_INNER_MARGINS, 0);
 
-    header.setBounds(bounds.removeFromTop(TABLE_ROW_HEIGHT));
+    auto headerBounds = bounds.removeFromTop(TABLE_ROW_HEIGHT);
+    // we reduce the header size by the scrollbar width here and right after when we get columns width
+    headerBounds.setWidth(headerBounds.getWidth() - contentViewport.getScrollBarThickness());
+    header.setBounds(headerBounds);
+
     contentViewport.setBounds(bounds);
 
-    auto columnsWidth = dataFrame.getColumnsWidth(bounds.getWidth());
+    auto columnsWidth = dataFrame.getColumnsWidth(bounds.getWidth() - contentViewport.getScrollBarThickness());
     header.setColumnsWidth(columnsWidth);
     content.setColumnsWidth(columnsWidth);
 }
@@ -84,7 +88,22 @@ void Table::receiveViewportUpdate(const juce::Rectangle<int> &newVisibleArea,
     auto loadingPlaceholder = childArea.removeFromBottom(TABLE_ROW_HEIGHT);
     if (newVisibleArea.intersects(loadingPlaceholder))
     {
-        std::cout << "viewing loading placeholder!" << std::endl;
+        int remainingRowsToLoad = dataFrame.getMaxRowIndex() + 1 - content.getRowCount();
+        if (remainingRowsToLoad > 0)
+        {
+            int startIndex = content.getRowCount();
+            int noRowsToLoad = std::min(bufferingSize, remainingRowsToLoad);
+            for (int i = 0; i < noRowsToLoad; i++)
+            {
+                content.addRow(dataFrame.getRow(startIndex + i));
+            }
+
+            // if no more rows to load, simply stop loading
+            if (content.getRowCount() == dataFrame.getMaxRowIndex() + 1)
+            {
+                content.showLoadPlaceholder(false);
+            }
+        }
     }
 }
 
@@ -201,7 +220,7 @@ TableRowsPainter::TableRowsPainter(std::vector<std::pair<TableType, TableColumnA
     textColor = COLOR_TEXT;
 
     refreshRowCellsPositions();
-    updateSize();
+    updateComponentHeight();
 }
 
 void TableRowsPainter::setTextColor(juce::Colour col)
@@ -218,7 +237,7 @@ void TableRowsPainter::setTextColor(juce::Colour col)
     repaint();
 }
 
-void TableRowsPainter::updateSize()
+void TableRowsPainter::updateComponentHeight()
 {
     setSize(getWidth(), (getRowCount() + int(showingLoadPlaceholder)) * TABLE_ROW_HEIGHT);
 }
@@ -269,7 +288,7 @@ void TableRowsPainter::setColumnsWidth(std::vector<int> cols)
         }
     }
 
-    updateSize();
+    updateComponentHeight();
     repaint();
 }
 
@@ -305,7 +324,7 @@ void TableRowsPainter::clear()
 {
     rows.clear();
     removeAllChildren();
-    updateSize();
+    updateComponentHeight();
     repaint();
 }
 
@@ -327,7 +346,7 @@ void TableRowsPainter::addRow(std::vector<std::shared_ptr<TableCell>> row)
         row[i]->setTextColor(textColor);
     }
 
-    updateSize();
+    updateComponentHeight();
 }
 
 int TableRowsPainter::getRowCount()
@@ -409,7 +428,7 @@ void TableRowsPainter::showLoadPlaceholder(bool isPlaceholderShown)
     if (showingLoadPlaceholder != isPlaceholderShown)
     {
         showingLoadPlaceholder = isPlaceholderShown;
-        updateSize();
+        updateComponentHeight();
         repaint();
     }
 }

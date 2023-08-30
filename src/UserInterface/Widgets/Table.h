@@ -324,7 +324,7 @@ class TableRowsPainter : public juce::Component
      * @brief refresh the size of the widget based on how many rows there are
      *
      */
-    void updateSize();
+    void updateComponentHeight();
 
     void refreshRowCellsPositions();
     void updateMouseRowHover(const juce::MouseEvent &me);
