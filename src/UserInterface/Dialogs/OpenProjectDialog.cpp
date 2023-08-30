@@ -70,7 +70,7 @@ void OpenProjectDialog::buttonClicked(juce::Button *button)
 
 ///////////////////////////////////////////////////////
 
-ProjectsDataFrame::ProjectsDataFrame(std::string projectFolderPath)
+ProjectsDataFrame::ProjectsDataFrame(std::string projectFolderPath) : fullProjectsFolderPath(projectFolderPath)
 {
 
     // first we're loading all the subfolder of the project folder
@@ -155,25 +155,26 @@ std::vector<std::shared_ptr<TableCell>> ProjectsDataFrame::getRow(int n)
     rowsCache[dataFrameIndex] = std::vector<std::shared_ptr<TableCell>>();
     rowsCache[dataFrameIndex].reserve(7);
 
-    rowsCache[dataFrameIndex].emplace_back(
-        std::make_shared<TableCell>(std::to_string(n) + " - " + projectsFoldersNames[dataFrameIndex],
-                                    TableColumnAlignment::TABLE_COLUMN_ALIGN_LEFT));
+    rowsCache[dataFrameIndex].emplace_back(std::make_shared<TableCell>(projectsFoldersNames[dataFrameIndex],
+                                                                       TableColumnAlignment::TABLE_COLUMN_ALIGN_LEFT));
     rowsCache[dataFrameIndex].emplace_back(std::make_shared<TableCell>(
         formatDatetime(projectsFoldersCreatedTimeSec[dataFrameIndex]), TableColumnAlignment::TABLE_COLUMN_ALIGN_RIGHT));
     rowsCache[dataFrameIndex].emplace_back(
         std::make_shared<TableCell>(formatDatetime(projectsFoldersLastModifiedTimeSec[dataFrameIndex]),
                                     TableColumnAlignment::TABLE_COLUMN_ALIGN_RIGHT));
 
-    // TODO: add git integration
+    // get git stats
+    auto repoStats = git.getRepositoryStatistics(fullProjectsFolderPath + "/" + projectsFoldersNames[dataFrameIndex]);
+
     rowsCache[dataFrameIndex].emplace_back(
-        std::make_shared<TableCell>(std::string(""),
+        std::make_shared<TableCell>(formatDatetime(repoStats.firstCommitDate),
                                     TableColumnAlignment::TABLE_COLUMN_ALIGN_CENTER)); // first commit date
-    rowsCache[dataFrameIndex].emplace_back(
-        std::make_shared<TableCell>("", TableColumnAlignment::TABLE_COLUMN_ALIGN_CENTER)); // last commit date
-    rowsCache[dataFrameIndex].emplace_back(
-        std::make_shared<TableCell>(0, TableColumnAlignment::TABLE_COLUMN_ALIGN_CENTER)); // # of commits
-    rowsCache[dataFrameIndex].emplace_back(
-        std::make_shared<TableCell>(0, TableColumnAlignment::TABLE_COLUMN_ALIGN_CENTER)); // # of branches
+    rowsCache[dataFrameIndex].emplace_back(std::make_shared<TableCell>(
+        formatDatetime(repoStats.lastCommitDate), TableColumnAlignment::TABLE_COLUMN_ALIGN_CENTER)); // last commit date
+    rowsCache[dataFrameIndex].emplace_back(std::make_shared<TableCell>(
+        repoStats.noCommits, TableColumnAlignment::TABLE_COLUMN_ALIGN_CENTER)); // # of commits
+    rowsCache[dataFrameIndex].emplace_back(std::make_shared<TableCell>(
+        repoStats.noBranches, TableColumnAlignment::TABLE_COLUMN_ALIGN_CENTER)); // # of branches
 
     // finally return it
     return rowsCache[dataFrameIndex];

@@ -94,6 +94,8 @@ class ProjectsDataFrame : public TableDataFrame
     std::vector<int> orderedIds;       /**<
                                         vector of indexes of projectsFoldersNames rows that are sorted in specified ordering.
                                        */
+    GitWrapper git;                    /**< Object that load git stats about projects */
+    std::string fullProjectsFolderPath;
 
     /**
      * @brief      Formats timestamp into appropriate time

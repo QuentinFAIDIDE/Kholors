@@ -344,8 +344,7 @@ void GitWrapper::countRepoBranches(git_repository *repo, RepositoryStatistics &d
     // iterate over branches and increment count
     git_reference *ref;
     git_branch_t branchType;
-    ret = git_branch_next(&ref, &branchType, branchIterator);
-    while (ret == 0)
+    while (!git_branch_next(&ref, &branchType, branchIterator))
     {
         destinationStatsStruct.noBranches++;
         git_reference_free(ref);
