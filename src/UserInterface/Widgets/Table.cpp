@@ -28,6 +28,7 @@ Table::Table(std::string tableName, TableSelectionMode selectionType, TableDataF
         auto cellPointer = std::make_shared<TableCell>(colnames[i], format[i].second);
         headerRow.push_back(cellPointer);
     }
+
     header.addRow(headerRow);
 
     // instanciate the actual data frame rows
@@ -50,11 +51,13 @@ void Table::paint(juce::Graphics &g)
     g.setColour(COLOR_BACKGROUND);
     g.fillAll();
 
+    // unfortunately we had to make this color match the tableRowPaint paintOverChildren one :(
+    // so beware
     g.setColour(COLOR_BACKGROUND_LIGHTER);
     g.fillRoundedRectangle(bounds.toFloat(), TABLE_CORNERS_RADIUS);
 
-    g.setColour(COLOR_TEXT.darker(0.6f));
-    g.drawRoundedRectangle(bounds.toFloat(), TABLE_CORNERS_RADIUS, 0.5f);
+    g.setColour(COLOR_TABLE_BORDERS);
+    g.drawRoundedRectangle(bounds.toFloat(), TABLE_CORNERS_RADIUS, TABLE_BORDERS_LINE_WIDTH);
 
     auto titleArea = bounds.removeFromTop(TABLE_TITLE_SECTION_HEIGHT);
     g.setColour(COLOR_TEXT);
@@ -186,8 +189,9 @@ void TableCell::paint(juce::Graphics &g)
         g.setColour(textColor);
         g.drawText(content, getLocalBounds().reduced(TABLE_CELL_INNER_MARGINS, 0), justification, true);
     }
-    g.setColour(COLOR_TEXT.withAlpha(0.5f));
-    g.drawLine(juce::Line(getLocalBounds().getBottomLeft(), getLocalBounds().getBottomRight()).toFloat(), 0.5f);
+    g.setColour(COLOR_TABLE_SEPARATOR_LINE);
+    g.drawLine(juce::Line(getLocalBounds().getBottomLeft(), getLocalBounds().getBottomRight()).toFloat(),
+               TABLE_ROW_SEPARATOR_LINE_WIDTH);
 }
 
 void TableCell::resized()
@@ -229,9 +233,9 @@ void TableRowsPainter::setTextColor(juce::Colour col)
 
     for (int i = 0; i < rows.size(); i++)
     {
-        for (int j = 0; j < rows[i].size(); j++)
+        for (int j = 0; j < rows[i].cells.size(); j++)
         {
-            rows[i][j]->setTextColor(textColor);
+            rows[i].cells[j]->setTextColor(textColor);
         }
     }
     repaint();
@@ -284,7 +288,7 @@ void TableRowsPainter::setColumnsWidth(std::vector<int> cols)
         int yOffset = i * TABLE_ROW_HEIGHT;
         for (int j = 0; j < cols.size(); j++)
         {
-            rows[i][j]->setBounds(rowCellsPositions[j].withY(yOffset));
+            rows[i].cells[j]->setBounds(rowCellsPositions[j].withY(yOffset));
         }
     }
 
@@ -294,20 +298,22 @@ void TableRowsPainter::setColumnsWidth(std::vector<int> cols)
 
 void TableRowsPainter::paint(juce::Graphics &g)
 {
-    if (rowSelectionMode != TableSelectionMode::TABLE_SELECTION_NONE && clickedRowIndex != -1)
+    if (rowSelectionMode != TableSelectionMode::TABLE_SELECTION_NONE && clickedRowIndex != -1 &&
+        greyedOutRowIndexes.find(clickedRowIndex) == greyedOutRowIndexes.end())
     {
         juce::Rectangle<int> rowRectangle(getLocalBounds().getWidth(), TABLE_ROW_HEIGHT);
         rowRectangle.setPosition(0, hoverRowIndex * TABLE_ROW_HEIGHT);
 
-        g.setColour(juce::Colours::white.withAlpha(0.05f));
+        g.setColour(COLOR_TABLE_CLICKED_ROW);
         g.fillRect(rowRectangle);
     }
-    else if (rowSelectionMode != TableSelectionMode::TABLE_SELECTION_NONE && hoverRowIndex != -1)
+    else if (rowSelectionMode != TableSelectionMode::TABLE_SELECTION_NONE && hoverRowIndex != -1 &&
+             greyedOutRowIndexes.find(hoverRowIndex) == greyedOutRowIndexes.end())
     {
         juce::Rectangle<int> rowRectangle(getLocalBounds().getWidth(), TABLE_ROW_HEIGHT);
         rowRectangle.setPosition(0, hoverRowIndex * TABLE_ROW_HEIGHT);
 
-        g.setColour(juce::Colours::white.withAlpha(0.025f));
+        g.setColour(COLOR_TABLE_ROW_HOVER);
         g.fillRect(rowRectangle);
     }
 
@@ -315,18 +321,32 @@ void TableRowsPainter::paint(juce::Graphics &g)
     {
         juce::Rectangle<int> rowRectangle(getLocalBounds().getWidth(), TABLE_ROW_HEIGHT);
         rowRectangle.setPosition(0, getRowCount() * TABLE_ROW_HEIGHT);
-        g.setColour(COLOR_TEXT.withAlpha(0.5f));
+        g.setColour(COLOR_TEXT.withAlpha(TABLE_LOADING_PLACEHOLDER_ALPHA));
         g.drawText("Loading...", rowRectangle, juce::Justification::centred, true);
     }
 
-    g.setColour(COLOR_TEXT.withAlpha(0.5f));
+    g.setColour(COLOR_TABLE_SELECTED_ROW);
     auto selectIter = selectedRowIndexes.begin();
     juce::Rectangle<int> rowRectangle(getLocalBounds().getWidth(), TABLE_ROW_HEIGHT);
     while (selectIter != selectedRowIndexes.end())
     {
-        g.drawRect(rowRectangle.withY((*selectIter) * TABLE_ROW_HEIGHT), 2);
+        g.fillRect(rowRectangle.withY((*selectIter) * TABLE_ROW_HEIGHT));
 
         selectIter++;
+    }
+}
+
+void TableRowsPainter::paintOverChildren(juce::Graphics &g)
+{
+    for (auto it = greyedOutRowIndexes.begin(); it != greyedOutRowIndexes.end(); it++)
+    {
+        // unfortunately, we can't alter cells content colour to make them alpha since
+        // they should be able to display child component that have no way to do that inherit from component class.
+        // We will try to do this ugly draw over for now :(
+        // The color of the rectangle matches the table paint method background one
+        juce::Rectangle<int> rowRectangle(getLocalBounds().getWidth(), TABLE_ROW_HEIGHT);
+        g.setColour(COLOR_TABLE_DISABLED_ROW_DRAWOVER);
+        g.fillRect(rowRectangle.withY(TABLE_ROW_HEIGHT * (*it)).reduced(0, 1));
     }
 }
 
@@ -334,27 +354,33 @@ void TableRowsPainter::clear()
 {
     rows.clear();
     selectedRowIndexes.clear();
+    greyedOutRowIndexes.clear();
     removeAllChildren();
     updateComponentHeight();
     repaint();
 }
 
-void TableRowsPainter::addRow(std::vector<std::shared_ptr<TableCell>> row)
+void TableRowsPainter::addRow(DataframeRow row)
 {
-    if (row.size() != noColumns)
+    if (row.cells.size() != noColumns)
     {
         throw std::runtime_error("Received bad number of row cells given expected table format");
     }
 
-    rows.push_back({});
+    rows.push_back(DataframeRow({}));
     int yOffset = (rows.size() - 1) * TABLE_ROW_HEIGHT;
 
-    for (int i = 0; i < row.size(); i++)
+    for (int i = 0; i < row.cells.size(); i++)
     {
-        rows[rows.size() - 1].push_back(row[i]);
-        addAndMakeVisible(row[i].get());
-        row[i]->setBounds(rowCellsPositions[i].withY(yOffset));
-        row[i]->setTextColor(textColor);
+        rows[rows.size() - 1].cells.push_back(row.cells[i]);
+        addAndMakeVisible(row.cells[i].get());
+        row.cells[i]->setBounds(rowCellsPositions[i].withY(yOffset));
+        row.cells[i]->setTextColor(textColor);
+    }
+
+    if (row.greyedOut)
+    {
+        greyedOutRowIndexes.insert(rows.size() - 1);
     }
 
     updateComponentHeight();
@@ -386,7 +412,8 @@ void TableRowsPainter::mouseDown(const juce::MouseEvent &me)
 
     if (oldClickedRow != clickedRowIndex)
     {
-        if (rowSelectionMode != TableSelectionMode::TABLE_SELECTION_NONE && clickedRowIndex != -1)
+        if (rowSelectionMode != TableSelectionMode::TABLE_SELECTION_NONE && clickedRowIndex != -1 &&
+            greyedOutRowIndexes.find(clickedRowIndex) == greyedOutRowIndexes.end())
         {
 
             if (selectedRowIndexes.find(clickedRowIndex) == selectedRowIndexes.end())

@@ -15,6 +15,16 @@
 #define TABLE_CELL_INNER_MARGINS 12
 #define TABLE_HEADER_AND_CONTENT_INNER_MARGINS 8
 #define TABLE_CONTENT_ALPHA 0.75f
+#define TABLE_LOADING_PLACEHOLDER_ALPHA 0.5f
+#define TABLE_BORDERS_LINE_WIDTH 0.5f
+#define TABLE_ROW_SEPARATOR_LINE_WIDTH 0.5f
+
+#define COLOR_TABLE_BORDERS COLOR_TEXT.darker(0.6f)
+#define COLOR_TABLE_SEPARATOR_LINE COLOR_TEXT.withAlpha(0.5f)
+#define COLOR_TABLE_CLICKED_ROW juce::Colours::white.withAlpha(0.05f)
+#define COLOR_TABLE_ROW_HOVER juce::Colours::white.withAlpha(0.025f)
+#define COLOR_TABLE_SELECTED_ROW COLOR_TEXT.withAlpha(0.07f)
+#define COLOR_TABLE_DISABLED_ROW_DRAWOVER COLOR_BACKGROUND_LIGHTER.withAlpha(0.7f)
 
 enum TableType
 {
@@ -110,6 +120,27 @@ class TableCell : public juce::Component
 };
 
 /**
+ * @brief      This class describes a dataframe row.
+ *             Note that unlike lots of things here, we don't
+ *             delete the copy constructor and it's just a struct overall (everything public).
+ */
+class DataframeRow
+{
+  public:
+    /**
+     * @brief      Constructs a new instance.
+     */
+    DataframeRow(std::vector<std::shared_ptr<TableCell>> rowCells)
+    {
+        cells = rowCells;
+        greyedOut = false;
+    };
+
+    std::vector<std::shared_ptr<TableCell>> cells; /**< cells making up the row */
+    bool greyedOut;                                /**< true if this row is greyed out and unselectable */
+};
+
+/**
  * @brief      This class manages data frames. Children classes are free to buffer
  *             and load rows as convenient, based on their needs and the corresponding table
  *             loading settings.
@@ -135,7 +166,7 @@ class TableDataFrame
      *
      * @return     The row.
      */
-    virtual std::vector<std::shared_ptr<TableCell>> getRow(int n) = 0;
+    virtual DataframeRow getRow(int n) = 0;
 
     /**
      * @brief      Gets the format of the dataframe, as a vector of
@@ -215,6 +246,16 @@ class TableRowsPainter : public juce::Component
     void paint(juce::Graphics &g) override;
 
     /**
+     * @brief      Paint over child components. Used here to grey out
+     *             cells and be sure even child component cells are.
+     *             We can't do that with regular paint without making the component
+     *             in the cell grey out by itself, which is deemed more complicated
+     *             than this approach..
+     *
+     */
+    void paintOverChildren(juce::Graphics &g) override;
+
+    /**
      * @brief clear all rows shown
      *
      */
@@ -223,9 +264,9 @@ class TableRowsPainter : public juce::Component
     /**
      * @brief Add a new rows to be displayed
      *
-     * @param row content of the row, as a vector of TableCell
+     * @param row content of the row, as a vector of TableCell.
      */
-    void addRow(std::vector<std::shared_ptr<TableCell>> row);
+    void addRow(DataframeRow row);
 
     /**
      * @brief Set the columns width
@@ -298,9 +339,9 @@ class TableRowsPainter : public juce::Component
     void mouseUp(const juce::MouseEvent &me) override;
 
   private:
-    int noColumns;                                             /**< how many columns are shown */
-    std::vector<std::vector<std::shared_ptr<TableCell>>> rows; /**< reference to rows objects */
-    std::vector<int> columnsWidth;                             /**< width of the columns */
+    int noColumns;                                       /**< how many columns are shown */
+    std::vector<DataframeRow> rows;                      /**< reference to rows objects */
+    std::vector<int> columnsWidth;                       /**< width of the columns */
     std::vector<juce::Rectangle<int>> rowCellsPositions; /**< Rectangle with pixel pos of each row relative to top */
     juce::Colour textColor;                              /**< color used to draw text */
     TableSelectionMode rowSelectionMode;                 /**< tells selection mode (none, one, many) */
@@ -308,6 +349,7 @@ class TableRowsPainter : public juce::Component
     int clickedRowIndex;                                 /**< row id currently clicked, -1 if none */
     bool showingLoadPlaceholder;                         /**< are we showing the loading placeholder ? */
     std::set<int> selectedRowIndexes;                    /**< Index of rows that are currently selected */
+    std::set<int> greyedOutRowIndexes;                   /**< set of cells that are greyed out */
 
     /**
      * @brief refresh the size of the widget based on how many rows there are

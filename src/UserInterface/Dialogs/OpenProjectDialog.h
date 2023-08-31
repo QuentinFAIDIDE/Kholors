@@ -26,7 +26,7 @@ class ProjectsDataFrame : public TableDataFrame
      *
      * @return     The row.
      */
-    std::vector<std::shared_ptr<TableCell>> getRow(int n) override;
+    DataframeRow getRow(int n) override;
 
     /**
      * @brief      Gets the format of the dataframe, as a vector of
@@ -84,8 +84,8 @@ class ProjectsDataFrame : public TableDataFrame
     std::vector<std::time_t>
         projectsFoldersLastModifiedTimeSec; /**< projects folder last edit timestamps (in loading order) */
     std::vector<std::time_t>
-        projectsFoldersCreatedTimeSec; /**< projects folder creation timestamps (in loading order) */
-    std::map<int, std::vector<std::shared_ptr<TableCell>>> rowsCache; /**< rows that are cached */
+        projectsFoldersCreatedTimeSec;            /**< projects folder creation timestamps (in loading order) */
+    std::map<int, DataframeRow> rowsCache;        /**< rows that are cached */
     std::optional<std::pair<int, bool>> ordering; /**< column index of ordering and bool to know if ascending */
     std::vector<std::pair<TableType, TableColumnAlignment>> format; /**< column types and alignments */
     std::vector<std::pair<TableType, TableColumnAlignment>>
