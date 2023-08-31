@@ -174,7 +174,7 @@
 #define NAME_REGEX "[A-Za-z à-üÀ-Ü]{3,30}"
 #define GIT_COMMIT_REGEX "[A-Za-z à-üÀ-Ü _%,;\\.:-]{3,130}"
 
-#define DATETIME_FORMAT_1 "%Y-%m-%d %H-%M-%S"
+#define DATETIME_FORMAT_1 "%Y-%m-%d %H:%M:%S"
 
 #define JSON_STATE_SAVING_INDENTATION 4
 
