@@ -224,6 +224,22 @@ class TableDataFrame
 };
 
 /**
+ * @brief      A class that can be registered against a table (and a TableRowsPainter)
+ *             to get its callback called when rows are selected.
+ */
+class TableSelectionListener
+{
+  public:
+    /**
+     * @brief      Callback to receive something when selected rows changes.
+     *             The int received are indices of the rows.
+     *
+     * @param[in]  selectedRowIndexes  The selected row indexes
+     */
+    virtual void receiveSelectionUpdate(std::set<int> selectedRowIndexes) = 0;
+};
+
+/**
  * @brief      Class that displays a set of rows for a table. It can be used
  *             for both headers and content and holds one component per cell.
  */
@@ -237,6 +253,15 @@ class TableRowsPainter : public juce::Component
      * @param rowSelectMode tells if rows can be selected, and if by one or many
      */
     TableRowsPainter(std::vector<std::pair<TableType, TableColumnAlignment>> &format, TableSelectionMode rowSelectMode);
+
+    /**
+     * @brief      Register selection listener that will get its callback called with new row ids selected when
+     *             the selection is changed.
+     *
+     * @param      pointer to the instanceo of the class that implements the callback to receive the set of it
+     * represention tow indices.
+     */
+    void addSelectionListener(TableSelectionListener *tsl);
 
     /**
      * @brief juce painting callback
@@ -350,6 +375,8 @@ class TableRowsPainter : public juce::Component
     bool showingLoadPlaceholder;                         /**< are we showing the loading placeholder ? */
     std::set<int> selectedRowIndexes;                    /**< Index of rows that are currently selected */
     std::set<int> greyedOutRowIndexes;                   /**< set of cells that are greyed out */
+    std::vector<TableSelectionListener *>
+        selectionListeners; /**< References to the selection listerners to broadcast updates to */
 
     /**
      * @brief refresh the size of the widget based on how many rows there are
@@ -359,6 +386,11 @@ class TableRowsPainter : public juce::Component
 
     void refreshRowCellsPositions();
     void updateMouseRowHover(const juce::MouseEvent &me);
+
+    /**
+     * @brief      Broadcasts selected rows to listeners.
+     */
+    void broadcastSelectedRows();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TableRowsPainter)
 };
@@ -383,6 +415,15 @@ class Table : public juce::Component, public ViewportScrollListener
      * @brief      Called when the component and its childs are resized. Called by the juce library.
      */
     void resized() override;
+
+    /**
+     * @brief      Register selection listener that will get its callback called with new row ids selected when
+     *             the selection is changed.
+     *
+     * @param      pointer to the instanceo of the class that implements the callback to receive the set of it
+     * represention tow indices.
+     */
+    void addSelectionListener(TableSelectionListener *tsl);
 
     /**
      * @brief called when the rows content viewport we're listening to get scrolled.

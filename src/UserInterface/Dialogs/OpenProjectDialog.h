@@ -113,7 +113,7 @@ class ProjectsDataFrame : public TableDataFrame
     bool sortByLastEditDate(int a, int b) const;
 };
 
-class OpenProjectDialog : public juce::Component, juce::Button::Listener
+class OpenProjectDialog : public juce::Component, juce::Button::Listener, TableSelectionListener
 {
   public:
     /**
@@ -145,6 +145,14 @@ class OpenProjectDialog : public juce::Component, juce::Button::Listener
      * @param      button  The button
      */
     void buttonClicked(juce::Button *button) override;
+
+    /**
+     * @brief      Callback to receive something when selected rows changes.
+     *             The int received are indices of the rows.
+     *
+     * @param[in]  selectedRowIndexes  The selected row indexes
+     */
+    void receiveSelectionUpdate(std::set<int> selectedRowIndexes) override;
 
   private:
     juce::TextButton closeButton;

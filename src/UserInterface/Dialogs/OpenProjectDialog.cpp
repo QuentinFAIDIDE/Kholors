@@ -28,6 +28,8 @@ OpenProjectDialog::OpenProjectDialog(ActivityManager &am)
 
     addAndMakeVisible(projectsTable);
 
+    projectsTable.addSelectionListener(this);
+
     setSize(DIALOG_OPEN_PROJECT_WIDTH, DIALOG_OPEN_PROJECT_HEIGHT);
 }
 
@@ -35,6 +37,11 @@ void OpenProjectDialog::paint(juce::Graphics &g)
 {
     g.setColour(COLOR_BACKGROUND);
     g.fillAll();
+}
+
+void OpenProjectDialog::receiveSelectionUpdate(std::set<int> selectedRowIndexes)
+{
+    std::cout << "Received " << selectedRowIndexes.size() << " rows" << std::endl;
 }
 
 void OpenProjectDialog::resized()

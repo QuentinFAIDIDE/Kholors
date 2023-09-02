@@ -110,6 +110,11 @@ void Table::receiveViewportUpdate(const juce::Rectangle<int> &newVisibleArea,
     }
 }
 
+void Table::addSelectionListener(TableSelectionListener *tsl)
+{
+    content.addSelectionListener(tsl);
+}
+
 /////////////////////////////////////////////////////////////////////////
 
 TableDataFrame::TableDataFrame()
@@ -225,6 +230,11 @@ TableRowsPainter::TableRowsPainter(std::vector<std::pair<TableType, TableColumnA
 
     refreshRowCellsPositions();
     updateComponentHeight();
+}
+
+void TableRowsPainter::addSelectionListener(TableSelectionListener *tsl)
+{
+    selectionListeners.push_back(tsl);
 }
 
 void TableRowsPainter::setTextColor(juce::Colour col)
@@ -358,6 +368,15 @@ void TableRowsPainter::clear()
     removeAllChildren();
     updateComponentHeight();
     repaint();
+    broadcastSelectedRows();
+}
+
+void TableRowsPainter::broadcastSelectedRows()
+{
+    for (int i = 0; i < selectionListeners.size(); i++)
+    {
+        selectionListeners[i]->receiveSelectionUpdate(selectedRowIndexes);
+    }
 }
 
 void TableRowsPainter::addRow(DataframeRow row)
@@ -429,6 +448,8 @@ void TableRowsPainter::mouseDown(const juce::MouseEvent &me)
             {
                 selectedRowIndexes.erase(clickedRowIndex);
             }
+
+            broadcastSelectedRows();
         }
 
         repaint();
