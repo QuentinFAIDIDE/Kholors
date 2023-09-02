@@ -965,6 +965,46 @@ class ResetTask : public Task
     int noStepsRemaining;
 };
 
+enum OpenProjectTaskStage
+{
+    OPEN_PROJECT_STAGE_APP_STATE_SETUP = 0,
+    OPEN_PROJECT_STAGE_TAXONOMY_SETUP = 1,
+    OPEN_PROJECT_STAGE_ARRANGEMENT_SETUP = 2,
+    OPEN_PROJECT_STAGE_MIXBUS_SETUP = 3,
+    OPEN_PROJECT_STAGE_COMPLETED = 4,
+    OPEN_PROJECT_STAGE_FAILED = 5
+};
+
+/**
+ * @brief      This class describes a project opening task.
+ *             It will pass through different stages through
+ *             activity manager that will allow it to trigger
+ *             state loading in the various app components.
+ */
+class OpenProjectTask : public Task
+{
+  public:
+    /**
+     * @brief      Constructs a new instance and parse files.
+     *
+     * @param[in]  projectPath  The project path
+     */
+    OpenProjectTask(std::string projectPath);
+
+    /**
+    Dumps the task data to a string as json
+    */
+    std::string marshal() override;
+
+    std::string projectFolderPath;
+    OpenProjectTaskStage stage;
+
+    std::string appStateConfig;
+    std::string taxonomyConfig;
+    std::string uiConfig;
+    std::string mixbusConfig;
+};
+
 /**
  * @brief      A task responsible for triggering
  *             track saving and git repository initialization.

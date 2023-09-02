@@ -1,6 +1,8 @@
 #include "Task.h"
 #include "TaxonomyManager.h"
+#include <exception>
 #include <memory>
+#include <stdexcept>
 
 int Task::taskGroupIndexIterator = 0;
 
@@ -1028,6 +1030,58 @@ std::string GitCommitTask::marshal()
                   {"is_completed", isCompleted()},
                   {"failed", hasFailed()},
                   {"message", message},
+                  {"recordable_in_history", recordableInHistory},
+                  {"is_part_of_reversion", isPartOfReversion}};
+    return taskj.dump();
+}
+
+/////////////////////////////////////////////////////
+
+OpenProjectTask::OpenProjectTask(std::string projectPath)
+{
+    projectFolderPath = projectPath;
+    stage = OPEN_PROJECT_STAGE_APP_STATE_SETUP;
+
+    // that's the part where the files are loaded
+    juce::File appStateFile(projectPath + "/app.json");
+    juce::File taxonomyFile(projectPath + "/taxonomy.json");
+    juce::File uiFile(projectPath + "/ui.json");
+    juce::File mixbusFile(projectPath + "/mixbus.json");
+
+    if (!appStateFile.existsAsFile())
+    {
+        throw std::runtime_error("Unable to find app.json file");
+    }
+
+    if (!taxonomyFile.existsAsFile())
+    {
+        throw std::runtime_error("Unable to find taxonomy.json file");
+    }
+
+    if (!uiFile.existsAsFile())
+    {
+        throw std::runtime_error("Unable to find ui.json file");
+    }
+
+    if (!mixbusFile.existsAsFile())
+    {
+        throw std::runtime_error("Unable to find mixbus.json file");
+    }
+
+    appStateConfig = appStateFile.loadFileAsString().toStdString();
+    taxonomyConfig = taxonomyFile.loadFileAsString().toStdString();
+    uiConfig = uiFile.loadFileAsString().toStdString();
+    mixbusConfig = mixbusFile.loadFileAsString().toStdString();
+}
+
+std::string OpenProjectTask::marshal()
+{
+    json taskj = {{"object", "task"},
+                  {"task", "project_loading_task"},
+                  {"is_completed", isCompleted()},
+                  {"failed", hasFailed()},
+                  {"project_folder_path", projectFolderPath},
+                  {"stage", stage},
                   {"recordable_in_history", recordableInHistory},
                   {"is_part_of_reversion", isPartOfReversion}};
     return taskj.dump();

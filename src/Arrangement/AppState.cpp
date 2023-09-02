@@ -64,6 +64,13 @@ void AppState::unmarshal(std::string &s)
     }
 
     tempo = (float)appjson["tempo"];
+    auto tempoTask = std::make_shared<NumericInputUpdateTask>(NUM_INPUT_ID_TEMPO, tempo);
+    activityManager.broadcastNestedTaskNow(tempoTask);
+
+    if (tempoTask->hasFailed())
+    {
+        throw std::runtime_error("unable to update tempo");
+    }
 }
 
 UserInterfaceState &AppState::getUiState()
@@ -170,6 +177,60 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
         tempo = tempoUpdate->newValue;
         std::cout << "tempo was updated to " << tempo << std::endl;
         return false;
+    }
+
+    auto projectOpeningTask = std::dynamic_pointer_cast<OpenProjectTask>(task);
+    if (projectOpeningTask != nullptr && projectOpeningTask->stage == OPEN_PROJECT_STAGE_APP_STATE_SETUP)
+    {
+        try
+        {
+
+            auto clearTask = std::make_shared<ResetTask>();
+            activityManager.broadcastNestedTaskNow(clearTask);
+
+            if (clearTask->hasFailed())
+            {
+                throw std::runtime_error("unable to clear app state");
+            }
+
+            // when done broadcasting, make sure to open the project folder so that we ofically recognise it as open and
+            // can commit
+            repositoryFolder = juce::File(projectOpeningTask->projectFolderPath);
+            if (!repositoryFolder->isDirectory())
+            {
+                throw std::runtime_error("invalid project repository folder");
+            }
+            git.setWorkingDirectory(projectOpeningTask->projectFolderPath);
+            git.open();
+
+            unmarshal(projectOpeningTask->appStateConfig);
+
+            projectOpeningTask->stage = OPEN_PROJECT_STAGE_TAXONOMY_SETUP;
+
+            taxonomy.unmarshal(projectOpeningTask->taxonomyConfig);
+
+            projectOpeningTask->stage = OPEN_PROJECT_STAGE_ARRANGEMENT_SETUP;
+            // This will pass the task to the arrangement area that will broadcast it again in another
+            // state so that it's picked by mixbus
+            activityManager.broadcastNestedTaskNow(projectOpeningTask);
+
+            // and this will record the task in history (note that broadcastNestTaskNow unlike broadcastTask guarantees
+            // execution)
+            return true;
+        }
+        catch (std::exception &err)
+        {
+            projectOpeningTask->setFailed(true);
+            projectOpeningTask->stage = OPEN_PROJECT_STAGE_FAILED;
+
+            std::cerr << "Unable to open project: " << err.what() << std::endl;
+
+            auto notifTask =
+                std::make_shared<NotificationTask>(std::string() + "Unable to open project, see logs for more infos.");
+            activityManager.broadcastNestedTaskNow(notifTask);
+
+            return true;
+        }
     }
 
     return false;

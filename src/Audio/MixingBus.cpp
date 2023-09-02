@@ -493,6 +493,30 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
         return false;
     }
 
+    auto projectLoadingTask = std::dynamic_pointer_cast<OpenProjectTask>(task);
+    if (projectLoadingTask != nullptr && projectLoadingTask->stage == OPEN_PROJECT_STAGE_MIXBUS_SETUP &&
+        !projectLoadingTask->hasFailed())
+    {
+        try
+        {
+            unmarshal(projectLoadingTask->mixbusConfig);
+            projectLoadingTask->setCompleted(true);
+            projectLoadingTask->stage = OPEN_PROJECT_STAGE_COMPLETED;
+        }
+        catch (std::exception &err)
+        {
+            projectLoadingTask->setFailed(true);
+            projectLoadingTask->stage = OPEN_PROJECT_STAGE_FAILED;
+            std::cerr << "unable to open project on mixbus side: " << err.what() << std::endl;
+
+            auto notifTask =
+                std::make_shared<NotificationTask>(std::string() + "Unable to open project. See logs for more infos.");
+            activityManager.broadcastNestedTaskNow(notifTask);
+        }
+
+        return true;
+    }
+
     return false;
 }
 

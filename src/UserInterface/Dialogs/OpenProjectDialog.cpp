@@ -1,6 +1,8 @@
 #include "OpenProjectDialog.h"
 #include <ctime>
+#include <exception>
 #include <iomanip>
+#include <memory>
 #include <stdexcept>
 #include <vector>
 
@@ -92,6 +94,23 @@ void OpenProjectDialog::buttonClicked(juce::Button *button)
     if (button == &closeButton || button == &confirmButton)
     {
         closeDialog();
+    }
+
+    std::string fullProjectPath = sharedConfig->getDataFolderPath() + "/Projects/" + selectedFolder;
+    std::cout << "About to open project at path: " << fullProjectPath << std::endl;
+
+    try
+    {
+        auto loadProjectTask = std::make_shared<OpenProjectTask>(fullProjectPath);
+        activityManager.broadcastTask(loadProjectTask);
+    }
+    catch (std::exception &err)
+    {
+        std::string errMsg = std::string() + "Unable to open project: " + err.what();
+        std::cerr << errMsg << std::endl;
+        auto notifTask =
+            std::make_shared<NotificationTask>(std::string() + "Unable to open project, see logs for more infos.");
+        activityManager.broadcastTask(notifTask);
     }
 }
 

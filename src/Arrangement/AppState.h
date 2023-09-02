@@ -33,6 +33,9 @@ class AppState : public Marshalable, public TaskListener
 
     /**
     Persist this struct to text (as of right now, JSON).
+    Should only be called from the processing of another task,
+    ie when handling another task and when broadcastNestedTask
+    is supposed to be called over broadcastTask (which requires lock).
     */
     std::string marshal() override final;
 
@@ -54,7 +57,7 @@ class AppState : public Marshalable, public TaskListener
 
     /**
      * @brief      Gets the repo directory optional container.
-     *             If not present, repo is unitialized.
+     *             If not present, it means repo is unitialized (no project open).
      *
      * @return     The repo directory if exists.
      */
@@ -82,7 +85,7 @@ class AppState : public Marshalable, public TaskListener
     void dumpProjectFiles();
 
     /**
-     * @brief      Sets the external application state file handlers. These are Marshalable
+     * @brief      Sets the external application state file handlers. These are Marshable children classes
      *             that can dump and load jsons to restore software states.
      *             Commonly set in the desktop app to the ArrangemeentArea for ui, and MixbingBus
      *             for mixbus state handler.

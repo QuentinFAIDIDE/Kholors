@@ -309,6 +309,34 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
         return false;
     }
 
+    auto loadProjectTask = std::dynamic_pointer_cast<OpenProjectTask>(task);
+    if (loadProjectTask != nullptr && loadProjectTask->stage == OPEN_PROJECT_STAGE_ARRANGEMENT_SETUP &&
+        !loadProjectTask->hasFailed())
+    {
+        try
+        {
+            unmarshal(loadProjectTask->uiConfig);
+
+            loadProjectTask->stage = OPEN_PROJECT_STAGE_MIXBUS_SETUP;
+            activityManager.broadcastNestedTaskNow(loadProjectTask);
+        }
+        catch (std::exception &err)
+        {
+            loadProjectTask->setFailed(true);
+            loadProjectTask->stage = OPEN_PROJECT_STAGE_FAILED;
+
+            std::string errMsg = std::string() + "unable to open project on arrangement area side: " + err.what();
+
+            std::cerr << errMsg << std::endl;
+
+            auto notifTask =
+                std::make_shared<NotificationTask>(std::string() + "Unable to open project. See logs for more infos.");
+            activityManager.broadcastNestedTaskNow(notifTask);
+        }
+
+        return true;
+    }
+
     return false;
 }
 
@@ -1985,4 +2013,10 @@ void ArrangementArea::unmarshal(std::string &s)
     json input = json::parse(s);
     input.at("view_position").get_to(viewPosition);
     input.at("view_scale").get_to(viewScale);
+
+    tempoGrid.updateView(viewPosition, viewScale);
+
+    shaderUniformUpdateThreadWrapper(false);
+
+    repaint();
 }
