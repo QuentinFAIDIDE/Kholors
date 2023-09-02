@@ -79,6 +79,15 @@ class ProjectsDataFrame : public TableDataFrame
      */
     std::vector<int> getColumnsWidth(int totalWidth) override;
 
+    /**
+     * @brief      Gets the folder name for the row at that index.
+     *
+     * @param[in]  i     index of the row in the displayed data (starting at 0).
+     *
+     * @return     The folder name.
+     */
+    std::string getFolderNameForRowIndex(int i);
+
   private:
     std::vector<std::string> projectsFoldersNames; /**< projects folder names (in loading order) */
     std::vector<std::time_t>
@@ -161,6 +170,8 @@ class OpenProjectDialog : public juce::Component, juce::Button::Listener, TableS
     ActivityManager &activityManager;
 
     juce::SharedResourcePointer<Config> sharedConfig;
+
+    std::string selectedFolder;
 
     ProjectsDataFrame rowManager;
     Table projectsTable;

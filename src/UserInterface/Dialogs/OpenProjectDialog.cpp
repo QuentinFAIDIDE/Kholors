@@ -41,7 +41,27 @@ void OpenProjectDialog::paint(juce::Graphics &g)
 
 void OpenProjectDialog::receiveSelectionUpdate(std::set<int> selectedRowIndexes)
 {
-    std::cout << "Received " << selectedRowIndexes.size() << " rows" << std::endl;
+    if (selectedRowIndexes.size() == 1)
+    {
+        int displayedRowId = *selectedRowIndexes.begin();
+        try
+        {
+            selectedFolder = rowManager.getFolderNameForRowIndex(displayedRowId);
+            confirmButton.setEnabled(true);
+            std::cout << "Selected folder " << selectedFolder << std::endl;
+        }
+        catch (std::runtime_error err)
+        {
+            std::cerr << "Error, received invalid selected row for project folder table" << std::endl;
+            selectedFolder = "";
+            confirmButton.setEnabled(false);
+        }
+    }
+    else
+    {
+        selectedFolder = "";
+        confirmButton.setEnabled(false);
+    }
 }
 
 void OpenProjectDialog::resized()
@@ -139,6 +159,19 @@ std::vector<std::string> &ProjectsDataFrame::getColumnNames()
 int ProjectsDataFrame::getMaxRowIndex()
 {
     return projectsFoldersNames.size() - 1;
+}
+
+std::string ProjectsDataFrame::getFolderNameForRowIndex(int i)
+{
+    if (i < 0 || i >= orderedIds.size())
+    {
+        throw std::runtime_error("Tried to access a data frame row out of range!");
+    }
+
+    // translate this index to its ordering
+    int dataFrameIndex = orderedIds[i];
+
+    return projectsFoldersNames[dataFrameIndex];
 }
 
 DataframeRow ProjectsDataFrame::getRow(int n)
