@@ -22,6 +22,8 @@ Config::Config()
 {
     invalid = true;
     errMsg = "Not initialized";
+    name = "test user";
+    mail = "test@user.com";
 }
 
 Config::Config(std::string configFilePath)

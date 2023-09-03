@@ -72,6 +72,12 @@ class GitWrapper
     void commit(std::string commitMessage);
 
     /**
+     * @brief      Make a git hard reset to HEAD, overwriting current changes
+     *             for tracked files with the git index (content) at the last commit.
+     */
+    void resetCurrentChanges();
+
+    /**
      * @brief      Gets the branch the repo on the working directory is on.
      *             Throw a runtime_error on unexpected git errors.
      *

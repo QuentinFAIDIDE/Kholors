@@ -52,6 +52,7 @@ add_test(NAME TestAudioLib COMMAND TestAudioLib)
 add_test(NAME TestSamplePlayer COMMAND TestSamplePlayer)
 add_test(NAME TestUnitConverter COMMAND TestUnitConverter)
 add_test(NAME TestTextureManager COMMAND TestTextureManager)
+add_test(NAME TestGitWrapper COMMAND TestGitWrapper)
 
 # If your app depends the VST2 SDK, perhaps to host VST2 plugins, CMake needs to be told where
 # to find the SDK on your system. This setup should be done before calling `juce_add_gui_app`.
@@ -76,6 +77,7 @@ juce_add_gui_app(TestAudioLib PRODUCT_NAME "TestAudioLib")
 juce_add_gui_app(TestSamplePlayer PRODUCT_NAME "TestSamplePlayer")
 juce_add_gui_app(TestUnitConverter PRODUCT_NAME "TestUnitConverter")
 juce_add_gui_app(TestTextureManager PRODUCT_NAME "TestTextureManager")
+juce_add_gui_app(TestGitWrapper PRODUCT_NAME "TestGitWrapper")
 
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
 # into your build tree. This should be included with `#include <JuceHeader.h>`. The include path for
@@ -99,6 +101,12 @@ target_sources(TestConfig
     PRIVATE
         src/Config.cpp
         test/TestConfig.cpp)
+
+target_sources(TestGitWrapper
+    PRIVATE
+        src/Arrangement/GitWrapper.cpp
+        src/Config.cpp
+        test/TestGitWrapper.cpp)
 
 target_sources(TestTextureManager
     PRIVATE
@@ -176,6 +184,15 @@ target_compile_definitions(TestTextureManager
         JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:Kholors,JUCE_PRODUCT_NAME>"
         JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:Kholors,JUCE_VERSION>")
 
+target_compile_definitions(TestGitWrapper
+    PRIVATE
+        # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
+        JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_gui_app` call
+        JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_gui_app` call
+        JUCE_DISPLAY_SPLASH_SCREEN=0 # added to remove splash screen as we're using gpl
+        JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:Kholors,JUCE_PRODUCT_NAME>"
+        JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:Kholors,JUCE_VERSION>")
+
 # If your target needs extra binary assets, you can add them here. The first argument is the name of
 # a new static library target that will include all the binary resources. There is an optional
 # `NAMESPACE` argument that can specify the namespace of the generated binary data class. Finally,
@@ -190,8 +207,6 @@ target_compile_definitions(TestTextureManager
 # dependencies are resolved automatically, so `juce_core`, `juce_events` and so on will also be
 # linked automatically. If we'd generated a binary data target above, we would need to link to it
 # here too. This is a standard CMake command.
-
-target_link_libraries(TestConfig PRIVATE yaml-cpp)
 
 target_link_libraries(Kholors
     PRIVATE
@@ -208,6 +223,24 @@ target_link_libraries(Kholors
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags)
+
+target_link_libraries(TestConfig PRIVATE yaml-cpp)
+
+# TODO: cherry pick TestGitWrapper linked libs to remove unnecessary bloat
+target_link_libraries(TestGitWrapper
+    PRIVATE
+        # GuiAppData            # If we'd created a binary data target, we'd link to it here
+        juce::juce_gui_extra
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_audio_basics
+        yaml-cpp
+        git2
+    PUBLIC
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_lto_flags
+        juce::juce_recommended_warning_flags)
+
 
 # TODO: cherry pick TestAudioLib linked libs to remove unnecessary bloat
 target_link_libraries(TestAudioLib

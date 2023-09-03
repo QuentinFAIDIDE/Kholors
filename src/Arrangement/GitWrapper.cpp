@@ -5,6 +5,7 @@
 #include <git2/index.h>
 #include <git2/refs.h>
 #include <git2/repository.h>
+#include <git2/revparse.h>
 #include <git2/signature.h>
 #include <git2/tree.h>
 #include <git2/types.h>
@@ -126,6 +127,7 @@ void GitWrapper::commit(std::string commitMessage)
     // get parent commit and reference to HEAD
     git_object *parent = nullptr;
     git_reference *ref = nullptr;
+    // TODO: use git_revparse_single instead ? ref is inuused!
     ret = git_revparse_ext(&parent, &ref, libgitRepo, "HEAD");
     // we ignore GIT_ENOTFOUND when HEAD is not found because it then
     // means that it's the first commit
@@ -341,6 +343,9 @@ void GitWrapper::countRepoBranches(git_repository *repo, RepositoryStatistics &d
                                  git_error_last()->message);
     }
 
+    // NOTE: whouldn'it be much faster just count the files in the refs/heads folder ?
+    // OPTIMIZATION: do that if you see perfs with this method sucks.
+
     // iterate over branches and increment count
     git_reference *ref;
     git_branch_t branchType;
@@ -358,4 +363,34 @@ void GitWrapper::countRepoBranches(git_repository *repo, RepositoryStatistics &d
     {
         throw std::runtime_error(std::string("git stats error on git_branch_next: ") + git_error_last()->message);
     }
+}
+
+void GitWrapper::resetCurrentChanges()
+{
+    if (repositoryPath == "" || libgitRepo == nullptr)
+    {
+        throw std::runtime_error("Trying to call reset when no git repo has been opened");
+    }
+
+    // get current branch HEAD commit oid
+    git_object *head_commit;
+    int ret = git_revparse_single(&head_commit, libgitRepo, "HEAD");
+    if (ret != 0)
+    {
+        throw std::runtime_error(std::string("git resetCurrentChanges error on git_revparse_single: ") +
+                                 git_error_last()->message);
+    }
+
+    // reset the HEAD to this commit (which should not change anything)
+    // and reset the index
+    // and reset the working directory with the files in the speciied commit tree
+    ret = git_reset(libgitRepo, head_commit, GIT_RESET_HARD, nullptr);
+    if (ret != 0)
+    {
+        git_object_free(head_commit);
+        throw std::runtime_error(std::string("git resetCurrentChanges error on git_reset: ") +
+                                 git_error_last()->message);
+    }
+
+    git_object_free(head_commit);
 }
