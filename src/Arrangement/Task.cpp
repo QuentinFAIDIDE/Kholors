@@ -1086,3 +1086,16 @@ std::string OpenProjectTask::marshal()
                   {"is_part_of_reversion", isPartOfReversion}};
     return taskj.dump();
 }
+
+/////////////////////////////////////////////////
+
+std::string GitHeadResetTask::marshal()
+{
+    json taskj = {{"object", "task"},
+                  {"task", "git_head_reset_tesk"},
+                  {"is_completed", isCompleted()},
+                  {"failed", hasFailed()},
+                  {"recordable_in_history", recordableInHistory},
+                  {"is_part_of_reversion", isPartOfReversion}};
+    return taskj.dump();
+}

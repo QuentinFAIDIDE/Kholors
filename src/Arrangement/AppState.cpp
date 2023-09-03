@@ -175,7 +175,6 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
     if (tempoUpdate != nullptr && tempoUpdate->numericalInputId == NUM_INPUT_ID_TEMPO && tempoUpdate->isCompleted())
     {
         tempo = tempoUpdate->newValue;
-        std::cout << "tempo was updated to " << tempo << std::endl;
         return false;
     }
 
@@ -211,7 +210,7 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
 
             projectOpeningTask->stage = OPEN_PROJECT_STAGE_ARRANGEMENT_SETUP;
             // This will pass the task to the arrangement area that will broadcast it again in another
-            // state so that it's picked by mixbus
+            // state so that it's picked by mixbus and then set as completed
             activityManager.broadcastNestedTaskNow(projectOpeningTask);
 
             // and this will record the task in history (note that broadcastNestTaskNow unlike broadcastTask guarantees
@@ -231,6 +230,42 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
 
             return true;
         }
+    }
+
+    auto hardHeadResetTask = std::dynamic_pointer_cast<GitHeadResetTask>(task);
+    if (hardHeadResetTask != nullptr && hardHeadResetTask->isCompleted() == false && !hardHeadResetTask->hasFailed())
+    {
+        try
+        {
+
+            if (!repositoryFolder.has_value())
+            {
+                throw std::runtime_error("No project repository folder currently set");
+            }
+
+            // perform the git reset
+            git.resetCurrentChanges();
+
+            // backup folder path
+            juce::File repoToReset = repositoryFolder.value();
+
+            // reload the project
+            auto loadProjectTask = std::make_shared<OpenProjectTask>(repoToReset.getFullPathName().toStdString());
+            activityManager.broadcastNestedTaskNow(loadProjectTask);
+            if (loadProjectTask->hasFailed() || !loadProjectTask->isCompleted())
+            {
+                throw std::runtime_error("Unable to reload project");
+            }
+        }
+        catch (std::exception &err)
+        {
+            std::cerr << "Failed to reset: " << err.what() << std::endl;
+            hardHeadResetTask->setFailed(true);
+            return true;
+        }
+
+        hardHeadResetTask->setCompleted(true);
+        return true;
     }
 
     return false;

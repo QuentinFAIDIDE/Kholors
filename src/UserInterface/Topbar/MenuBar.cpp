@@ -2,6 +2,7 @@
 #include "../../Config.h"
 #include <memory>
 
+#include "../Dialogs/ConfirmResetDialog.h"
 #include "../Dialogs/GitCommitDialog.h"
 #include "../Dialogs/GitInitRepoDialog.h"
 #include "../Dialogs/OpenProjectDialog.h"
@@ -288,6 +289,18 @@ void MenuBar::openVersionningMenu()
             juce::DialogWindow::LaunchOptions launchOptions;
             launchOptions.dialogTitle = "Save and commit your changes";
             launchOptions.content.set(new GitCommitDialog(activityManager), true);
+            launchOptions.escapeKeyTriggersCloseButton = true;
+            launchOptions.useNativeTitleBar = true;
+            launchOptions.resizable = false;
+            launchOptions.useBottomRightCornerResizer = false;
+            launchOptions.launchAsync();
+        }
+
+        if (id == VERSIONNING_MENU_ITEM_ID_RESET)
+        {
+            juce::DialogWindow::LaunchOptions launchOptions;
+            launchOptions.dialogTitle = "Reset changes";
+            launchOptions.content.set(new ConfirmResetDialog(activityManager), true);
             launchOptions.escapeKeyTriggersCloseButton = true;
             launchOptions.useNativeTitleBar = true;
             launchOptions.resizable = false;

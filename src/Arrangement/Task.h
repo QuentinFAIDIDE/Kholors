@@ -1039,4 +1039,13 @@ class GitCommitTask : public Task
     std::string message;
 };
 
+class GitHeadResetTask : public Task
+{
+  public:
+    /**
+    Dumps the task data to a string as json
+    */
+    std::string marshal() override;
+};
+
 #endif // DEF_ACTION_HPP
