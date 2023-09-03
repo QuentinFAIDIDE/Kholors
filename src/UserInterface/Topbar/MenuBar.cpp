@@ -19,7 +19,7 @@
 #define EDIT_MENU_ITEM_ID_REDO 2001
 
 #define VERSIONNING_MENU_ID 3
-#define VERSIONNING_MENU_TEXT "Versionning"
+#define VERSIONNING_MENU_TEXT "Project"
 #define VERSIONNING_MENU_ITEM_ID_INIT 3001
 #define VERSIONNING_MENU_ITEM_ID_COMMIT 3002
 #define VERSIONNING_MENU_ITEM_ID_RESET 3003
@@ -250,10 +250,10 @@ void MenuBar::openVersionningMenu()
     juce::PopupMenu menu;
     menu.addItem(VERSIONNING_MENU_ITEM_ID_INIT, "Initialize", !isRepoAlreadyInitialized, false);
     menu.addSeparator();
-    menu.addItem(VERSIONNING_MENU_ITEM_ID_COMMIT, "Commit and save changes", isRepoAlreadyInitialized, false);
-    menu.addItem(VERSIONNING_MENU_ITEM_ID_RESET, "Revert to last commit", isRepoAlreadyInitialized, false);
+    menu.addItem(VERSIONNING_MENU_ITEM_ID_COMMIT, "Save and commit", isRepoAlreadyInitialized, false);
+    menu.addItem(VERSIONNING_MENU_ITEM_ID_RESET, "Reset changes", isRepoAlreadyInitialized, false);
     menu.addSeparator();
-    menu.addItem(VERSIONNING_MENU_ITEM_ID_REVERT, "Revert to a previous commit", isRepoAlreadyInitialized, false);
+    menu.addItem(VERSIONNING_MENU_ITEM_ID_REVERT, "Revert to a past commit", isRepoAlreadyInitialized, false);
     menu.addItem(VERSIONNING_MENU_ITEM_ID_CREATE_BRANCH, "New branch", isRepoAlreadyInitialized, false);
     menu.addItem(VERSIONNING_MENU_ITEM_ID_CHANGE_BRANCH, "Switch branch", isRepoAlreadyInitialized, false);
 
