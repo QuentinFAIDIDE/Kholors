@@ -882,6 +882,74 @@ void MixingBus::checkForBuffersToFree()
 
 void MixingBus::importNewFile(std::shared_ptr<SampleCreateTask> task)
 {
+    // get the necessary task parameters
+    std::string pathToOpen = task->getFilePath();
+    int64_t desiredPosition = task->getPosition();
+
+    // request the audio buffer to be loaded
+    try
+    {
+        auto fileAudioBuffer = sharedAudioFileBuffers->loadSample(pathToOpen);
+
+        // create a new sample player
+        std::shared_ptr<SamplePlayer> newSample = std::make_shared<SamplePlayer>(desiredPosition);
+
+        // assign buffer to the new SamplePlayer
+        newSample->setBuffer(fileAudioBuffer, forwardFFT);
+
+        // get a scoped lock for the buffer array
+        int newTrackIndex;
+        {
+            const juce::ScopedLock lock(mixbusMutex);
+
+            // add new SamplePlayer to the tracks list (positionable audio
+            // sources)
+            if (task->reuseNewId)
+            {
+                samplePlayers.set(task->getAllocatedIndex(), newSample);
+                newTrackIndex = task->getAllocatedIndex();
+            }
+            else
+            {
+                samplePlayers.add(newSample);
+                newTrackIndex = samplePlayers.size() - 1;
+            }
+
+            samplePlayers[newTrackIndex]->setNextReadPosition(playCursor);
+        }
+
+        task->setAllocatedIndex(newTrackIndex);
+        task->setCompleted(true);
+        task->setFailed(false);
+
+        // this is instructing to update the view
+        std::shared_ptr<SampleDisplayTask> displayTask = std::make_shared<SampleDisplayTask>(newSample, task);
+        activityManager.broadcastNestedTaskNow(displayTask);
+
+        // this is instructing to record a count for file import
+        std::shared_ptr<ImportFileCountTask> fcTask = std::make_shared<ImportFileCountTask>(pathToOpen);
+        activityManager.broadcastNestedTaskNow(fcTask);
+
+        // this make the arrangement area widget repaint.
+        // TODO: replace with repaint from SampleDisplayTask
+        trackRepaintCallback();
+    }
+    catch (std::runtime_error &err)
+    {
+        std::cerr << "File " << pathToOpen << " failed to be loaded: " << err.what() << std::endl;
+
+        auto notif = std::make_shared<NotificationTask>(juce::String("Unable to import file: ") + err.what());
+
+        activityManager.broadcastTask(notif); /* note that if called from within a task broadcastTask will wait after
+                                                 execution of current task to perform the new one */
+
+        task->setFailed(true);
+        return;
+    }
+}
+
+void MixingBus::importNewFile(std::shared_ptr<SampleCreateTask> task)
+{
     // inspired by LoopingAudioSampleBuffer juce tutorial
 
     std::string pathToOpen = task->getFilePath();

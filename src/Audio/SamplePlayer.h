@@ -1,22 +1,16 @@
 #ifndef DEF_SAMPLEPLAYER_HPP
 #define DEF_SAMPLEPLAYER_HPP
 
-// CMake builds don't use an AppConfig.h, so it's safe to include juce module
-// headers directly. If you need to remain compatible with Projucer-generated
-// builds, and have called `juce_generate_juce_header(<thisTarget>)` in your
-// CMakeLists.txt, you could `#include <JuceHeader.h>` here instead, to make all
-// your module headers visible.
-#include <juce_audio_utils/juce_audio_utils.h>
-#include <juce_gui_extra/juce_gui_extra.h>
-
 #include <atomic>
 
-#include "ReferenceCountedBuffer.h"
-#include "UnitConverter.h"
+#include <juce_audio_utils/juce_audio_utils.h>
+#include <juce_dsp/juce_dsp.h>
+#include <juce_gui_extra/juce_gui_extra.h>
+#include <nlohmann/json.hpp>
 
 #include "../Config.h"
+#include "UnitConverter.h"
 
-#include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
 class SamplePlayer : public juce::PositionableAudioSource
@@ -25,15 +19,16 @@ class SamplePlayer : public juce::PositionableAudioSource
     SamplePlayer(int64_t position);
     ~SamplePlayer();
     // this tells the SamplePlayer which audio buffer to use
-    void setBuffer(BufferPtr audioBufferRef, juce::dsp::FFT &fftFunctor);
-    void setBuffer(BufferPtr audioBufferRef, std::shared_ptr<std::vector<float>> fftData);
+    void setBuffer(std::shared_ptr<juce::AudioSampleBuffer> audioBufferRef, juce::dsp::FFT &fftFunctor);
+    void setBuffer(std::shared_ptr<juce::AudioSampleBuffer> audioBufferRef,
+                   std::shared_ptr<std::vector<float>> fftData);
 
     /**
      * @brief      Gets the buffer reference.
      *
      * @return     The buffer reference.
      */
-    BufferPtr getBufferRef();
+    std::shared_ptr<juce::AudioSampleBuffer> getBufferRef();
 
     // inherited from PositionableAudioSource
     juce::int64 getNextReadPosition() const override;
@@ -234,7 +229,7 @@ class SamplePlayer : public juce::PositionableAudioSource
     // how many 12db/octave filters we successively apply for high pass filtering ?
     int highPassRepeat;
 
-    BufferPtr audioBufferRef;
+    std::shared_ptr<juce::AudioSampleBuffer> audioBufferRef;
     bool isSampleSet;
 
     // the sample gain (not in db but in Gain)

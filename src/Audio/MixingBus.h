@@ -18,9 +18,9 @@
 #include <memory>
 
 #include "../Arrangement/ActivityManager.h"
+#include "AudioFilesBufferStore.h"
 #include "DataSource.h"
 #include "MixbusDataSource.h"
-#include "ReferenceCountedBuffer.h"
 #include "SamplePlayer.h"
 
 #define TASK_QUEUE_RESERVED_SIZE 16
@@ -144,6 +144,9 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pub
     // a buffer to hold the summed selected samples signal
     juce::AudioBuffer<float> audioThreadSelectionBuffer;
 
+    juce::SharedResourcePointer<AudioFilesBufferStore>
+        sharedAudioFileBuffers; /**< object managing audio buffers read from files */
+
     // A list of SamplePlayer objects that inherits PositionableAudioSource
     // and are objects that play buffers at some position
     juce::Array<std::shared_ptr<SamplePlayer>> samplePlayers;
@@ -152,9 +155,6 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pub
 
     // helps deciding on notifying ArrangementArea for redraw
     int64_t lastDrawnCursor;
-
-    // list of ReferenceCountedBuffer that are holding sample data
-    juce::ReferenceCountedArray<ReferenceCountedBuffer> buffers;
 
     // mutex to swap the path and access tracks
     juce::CriticalSection pathMutex, mixbusMutex;
