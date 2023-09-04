@@ -16,8 +16,6 @@ MixingBus::MixingBus(ActivityManager &am)
     : Thread("Mixbus Loader Thread"), activityManager(am), numChannels(2), forwardFFT(FREQVIEW_SAMPLE_FFT_ORDER),
       uiState(am.getAppState().getUiState())
 {
-    // initialize format manager
-    formatManager.registerBasicFormats();
 
     // create instance of mixbusDataSource
     mixbusDataSource = std::make_shared<MixbusDataSource>();

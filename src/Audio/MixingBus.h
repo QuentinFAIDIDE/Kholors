@@ -91,8 +91,6 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pub
 
     ActivityManager &activityManager;
 
-    // file formats manager
-    juce::AudioFormatManager formatManager;
     // play cursom position in audio frames
     int playCursor;
 
