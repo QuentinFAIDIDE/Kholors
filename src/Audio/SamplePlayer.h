@@ -9,6 +9,7 @@
 #include <nlohmann/json.hpp>
 
 #include "../Config.h"
+#include "AudioFilesBufferStore.h"
 #include "UnitConverter.h"
 
 using json = nlohmann::json;
@@ -19,16 +20,15 @@ class SamplePlayer : public juce::PositionableAudioSource
     SamplePlayer(int64_t position);
     ~SamplePlayer();
     // this tells the SamplePlayer which audio buffer to use
-    void setBuffer(std::shared_ptr<juce::AudioSampleBuffer> audioBufferRef, juce::dsp::FFT &fftFunctor);
-    void setBuffer(std::shared_ptr<juce::AudioSampleBuffer> audioBufferRef,
-                   std::shared_ptr<std::vector<float>> fftData);
+    void setBuffer(AudioFileBufferRef audioBufferRef, juce::dsp::FFT &fftFunctor);
+    void setBuffer(AudioFileBufferRef audioBufferRef, std::shared_ptr<std::vector<float>> fftData);
 
     /**
      * @brief      Gets the buffer reference.
      *
      * @return     The buffer reference.
      */
-    std::shared_ptr<juce::AudioSampleBuffer> getBufferRef();
+    AudioFileBufferRef getBufferRef();
 
     // inherited from PositionableAudioSource
     juce::int64 getNextReadPosition() const override;
@@ -229,7 +229,7 @@ class SamplePlayer : public juce::PositionableAudioSource
     // how many 12db/octave filters we successively apply for high pass filtering ?
     int highPassRepeat;
 
-    std::shared_ptr<juce::AudioSampleBuffer> audioBufferRef;
+    AudioFileBufferRef audioBufferRef;
     bool isSampleSet;
 
     // the sample gain (not in db but in Gain)

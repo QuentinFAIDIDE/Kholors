@@ -1,14 +1,6 @@
 #ifndef DEF_MIXING_BUS_HPP
 #define DEF_MIXING_BUS_HPP
 
-/**
-  *
-
-  MixingBus will load, mix, process and play
-  the audio samples loaded with the interface.
-
-  */
-
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_dsp/juce_dsp.h>
 #include <juce_gui_extra/juce_gui_extra.h>
@@ -25,7 +17,11 @@
 
 #define TASK_QUEUE_RESERVED_SIZE 16
 
-//==============================================================================
+/**
+ * @brief MixingBus will load, mix, process and play
+ *        the audio samples.
+ *
+ */
 class MixingBus : public juce::PositionableAudioSource, public TaskListener, public Marshalable, private juce::Thread
 {
   public:

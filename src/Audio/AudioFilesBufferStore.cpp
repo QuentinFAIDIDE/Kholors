@@ -6,9 +6,10 @@
 AudioFileBufferRef::AudioFileBufferRef(std::shared_ptr<juce::AudioSampleBuffer> ptr, std::string path)
     : data(ptr), fileFullPath(path)
 {
+    // we now allow nullptr AudioFileBufferRef
     if (ptr == nullptr)
     {
-        throw std::runtime_error("Tried to initialize an AudioFileBufferRef without a proper to the data");
+        return;
     }
 
     // reserve an array of data to concatenate all the channel hashes
@@ -29,6 +30,8 @@ AudioFileBufferRef::AudioFileBufferRef(std::shared_ptr<juce::AudioSampleBuffer> 
     }
 
     // we then hash the hashes so they are combined in a lazy manner
+    // NOTE: at the scale of the huge audio files, one or two more iterations
+    // are basically free.
 
     size_t hashlen;
     // compute digest of the file

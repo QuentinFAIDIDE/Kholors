@@ -1,4 +1,5 @@
 #include "SamplePlayer.h"
+#include "AudioFilesBufferStore.h"
 #include "UnitConverter.h"
 
 #include <iterator>
@@ -9,7 +10,8 @@ int SamplePlayer::maxFilterFreq = (AUDIO_FRAMERATE >> 1) - 1;
 
 SamplePlayer::SamplePlayer(int64_t position)
     : editingPosition(position), bufferInitialPosition(0), bufferStart(0), bufferEnd(0), position(0),
-      lowPassFreq(maxFilterFreq), highPassFreq(0), isSampleSet(false), numFft(0)
+      lowPassFreq(maxFilterFreq), highPassFreq(0), audioBufferRef(std::shared_ptr<juce::AudioSampleBuffer>(), ""),
+      isSampleSet(false), numFft(0)
 {
 
     audioBufferFrequencies = std::make_shared<std::vector<float>>();
@@ -41,11 +43,11 @@ json SamplePlayer::toJSON()
     std::string filePath = "";
     int bufferLen = 0;
 
-    if (audioBufferRef->getAudioSampleBuffer() != nullptr)
+    if (audioBufferRef.data != nullptr)
     {
-        filename = audioBufferRef->getName();
-        filePath = audioBufferRef->getPath();
-        bufferLen = audioBufferRef->getAudioSampleBuffer()->getNumSamples();
+        filename = juce::File(audioBufferRef.fileFullPath).getFileName().toStdString();
+        filePath = audioBufferRef.fileFullPath;
+        bufferLen = audioBufferRef.data->getNumSamples();
     }
 
     json output = {{"file_name", filename},
@@ -73,7 +75,7 @@ void SamplePlayer::setupFromJSON(json &stateToRestore)
     stateToRestore.at("file_path").get_to(path);
 
     // abort if the sample was not loaded
-    if (audioBufferRef.get() == nullptr)
+    if (audioBufferRef.data == nullptr)
     {
         throw std::runtime_error("A sample player had no buffer set when loaded!");
     }
@@ -82,7 +84,7 @@ void SamplePlayer::setupFromJSON(json &stateToRestore)
     // that was loaded at the moment the json was generated
     int desiredBufferLen;
     stateToRestore.at("audio_buffer_len").get_to(desiredBufferLen);
-    if (desiredBufferLen != audioBufferRef->getAudioSampleBuffer()->getNumSamples())
+    if (desiredBufferLen != audioBufferRef.data->getNumSamples())
     {
         throw std::runtime_error("A sample player was loaded with a disk file that has different size: " + path);
     }
@@ -212,14 +214,14 @@ bool SamplePlayer::hasBeenInitialized() const
     return isSampleSet;
 }
 
-void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
+void SamplePlayer::setBuffer(AudioFileBufferRef targetBuffer, juce::dsp::FFT &fft)
 {
     // get lock and change buffer
     const juce::SpinLock::ScopedLockType lock(playerMutex);
     audioBufferRef = targetBuffer;
 
-    int numChannels = targetBuffer->getAudioSampleBuffer()->getNumChannels();
-    int numSamples = targetBuffer->getAudioSampleBuffer()->getNumSamples();
+    int numChannels = targetBuffer.data->getNumChannels();
+    int numSamples = targetBuffer.data->getNumSamples();
     numFft = numSamples / (FREQVIEW_SAMPLE_FFT_SIZE);
 
     // reset sample length
@@ -228,7 +230,7 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
     isSampleSet = true;
 
     // allocate the buffer where the fft result will be stored
-    audioBufferFrequencies->resize(numChannels * numFft * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
+    audioBufferFrequencies->resize((size_t)numChannels * (size_t)numFft * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
     std::fill(audioBufferFrequencies->begin(), audioBufferFrequencies->end(), 0.0f);
 
     // allocate a buffer to perform a fft (double size of fft)
@@ -248,15 +250,15 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
     int maxFftIndex = (FREQVIEW_SAMPLE_FFT_SIZE >> 1) - 1;
 
     // for each channel
-    for (size_t i = 0; i < numChannels; i++)
+    for (size_t i = 0; i < (size_t)numChannels; i++)
     {
-        audioBufferData = targetBuffer->getAudioSampleBuffer()->getReadPointer(i);
+        audioBufferData = targetBuffer.data->getReadPointer(i);
         audioBufferPosition = 0;
 
-        auto channelFftIndex = (i * numFft);
+        auto channelFftIndex = (i * (size_t)numFft);
 
         // iterate over buffers of 1024 samples
-        for (size_t j = 0; j < numFft; j++)
+        for (size_t j = 0; j < (size_t)numFft; j++)
         {
             // fill the input buffer with zeros.
             // NOTE: is it really necessary ?
@@ -293,14 +295,14 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
                 float interpolationPosition = logIndexFft - std::floor(logIndexFft);
 
                 // tried to prevent reading irrelevant data due to ceiling errors
-                if (aboveIndex > maxFftIndex)
+                if (aboveIndex > (size_t)maxFftIndex)
                 {
-                    aboveIndex = maxFftIndex;
+                    aboveIndex = (size_t)maxFftIndex;
                 }
 
-                if (belowIndex > maxFftIndex)
+                if (belowIndex > (size_t)maxFftIndex)
                 {
-                    belowIndex = maxFftIndex;
+                    belowIndex = (size_t)maxFftIndex;
                 }
 
                 (*audioBufferFrequencies)[fftIndex + k] =
@@ -316,13 +318,13 @@ void SamplePlayer::setBuffer(BufferPtr targetBuffer, juce::dsp::FFT &fft)
     setFadeOutLength((AUDIO_FRAMERATE / 1000.0) * SAMPLEPLAYER_DEFAULT_FADE_OUT_MS);
 }
 
-void SamplePlayer::setBuffer(BufferPtr targetBuffer, std::shared_ptr<std::vector<float>> fftData)
+void SamplePlayer::setBuffer(AudioFileBufferRef targetBuffer, std::shared_ptr<std::vector<float>> fftData)
 {
     // get lock and change buffer
     const juce::SpinLock::ScopedLockType lock(playerMutex);
     audioBufferRef = targetBuffer;
 
-    int numSamples = targetBuffer->getAudioSampleBuffer()->getNumSamples();
+    int numSamples = targetBuffer.data->getNumSamples();
     numFft = numSamples / (FREQVIEW_SAMPLE_FFT_SIZE);
 
     // reset sample length
@@ -348,18 +350,18 @@ int SamplePlayer::getBufferNumChannels() const
     // note: WE DO NOT CHECK THAT AUDIOBUFFERREF IS SET !
     // beware of segfaults if you play with SamplePlayer
     // outside of the tracks SampleManager list!
-    return audioBufferRef->getAudioSampleBuffer()->getNumChannels();
+    return audioBufferRef.data->getNumChannels();
 }
 
 std::string SamplePlayer::getFileName()
 {
-    if (audioBufferRef == nullptr)
+    if (audioBufferRef.data == nullptr)
     {
         return "None";
     }
     else
     {
-        return audioBufferRef->getName();
+        return juce::File(audioBufferRef.fileFullPath).getFileName().toStdString();
     }
 }
 
@@ -382,11 +384,11 @@ void SamplePlayer::setNextReadPosition(juce::int64 p)
 // length of entire buffer
 juce::int64 SamplePlayer::getTotalLength() const
 {
-    if (!isSampleSet || audioBufferRef == nullptr)
+    if (!isSampleSet || audioBufferRef.data == nullptr)
     {
         return 0;
     }
-    return audioBufferRef->getAudioSampleBuffer()->getNumSamples();
+    return audioBufferRef.data->getNumSamples();
 }
 
 bool SamplePlayer::isLooping() const
@@ -398,7 +400,7 @@ bool SamplePlayer::isLooping() const
 // move the sample to a new track position
 void SamplePlayer::move(juce::int64 newPosition)
 {
-    if (!isSampleSet || audioBufferRef == nullptr)
+    if (!isSampleSet || audioBufferRef.data == nullptr)
     {
         return;
     }
@@ -409,7 +411,7 @@ void SamplePlayer::move(juce::int64 newPosition)
 void SamplePlayer::setLength(juce::int64 length)
 {
 
-    if (!isSampleSet || audioBufferRef == nullptr)
+    if (!isSampleSet || audioBufferRef.data == nullptr)
     {
         return;
     }
@@ -420,13 +422,13 @@ void SamplePlayer::setLength(juce::int64 length)
     }
 
     const juce::SpinLock::ScopedLockType lock(playerMutex);
-    if (bufferStart + length < audioBufferRef->getAudioSampleBuffer()->getNumSamples())
+    if (bufferStart + length < audioBufferRef.data->getNumSamples())
     {
         bufferEnd = bufferStart + length - 1;
     }
     else
     {
-        bufferEnd = audioBufferRef->getAudioSampleBuffer()->getNumSamples() - 1;
+        bufferEnd = audioBufferRef.data->getNumSamples() - 1;
     }
 
     checkGainRamps();
@@ -436,7 +438,7 @@ void SamplePlayer::setLength(juce::int64 length)
 juce::int64 SamplePlayer::getLength() const
 {
 
-    if (!isSampleSet || audioBufferRef == nullptr)
+    if (!isSampleSet || audioBufferRef.data == nullptr)
     {
         return 0;
     }
@@ -446,7 +448,7 @@ juce::int64 SamplePlayer::getLength() const
 
 int SamplePlayer::getBufferStart() const
 {
-    if (!isSampleSet || audioBufferRef == nullptr)
+    if (!isSampleSet || audioBufferRef.data == nullptr)
     {
         return 0;
     }
@@ -456,7 +458,7 @@ int SamplePlayer::getBufferStart() const
 
 int SamplePlayer::getBufferEnd() const
 {
-    if (!isSampleSet || audioBufferRef == nullptr)
+    if (!isSampleSet || audioBufferRef.data == nullptr)
     {
         return 0;
     }
@@ -469,7 +471,7 @@ int SamplePlayer::getBufferEnd() const
 int SamplePlayer::tryMovingStart(int desiredShift)
 {
 
-    if (!isSampleSet || audioBufferRef == nullptr)
+    if (!isSampleSet || audioBufferRef.data == nullptr)
     {
         return 0;
     }
@@ -502,7 +504,7 @@ int SamplePlayer::tryMovingStart(int desiredShift)
 int SamplePlayer::tryMovingEnd(int desiredShift)
 {
 
-    if (!isSampleSet || audioBufferRef == nullptr)
+    if (!isSampleSet || audioBufferRef.data == nullptr)
     {
         return 0;
     }
@@ -535,7 +537,7 @@ int SamplePlayer::tryMovingEnd(int desiredShift)
 void SamplePlayer::setBufferShift(juce::int64 shift)
 {
 
-    if (!isSampleSet || audioBufferRef == nullptr)
+    if (!isSampleSet || audioBufferRef.data == nullptr)
     {
         return;
     }
@@ -566,7 +568,7 @@ void SamplePlayer::checkGainRamps()
 // get the shift of the buffer shift
 juce::int64 SamplePlayer::getBufferShift() const
 {
-    if (!isSampleSet || audioBufferRef == nullptr)
+    if (!isSampleSet || audioBufferRef.data == nullptr)
     {
         return 0;
     }
@@ -578,7 +580,7 @@ juce::int64 SamplePlayer::getBufferShift() const
 std::shared_ptr<SamplePlayer> SamplePlayer::createDuplicate(juce::int64 newPosition)
 {
 
-    if (!isSampleSet || audioBufferRef == nullptr)
+    if (!isSampleSet || audioBufferRef.data == nullptr)
     {
         return nullptr;
     }
@@ -600,7 +602,7 @@ std::shared_ptr<SamplePlayer> SamplePlayer::createDuplicate(juce::int64 newPosit
 std::shared_ptr<SamplePlayer> SamplePlayer::splitAtFrequency(float frequencyLimitHz)
 {
 
-    if (!isSampleSet || audioBufferRef == nullptr)
+    if (!isSampleSet || audioBufferRef.data == nullptr)
     {
         return nullptr;
     }
@@ -653,7 +655,7 @@ std::shared_ptr<SamplePlayer> SamplePlayer::splitAtFrequency(float frequencyLimi
 std::shared_ptr<SamplePlayer> SamplePlayer::splitAtPosition(juce::int64 positionLimit)
 {
 
-    if (!isSampleSet || audioBufferRef == nullptr)
+    if (!isSampleSet || audioBufferRef.data == nullptr)
     {
         return nullptr;
     }
@@ -703,7 +705,7 @@ float SamplePlayer::addOnScreenAmountToFreq(float freq, float screenProportion)
     return fftIndex * (float(AUDIO_FRAMERATE / float(FREQVIEW_SAMPLE_FFT_SIZE)));
 }
 
-void SamplePlayer::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
+void SamplePlayer::prepareToPlay(int, double)
 {
     // TODO
 }
@@ -711,7 +713,7 @@ void SamplePlayer::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 void SamplePlayer::releaseResources()
 {
     isSampleSet = false;
-    audioBufferRef = BufferPtr(nullptr);
+    audioBufferRef = AudioFileBufferRef(nullptr, "");
 }
 
 void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill)
@@ -720,12 +722,12 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferT
     // https://docs.juce.com/master/tutorial_looping_audio_sample_buffer_advanced.html
 
     // safely get the current buffer
-    auto retainedCurrentBuffer = [&]() -> BufferPtr {
+    auto retainedCurrentBuffer = [&]() -> std::shared_ptr<juce::AudioSampleBuffer> {
         // get scoped lock
         const juce::SpinLock::ScopedTryLockType lock(playerMutex);
 
         if (lock.isLocked())
-            return audioBufferRef;
+            return audioBufferRef.data;
 
         return nullptr;
     }();
@@ -741,7 +743,7 @@ void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferT
     }
 
     // samplePlayer audio buffer data
-    auto *currentAudioSampleBuffer = retainedCurrentBuffer->getAudioSampleBuffer();
+    auto *currentAudioSampleBuffer = retainedCurrentBuffer.get();
     auto numInputChannels = currentAudioSampleBuffer->getNumChannels();
     auto numOutputChannels = bufferToFill.buffer->getNumChannels();
     auto outputSamplesRemaining = bufferToFill.numSamples;
@@ -972,7 +974,7 @@ void SamplePlayer::setHighPassFreq(int freq)
 
 void SamplePlayer::applyFilters(const juce::AudioSourceChannelInfo &bufferToFill)
 {
-    for (size_t channel = 0; channel < bufferToFill.buffer->getNumChannels(); ++channel)
+    for (size_t channel = 0; channel < (size_t)bufferToFill.buffer->getNumChannels(); ++channel)
     {
 
         juce::IIRFilter *highPassFilters, *lowPassFilters;
@@ -988,15 +990,15 @@ void SamplePlayer::applyFilters(const juce::AudioSourceChannelInfo &bufferToFill
         }
 
         float *audioSamples = bufferToFill.buffer->getWritePointer(channel);
-        for (size_t i = 0; i < highPassRepeat; i++)
+        for (size_t i = 0; i < (size_t)highPassRepeat; i++)
         {
-            highPassFilters[i].processSamples(audioSamples + bufferToFill.startSample * sizeof(float),
+            highPassFilters[i].processSamples(audioSamples + (unsigned long)bufferToFill.startSample * sizeof(float),
                                               bufferToFill.numSamples);
         }
 
-        for (size_t i = 0; i < lowPassRepeat; i++)
+        for (size_t i = 0; i < (size_t)lowPassRepeat; i++)
         {
-            lowPassFilters[i].processSamples(audioSamples + bufferToFill.startSample * sizeof(float),
+            lowPassFilters[i].processSamples(audioSamples + (unsigned long)bufferToFill.startSample * sizeof(float),
                                              bufferToFill.numSamples);
         }
     }
@@ -1012,7 +1014,7 @@ float SamplePlayer::getHighPassFreq()
     return highPassFreq;
 }
 
-BufferPtr SamplePlayer::getBufferRef()
+AudioFileBufferRef SamplePlayer::getBufferRef()
 {
     return audioBufferRef;
 }
