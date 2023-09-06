@@ -10,7 +10,7 @@
 struct AudioBufferTextureData
 {
     std::shared_ptr<std::vector<float>> textureData;
-    BufferPtr audioData;
+    AudioFileBufferRef audioData;
     int useCount;
 };
 
@@ -49,7 +49,7 @@ class TextureManager
      *
      * @return     The audio buffer (counted) reference.
      */
-    BufferPtr getAudioBufferFromTextureId(GLuint id);
+    AudioFileBufferRef getAudioBufferFromTextureId(GLuint id);
 
     /**
      * @brief      Gets the texture data from identifier.

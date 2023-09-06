@@ -1,19 +1,20 @@
 #include "TextureManager.h"
+#include <limits>
 #include <memory>
 
 juce::Optional<GLuint> TextureManager::getTextureIdentifier(std::shared_ptr<SamplePlayer> sp)
 {
-    BufferPtr buffer = sp->getBufferRef();
+    AudioFileBufferRef buffer = sp->getBufferRef();
 
     // if length is unique, directly return nothing
-    if (texturesLengthCount.find(buffer->getAudioSampleBuffer()->getNumSamples()) == texturesLengthCount.end())
+    if (texturesLengthCount.find(buffer.data->getNumSamples()) == texturesLengthCount.end())
     {
         return juce::Optional<GLuint>();
     }
 
     // compute hash
-    int hashingLength = juce::jmin(buffer->getAudioSampleBuffer()->getNumSamples(), TEXTURE_MANAGER_HASH_LENGTH);
-    size_t hash = hashAudioChannel(buffer->getAudioSampleBuffer()->getReadPointer(0), hashingLength);
+    int hashingLength = juce::jmin(buffer.data->getNumSamples(), TEXTURE_MANAGER_HASH_LENGTH);
+    size_t hash = hashAudioChannel(buffer.data->getReadPointer(0), hashingLength);
 
     // if no items for this hash, return nothing
     auto foundHash = texturesPerHash.find(hash);
@@ -27,15 +28,15 @@ juce::Optional<GLuint> TextureManager::getTextureIdentifier(std::shared_ptr<Samp
     // for each hash item iterate and test full equality
     for (size_t i = 0; i < audioBufferIdentifiersBucket.size(); i++)
     {
-        BufferPtr bucketAudioBuffer = getAudioBufferFromTextureId(audioBufferIdentifiersBucket[i]);
-        if (bucketAudioBuffer.get() == nullptr)
+        AudioFileBufferRef bucketAudioBuffer = getAudioBufferFromTextureId(audioBufferIdentifiersBucket[i]);
+        if (bucketAudioBuffer.data == nullptr)
         {
             std::cerr << "a TextureManager hash bucket had a GLuint texture identifier for which no audio was found"
                       << std::endl;
             continue;
         }
 
-        if (areAudioBufferEqual(*buffer->getAudioSampleBuffer(), *bucketAudioBuffer.get()->getAudioSampleBuffer()))
+        if (areAudioBufferEqual(*buffer.data, *bucketAudioBuffer.data))
         {
             return audioBufferIdentifiersBucket[i];
         }
@@ -56,14 +57,14 @@ bool TextureManager::areAudioBufferEqual(juce::AudioBuffer<float> &a, juce::Audi
         return false;
     }
 
-    for (size_t chan = 0; chan < a.getNumChannels(); chan++)
+    for (size_t chan = 0; chan < (size_t)a.getNumChannels(); chan++)
     {
         auto aData = a.getReadPointer(chan);
         auto bData = b.getReadPointer(chan);
 
-        for (size_t sample = 0; sample < a.getNumSamples(); sample++)
+        for (size_t sample = 0; sample < (size_t)a.getNumSamples(); sample++)
         {
-            if (aData[sample] != bData[sample])
+            if (std::abs(aData[sample] - bData[sample]) < std::numeric_limits<float>::epsilon())
             {
                 return false;
             }
@@ -73,13 +74,14 @@ bool TextureManager::areAudioBufferEqual(juce::AudioBuffer<float> &a, juce::Audi
     return true;
 }
 
-BufferPtr TextureManager::getAudioBufferFromTextureId(GLuint id)
+AudioFileBufferRef TextureManager::getAudioBufferFromTextureId(GLuint id)
 {
     auto textureSearchIterator = audioBufferTextureData.find(id);
 
+    // NOTE: it would be better to use a std::optional here rather than making a fake buffer
     if (textureSearchIterator == audioBufferTextureData.end())
     {
-        return BufferPtr();
+        return AudioFileBufferRef(nullptr, "");
     }
 
     return textureSearchIterator->second->audioData;
@@ -119,7 +121,7 @@ size_t TextureManager::hashAudioChannel(const float *data, int length)
     // stolen from stack overflow here: https://stackoverflow.com/questions/2590677/how-do-i-combine-hash-values-in-c0x
     // lots of discussion detailing what it does and why on Stackoverflow
     size_t seed = 0;
-    for (size_t i = 0; i < length; i++)
+    for (size_t i = 0; i < (size_t)length; i++)
     {
         seed ^= hasher(data[i]) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
     }
@@ -166,7 +168,7 @@ void TextureManager::clearTextureData(GLuint textureId)
 
     // first we need to remove the texture count per audio buffer length
     auto audioBuffer = textureSearchIterator->second->audioData;
-    auto sampleLength = audioBuffer->getAudioSampleBuffer()->getNumSamples();
+    auto sampleLength = audioBuffer.data->getNumSamples();
 
     if (texturesLengthCount.find(sampleLength) == texturesLengthCount.end())
     {
@@ -181,8 +183,8 @@ void TextureManager::clearTextureData(GLuint textureId)
 
     // then we remove the glint from the bucket corresponding to the hash
     // compute hash
-    int hashingLength = juce::jmin(audioBuffer->getAudioSampleBuffer()->getNumSamples(), TEXTURE_MANAGER_HASH_LENGTH);
-    size_t hash = hashAudioChannel(audioBuffer->getAudioSampleBuffer()->getReadPointer(0), hashingLength);
+    int hashingLength = juce::jmin(audioBuffer.data->getNumSamples(), TEXTURE_MANAGER_HASH_LENGTH);
+    size_t hash = hashAudioChannel(audioBuffer.data->getReadPointer(0), hashingLength);
 
     // if no items for this hash, this sucks really hard
     auto foundHash = texturesPerHash.find(hash);
@@ -198,7 +200,7 @@ void TextureManager::clearTextureData(GLuint textureId)
         {
             if (audioBufferIdentifiersBucket[i] == textureId)
             {
-                audioBufferIdentifiersBucket.erase(audioBufferIdentifiersBucket.begin() + i);
+                audioBufferIdentifiersBucket.erase(audioBufferIdentifiersBucket.begin() + (long)i);
                 clearedIdFromBucket = true;
                 break;
             }
@@ -217,7 +219,7 @@ void TextureManager::setTexture(GLuint textureId, std::shared_ptr<SamplePlayer> 
                                 std::shared_ptr<std::vector<float>> textureData)
 {
     // increments textureLength count
-    int length = sp->getBufferRef()->getAudioSampleBuffer()->getNumSamples();
+    int length = sp->getBufferRef().data->getNumSamples();
     if (texturesLengthCount.find(length) == texturesLengthCount.end())
     {
         texturesLengthCount[length] = 1;
@@ -228,9 +230,8 @@ void TextureManager::setTexture(GLuint textureId, std::shared_ptr<SamplePlayer> 
     }
 
     // add texture identifier to audio hash bucket
-    int hashingLength =
-        juce::jmin(sp->getBufferRef()->getAudioSampleBuffer()->getNumSamples(), TEXTURE_MANAGER_HASH_LENGTH);
-    size_t hash = hashAudioChannel(sp->getBufferRef()->getAudioSampleBuffer()->getReadPointer(0), hashingLength);
+    int hashingLength = juce::jmin(sp->getBufferRef().data->getNumSamples(), TEXTURE_MANAGER_HASH_LENGTH);
+    size_t hash = hashAudioChannel(sp->getBufferRef().data->getReadPointer(0), hashingLength);
     // if no items for this hash, create a bucket
     auto foundHash = texturesPerHash.find(hash);
     if (foundHash == texturesPerHash.end())

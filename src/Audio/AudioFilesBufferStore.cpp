@@ -3,6 +3,10 @@
 #include "../Config.h"
 #include <regex>
 
+AudioFileBufferRef::AudioFileBufferRef() : data(nullptr), fileFullPath("")
+{
+}
+
 AudioFileBufferRef::AudioFileBufferRef(std::shared_ptr<juce::AudioSampleBuffer> ptr, std::string path)
     : data(ptr), fileFullPath(path)
 {

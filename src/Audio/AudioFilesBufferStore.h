@@ -26,6 +26,11 @@ struct AudioFileBufferRef
     AudioFileBufferRef(std::shared_ptr<juce::AudioSampleBuffer> ptr, std::string path);
 
     /**
+     * @brief Construct a an empty object
+     */
+    AudioFileBufferRef();
+
+    /**
      * @brief Return a hexadecimal string representing the audio buffer hash.
      *
      * @return std::string

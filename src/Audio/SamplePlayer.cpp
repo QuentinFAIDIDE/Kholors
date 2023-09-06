@@ -10,8 +10,7 @@ int SamplePlayer::maxFilterFreq = (AUDIO_FRAMERATE >> 1) - 1;
 
 SamplePlayer::SamplePlayer(int64_t position)
     : editingPosition(position), bufferInitialPosition(0), bufferStart(0), bufferEnd(0), position(0),
-      lowPassFreq(maxFilterFreq), highPassFreq(0), audioBufferRef(std::shared_ptr<juce::AudioSampleBuffer>(), ""),
-      isSampleSet(false), numFft(0)
+      lowPassFreq(maxFilterFreq), highPassFreq(0), audioBufferRef(), isSampleSet(false), numFft(0)
 {
 
     audioBufferFrequencies = std::make_shared<std::vector<float>>();
@@ -713,7 +712,7 @@ void SamplePlayer::prepareToPlay(int, double)
 void SamplePlayer::releaseResources()
 {
     isSampleSet = false;
-    audioBufferRef = AudioFileBufferRef(nullptr, "");
+    audioBufferRef = AudioFileBufferRef();
 }
 
 void SamplePlayer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill)

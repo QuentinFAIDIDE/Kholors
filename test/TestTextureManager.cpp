@@ -31,11 +31,12 @@ std::shared_ptr<SamplePlayer> loadFile(std::string path)
     }
 
     // allocate a buffer
-    BufferPtr newBuffer = new ReferenceCountedBuffer(testTonality.getFileName(), (int)reader->numChannels,
-                                                     (int)reader->lengthInSamples, testTonality.getFullPathName());
+    auto bufferPtr = std::make_shared<juce::AudioSampleBuffer>(reader->numChannels, reader->lengthInSamples);
 
     // read file into buffer
-    reader->read(newBuffer->getAudioSampleBuffer(), 0, (int)reader->lengthInSamples, 0, true, true);
+    reader->read(bufferPtr.get(), 0, (int)reader->lengthInSamples, 0, true, true);
+
+    AudioFileBufferRef newBuffer(bufferPtr, testTonality.getFullPathName().toStdString());
 
     auto newSample = std::make_shared<SamplePlayer>(0);
     newSample->setBuffer(newBuffer, fft);
@@ -45,15 +46,15 @@ std::shared_ptr<SamplePlayer> loadFile(std::string path)
     return newSample;
 }
 
-int main(int argc, char *argv[])
+int main()
 {
 
     auto sp1 = loadFile("../test/TestSamples/A-sines-stereo.wav");
     auto sp2 = loadFile("../test/TestSamples/rise-up-sine.wav");
     auto sp3 = loadFile("../test/TestSamples/rise-up-sine.wav");
 
-    sp3->getBufferRef()->getAudioSampleBuffer()->getWritePointer(0)[1024] = 0.1f;
-    sp3->getBufferRef()->getAudioSampleBuffer()->getWritePointer(0)[1025] = 0.3f;
+    sp3->getBufferRef().data->getWritePointer(0)[1024] = 0.1f;
+    sp3->getBufferRef().data->getWritePointer(0)[1025] = 0.3f;
 
     TextureManager textureManager;
 

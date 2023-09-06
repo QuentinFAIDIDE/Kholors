@@ -44,6 +44,7 @@ add_subdirectory(JUCE)                    # If you've put JUCE in a subdirectory
 # ensure the required packages are installed
 find_package(nlohmann_json 3.11.2 REQUIRED)
 find_package(yaml-cpp)
+find_package(OpenSSL)
 
 # Include tests and Ctest utility
 include(CTest)
@@ -113,6 +114,7 @@ target_sources(TestTextureManager
         src/OpenGL/TextureManager.cpp
         src/Audio/SamplePlayer.cpp
         test/TestTextureManager.cpp
+        src/Audio/AudioFilesBufferStore.cpp
         src/Audio/UnitConverter.cpp)
 
 target_sources(TestAudioLib
@@ -124,7 +126,9 @@ target_sources(TestSamplePlayer
     PRIVATE
         src/Audio/SamplePlayer.cpp
         test/TestSamplePlayer.cpp
-        src/Audio/UnitConverter.cpp)
+        src/Audio/UnitConverter.cpp
+        src/Audio/AudioFilesBufferStore.cpp
+        )
 
 target_sources(TestUnitConverter
     PRIVATE
@@ -219,6 +223,8 @@ target_link_libraries(Kholors
         yaml-cpp
         nlohmann_json::nlohmann_json
         git2
+        ssl
+        crypto
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
@@ -263,6 +269,8 @@ target_link_libraries(TestSamplePlayer
         juce::juce_audio_utils
         juce::juce_dsp
         juce::juce_audio_basics
+        ssl
+        crypto
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
@@ -289,6 +297,8 @@ target_link_libraries(TestTextureManager
         juce::juce_audio_utils
         juce::juce_dsp
         juce::juce_audio_basics
+        ssl
+        crypto
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

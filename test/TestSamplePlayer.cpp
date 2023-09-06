@@ -32,11 +32,12 @@ int testSamplePlayerWithSample(std::string path, int blockSize, int offset, int 
     }
 
     // allocate a buffer
-    BufferPtr newBuffer = new ReferenceCountedBuffer(testTonality.getFileName(), (int)reader->numChannels,
-                                                     (int)reader->lengthInSamples, testTonality.getFullPathName());
+    auto bufferPtr = std::make_shared<juce::AudioSampleBuffer>(reader->numChannels, reader->lengthInSamples);
 
     // read file into buffer
-    reader->read(newBuffer->getAudioSampleBuffer(), 0, (int)reader->lengthInSamples, 0, true, true);
+    reader->read(bufferPtr.get(), 0, (int)reader->lengthInSamples, 0, true, true);
+
+    AudioFileBufferRef newBuffer(bufferPtr, testTonality.getFullPathName().toStdString());
 
     SamplePlayer *newSample = new SamplePlayer(offset);
     newSample->setBuffer(newBuffer, fft);
@@ -45,17 +46,16 @@ int testSamplePlayerWithSample(std::string path, int blockSize, int offset, int 
     // set initial position
     newSample->setNextReadPosition(0);
 
-    if (newBuffer->getAudioSampleBuffer()->getNumSamples() != newSample->getTotalLength())
+    if (newBuffer.data->getNumSamples() != newSample->getTotalLength())
     {
         std::cerr << "getTotalLength differ from buffer num samples" << std::endl;
         return 1;
     }
 
-    if (newBuffer->getAudioSampleBuffer()->getNumSamples() - startShift != newSample->getLength())
+    if (newBuffer.data->getNumSamples() - startShift != newSample->getLength())
     {
-        std::cerr << "getLength differ from buffer num samples: expected "
-                  << newBuffer->getAudioSampleBuffer()->getNumSamples() << " but got " << newSample->getLength()
-                  << std::endl;
+        std::cerr << "getLength differ from buffer num samples: expected " << newBuffer.data->getNumSamples()
+                  << " but got " << newSample->getLength() << std::endl;
         return 1;
     }
 
@@ -63,7 +63,7 @@ int testSamplePlayerWithSample(std::string path, int blockSize, int offset, int 
 
     // initialize size of blocks to read and position
     int testReadPosition = 0;
-    int bufferSize = newBuffer->getAudioSampleBuffer()->getNumSamples();
+    int bufferSize = newBuffer.data->getNumSamples();
     // allocate a buffer that go up to next 1024 sample block above buffer size
     int testBufferSize = bufferSize + (blockSize - (bufferSize % blockSize)) + offset;
 
@@ -83,7 +83,7 @@ int testSamplePlayerWithSample(std::string path, int blockSize, int offset, int 
     {
         for (int chan = 0; chan < 2; chan++)
         {
-            int originalAudio = newBuffer->getAudioSampleBuffer()->getReadPointer(chan)[startShift + i];
+            int originalAudio = newBuffer.data->getReadPointer(chan)[startShift + i];
             int retrievedAudio = audioBuffer.getReadPointer(chan)[offset + i];
             if (originalAudio != retrievedAudio)
             {
