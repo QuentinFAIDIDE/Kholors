@@ -74,15 +74,17 @@ int main()
     textureManager.setTexture(10, sp1, sp1->getFftData());
     textureManager.setTexture(11, sp2, sp1->getFftData());
 
-    if (!textureManager.getTextureIdentifier(sp1).hasValue() || *textureManager.getTextureIdentifier(sp1) != 10)
+    bool foundSome = textureManager.getTextureIdentifier(sp1).hasValue();
+    unsigned int foundId = *textureManager.getTextureIdentifier(sp1);
+    if (!foundSome || foundId != 10)
     {
-        std::cerr << "textureManager returned bad texture id" << std::endl;
+        std::cerr << "textureManager returned bad texture id 1" << std::endl;
         return 1;
     }
 
     if (!textureManager.getTextureIdentifier(sp2).hasValue() || *textureManager.getTextureIdentifier(sp2) != 11)
     {
-        std::cerr << "textureManager returned bad texture id" << std::endl;
+        std::cerr << "textureManager returned bad texture id 2" << std::endl;
         return 1;
     }
 
