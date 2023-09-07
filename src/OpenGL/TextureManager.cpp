@@ -64,7 +64,7 @@ bool TextureManager::areAudioBufferEqual(juce::AudioBuffer<float> &a, juce::Audi
 
         for (size_t sample = 0; sample < (size_t)a.getNumSamples(); sample++)
         {
-            if (std::abs(aData[sample] - bData[sample]) < std::numeric_limits<float>::epsilon())
+            if (std::abs(aData[sample] - bData[sample]) > std::numeric_limits<float>::epsilon())
             {
                 return false;
             }
