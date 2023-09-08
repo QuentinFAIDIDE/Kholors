@@ -183,6 +183,9 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
     {
         try
         {
+            // this will prevent the sample from getting unload untill the new project is loaded
+            // which helps at reusing loaded files.
+            sharedAudioFileBuffers->disableUnusedBuffersRelease();
 
             auto clearTask = std::make_shared<ResetTask>();
             activityManager.broadcastNestedTaskNow(clearTask);
@@ -213,12 +216,19 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
             // state so that it's picked by mixbus and then set as completed
             activityManager.broadcastNestedTaskNow(projectOpeningTask);
 
+            // since the broadcastNestedTaskNow run the subtasks synchronously, we can consider
+            // loading is finished here and reenable the audio buffer freeing
+            sharedAudioFileBuffers->enableUnusedBuffersRelease();
+
             // and this will record the task in history (note that broadcastNestTaskNow unlike broadcastTask guarantees
             // execution)
             return true;
         }
         catch (std::exception &err)
         {
+            // this need to be reenabled
+            sharedAudioFileBuffers->enableUnusedBuffersRelease();
+
             projectOpeningTask->setFailed(true);
             projectOpeningTask->stage = OPEN_PROJECT_STAGE_FAILED;
 

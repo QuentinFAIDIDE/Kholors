@@ -107,6 +107,9 @@ class AppState : public Marshalable, public TaskListener
     Marshalable *mixbusStateFileHandler;
     Marshalable *taxonomyStateFileHandler;
 
+    juce::SharedResourcePointer<AudioFilesBufferStore>
+        sharedAudioFileBuffers; /**< object managing audio buffers read from files */
+
     std::optional<juce::File> repositoryFolder;
 
     //==============================================================================
