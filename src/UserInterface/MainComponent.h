@@ -68,7 +68,7 @@ class MainComponent : public juce::AudioAppComponent, public juce::DragAndDropCo
     juce::Rectangle<int> resizeHandleArea;
 
     TopbarArea topbarArea;
-    PassClickTab actionTabs;
+    ResizableTabsContainer actionTabs;
 
     AudioLibraryTab audioLibraryTab;
     GeneratorsTab generatorsTab;

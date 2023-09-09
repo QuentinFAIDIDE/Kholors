@@ -13,10 +13,10 @@
  *        resize.
  *
  */
-class PassClickTab : public juce::TabbedComponent
+class ResizableTabsContainer : public juce::TabbedComponent
 {
   public:
-    PassClickTab(juce::TabbedButtonBar::Orientation a) : juce::TabbedComponent(a){};
+    ResizableTabsContainer(juce::TabbedButtonBar::Orientation a) : juce::TabbedComponent(a){};
 
     /**
      * @brief Determines if we intercept the click or not (juce calls it).
