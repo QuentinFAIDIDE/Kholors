@@ -16,12 +16,9 @@
 #include "../../Arrangement/Task.h"
 #include "../LogoDarkPng.h"
 #include "LoopButton.h"
-#include "MenuBar.h"
 #include "StopButton.h"
 #include "TopbarLeftArea.h"
 #include "TopbarRightArea.h"
-
-#define TOPBAR_MENU_HEIGHT 25
 
 typedef struct
 {
@@ -102,8 +99,6 @@ class TopbarArea : public juce::AnimatedAppComponent, public TaskListener
     PlayButton playButton;
     StopButton stopButton;
     LoopButton loopButton;
-
-    MenuBar menuBar;
 
     //==============================================================================
     void trimNotifications();

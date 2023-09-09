@@ -13,10 +13,14 @@
 #include "../Audio/MixingBus.h"
 #include "./ArrangementArea/ArrangementArea.h"
 #include "KholorsLookAndFeel.h"
+#include "MenuBar.h"
 #include "TabSection/AudioLibraryTab.h"
 #include "TabSection/EmptyTab.h"
 #include "TabSection/GeneratorsTab.h"
 #include "Topbar/TopbarArea.h"
+
+#include "MenuBar.h"
+#include "Widgets/PassClickTab.h"
 
 //==============================================================================
 /*
@@ -64,12 +68,14 @@ class MainComponent : public juce::AudioAppComponent, public juce::DragAndDropCo
     juce::Rectangle<int> resizeHandleArea;
 
     TopbarArea topbarArea;
-    juce::TabbedComponent actionTabs;
+    PassClickTab actionTabs;
 
     AudioLibraryTab audioLibraryTab;
     GeneratorsTab generatorsTab;
     EmptyTab sampleProcessingTab;
     EmptyTab masteringTab;
+
+    MenuBar menu;
 
     juce::SharedResourcePointer<Config> sharedConfig;
 

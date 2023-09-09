@@ -8,9 +8,8 @@
 //==============================================================================
 MainComponent::MainComponent()
     : mixingBus(activityManager), arrangementArea(mixingBus, activityManager), topbarArea(activityManager),
-      actionTabs(juce::TabbedButtonBar::Orientation::TabsAtTop)
+      actionTabs(juce::TabbedButtonBar::Orientation::TabsAtTop), menu(activityManager)
 {
-
     arrangementAreaHeight = FREQTIME_VIEW_HEIGHT;
 
     activityManager.registerTaskListener(this);
@@ -38,6 +37,7 @@ MainComponent::MainComponent()
     addAndMakeVisible(topbarArea);
     addAndMakeVisible(arrangementArea);
     addAndMakeVisible(actionTabs);
+    addAndMakeVisible(menu);
 
     // set the mixingBus callback to repaint arrangement area
     mixingBus.setTrackRepaintCallback([this] {
@@ -104,30 +104,17 @@ void MainComponent::resized()
 {
     // get window coordinations
     juce::Rectangle<int> localBounds = getLocalBounds();
-    // set notification area
-    localBounds.setX(0);
-    localBounds.setY(0);
-    localBounds.setHeight(NOTIF_HEIGHT + NOTIF_OUTTER_MARGINS + NOTIF_OUTTER_MARGINS);
-    topbarArea.setBounds(localBounds);
-    // set arrangement area to a arrangementAreaHeight band at
-    // middle of the screen
-    localBounds.setX(0);
-    localBounds.setY(NOTIF_HEIGHT + NOTIF_OUTTER_MARGINS + NOTIF_OUTTER_MARGINS);
-    localBounds.setHeight(arrangementAreaHeight);
-    arrangementArea.setBounds(localBounds);
 
-    // area where a click = a resizing
-    resizeHandleArea.setX(0);
-    resizeHandleArea.setY(localBounds.getBottom());
-    resizeHandleArea.setWidth(localBounds.getWidth());
-    resizeHandleArea.setHeight(MAINVIEW_RESIZE_HANDLE_HEIGHT);
-
-    int y = NOTIF_HEIGHT + NOTIF_OUTTER_MARGINS + NOTIF_OUTTER_MARGINS + arrangementAreaHeight +
-            MAINVIEW_RESIZE_HANDLE_HEIGHT;
-    localBounds = getLocalBounds();
-    localBounds.setY(y);
-    localBounds.setHeight(localBounds.getHeight() - y - 6);
+    // set all main components bounds
+    menu.setBounds(localBounds.removeFromTop(MENU_BAR_HEIGHT));
+    topbarArea.setBounds(localBounds.removeFromTop(NOTIF_HEIGHT + NOTIF_OUTTER_MARGINS + NOTIF_OUTTER_MARGINS));
+    arrangementArea.setBounds(localBounds.removeFromTop(arrangementAreaHeight));
     actionTabs.setBounds(localBounds);
+
+    // the area to resize the arrangement area is in between itself and action tabs with a thin width
+    resizeHandleArea = actionTabs.getBounds();
+    resizeHandleArea.setY(resizeHandleArea.getY() - (MAINVIEW_RESIZE_HANDLE_HEIGHT >> 1));
+    resizeHandleArea.setHeight(MAINVIEW_RESIZE_HANDLE_HEIGHT);
 }
 
 void MainComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate)

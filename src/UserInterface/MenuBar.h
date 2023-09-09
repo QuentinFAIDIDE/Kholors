@@ -3,7 +3,9 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
-#include "../../Arrangement/ActivityManager.h"
+#include "../Arrangement/ActivityManager.h"
+
+#define MENU_BAR_HEIGHT 25
 
 /**
  * @brief      This class describes the topbar menu bar.

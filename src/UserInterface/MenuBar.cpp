@@ -1,11 +1,11 @@
 #include "MenuBar.h"
-#include "../../Config.h"
+#include "../Config.h"
 #include <memory>
 
-#include "../Dialogs/ConfirmResetDialog.h"
-#include "../Dialogs/GitCommitDialog.h"
-#include "../Dialogs/GitInitRepoDialog.h"
-#include "../Dialogs/OpenProjectDialog.h"
+#include "./Dialogs/ConfirmResetDialog.h"
+#include "./Dialogs/GitCommitDialog.h"
+#include "./Dialogs/GitInitRepoDialog.h"
+#include "./Dialogs/OpenProjectDialog.h"
 
 #define FILE_MENU_ID 1
 #define FILE_MENU_TEXT "File"
@@ -133,7 +133,7 @@ void MenuBar::mouseMove(const juce::MouseEvent &me)
     }
 }
 
-void MenuBar::mouseExit(const juce::MouseEvent &me)
+void MenuBar::mouseExit(const juce::MouseEvent &)
 {
     mouseOverId = 0;
 }
