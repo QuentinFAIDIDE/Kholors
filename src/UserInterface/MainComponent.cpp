@@ -107,7 +107,7 @@ void MainComponent::resized()
 
     // set all main components bounds
     menu.setBounds(localBounds.removeFromTop(MENU_BAR_HEIGHT));
-    topbarArea.setBounds(localBounds.removeFromTop(NOTIF_HEIGHT + NOTIF_OUTTER_MARGINS + NOTIF_OUTTER_MARGINS));
+    topbarArea.setBounds(localBounds.removeFromLeft(SIDEBAR_WIDTH));
     arrangementArea.setBounds(localBounds.removeFromTop(arrangementAreaHeight));
     actionTabs.setBounds(localBounds);
 
@@ -192,7 +192,7 @@ void MainComponent::mouseDrag(const juce::MouseEvent &me)
 
     if (activityManager.getAppState().getUiState() == UI_STATE_RESIZE_MAINVIEW)
     {
-        arrangementAreaHeight = me.getPosition().getY() - (NOTIF_HEIGHT + NOTIF_OUTTER_MARGINS + NOTIF_OUTTER_MARGINS);
+        arrangementAreaHeight = me.getPosition().getY() - arrangementArea.getBounds().getY();
         resized();
         repaint();
     }

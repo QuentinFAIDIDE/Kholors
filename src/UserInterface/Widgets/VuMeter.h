@@ -8,7 +8,7 @@
 
 #define VUMETER_WIDTH 52
 // the preferred widget width
-#define VUMETER_WIDGET_WIDTH (VUMETER_WIDTH + (2 * TOPBAR_WIDGETS_MARGINS))
+#define VUMETER_WIDGET_WIDTH (VUMETER_WIDTH + (2 * SIDEBAR_WIDGETS_MARGINS))
 
 // padding inside the whole box
 #define VUMETER_OUTTER_PADDING 2

@@ -1,11 +1,6 @@
-#ifndef DEF_TOPBAR_AREA_HPP
-#define DEF_TOPBAR_AREA_HPP
+#ifndef DEF_SIDEBAR_AREA_HPP
+#define DEF_SIDEBAR_AREA_HPP
 
-// CMake builds don't use an AppConfig.h, so it's safe to include juce module
-// headers directly. If you need to remain compatible with Projucer-generated
-// builds, and have called `juce_generate_juce_header(<thisTarget>)` in your
-// CMakeLists.txt, you could `#include <JuceHeader.h>` here instead, to make all
-// your module headers visible.
 #include <juce_gui_extra/juce_gui_extra.h>
 
 #include <memory>
@@ -15,11 +10,18 @@
 #include "../../Arrangement/ActivityManager.h"
 #include "../../Arrangement/Task.h"
 #include "../LogoDarkPng.h"
+#include "../Widgets/VuMeter.h"
+#include "ColorPicker.h"
 #include "LoopButton.h"
+#include "SampleProperties.h"
 #include "StopButton.h"
-#include "TopbarLeftArea.h"
-#include "TopbarRightArea.h"
+#include "TrackProperties.h"
 
+#define SIDEBAR_WIDTH 260
+#define SIDEBAR_VU_METERS_AREA_HEIGHT 260
+#define SIDEBAR_COLOR_PICKER_HEIGHT 70
+#define SIDEBAR_TRACK_PROPERTIES_HEIGHT (22 + LABELED_LINE_CONTAINER_DEFAULT_HEIGHT * 3)
+#define SIDEBAR_SAMPLE_PROPERTIES_HEIGHT (22 + LABELED_LINE_CONTAINER_DEFAULT_HEIGHT * 5)
 typedef struct
 {
     uint32_t timestamp;
@@ -30,12 +32,12 @@ typedef struct
 /*
     This component pops up notifications
 */
-class TopbarArea : public juce::AnimatedAppComponent, public TaskListener
+class SidebarArea : public juce::AnimatedAppComponent, public TaskListener
 {
   public:
     //==============================================================================
-    TopbarArea(ActivityManager &);
-    ~TopbarArea();
+    SidebarArea(ActivityManager &);
+    ~SidebarArea();
 
     //==============================================================================
     // Component inherited
@@ -82,6 +84,7 @@ class TopbarArea : public juce::AnimatedAppComponent, public TaskListener
     int now, timeSinceAnimStart, animStartTime;
     // size and position of main content widget
     juce::Rectangle<int> bounds;
+    juce::Rectangle<int> projectTitleArea;
     // mutex for list updates.
     // While list appends can happen in different threads due to notifyError,
     // other variables are only used by the gui thread and should be safe to rw.
@@ -89,21 +92,21 @@ class TopbarArea : public juce::AnimatedAppComponent, public TaskListener
     // a value that store total width the animation have to move in
     float animationNormalisingFactor;
 
-    // the logo of the app we draw in left corner
-    juce::Image logo;
-
-    // left section with master and track properties
-    TopbarLeftArea leftComponentsContainer;
-    TopbarRightArea rightComponentsContainer;
-
     PlayButton playButton;
     StopButton stopButton;
     LoopButton loopButton;
 
+    ColorPicker colorPicker;
+    TrackProperties trackProperties;
+    SampleProperties sampleProperties;
+
+    VuMeter selectionGainVu;
+    VuMeter masterGainVu;
+
     //==============================================================================
     void trimNotifications();
     float easeIn(float t);
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TopbarArea)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SidebarArea)
 };
 
-#endif // DEF_TOPBAR_AREA_HPP
+#endif // DEF_SIDEBAR_AREA_HPP

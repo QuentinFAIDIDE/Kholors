@@ -1,8 +1,6 @@
 #ifndef DEF_COLOR_PICKER_HPP
 #define DEF_COLOR_PICKER_HPP
 
-#define COLORPICKER_WIDTH 120
-
 #include "../../Arrangement/ActivityManager.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 

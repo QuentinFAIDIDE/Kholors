@@ -51,6 +51,8 @@ MenuBar::MenuBar(ActivityManager &am) : activityManager(am)
 void MenuBar::paint(juce::Graphics &g)
 {
     auto bounds = getLocalBounds();
+    g.setColour(COLOR_BACKGROUND);
+    g.fillAll();
     drawMenuItem(1, FILE_MENU_TEXT, bounds, g);
     drawMenuItem(2, EDIT_MENU_TEXT, bounds, g);
     drawMenuItem(3, VERSIONNING_MENU_TEXT, bounds, g);

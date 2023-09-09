@@ -1,7 +1,8 @@
-#include "TopbarArea.h"
+#include "SidebarArea.h"
 
-TopbarArea::TopbarArea(ActivityManager &am)
-    : leftComponentsContainer(am), rightComponentsContainer(am), playButton(am), stopButton(am), loopButton(am)
+SidebarArea::SidebarArea(ActivityManager &am)
+    : playButton(am), stopButton(am), loopButton(am), colorPicker(am), trackProperties(am), sampleProperties(am),
+      selectionGainVu("SELECTION", VUMETER_ID_SELECTED), masterGainVu("MASTER", VUMETER_ID_MASTER)
 {
 
     isHidden = true;
@@ -12,26 +13,28 @@ TopbarArea::TopbarArea(ActivityManager &am)
     popupX = NOTIF_WIDTH + (2 * NOTIF_OUTTER_MARGINS);
     setFramesPerSecond(NOTIF_ANIM_FPS);
     animationNormalisingFactor = float(NOTIF_WIDTH + (2.0 * NOTIF_OUTTER_MARGINS));
-    logo = juce::ImageFileFormat::loadFrom(LogoDarkPng::logo_dark_png, LogoDarkPng::logo_dark_pngSize);
 
-    addAndMakeVisible(leftComponentsContainer);
-    addAndMakeVisible(rightComponentsContainer);
     addAndMakeVisible(playButton);
     addAndMakeVisible(stopButton);
     addAndMakeVisible(loopButton);
+    addAndMakeVisible(colorPicker);
+    addAndMakeVisible(trackProperties);
+    addAndMakeVisible(sampleProperties);
+    addAndMakeVisible(selectionGainVu);
+    addAndMakeVisible(masterGainVu);
 }
 
-TopbarArea::~TopbarArea()
+SidebarArea::~SidebarArea()
 {
 }
 
-void TopbarArea::setDataSource(std::shared_ptr<MixbusDataSource> ds)
+void SidebarArea::setDataSource(std::shared_ptr<MixbusDataSource> ds)
 {
-    leftComponentsContainer.setDataSource(ds);
-    rightComponentsContainer.setDataSource(ds);
+    selectionGainVu.setDataSource(ds);
+    masterGainVu.setDataSource(ds);
 }
 
-bool TopbarArea::taskHandler(std::shared_ptr<Task> task)
+bool SidebarArea::taskHandler(std::shared_ptr<Task> task)
 {
     std::shared_ptr<NotificationTask> notif = std::dynamic_pointer_cast<NotificationTask>(task);
 
@@ -44,25 +47,15 @@ bool TopbarArea::taskHandler(std::shared_ptr<Task> task)
     return false;
 }
 
-void TopbarArea::paint(juce::Graphics &g)
+void SidebarArea::paint(juce::Graphics &g)
 {
-    g.setColour(COLOR_BACKGROUND);
-    g.fillAll();
-
-    // we then draw a card at half the outter margins
-    juce::Rectangle<float> cardInsideArea =
-        getLocalBounds().reduced(TOPBAR_OUTTER_MARGINS >> 1, TOPBAR_OUTTER_MARGINS >> 1).toFloat();
     g.setColour(COLOR_BACKGROUND_LIGHTER);
-    g.fillRoundedRectangle(cardInsideArea, TOPBAR_BORDER_RADIUS);
-    g.setColour(COLOR_LABELS_BORDER);
-    g.drawRoundedRectangle(cardInsideArea, TOPBAR_BORDER_RADIUS, 0.4);
-
-    int imageY = (getLocalBounds().getHeight() / 2.0) - (logo.getHeight() / 2.0);
-
-    g.drawImageAt(logo, TOPBAR_OUTTER_MARGINS, imageY);
+    g.fillAll();
+    g.setColour(COLOR_TEXT);
+    g.drawText("MyProject", projectTitleArea, juce::Justification::centredLeft, true);
 }
 
-void TopbarArea::paintOverChildren(juce::Graphics &g)
+void SidebarArea::paintOverChildren(juce::Graphics &g)
 {
     // make sure the notification are filetered to remove old ones
     trimNotifications();
@@ -174,7 +167,7 @@ void TopbarArea::paintOverChildren(juce::Graphics &g)
     queueRwMutex.exitRead();
 }
 
-void TopbarArea::trimNotifications()
+void SidebarArea::trimNotifications()
 {
     // get current timestamp
     uint32_t timestamp = juce::Time::getMillisecondCounter();
@@ -207,37 +200,39 @@ void TopbarArea::trimNotifications()
     queueRwMutex.exitRead();
 }
 
-void TopbarArea::resized()
+void SidebarArea::resized()
 {
-    auto area = getLocalBounds();
-    area.reduce(TOPBAR_OUTTER_MARGINS, TOPBAR_OUTTER_MARGINS);
-    auto leftSection = area.removeFromLeft(TOPBAR_LEFT_SECTION_WIDTH);
-    leftSection.removeFromLeft(logo.getWidth());
-    leftComponentsContainer.setBounds(leftSection);
+    // this is the component bounds that we will remove area from
+    // to assign it to other components
+    auto remainingBounds = getLocalBounds();
 
-    area = getLocalBounds();
-    area.reduce(TOPBAR_OUTTER_MARGINS, TOPBAR_OUTTER_MARGINS);
-    auto rightSection = area.removeFromRight(TOPBAR_RIGHT_SECTION_WIDTH);
-    rightComponentsContainer.setBounds(rightSection);
+    // top bar with app title and play/stop buttons
+    auto topLine = remainingBounds.removeFromTop(TABS_HEIGHT);
+    topLine.reduce(SIDEBAR_ICONS_BUTTONS_PADDING, 0); // we reuse icons padding for side padding of the whole line
+    loopButton.setBounds(topLine.removeFromRight(SIDEBAR_ICONS_BUTTONS_WIDTH));
+    topLine.removeFromRight(SIDEBAR_ICONS_BUTTONS_PADDING);
+    stopButton.setBounds(topLine.removeFromRight(SIDEBAR_ICONS_BUTTONS_WIDTH));
+    topLine.removeFromLeft(SIDEBAR_ICONS_BUTTONS_PADDING);
+    playButton.setBounds(topLine.removeFromRight(SIDEBAR_ICONS_BUTTONS_WIDTH));
+    topLine.removeFromRight(SIDEBAR_ICONS_BUTTONS_PADDING);
 
-    area = getLocalBounds();
-    area.reduce(TOPBAR_OUTTER_MARGINS, TOPBAR_OUTTER_MARGINS);
-    area.removeFromLeft(leftSection.getWidth() + logo.getWidth());
-    area.removeFromRight(rightComponentsContainer.getWidth());
+    // the remaining area is where we draw the project title
+    projectTitleArea = topLine;
 
-    int centerAreaXDelta = (area.getWidth() - (TOPBAR_ICONS_GAP * 2) - (3 * TOPBAR_ICONS_BUTTONS_WIDTH)) / 2;
-    int centerAreaYDelta = (area.getHeight() - (1 * TOPBAR_ICONS_BUTTONS_WIDTH)) / 2;
-    area.reduce(centerAreaXDelta, centerAreaYDelta);
+    // we now proceed to add vu meters to the bottom
+    auto vuMetersSection = remainingBounds.removeFromBottom(SIDEBAR_VU_METERS_AREA_HEIGHT);
+    masterGainVu.setBounds(vuMetersSection.removeFromLeft(vuMetersSection.getWidth() >> 1));
+    selectionGainVu.setBounds(vuMetersSection);
 
-    playButton.setBounds(area.removeFromLeft(TOPBAR_ICONS_BUTTONS_WIDTH));
-    area.removeFromLeft(TOPBAR_ICONS_GAP);
-    stopButton.setBounds(area.removeFromLeft(TOPBAR_ICONS_BUTTONS_WIDTH));
-    area.removeFromLeft(TOPBAR_ICONS_GAP);
-    loopButton.setBounds(area.removeFromLeft(TOPBAR_ICONS_BUTTONS_WIDTH));
+    // we finally start adding the main sections
+    auto mainArea = remainingBounds;
+    colorPicker.setBounds(mainArea.removeFromTop(SIDEBAR_COLOR_PICKER_HEIGHT));
+    trackProperties.setBounds(mainArea.removeFromTop(SIDEBAR_TRACK_PROPERTIES_HEIGHT));
+    sampleProperties.setBounds(mainArea.removeFromTop(SIDEBAR_SAMPLE_PROPERTIES_HEIGHT));
 };
 
 // must be called from messagemanager thread
-void TopbarArea::notifyMessage(const juce::String &msg)
+void SidebarArea::notifyMessage(const juce::String &msg)
 {
     // get a read lock
     queueRwMutex.enterRead();
@@ -271,7 +266,7 @@ void TopbarArea::notifyMessage(const juce::String &msg)
 // stolen from here:
 // https://stackoverflow.com/questions/13462001/ease-in-and-ease-out-animation-formula
 // Implements an ease in speed modulation between 0 and 1
-float TopbarArea::easeIn(float t)
+float SidebarArea::easeIn(float t)
 {
     if (t <= 0.5f)
         return 2.0f * t * t;
@@ -286,6 +281,6 @@ float TopbarArea::easeIn(float t)
     }
 }
 
-void TopbarArea::update()
+void SidebarArea::update()
 {
 }

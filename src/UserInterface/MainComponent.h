@@ -14,13 +14,13 @@
 #include "./ArrangementArea/ArrangementArea.h"
 #include "KholorsLookAndFeel.h"
 #include "MenuBar.h"
+#include "Sidebar/SidebarArea.h"
 #include "TabSection/AudioLibraryTab.h"
 #include "TabSection/EmptyTab.h"
 #include "TabSection/GeneratorsTab.h"
-#include "Topbar/TopbarArea.h"
 
 #include "MenuBar.h"
-#include "Widgets/PassClickTab.h"
+#include "Widgets/ResizableTabsContainer.h"
 
 //==============================================================================
 /*
@@ -67,7 +67,7 @@ class MainComponent : public juce::AudioAppComponent, public juce::DragAndDropCo
 
     juce::Rectangle<int> resizeHandleArea;
 
-    TopbarArea topbarArea;
+    SidebarArea topbarArea;
     ResizableTabsContainer actionTabs;
 
     AudioLibraryTab audioLibraryTab;

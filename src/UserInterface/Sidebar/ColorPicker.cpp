@@ -21,7 +21,7 @@ void ColorPicker::paint(juce::Graphics &g)
     // get the bounds below the section title
     auto boxesArea = bounds;
     boxesArea.removeFromTop(SECTION_TITLE_HEIGHT_SMALL);
-    boxesArea.reduce(TOPBAR_WIDGETS_MARGINS, TOPBAR_WIDGETS_MARGINS);
+    boxesArea.reduce(0, SIDEBAR_WIDGETS_MARGINS);
 
     // compute how many squares will fit
     int noHorizontalSqares = (boxesArea.getWidth() / COLORSQUARE_SIZE);

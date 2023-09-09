@@ -106,7 +106,7 @@ juce::Rectangle<int> VuMeter::zoomToInnerSection(juce::Rectangle<int> bounds)
     // focus on the area without the title and margins
     auto boxesArea = bounds;
     boxesArea.removeFromTop(SECTION_TITLE_HEIGHT_SMALL);
-    boxesArea.reduce(TOPBAR_WIDGETS_MARGINS, TOPBAR_WIDGETS_MARGINS);
+    boxesArea.reduce(SIDEBAR_WIDGETS_MARGINS, SIDEBAR_WIDGETS_MARGINS);
 
     // what's the size of the remaining side parts ?
     int emptySidesWidth = (boxesArea.getWidth() - VUMETER_WIDTH) / 2;
