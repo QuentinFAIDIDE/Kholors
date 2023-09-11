@@ -23,6 +23,9 @@ IconsLoader::IconsLoader()
     moveIcon = juce::Drawable::createFromImageData(Icons::move_svg, Icons::move_svgSize);
     moveIcon->replaceColour(juce::Colours::white, COLOR_BACKGROUND);
 
+    searchIcon = juce::Drawable::createFromImageData(Icons::search_svg, Icons::search_svgSize);
+    searchIcon->replaceColour(juce::Colours::white, COLOR_SEPARATOR_LINE);
+
     resizeHorizontalIcon =
         juce::Drawable::createFromImageData(Icons::resize_horizontal_svg, Icons::resize_horizontal_svgSize);
     resizeHorizontalIcon->replaceColour(juce::Colours::white, COLOR_BACKGROUND);

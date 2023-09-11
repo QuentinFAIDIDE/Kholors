@@ -40,7 +40,7 @@ SampleProperties::SampleProperties(ActivityManager &am)
     lpRepeatInput->setUnit("dB/oct");
     am.registerTaskListener(lpRepeatInput.get());
     lpRepeatInput->setActivityManager(&am);
-    lpRepeatLine = std::make_shared<LabeledLineContainer>("LowPass Slope", lpRepeatInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
+    lpRepeatLine = std::make_shared<LabeledLineContainer>("LP Slope", lpRepeatInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
                                                           SAMPLEPROPS_INPUT_WIDTH);
     addAndMakeVisible(*lpRepeatLine);
 
@@ -48,7 +48,7 @@ SampleProperties::SampleProperties(ActivityManager &am)
     hpRepeatInput->setUnit("dB/oct");
     am.registerTaskListener(hpRepeatInput.get());
     hpRepeatInput->setActivityManager(&am);
-    hpRepeatLine = std::make_shared<LabeledLineContainer>("HighPass Slope:", hpRepeatInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
+    hpRepeatLine = std::make_shared<LabeledLineContainer>("HP Slope", hpRepeatInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
                                                           SAMPLEPROPS_INPUT_WIDTH);
     addAndMakeVisible(*hpRepeatLine);
 

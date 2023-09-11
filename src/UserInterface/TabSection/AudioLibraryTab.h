@@ -6,6 +6,7 @@
 #include "../../Arrangement/ActivityManager.h"
 #include "../../Config.h"
 #include "../../Library/AudioLibraryManager.h"
+#include "../IconsLoader.h"
 #include "../Section.h"
 #include "AudioLibTreeItem.h"
 #include "LibrarySearchBar.h"
@@ -46,6 +47,17 @@ class AudioLibraryTab : public juce::Component,
     void paint(juce::Graphics &) override;
 
     /**
+     * @brief Will unfortunately overwrite some searchbar content to make it
+     *        prettier and eventually avoid some bugs.
+     *
+     * @param g  the juce graphic context.
+     */
+    void paintOverChildren(juce::Graphics &g) override;
+
+    // called when focus of child changed
+    void focusOfChildComponentChanged(FocusChangeType cause) override;
+
+    /**
      * called when the window/widget is resized.
      */
     void resized() override;
@@ -58,6 +70,11 @@ class AudioLibraryTab : public juce::Component,
 
     juce::SpinLock searchTextLock;
     juce::String searchText;
+
+    /**
+     * Shared svg icons.
+     */
+    juce::SharedResourcePointer<IconsLoader> sharedIcons;
 
     LibrarySearchBar searchBar;
 

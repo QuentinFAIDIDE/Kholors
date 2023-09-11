@@ -6,7 +6,10 @@
 #include "../Section.h"
 
 #define SEARCHBAR_HEIGHT 30
+#define LENS_ICON_WIDTH 24 // prefer something even
+#define LENS_ICON_AREA_WIDTH SEARCHBAR_HEIGHT
 #define SEARCHBAR_BOTTOM_MARGIN 5
+#define LENS_ADDITIONAL_LEFT_PADDING 3
 
 AudioLibraryTab::AudioLibraryTab() : Thread("File Search Thread"), resultList("Results", &resultListContent)
 {
@@ -31,8 +34,8 @@ AudioLibraryTab::AudioLibraryTab() : Thread("File Search Thread"), resultList("R
 
     searchBar.setColour(juce::TextEditor::ColourIds::textColourId, COLOR_TEXT);
     searchBar.setColour(juce::TextEditor::ColourIds::backgroundColourId, juce::Colours::transparentBlack);
-    searchBar.setColour(juce::TextEditor::outlineColourId, COLOR_SEPARATOR_LINE);
-    searchBar.setColour(juce::TextEditor::focusedOutlineColourId, COLOR_SEPARATOR_LINE);
+    searchBar.setColour(juce::TextEditor::outlineColourId, juce::Colours::transparentBlack);
+    searchBar.setColour(juce::TextEditor::focusedOutlineColourId, juce::Colours::transparentBlack);
 
     juce::Font font(DEFAULT_FONT_SIZE);
     searchBar.setFont(font);
@@ -96,6 +99,39 @@ bool AudioLibraryTab::isLibraryPath(std::string path)
     return false;
 }
 
+void AudioLibraryTab::paintOverChildren(juce::Graphics &g)
+{
+    auto searchbarArea = searchBar.getBoundsInParent();
+    // add the area where we plan to draw the lens icon
+    searchbarArea.setX(searchbarArea.getX() - LENS_ICON_AREA_WIDTH);
+    searchbarArea.setWidth(searchbarArea.getWidth() + LENS_ICON_AREA_WIDTH);
+    g.setColour(COLOR_SEPARATOR_LINE);
+    g.drawRect(searchbarArea);
+
+    // draw a prototype of ugly lens
+    auto lensArea = searchbarArea;
+    lensArea = lensArea.removeFromLeft(LENS_ICON_AREA_WIDTH);
+    int padding = (LENS_ICON_AREA_WIDTH - LENS_ICON_WIDTH);
+    lensArea.reduce(padding, padding);
+    lensArea.setX(lensArea.getX() + LENS_ADDITIONAL_LEFT_PADDING);
+    sharedIcons->searchIcon->drawWithin(g, lensArea.toFloat(), juce::RectanglePlacement::centred, 1.0f);
+
+    // if empty and we don't have the focus, draw a placeholder text
+    if (searchBar.isEmpty() && !searchBar.hasKeyboardFocus(true))
+    {
+        auto placeholderArea = searchBarBounds;
+        placeholderArea.reduce(4, 4);
+        g.drawText("Search your library here...", placeholderArea, juce::Justification::centredLeft, true);
+    }
+}
+
+void AudioLibraryTab::focusOfChildComponentChanged(FocusChangeType)
+{
+    // this allow us to repaint our placeholds when user
+    // exit text area keyboard focus
+    repaint();
+}
+
 AudioLibraryTab::~AudioLibraryTab()
 {
     // stop thread with a 4sec timeout to kill it
@@ -147,10 +183,6 @@ void AudioLibraryTab::addAudioLibrary(std::string path)
 
 void AudioLibraryTab::paint(juce::Graphics &g)
 {
-    juce::Line<int> searchBarBottom(searchBarBounds.getBottomLeft(), searchBarBounds.getBottomRight());
-    g.setColour(COLOR_TEXT_DARKER.withAlpha(0.5f));
-    g.drawLine(searchBarBottom.toFloat(), 1.0f);
-    // TODO: draw a lens instead
 }
 
 void AudioLibraryTab::resized()
@@ -169,6 +201,8 @@ void AudioLibraryTab::resized()
     // positionate the searchbar
     auto searchBarAndFileListArea = findLocation;
     searchBarBounds = searchBarAndFileListArea.removeFromTop(SEARCHBAR_HEIGHT);
+    // remove the area where we want to draw the lens icon
+    searchBarBounds.removeFromLeft(LENS_ICON_AREA_WIDTH);
 
     searchBar.setBounds(searchBarBounds);
     searchBarAndFileListArea.removeFromTop(SEARCHBAR_BOTTOM_MARGIN);
@@ -177,6 +211,9 @@ void AudioLibraryTab::resized()
 
 void AudioLibraryTab::textEditorTextChanged(juce::TextEditor &te)
 {
+    // this can make sure our drawing on top of the text area update asap
+    repaint();
+
     juce::String txt = te.getText();
 
     // if text was just deleted, reset the result list

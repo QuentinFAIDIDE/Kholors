@@ -36,7 +36,8 @@
 
 #define NO_MENU_ITEMS 4
 
-#define MENU_LEFT_MARGIN 16
+#define MENU_BAR_LEFT_MARGIN 5 // this is the space to the left of the first menu
+#define MENU_LEFT_MARGIN 8     // these two next are the margins for each top menu entry
 #define MENU_RIGHT_MARGIN 8
 #define MENU_SEPARATOR_WIDTH 1
 #define OPENED_MENU_BOTTOM_LINE_WIDTH 2
@@ -53,6 +54,7 @@ void MenuBar::paint(juce::Graphics &g)
     auto bounds = getLocalBounds();
     g.setColour(COLOR_BACKGROUND);
     g.fillAll();
+    bounds.removeFromLeft(MENU_BAR_LEFT_MARGIN);
     drawMenuItem(1, FILE_MENU_TEXT, bounds, g);
     drawMenuItem(2, EDIT_MENU_TEXT, bounds, g);
     drawMenuItem(3, VERSIONNING_MENU_TEXT, bounds, g);

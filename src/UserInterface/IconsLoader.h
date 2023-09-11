@@ -2,6 +2,7 @@
 #define DEF_ICONS_LOADER_HPP
 
 #include <juce_gui_basics/juce_gui_basics.h>
+#include <memory>
 
 struct IconsLoader
 {
@@ -14,6 +15,7 @@ struct IconsLoader
     std::unique_ptr<juce::Drawable> unloopIcon;
     std::unique_ptr<juce::Drawable> moveIcon;
     std::unique_ptr<juce::Drawable> resizeHorizontalIcon;
+    std::unique_ptr<juce::Drawable> searchIcon;
 
   private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(IconsLoader)

@@ -8,7 +8,7 @@
 
 #include "../FontsLoader.h"
 
-#define TIMEINFO_WIDTH 95
+#define TIMEINFO_WIDTH 120
 
 #define TIMEINFO_MIN_NO_CHAR 2
 #define TIMEINFO_SEC_NO_CHAR 2

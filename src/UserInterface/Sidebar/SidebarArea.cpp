@@ -34,6 +34,7 @@ void SidebarArea::setDataSource(std::shared_ptr<MixbusDataSource> ds)
 {
     selectionGainVu.setDataSource(ds);
     masterGainVu.setDataSource(ds);
+    trackProperties.setDataSource(ds);
 }
 
 bool SidebarArea::taskHandler(std::shared_ptr<Task> task)

@@ -49,7 +49,7 @@ void TimeInfoValue::setFrameValue(int v)
 
 TimeInfo::TimeInfo() : frameValue(0)
 {
-    characterWidth = sharedFonts->monospaceFont.withHeight(SMALLER_FONT_SIZE).getStringWidth(" ");
+    characterWidth = sharedFonts->monospaceFont.withHeight(DEFAULT_FONT_SIZE).getStringWidth(" ");
     textWidth = characterWidth * (TIMEINFO_MIN_NO_CHAR + 2 + TIMEINFO_SEC_NO_CHAR + 2 + TIMEINFO_MS_NO_CHAR + 2);
 }
 
@@ -72,23 +72,23 @@ void TimeInfo::paint(juce::Graphics &g)
 
 void TimeInfo::paintBackground(juce::Graphics &g)
 {
-    // draw background and bottom line
-    g.setColour(COLOR_BACKGROUND.withAlpha(0.5f));
-    g.fillRoundedRectangle(g.getClipBounds().toFloat(), 3);
-
-    juce::Line<int> bottomLine(g.getClipBounds().getBottomLeft(), g.getClipBounds().getBottomRight());
-    g.setColour(COLOR_TEXT_DARKER.withAlpha(0.15f));
-    g.drawLine(bottomLine.toFloat(), 2.0f);
+    // We do not draw background anymore for timeinfo
 }
 
 void TimeInfo::paintMulticolorTimeText(juce::Graphics &g)
 {
+
     auto textArea = g.getClipBounds();
-    g.setFont(sharedFonts->monospaceFont.withHeight(SMALLER_FONT_SIZE));
+    g.setFont(sharedFonts->monospaceFont.withHeight(DEFAULT_FONT_SIZE));
 
     if (textArea.getWidth() <= textWidth)
     {
         return;
+    }
+    else
+    {
+        int diff = textArea.getWidth() - textWidth;
+        textArea.removeFromLeft((diff / 2));
     }
 
     // centering text area to perfectly fit text
