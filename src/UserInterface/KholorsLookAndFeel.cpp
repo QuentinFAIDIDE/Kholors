@@ -9,6 +9,9 @@ KholorsLookAndFeel::KholorsLookAndFeel()
     setColour(juce::TabbedButtonBar::ColourIds::tabOutlineColourId, juce::Colours::transparentBlack);
     setColour(juce::TabbedButtonBar::ColourIds::frontOutlineColourId, juce::Colours::transparentBlack);
     setColour(juce::TabbedComponent::ColourIds::outlineColourId, juce::Colours::transparentBlack);
+    setColour(juce::ScrollBar::ColourIds::thumbColourId, COLOR_HIGHLIGHT);
+    setColour(juce::TextEditor::ColourIds::highlightColourId, COLOR_HIGHLIGHT);
+    setColour(juce::CaretComponent::ColourIds::caretColourId, COLOR_HIGHLIGHT);
 }
 
 void KholorsLookAndFeel::drawTabButton(juce::TabBarButton &tb, juce::Graphics &g, bool isMouseOver, bool)

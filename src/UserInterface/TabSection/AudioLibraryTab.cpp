@@ -22,13 +22,13 @@ AudioLibraryTab::AudioLibraryTab() : Thread("File Search Thread"), resultList("R
 
     treeView.setColour(juce::TreeView::ColourIds::linesColourId, COLOR_TEXT.withAlpha(0.8f));
     treeView.setColour(juce::TreeView::ColourIds::selectedItemBackgroundColourId, COLOR_SELECTED_BACKGROUND);
-    treeView.getViewport()->setScrollBarsShown(false, false, true, true);
+    treeView.getViewport()->setScrollBarsShown(true, false, true, true);
 
     treeView.setIndentSize(TREEVIEW_INDENT_SIZE);
 
     resultList.setColour(juce::ListBox::backgroundColourId, juce::Colours::transparentBlack);
     resultList.setColour(juce::ListBox::outlineColourId, juce::Colours::transparentBlack);
-    resultList.getViewport()->setScrollBarsShown(false, false, true, true);
+    resultList.getViewport()->setScrollBarsShown(true, false, true, true);
     resultList.setRowHeight(TREEVIEW_ITEM_HEIGHT);
     resultList.setOutlineThickness(0);
 
@@ -220,10 +220,7 @@ void AudioLibraryTab::textEditorTextChanged(juce::TextEditor &te)
     if (txt.isEmpty())
     {
         updateBestEntries();
-        {
-            const juce::SpinLock::ScopedLockType lock(searchTextLock);
-            searchText.clear();
-        }
+        searchText.clear();
         return;
     }
 
@@ -231,10 +228,7 @@ void AudioLibraryTab::textEditorTextChanged(juce::TextEditor &te)
     if (txt.length() < 3)
     {
         emptyResultEntries();
-        {
-            const juce::SpinLock::ScopedLockType lock(searchTextLock);
-            searchText.clear();
-        }
+        searchText.clear();
         return;
     }
 
@@ -268,8 +262,13 @@ void AudioLibraryTab::populateSearchContent(std::string txt)
 
     // lock the message thread and update the widget with the results
     const juce::MessageManagerLock mmLock;
-    resultListContent.setContent(res);
-    resultList.updateContent();
+
+    // if the text is now different, do nothing
+    if (searchBar.getText().toStdString() == txt)
+    {
+        resultListContent.setContent(res);
+        resultList.updateContent();
+    }
 }
 
 void AudioLibraryTab::run()
