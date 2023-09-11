@@ -122,20 +122,9 @@ void AudioLibFile::itemOpennessChanged(bool isNowOpen)
 void AudioLibFile::paintItem(juce::Graphics &g, int width, int height)
 {
     g.setColour(COLOR_TEXT_DARKER);
+    g.setFont(juce::Font(DEFAULT_FONT_SIZE));
     g.drawText(name, 0, 0, width, height, juce::Justification::left);
-
     g.setColour(COLOR_TEXT_DARKER.withAlpha(0.4f));
-
-    auto bounds = g.getClipBounds();
-    bounds.reduce(5, 0);
-    juce::Line<int> bottomLine(bounds.getBottomLeft(), bounds.getBottomRight());
-    g.drawLine(bottomLine.toFloat(), 0.5f);
-
-    if (getRowNumberInTree() == 0)
-    {
-        juce::Line<int> topLine(bounds.getTopLeft(), bounds.getTopRight());
-        g.drawLine(topLine.toFloat(), 0.5f);
-    }
 }
 
 void AudioLibFile::paintOpenCloseButton(juce::Graphics &g, const juce::Rectangle<float> &area,

@@ -26,12 +26,10 @@ class ResultList : public juce::ListBoxModel
 
     void paintListBoxItem(int rowNumber, juce::Graphics &g, int widtht, int height, bool selected) override
     {
-        g.setColour(COLOR_TEXT_DARKER.withAlpha(0.2f));
-        g.drawLine(juce::Line<int>(g.getClipBounds().getBottomLeft(), g.getClipBounds().getBottomRight()).toFloat(), 1);
 
         if (selected)
         {
-            g.setColour(COLOR_BACKGROUND_HIGHLIGHT);
+            g.setColour(COLOR_SELECTED_BACKGROUND);
             g.fillRect(g.getClipBounds());
         }
 
@@ -51,6 +49,7 @@ class ResultList : public juce::ListBoxModel
             shortedName = "..." + shortedName;
         }
 
+        g.setFont(DEFAULT_FONT_SIZE);
         g.drawText(shortedName, g.getClipBounds().reduced(5, 0), juce::Justification::centredLeft, false);
     }
 

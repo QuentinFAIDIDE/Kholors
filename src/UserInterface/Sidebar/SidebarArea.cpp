@@ -53,6 +53,12 @@ void SidebarArea::paint(juce::Graphics &g)
     g.fillAll();
     g.setColour(COLOR_TEXT);
     g.drawText("MyProject", projectTitleArea, juce::Justification::centredLeft, true);
+
+    auto topSection = getLocalBounds().removeFromTop(TABS_HEIGHT);
+    topSection.setY(topSection.getY() + topSection.getHeight());
+    g.setColour(COLOR_SEPARATOR_LINE);
+    topSection.setHeight(1);
+    g.fillRect(topSection);
 }
 
 void SidebarArea::paintOverChildren(juce::Graphics &g)
@@ -206,13 +212,14 @@ void SidebarArea::resized()
     // to assign it to other components
     auto remainingBounds = getLocalBounds();
 
+    remainingBounds.reduce(SIDEBAR_OUTTER_MARGINS, 0);
+
     // top bar with app title and play/stop buttons
     auto topLine = remainingBounds.removeFromTop(TABS_HEIGHT);
-    topLine.reduce(SIDEBAR_ICONS_BUTTONS_PADDING, 0); // we reuse icons padding for side padding of the whole line
     loopButton.setBounds(topLine.removeFromRight(SIDEBAR_ICONS_BUTTONS_WIDTH));
     topLine.removeFromRight(SIDEBAR_ICONS_BUTTONS_PADDING);
     stopButton.setBounds(topLine.removeFromRight(SIDEBAR_ICONS_BUTTONS_WIDTH));
-    topLine.removeFromLeft(SIDEBAR_ICONS_BUTTONS_PADDING);
+    topLine.removeFromRight(SIDEBAR_ICONS_BUTTONS_PADDING);
     playButton.setBounds(topLine.removeFromRight(SIDEBAR_ICONS_BUTTONS_WIDTH));
     topLine.removeFromRight(SIDEBAR_ICONS_BUTTONS_PADDING);
 

@@ -85,11 +85,7 @@ void main()
     // horizontal bars
     if (abs(gl_FragCoord.y - 0.5 - (viewHeightPixels/2)) < 0.5 ) {
         FragColor = vec4(0.4,0.4,0.4,1.0);
-    } else if (gl_FragCoord.y < 0.75 ) {
-        FragColor = vec4(0.4,0.4,0.4,1.0);
-    } else if (gl_FragCoord.y > viewHeightPixels-0.75) {
-        FragColor = vec4(0.4,0.4,0.4,1.0);
-    
+            
     // vertical grid tempo bars
     } else if ( abs( grid0position - round(grid0position) )*grid0PixelWidth < 1.5 && grid0PixelWidth > 25 ) {
         FragColor = vec4(0.4,0.4,0.4,1.0);

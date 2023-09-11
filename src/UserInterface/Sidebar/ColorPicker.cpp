@@ -15,8 +15,7 @@ void ColorPicker::paint(juce::Graphics &g)
 {
     auto bounds = g.getClipBounds();
 
-    juce::Colour bg = juce::Colours::transparentBlack;
-    drawSection(g, bounds, "Group Color", bg, true);
+    drawSection(g, bounds, "Group Color");
 
     // get the bounds below the section title
     auto boxesArea = bounds;
@@ -48,11 +47,8 @@ void ColorPicker::paint(juce::Graphics &g)
         square = square.withY(square.getY() + verticalIndex * COLORSQUARE_SIZE);
 
         square.reduce(COLORSQUARE_INNER_MARGINS, COLORSQUARE_INNER_MARGINS);
-        g.setColour(colourPalette[i]);
-        g.fillRoundedRectangle(square.toFloat(), 2);
-        g.setColour(COLOR_TEXT_DARKER);
-        g.drawRoundedRectangle(square.toFloat(), 2, 1);
-
+        g.setColour(colourPalette[(size_t)i]);
+        g.fillRect(square.toFloat());
         colorSquares[i] = square;
     }
 }

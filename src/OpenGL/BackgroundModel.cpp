@@ -12,8 +12,7 @@ BackgroundModel::BackgroundModel()
 
     vertices.reserve(4);
 
-    // TODO: move that into the config
-    juce::Colour col(20, 20, 20);
+    juce::Colour col = COLOR_BACKGROUND;
 
     // NOTE: we use a unified vertex format that includes
     // texture coordinates because we can affort to send

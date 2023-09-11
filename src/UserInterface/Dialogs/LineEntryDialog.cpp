@@ -46,8 +46,7 @@ void LineEntryDialog::paint(juce::Graphics &g)
     g.fillAll();
 
     auto bounds = getLocalBounds().reduced(4, 4);
-    auto bgColor = COLOR_DIALOG_BACKGROUND;
-    drawSection(g, bounds, getDialogInstructions() + ":", bgColor);
+    drawSection(g, bounds, getDialogInstructions() + ":");
 
     auto nameBound = textEntry.getBounds();
     g.setColour(COLOR_TEXT_DARKER.withAlpha(0.6f));

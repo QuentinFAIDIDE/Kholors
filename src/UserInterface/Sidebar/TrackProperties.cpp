@@ -32,9 +32,7 @@ TrackProperties::TrackProperties(ActivityManager &am)
 void TrackProperties::paint(juce::Graphics &g)
 {
     auto bounds = g.getClipBounds();
-
-    juce::Colour bg = juce::Colours::transparentBlack;
-    drawSection(g, bounds, "Track Properties", bg, true);
+    drawSection(g, bounds, "Track Properties");
 }
 
 void TrackProperties::resized()

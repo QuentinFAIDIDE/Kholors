@@ -20,8 +20,7 @@ void VuMeter::paint(juce::Graphics &g)
     }
 
     // draw the top title
-    juce::Colour bg = juce::Colours::transparentBlack;
-    drawSection(g, bounds, title, bg, true);
+    drawSection(g, bounds, title);
 
     // now we update the value from the data source if possible
     updateValue();

@@ -7,9 +7,10 @@
 
 // made from https://medialab.github.io/iwanthue/
 inline std::vector<juce::Colour> colourPalette = {
-    juce::Colour::fromString("ff6cbf73"), juce::Colour::fromString("ffd470e7"), juce::Colour::fromString("ff80c239"),
-    juce::Colour::fromString("ffe97bbd"), juce::Colour::fromString("ff40c6b6"), juce::Colour::fromString("ffe09b2e"),
-    juce::Colour::fromString("ff7b98ea"), juce::Colour::fromString("ffc4a756"), juce::Colour::fromString("ffb4a1e2"),
-    juce::Colour::fromString("ffeb8071")};
+    juce::Colour::fromString("ff399898"), juce::Colour::fromString("ff3c7a98"), juce::Colour::fromString("ff4056a5"),
+    juce::Colour::fromString("ff663fc6"), juce::Colour::fromString("ff8c2fd3"), juce::Colour::fromString("ffcc34c9"),
+    juce::Colour::fromString("ffc2448a"), juce::Colour::fromString("ffc64264"), juce::Colour::fromString("ff9b5f31"),
+    juce::Colour::fromString("ffc5a536"), juce::Colour::fromString("ffbec83d"), juce::Colour::fromString("ff97c43e"),
+    juce::Colour::fromString("ff49c479")};
 
 #endif // DEF_COLOR_PALETTE_HPP

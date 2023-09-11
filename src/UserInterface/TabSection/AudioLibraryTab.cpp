@@ -5,6 +5,9 @@
 
 #include "../Section.h"
 
+#define SEARCHBAR_HEIGHT 30
+#define SEARCHBAR_BOTTOM_MARGIN 5
+
 AudioLibraryTab::AudioLibraryTab() : Thread("File Search Thread"), resultList("Results", &resultListContent)
 {
     startThread();
@@ -14,23 +17,22 @@ AudioLibraryTab::AudioLibraryTab() : Thread("File Search Thread"), resultList("R
     treeView.setRootItemVisible(false);
     treeView.setRepaintsOnMouseActivity(false);
 
-    treeView.setColour(juce::TreeView::ColourIds::linesColourId, COLOR_TEXT);
-    treeView.setColour(juce::TreeView::ColourIds::selectedItemBackgroundColourId, COLOR_BACKGROUND_HIGHLIGHT);
+    treeView.setColour(juce::TreeView::ColourIds::linesColourId, COLOR_TEXT.withAlpha(0.5f));
+    treeView.setColour(juce::TreeView::ColourIds::selectedItemBackgroundColourId, COLOR_SELECTED_BACKGROUND);
     treeView.getViewport()->setScrollBarsShown(false, false, true, true);
 
     treeView.setIndentSize(TREEVIEW_INDENT_SIZE);
 
-    resultList.setColour(juce::ListBox::backgroundColourId, COLOR_BACKGROUND_LIGHTER);
-    resultList.setColour(juce::ListBox::outlineColourId, COLOR_BACKGROUND_LIGHTER);
+    resultList.setColour(juce::ListBox::backgroundColourId, juce::Colours::transparentBlack);
+    resultList.setColour(juce::ListBox::outlineColourId, juce::Colours::transparentBlack);
     resultList.getViewport()->setScrollBarsShown(false, false, true, true);
     resultList.setRowHeight(TREEVIEW_ITEM_HEIGHT);
-    resultList.setOutlineThickness(1);
+    resultList.setOutlineThickness(0);
 
     searchBar.setColour(juce::TextEditor::ColourIds::textColourId, COLOR_TEXT);
-    searchBar.setColour(juce::TextEditor::ColourIds::backgroundColourId, COLOR_BACKGROUND_LIGHTER.darker(0.1f));
-    searchBar.setColour(juce::TextEditor::outlineColourId, COLOR_BACKGROUND_LIGHTER);
-    searchBar.setColour(juce::TextEditor::focusedOutlineColourId, COLOR_BACKGROUND_LIGHTER.darker(0.05f));
-
+    searchBar.setColour(juce::TextEditor::ColourIds::backgroundColourId, juce::Colours::transparentBlack);
+    searchBar.setColour(juce::TextEditor::outlineColourId, COLOR_TEXT.darker(0.5f));
+    searchBar.setColour(juce::TextEditor::focusedOutlineColourId, COLOR_HIGHLIGHT);
     addAndMakeVisible(treeView);
     addAndMakeVisible(searchBar);
     addAndMakeVisible(resultList);
@@ -141,16 +143,10 @@ void AudioLibraryTab::addAudioLibrary(std::string path)
 
 void AudioLibraryTab::paint(juce::Graphics &g)
 {
-    juce::Colour bg = COLOR_BACKGROUND_LIGHTER;
-    auto dropShadow = juce::DropShadow(COLOR_BLACK.withAlpha(0.4f), 5, juce::Point<int>(4, 2));
-    dropShadow.drawForRectangle(g, findLocation);
-    dropShadow.drawForRectangle(g, librariesSectionLocation);
-    drawSection(g, findLocation, "Find", bg);
-    drawSection(g, librariesSectionLocation, "Libraries", bg);
-
     juce::Line<int> searchBarBottom(searchBarBounds.getBottomLeft(), searchBarBounds.getBottomRight());
     g.setColour(COLOR_TEXT_DARKER.withAlpha(0.5f));
     g.drawLine(searchBarBottom.toFloat(), 1.0f);
+    // TODO: draw a lens instead
 }
 
 void AudioLibraryTab::resized()
@@ -161,33 +157,18 @@ void AudioLibraryTab::resized()
 
     // set position of the Find section
     int idealProportion = LIBRARY_IDEAL_SEARCH_SIZE_PROPORTION * localBounds.getWidth();
-    localBounds.setWidth(juce::jmax(idealProportion, LIBRARY_MIN_SEARCH_SIZE));
-    findLocation = localBounds.reduced(TAB_SECTIONS_MARGINS, TAB_SECTIONS_MARGINS);
+    findLocation = localBounds.removeFromLeft(idealProportion).reduced(TAB_SECTIONS_MARGINS, TAB_SECTIONS_MARGINS);
 
     // set the position of the library files section
-    localBounds.setX(localBounds.getX() + localBounds.getWidth());
-    localBounds.setWidth(getLocalBounds().reduced(TAB_PADDING, TAB_PADDING).getWidth() - localBounds.getWidth());
-    librariesSectionLocation = localBounds.reduced(TAB_SECTIONS_MARGINS, TAB_SECTIONS_MARGINS);
-
-    // set the position of the file browser
-    localBounds.reduce(TAB_SECTIONS_MARGINS, TAB_SECTIONS_MARGINS);
-    localBounds.setY(localBounds.getY() + SECTION_TITLE_HEIGHT);
-    localBounds.setHeight(localBounds.getHeight() - 25);
-    treeView.setBounds(localBounds.reduced(2));
-
-    // TODO: this code sucks, it should be refactored cleaner.
+    treeView.setBounds(localBounds.reduced(TAB_SECTIONS_MARGINS, TAB_SECTIONS_MARGINS));
 
     // positionate the searchbar
-    searchBarBounds = findLocation.reduced(TAB_SECTIONS_MARGINS, TAB_SECTIONS_MARGINS)
-                          .withHeight(26)
-                          .withY(findLocation.getY() + SECTION_TITLE_HEIGHT)
-                          .reduced(2);
+    auto searchBarAndFileListArea = findLocation;
+    searchBarBounds = searchBarAndFileListArea.removeFromTop(SEARCHBAR_HEIGHT);
+
     searchBar.setBounds(searchBarBounds);
-    resultList.setBounds(findLocation.reduced(TAB_SECTIONS_MARGINS, TAB_SECTIONS_MARGINS)
-                             .withHeight(findLocation.reduced(TAB_SECTIONS_MARGINS, TAB_SECTIONS_MARGINS).getHeight() -
-                                         26 - SECTION_TITLE_HEIGHT + 1)
-                             .withY(findLocation.getY() + SECTION_TITLE_HEIGHT + 26 + 3)
-                             .reduced(2));
+    searchBarAndFileListArea.removeFromTop(SEARCHBAR_BOTTOM_MARGIN);
+    resultList.setBounds(searchBarAndFileListArea);
 }
 
 void AudioLibraryTab::textEditorTextChanged(juce::TextEditor &te)

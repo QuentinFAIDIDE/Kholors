@@ -6,7 +6,6 @@
 #define SECTION_TITLE_HEIGHT 24
 #define SECTION_TITLE_HEIGHT_SMALL 16
 
-void drawSection(juce::Graphics &g, juce::Rectangle<int> &bounds, juce::String title, juce::Colour &background,
-                 bool small = false);
+void drawSection(juce::Graphics &g, juce::Rectangle<int> &bounds, juce::String title);
 
 #endif // DEF_SECTION_HPP

@@ -29,7 +29,8 @@ void TempoGrid::paint(juce::Graphics &g)
     auto centerLine = juce::Line<int>(halfBounds.getX(), halfBounds.getTopLeft().getY(),
                                       halfBounds.getX() + halfBounds.getWidth(), halfBounds.getTopLeft().getY());
 
-    paintMiddleGradient(g, halfBounds);
+    // we used to call paintMiddleGradient here but it doesn't really
+    // fit in our new graphic chart
 
     paintLoopSection(g);
 
