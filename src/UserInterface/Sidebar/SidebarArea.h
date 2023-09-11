@@ -104,6 +104,8 @@ class SidebarArea : public juce::AnimatedAppComponent, public TaskListener
     VuMeter selectionGainVu;
     VuMeter masterGainVu;
 
+    ActivityManager &activityManager;
+
     //==============================================================================
     void trimNotifications();
     float easeIn(float t);

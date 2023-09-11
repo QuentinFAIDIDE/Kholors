@@ -4,7 +4,7 @@
 
 SidebarArea::SidebarArea(ActivityManager &am)
     : playButton(am), stopButton(am), loopButton(am), colorPicker(am), trackProperties(am), sampleProperties(am),
-      selectionGainVu("SELECTION", VUMETER_ID_SELECTED), masterGainVu("MASTER", VUMETER_ID_MASTER)
+      selectionGainVu("SELECTION", VUMETER_ID_SELECTED), masterGainVu("MASTER", VUMETER_ID_MASTER), activityManager(am)
 {
 
     isHidden = true;
@@ -55,7 +55,16 @@ void SidebarArea::paint(juce::Graphics &g)
     g.setColour(COLOR_BACKGROUND_LIGHTER);
     g.fillAll();
     g.setColour(COLOR_TEXT);
-    g.drawText("MyProject", projectTitleArea, juce::Justification::centredLeft, true);
+
+    std::string projectName = "New Project";
+    auto optionalRepo = activityManager.getAppState().getRepoDirectory();
+    if (optionalRepo.has_value())
+    {
+        projectName = optionalRepo.value().getFileName().toStdString();
+    }
+
+    g.setFont(DEFAULT_FONT_SIZE);
+    g.drawText(projectName, projectTitleArea, juce::Justification::centredLeft, true);
 }
 
 void SidebarArea::paintOverChildren(juce::Graphics &g)
