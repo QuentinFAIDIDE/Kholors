@@ -88,7 +88,7 @@
 #define COLOR_HIGHLIGHT juce::Colour(56, 110, 155)
 #define COLOR_SELECTED_BACKGROUND juce::Colour(35, 36, 38)
 
-#define COLOR_UNITS COLOR_TEXT_DARKER.withAlpha(0.85f)
+#define COLOR_UNITS COLOR_TEXT_DARKER.withAlpha(0.5f)
 
 #define COLOR_BLACK juce::Colour(10, 10, 10)
 #define COLOR_WHITE juce::Colour(230, 230, 230)

@@ -55,12 +55,6 @@ void SidebarArea::paint(juce::Graphics &g)
     g.fillAll();
     g.setColour(COLOR_TEXT);
     g.drawText("MyProject", projectTitleArea, juce::Justification::centredLeft, true);
-
-    auto topSection = getLocalBounds().removeFromTop(TABS_HEIGHT);
-    topSection.setY(topSection.getY() + topSection.getHeight());
-    g.setColour(COLOR_SEPARATOR_LINE);
-    topSection.setHeight(1);
-    g.fillRect(topSection);
 }
 
 void SidebarArea::paintOverChildren(juce::Graphics &g)
