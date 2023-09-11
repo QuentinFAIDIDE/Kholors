@@ -5,8 +5,8 @@
 #include <climits>
 #include <memory>
 
-#define SAMPLEPROPS_MAX_LABEL_WIDTH 60
-#define SAMPLEPROPS_INPUT_WIDTH 70
+#define SAMPLEPROPS_MAX_LABEL_WIDTH 140
+#define SAMPLEPROPS_INPUT_WIDTH 100
 
 SampleProperties::SampleProperties(ActivityManager &am)
 {
@@ -15,7 +15,7 @@ SampleProperties::SampleProperties(ActivityManager &am)
     am.registerTaskListener(fadeInInput.get());
     fadeInInput->setActivityManager(&am);
     fadeInInput->setMinDragUpdate(1.0f);
-    fadeInLine = std::make_shared<LabeledLineContainer>("Fade In:", fadeInInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
+    fadeInLine = std::make_shared<LabeledLineContainer>("Attack", fadeInInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
                                                         SAMPLEPROPS_INPUT_WIDTH);
     addAndMakeVisible(*fadeInLine);
 
@@ -24,7 +24,7 @@ SampleProperties::SampleProperties(ActivityManager &am)
     am.registerTaskListener(fadeOutInput.get());
     fadeOutInput->setActivityManager(&am);
     fadeOutInput->setMinDragUpdate(1.0f);
-    fadeOutLine = std::make_shared<LabeledLineContainer>("Fade Out:", fadeOutInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
+    fadeOutLine = std::make_shared<LabeledLineContainer>("Release", fadeOutInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
                                                          SAMPLEPROPS_INPUT_WIDTH);
     addAndMakeVisible(*fadeOutLine);
 
@@ -32,15 +32,15 @@ SampleProperties::SampleProperties(ActivityManager &am)
     gainInput->setUnit("dB");
     am.registerTaskListener(gainInput.get());
     gainInput->setActivityManager(&am);
-    gainLine = std::make_shared<LabeledLineContainer>("Gain:", gainInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
-                                                      SAMPLEPROPS_INPUT_WIDTH);
+    gainLine =
+        std::make_shared<LabeledLineContainer>("Gain", gainInput, SAMPLEPROPS_MAX_LABEL_WIDTH, SAMPLEPROPS_INPUT_WIDTH);
     addAndMakeVisible(*gainLine);
 
     auto lpRepeatInput = std::make_shared<SampleFilterRepeatInput>(true);
     lpRepeatInput->setUnit("dB/oct");
     am.registerTaskListener(lpRepeatInput.get());
     lpRepeatInput->setActivityManager(&am);
-    lpRepeatLine = std::make_shared<LabeledLineContainer>("LP:", lpRepeatInput, SAMPLEPROPS_MAX_LABEL_WIDTH >> 1,
+    lpRepeatLine = std::make_shared<LabeledLineContainer>("LowPass Slope", lpRepeatInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
                                                           SAMPLEPROPS_INPUT_WIDTH);
     addAndMakeVisible(*lpRepeatLine);
 
@@ -48,7 +48,7 @@ SampleProperties::SampleProperties(ActivityManager &am)
     hpRepeatInput->setUnit("dB/oct");
     am.registerTaskListener(hpRepeatInput.get());
     hpRepeatInput->setActivityManager(&am);
-    hpRepeatLine = std::make_shared<LabeledLineContainer>("HP:", hpRepeatInput, SAMPLEPROPS_MAX_LABEL_WIDTH >> 1,
+    hpRepeatLine = std::make_shared<LabeledLineContainer>("HighPass Slope:", hpRepeatInput, SAMPLEPROPS_MAX_LABEL_WIDTH,
                                                           SAMPLEPROPS_INPUT_WIDTH);
     addAndMakeVisible(*hpRepeatLine);
 
@@ -64,14 +64,16 @@ void SampleProperties::paint(juce::Graphics &g)
 void SampleProperties::resized()
 {
     auto contentBounds = getLocalBounds();
-    contentBounds.removeFromTop(SECTION_TITLE_HEIGHT_SMALL);
+    contentBounds.removeFromTop(SECTION_TITLE_HEIGHT);
     gainLine->setBounds(contentBounds.removeFromTop(LABELED_LINE_CONTAINER_DEFAULT_HEIGHT));
+    contentBounds.removeFromTop(LABELED_LINE_CONTAINER_SPACING);
     fadeInLine->setBounds(contentBounds.removeFromTop(LABELED_LINE_CONTAINER_DEFAULT_HEIGHT));
+    contentBounds.removeFromTop(LABELED_LINE_CONTAINER_SPACING);
     fadeOutLine->setBounds(contentBounds.removeFromTop(LABELED_LINE_CONTAINER_DEFAULT_HEIGHT));
-    lpRepeatLine->setBounds(contentBounds.removeFromTop(LABELED_LINE_CONTAINER_DEFAULT_HEIGHT)
-                                .removeFromLeft(contentBounds.getWidth() / 2));
-    auto lpBounds = lpRepeatLine->getBounds();
-    hpRepeatLine->setBounds(lpBounds.withX(lpBounds.getX() + lpBounds.getWidth()));
+    contentBounds.removeFromTop(LABELED_LINE_CONTAINER_SPACING);
+    lpRepeatLine->setBounds(contentBounds.removeFromTop(LABELED_LINE_CONTAINER_DEFAULT_HEIGHT));
+    contentBounds.removeFromTop(LABELED_LINE_CONTAINER_SPACING);
+    hpRepeatLine->setBounds(contentBounds.removeFromTop(LABELED_LINE_CONTAINER_DEFAULT_HEIGHT));
 }
 
 bool SampleProperties::taskHandler(std::shared_ptr<Task> task)
@@ -99,4 +101,9 @@ bool SampleProperties::taskHandler(std::shared_ptr<Task> task)
     }
 
     return false;
+}
+
+int SampleProperties::getIdealHeight()
+{
+    return SECTION_TITLE_HEIGHT + (5 * (TABS_HEIGHT + LABELED_LINE_CONTAINER_SPACING));
 }

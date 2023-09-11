@@ -2,10 +2,6 @@
 
 #include "../Config.h"
 
-#define POPUP_MENU_IDEAL_HEIGHT 18
-#define POPUP_MENU_SEPARATOR_IDEAL_HEIGHT 4
-#define TAB_HIGHLIGHT_LINE_WIDTH 2
-
 KholorsLookAndFeel::KholorsLookAndFeel()
 {
     setColour(juce::PopupMenu::ColourIds::backgroundColourId, COLOR_BACKGROUND);
@@ -62,6 +58,7 @@ void KholorsLookAndFeel::drawTabAreaBehindFrontButton(juce::TabbedButtonBar &tb,
     int currentTabIndex = tb.getCurrentTabIndex();
     auto tabBounds = tb.getTabButton(currentTabIndex)->getBounds();
     g.setColour(COLOR_HIGHLIGHT);
-    g.fillRect(tabBounds.withY(tabBounds.getY() + tabBounds.getHeight() - TAB_HIGHLIGHT_LINE_WIDTH)
-                   .withHeight(TAB_HIGHLIGHT_LINE_WIDTH));
+    auto line = tabBounds.withY(tabBounds.getY() + tabBounds.getHeight() - TAB_HIGHLIGHT_LINE_WIDTH)
+                    .withHeight(TAB_HIGHLIGHT_LINE_WIDTH);
+    g.fillRect(line);
 }

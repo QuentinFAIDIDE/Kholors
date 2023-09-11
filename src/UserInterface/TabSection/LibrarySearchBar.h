@@ -16,13 +16,9 @@ class LibrarySearchBar : public juce::TextEditor
     {
         setCaretVisible(true);
         setScrollbarsShown(false);
-        setJustification(juce::Justification::left);
+        setJustification(juce::Justification::centredLeft);
         setDescription("Search for files here");
         setMultiLine(false);
-        setColour(juce::TextEditor::backgroundColourId, juce::Colour(COLOR_APP_BACKGROUND));
-        setColour(juce::TextEditor::outlineColourId, juce::Colour::fromRGBA(255, 255, 255, 100));
-        setColour(juce::TextEditor::focusedOutlineColourId, juce::Colour::fromRGBA(255, 255, 255, 125));
-        setColour(juce::TextEditor::textColourId, COLOR_TEXT);
         setMouseCursor(juce::MouseCursor::IBeamCursor);
     };
 };

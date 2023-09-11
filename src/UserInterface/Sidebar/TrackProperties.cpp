@@ -14,7 +14,7 @@ TrackProperties::TrackProperties(ActivityManager &am)
 {
     std::shared_ptr<TimeInfo> timeInfo = std::make_shared<TimeInfo>();
     trackTimeInfoLine =
-        std::make_shared<LabeledLineContainer>("Position:", timeInfo, TRACKPROP_MAX_LABEL_WIDTH, TIMEINFO_WIDTH);
+        std::make_shared<LabeledLineContainer>("Position", timeInfo, TRACKPROP_MAX_LABEL_WIDTH, TIMEINFO_WIDTH);
     addAndMakeVisible(*trackTimeInfoLine);
 
     // make the tempo widget and connect to to task handling (for updating values around)
@@ -25,7 +25,7 @@ TrackProperties::TrackProperties(ActivityManager &am)
     tempoInput->setNumericInputId(NUM_INPUT_ID_TEMPO);
     tempoInput->setActivityManager(&am);
     trackTempoLine =
-        std::make_shared<LabeledLineContainer>("Tempo:", tempoInput, TRACKPROP_MAX_LABEL_WIDTH, TRACKPROP_TEMPO_WIDTH);
+        std::make_shared<LabeledLineContainer>("Tempo", tempoInput, TRACKPROP_MAX_LABEL_WIDTH, TRACKPROP_TEMPO_WIDTH);
     addAndMakeVisible(*trackTempoLine);
 }
 
@@ -39,10 +39,10 @@ void TrackProperties::resized()
 {
 
     auto contentBounds = getLocalBounds();
-    contentBounds.removeFromTop(SECTION_TITLE_HEIGHT_SMALL);
+    contentBounds.removeFromTop(SECTION_TITLE_HEIGHT);
 
     trackTimeInfoLine->setBounds(contentBounds.removeFromTop(LABELED_LINE_CONTAINER_DEFAULT_HEIGHT));
-
+    contentBounds.removeFromTop(LABELED_LINE_CONTAINER_SPACING);
     trackTempoLine->setBounds(contentBounds.removeFromTop(LABELED_LINE_CONTAINER_DEFAULT_HEIGHT));
 }
 
@@ -58,4 +58,9 @@ void TrackProperties::setDataSource(std::shared_ptr<MixbusDataSource> ds)
             timeInfo->setDataSource(pds);
         }
     }
+}
+
+int TrackProperties::getIdealHeight()
+{
+    return SECTION_TITLE_HEIGHT + (2 * (TABS_HEIGHT + LABELED_LINE_CONTAINER_SPACING));
 }

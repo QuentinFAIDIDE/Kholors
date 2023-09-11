@@ -13,8 +13,10 @@
 #include "../Audio/MixingBus.h"
 #include "./ArrangementArea/ArrangementArea.h"
 #include "KholorsLookAndFeel.h"
+#include "LayerBar.h"
 #include "MenuBar.h"
 #include "Sidebar/SidebarArea.h"
+#include "StatusBar.h"
 #include "TabSection/AudioLibraryTab.h"
 #include "TabSection/EmptyTab.h"
 #include "TabSection/GeneratorsTab.h"
@@ -63,7 +65,7 @@ class MainComponent : public juce::AudioAppComponent, public juce::DragAndDropCo
     MixingBus mixingBus;
 
     ArrangementArea arrangementArea;
-    int arrangementAreaHeight;
+    int tabAreaHeight;
 
     juce::Rectangle<int> resizeHandleArea;
 
@@ -74,6 +76,8 @@ class MainComponent : public juce::AudioAppComponent, public juce::DragAndDropCo
     GeneratorsTab generatorsTab;
     EmptyTab sampleProcessingTab;
     EmptyTab masteringTab;
+    LayerBar layerTabs;
+    StatusBar statusBar;
 
     MenuBar menu;
 

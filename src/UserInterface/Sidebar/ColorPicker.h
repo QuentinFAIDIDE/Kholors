@@ -10,6 +10,7 @@ class ColorPicker : public juce::Component
     ColorPicker(ActivityManager &am);
     void paint(juce::Graphics &g) override;
     void mouseUp(const juce::MouseEvent &event) override;
+    int getIdealHeight();
 
   private:
     ActivityManager &activityManager;

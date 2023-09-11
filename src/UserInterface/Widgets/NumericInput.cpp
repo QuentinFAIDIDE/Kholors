@@ -9,22 +9,14 @@ NumericInput::NumericInput(bool integers, float minValue, float maxValue, float 
     : value(0.0f), isInteger(integers), min(minValue), max(maxValue), step(stepValue),
       minDragUpdate(NUMERIC_INPUT_MIN_DRAG_UPDATE), activityManager(nullptr), isDragging(false), unit("")
 {
-    charWidth = sharedFonts->monospaceFont.withHeight(SMALLER_FONT_SIZE).getStringWidth(" ");
+    charWidth = sharedFonts->monospaceFont.withHeight(DEFAULT_FONT_SIZE).getStringWidth(" ");
 }
 
 void NumericInput::paint(juce::Graphics &g)
 {
-    g.setColour(COLOR_BACKGROUND.withAlpha(0.5f));
-    g.fillRoundedRectangle(g.getClipBounds().toFloat(), 3);
+    auto textArea = g.getClipBounds().reduced(NUMERIC_INPUT_TEXT_MARGINS + NUMERIC_INPUT_SIDE_ADDITIONAL_MARGINS, 0);
 
-    juce::Line<int> bottomLine(g.getClipBounds().getBottomLeft(), g.getClipBounds().getBottomRight());
-    g.setColour(COLOR_TEXT_DARKER.withAlpha(0.15f));
-    g.drawLine(bottomLine.toFloat(), 2.0f);
-
-    auto textArea = g.getClipBounds().reduced(NUMERIC_INPUT_TEXT_MARGINS + NUMERIC_INPUT_SIDE_ADDITIONAL_MARGINS,
-                                              NUMERIC_INPUT_TEXT_MARGINS);
-
-    g.setFont(sharedFonts->monospaceFont.withHeight(SMALLER_FONT_SIZE));
+    g.setFont(sharedFonts->monospaceFont.withHeight(DEFAULT_FONT_SIZE));
 
     if (unit != "")
     {

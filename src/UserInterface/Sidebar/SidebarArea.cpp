@@ -1,5 +1,7 @@
 #include "SidebarArea.h"
 
+#define SECTION_COMPONENTS_PADDING 6
+
 SidebarArea::SidebarArea(ActivityManager &am)
     : playButton(am), stopButton(am), loopButton(am), colorPicker(am), trackProperties(am), sampleProperties(am),
       selectionGainVu("SELECTION", VUMETER_ID_SELECTED), masterGainVu("MASTER", VUMETER_ID_MASTER)
@@ -222,7 +224,6 @@ void SidebarArea::resized()
     topLine.removeFromRight(SIDEBAR_ICONS_BUTTONS_PADDING);
     playButton.setBounds(topLine.removeFromRight(SIDEBAR_ICONS_BUTTONS_WIDTH));
     topLine.removeFromRight(SIDEBAR_ICONS_BUTTONS_PADDING);
-
     // the remaining area is where we draw the project title
     projectTitleArea = topLine;
 
@@ -233,9 +234,12 @@ void SidebarArea::resized()
 
     // we finally start adding the main sections
     auto mainArea = remainingBounds;
-    colorPicker.setBounds(mainArea.removeFromTop(SIDEBAR_COLOR_PICKER_HEIGHT));
-    trackProperties.setBounds(mainArea.removeFromTop(SIDEBAR_TRACK_PROPERTIES_HEIGHT));
-    sampleProperties.setBounds(mainArea.removeFromTop(SIDEBAR_SAMPLE_PROPERTIES_HEIGHT));
+    mainArea.removeFromTop(SIDEBAR_MAIN_SECTION_TOP_PADDING);
+    colorPicker.setBounds(mainArea.removeFromTop(colorPicker.getIdealHeight()));
+    mainArea.removeFromTop(SECTION_COMPONENTS_PADDING);
+    trackProperties.setBounds(mainArea.removeFromTop(trackProperties.getIdealHeight()));
+    mainArea.removeFromTop(SECTION_COMPONENTS_PADDING);
+    sampleProperties.setBounds(mainArea.removeFromTop(sampleProperties.getIdealHeight()));
 };
 
 // must be called from messagemanager thread

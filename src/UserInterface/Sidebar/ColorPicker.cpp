@@ -6,6 +6,7 @@
 // full color square size including margins
 #define COLORSQUARE_SIZE 22
 #define COLORSQUARE_INNER_MARGINS 3
+#define COLORPICKER_LINE_PAD 4
 
 ColorPicker::ColorPicker(ActivityManager &am) : activityManager(am)
 {
@@ -19,8 +20,7 @@ void ColorPicker::paint(juce::Graphics &g)
 
     // get the bounds below the section title
     auto boxesArea = bounds;
-    boxesArea.removeFromTop(SECTION_TITLE_HEIGHT_SMALL);
-    boxesArea.reduce(0, SIDEBAR_WIDGETS_MARGINS);
+    boxesArea.removeFromTop(SECTION_TITLE_HEIGHT);
 
     // compute how many squares will fit
     int noHorizontalSqares = (boxesArea.getWidth() / COLORSQUARE_SIZE);
@@ -43,8 +43,8 @@ void ColorPicker::paint(juce::Graphics &g)
         auto square = boxesArea;
         square.setWidth(COLORSQUARE_SIZE);
         square.setHeight(COLORSQUARE_SIZE);
-        square = square.withX(square.getX() + horizontalIndex * COLORSQUARE_SIZE);
-        square = square.withY(square.getY() + verticalIndex * COLORSQUARE_SIZE);
+        square = square.withX(square.getX() + horizontalIndex * (COLORSQUARE_SIZE));
+        square = square.withY(square.getY() + verticalIndex * (COLORSQUARE_SIZE + COLORPICKER_LINE_PAD));
 
         square.reduce(COLORSQUARE_INNER_MARGINS, COLORSQUARE_INNER_MARGINS);
         g.setColour(colourPalette[(size_t)i]);
@@ -64,4 +64,15 @@ void ColorPicker::mouseUp(const juce::MouseEvent &event)
             return;
         }
     }
+}
+
+int ColorPicker::getIdealHeight()
+{
+    // get the bounds below the section title
+    auto availableWidth = getParentWidth() - (2 * SIDEBAR_OUTTER_MARGINS);
+
+    int noSquarePerLine = availableWidth / COLORSQUARE_SIZE;
+    int noLines = std::ceil((float)colourPalette.size() / (float)noSquarePerLine);
+
+    return SECTION_TITLE_HEIGHT + (COLORSQUARE_SIZE * noLines) + ((noLines - 1) * COLORPICKER_LINE_PAD);
 }

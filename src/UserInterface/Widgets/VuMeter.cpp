@@ -19,8 +19,10 @@ void VuMeter::paint(juce::Graphics &g)
         return;
     }
 
-    // draw the top title
-    drawSection(g, bounds, title);
+    // draw the top title;
+    g.setColour(COLOR_TEXT_DARKER);
+    g.setFont(juce::Font(SMALLER_FONT_SIZE));
+    g.drawText(title, g.getClipBounds(), juce::Justification::centredTop);
 
     // now we update the value from the data source if possible
     updateValue();
@@ -104,7 +106,7 @@ juce::Rectangle<int> VuMeter::zoomToInnerSection(juce::Rectangle<int> bounds)
 {
     // focus on the area without the title and margins
     auto boxesArea = bounds;
-    boxesArea.removeFromTop(SECTION_TITLE_HEIGHT_SMALL);
+    boxesArea.removeFromTop(SECTION_TITLE_HEIGHT);
     boxesArea.reduce(SIDEBAR_WIDGETS_MARGINS, SIDEBAR_WIDGETS_MARGINS);
 
     // what's the size of the remaining side parts ?
@@ -124,6 +126,14 @@ void VuMeter::paintCoreMeter(juce::Graphics &g, juce::Rectangle<int> boxesArea)
     // apply the vumeter inner margins
     boxesArea.reduce(VUMETER_OUTTER_PADDING, VUMETER_OUTTER_PADDING);
 
+    // remove pixels so that we have equal spaces between vu meter levels
+    int totalSpaceBetweenLevels = VUMETER_DEFINITION - 1;
+    int remainingPixels = (boxesArea.getHeight() - totalSpaceBetweenLevels) % VUMETER_DEFINITION;
+    int bothSideReduction = remainingPixels / 2;
+    int topReduction = remainingPixels % 2;
+    boxesArea.reduce(0, bothSideReduction);
+    boxesArea.setHeight(boxesArea.getHeight() - topReduction);
+
     // isolate the left area where the vu meter lives
     auto vuArea = boxesArea.withWidth(boxesArea.getWidth() / 2);
     // isolate the right area where the scale lives
@@ -131,6 +141,8 @@ void VuMeter::paintCoreMeter(juce::Graphics &g, juce::Rectangle<int> boxesArea)
 
     drawScale(g, scaleArea);
     drawMeter(g, vuArea);
+    g.setColour(COLOR_SEPARATOR_LINE);
+    g.drawRect(vuArea);
 }
 
 void VuMeter::drawScale(juce::Graphics &g, juce::Rectangle<int> area)
@@ -142,7 +154,7 @@ void VuMeter::drawScale(juce::Graphics &g, juce::Rectangle<int> area)
     int currentLineHeight = 0;
 
     g.setColour(COLOR_TEXT_DARKER);
-    g.setFont(juce::Font(8));
+    g.setFont(juce::Font(SMALLER_FONT_SIZE - 2));
 
     // the space between lines
     float lineSpacing = float(area.getHeight()) / float(noLines);
@@ -189,7 +201,7 @@ void VuMeter::drawMeter(juce::Graphics &g, juce::Rectangle<int> area)
 void VuMeter::drawChannel(juce::Graphics &g, juce::Rectangle<int> area, float value, float maxval)
 {
     // ideal rectangle length
-    int rectHeigth = float(area.getHeight()) / float(VUMETER_DEFINITION);
+    float rectHeigth = float(area.getHeight()) / float(VUMETER_DEFINITION);
 
     // This is the effective resolution (number of levels) that can be different
     // from requested one whenever int truncating make it so that we can fit one more.
@@ -197,11 +209,12 @@ void VuMeter::drawChannel(juce::Graphics &g, juce::Rectangle<int> area, float va
     int effectiveResolution = area.getHeight() / rectHeigth;
 
     // compute remaining area at top (because of int truncating)
-    int remainingPixels = area.getHeight() - (effectiveResolution * rectHeigth);
-    for (int i = 0; i < effectiveResolution; i++)
+    float remainingPixels = (float)area.getHeight() - ((float)effectiveResolution * (float)rectHeigth);
+    for (int i = 0; i < (int)effectiveResolution; i++)
     {
         juce::Rectangle<int> rectToDraw(area.getX(),
-                                        area.getY() + area.getHeight() - (rectHeigth * (i + 1)) - (remainingPixels / 2),
+                                        area.getY() + area.getHeight() - (float)(rectHeigth * (float)(i + 1)) -
+                                            (remainingPixels / (float)2),
                                         area.getWidth(), rectHeigth);
         rectToDraw.removeFromTop(VUMETER_INNER_PADDING);
 

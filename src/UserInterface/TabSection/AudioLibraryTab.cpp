@@ -17,7 +17,7 @@ AudioLibraryTab::AudioLibraryTab() : Thread("File Search Thread"), resultList("R
     treeView.setRootItemVisible(false);
     treeView.setRepaintsOnMouseActivity(false);
 
-    treeView.setColour(juce::TreeView::ColourIds::linesColourId, COLOR_TEXT.withAlpha(0.5f));
+    treeView.setColour(juce::TreeView::ColourIds::linesColourId, COLOR_TEXT.withAlpha(0.8f));
     treeView.setColour(juce::TreeView::ColourIds::selectedItemBackgroundColourId, COLOR_SELECTED_BACKGROUND);
     treeView.getViewport()->setScrollBarsShown(false, false, true, true);
 
@@ -31,8 +31,12 @@ AudioLibraryTab::AudioLibraryTab() : Thread("File Search Thread"), resultList("R
 
     searchBar.setColour(juce::TextEditor::ColourIds::textColourId, COLOR_TEXT);
     searchBar.setColour(juce::TextEditor::ColourIds::backgroundColourId, juce::Colours::transparentBlack);
-    searchBar.setColour(juce::TextEditor::outlineColourId, COLOR_TEXT.darker(0.5f));
-    searchBar.setColour(juce::TextEditor::focusedOutlineColourId, COLOR_HIGHLIGHT);
+    searchBar.setColour(juce::TextEditor::outlineColourId, COLOR_SEPARATOR_LINE);
+    searchBar.setColour(juce::TextEditor::focusedOutlineColourId, COLOR_SEPARATOR_LINE);
+
+    juce::Font font(DEFAULT_FONT_SIZE);
+    searchBar.setFont(font);
+
     addAndMakeVisible(treeView);
     addAndMakeVisible(searchBar);
     addAndMakeVisible(resultList);

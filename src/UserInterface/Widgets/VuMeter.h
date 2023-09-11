@@ -6,7 +6,7 @@
 
 #include "../../Audio/DataSource.h"
 
-#define VUMETER_WIDTH 52
+#define VUMETER_WIDTH 72
 // the preferred widget width
 #define VUMETER_WIDGET_WIDTH (VUMETER_WIDTH + (2 * SIDEBAR_WIDGETS_MARGINS))
 
@@ -17,12 +17,12 @@
 #define VUMETER_INNER_PADDING 1
 
 // how many tiny little squares we define
-#define VUMETER_DEFINITION 16
+#define VUMETER_DEFINITION 19
 // how many db between each bars
-#define VUMETER_SCALE_DEFINITION 3.0f
-#define VUMETER_COLOR_0_MAX_DB -13.0f
-#define VUMETER_COLOR_1_MAX_DB -8.0f
-#define VUMETER_COLOR_2_MAX_DB -3.0f
+#define VUMETER_SCALE_DEFINITION 6.0f
+#define VUMETER_COLOR_0_MAX_DB -18.0f
+#define VUMETER_COLOR_1_MAX_DB -12.0f
+#define VUMETER_COLOR_2_MAX_DB -6.0f
 #define VUMETER_DECAY_PER_BUFFER 3.0f
 #define VUMETER_BUFFERS_BEFORE_DECAY 20
 

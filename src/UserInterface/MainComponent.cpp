@@ -5,12 +5,13 @@
 
 #include "RobotoFont.h"
 
-//==============================================================================
+#define DEFAULT_TAB_AREA_HEIGHT 300
+
 MainComponent::MainComponent()
     : mixingBus(activityManager), arrangementArea(mixingBus, activityManager), topbarArea(activityManager),
-      actionTabs(juce::TabbedButtonBar::Orientation::TabsAtTop), menu(activityManager)
+      actionTabs(juce::TabbedButtonBar::Orientation::TabsAtTop), menu(activityManager),
+      tabAreaHeight(DEFAULT_TAB_AREA_HEIGHT)
 {
-    arrangementAreaHeight = FREQTIME_VIEW_HEIGHT;
 
     activityManager.registerTaskListener(this);
 
@@ -40,6 +41,8 @@ MainComponent::MainComponent()
     addAndMakeVisible(arrangementArea);
     addAndMakeVisible(actionTabs);
     addAndMakeVisible(menu);
+    addAndMakeVisible(layerTabs);
+    addAndMakeVisible(statusBar);
 
     // set the mixingBus callback to repaint arrangement area
     mixingBus.setTrackRepaintCallback([this] {
@@ -109,9 +112,11 @@ void MainComponent::resized()
 
     // set all main components bounds
     menu.setBounds(localBounds.removeFromTop(MENU_BAR_HEIGHT));
+    statusBar.setBounds(localBounds.removeFromBottom(MENU_BAR_HEIGHT));
     topbarArea.setBounds(localBounds.removeFromLeft(SIDEBAR_WIDTH));
-    arrangementArea.setBounds(localBounds.removeFromTop(arrangementAreaHeight));
-    actionTabs.setBounds(localBounds);
+    actionTabs.setBounds(localBounds.removeFromBottom(tabAreaHeight));
+    layerTabs.setBounds(localBounds.removeFromTop(TABS_HEIGHT));
+    arrangementArea.setBounds(localBounds);
 
     // the area to resize the arrangement area is in between itself and action tabs with a thin width
     resizeHandleArea = actionTabs.getBounds();
@@ -164,7 +169,7 @@ void MainComponent::mouseMove(const juce::MouseEvent &event)
     }
     else if (activityManager.getAppState().getUiState() == UI_STATE_RESIZE_MAINVIEW)
     {
-        arrangementAreaHeight = event.getPosition().getY() - getBounds().getY();
+        tabAreaHeight = getLocalBounds().getHeight() - event.getPosition().getY() - statusBar.getHeight();
         resized();
         repaint();
     }
@@ -194,7 +199,7 @@ void MainComponent::mouseDrag(const juce::MouseEvent &me)
 
     if (activityManager.getAppState().getUiState() == UI_STATE_RESIZE_MAINVIEW)
     {
-        arrangementAreaHeight = me.getPosition().getY() - arrangementArea.getBounds().getY();
+        tabAreaHeight = getLocalBounds().getHeight() - me.getPosition().getY() - statusBar.getHeight();
         resized();
         repaint();
     }

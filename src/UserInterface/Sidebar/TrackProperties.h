@@ -18,6 +18,7 @@ class TrackProperties : public juce::Component
     void paint(juce::Graphics &g) override;
     void resized() override;
     void setDataSource(std::shared_ptr<MixbusDataSource> ds);
+    int getIdealHeight();
 
   private:
     std::shared_ptr<LabeledLineContainer> trackTimeInfoLine;

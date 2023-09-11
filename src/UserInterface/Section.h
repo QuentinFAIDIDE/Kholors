@@ -3,8 +3,7 @@
 
 #include <juce_gui_extra/juce_gui_extra.h>
 
-#define SECTION_TITLE_HEIGHT 24
-#define SECTION_TITLE_HEIGHT_SMALL 16
+#define SECTION_TITLE_HEIGHT 25
 
 void drawSection(juce::Graphics &g, juce::Rectangle<int> &bounds, juce::String title);
 

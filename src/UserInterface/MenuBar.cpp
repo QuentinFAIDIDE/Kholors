@@ -36,7 +36,7 @@
 
 #define NO_MENU_ITEMS 4
 
-#define MENU_LEFT_MARGIN 4
+#define MENU_LEFT_MARGIN 16
 #define MENU_RIGHT_MARGIN 8
 #define MENU_SEPARATOR_WIDTH 1
 #define OPENED_MENU_BOTTOM_LINE_WIDTH 2
@@ -161,6 +161,7 @@ void MenuBar::drawMenuItem(int id, std::string text, juce::Rectangle<int> &bound
 
     menuItemsRectangles[id] = fileMenuArea;
 
+    g.setFont(DEFAULT_FONT_SIZE);
     fileMenuArea.removeFromLeft(MENU_LEFT_MARGIN);
     fileMenuArea.removeFromRight(MENU_RIGHT_MARGIN);
     g.setFont(juce::Font(DEFAULT_FONT_SIZE));

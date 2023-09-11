@@ -16,14 +16,20 @@ std::shared_ptr<juce::Component> LabeledLineContainer::getContent()
 
 void LabeledLineContainer::paint(juce::Graphics &g)
 {
-    g.setFont(juce::Font(SMALLER_FONT_SIZE));
-    g.setColour(COLOR_TEXT_DARKER);
+    auto bounds = g.getClipBounds();
+    g.setColour(COLOR_BACKGROUND);
+    g.fillRect(bounds);
+    g.setColour(COLOR_SEPARATOR_LINE);
+    g.drawRect(bounds);
+
+    g.setFont(juce::Font(DEFAULT_FONT_SIZE));
+    g.setColour(COLOR_UNITS);
     g.drawText(label, labelLocalBounds, juce::Justification::centredLeft, true);
 }
 
 void LabeledLineContainer::resized()
 {
-    auto bounds = getLocalBounds().reduced(LABELED_LINE_CONTAINER_PADDING);
+    auto bounds = getLocalBounds().reduced(LABELED_LINE_CONTAINER_PADDING, 0);
 
     contentLocalBounds = bounds.removeFromRight(contentWidth);
     labelLocalBounds = bounds;

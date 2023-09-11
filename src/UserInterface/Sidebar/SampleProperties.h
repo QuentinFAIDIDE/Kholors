@@ -13,6 +13,7 @@ class SampleProperties : public juce::Component, public TaskListener
     void paint(juce::Graphics &g) override;
     void resized() override;
     bool taskHandler(std::shared_ptr<Task> task) override;
+    int getIdealHeight();
 
   private:
     std::shared_ptr<LabeledLineContainer> gainLine;
