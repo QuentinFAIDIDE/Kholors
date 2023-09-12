@@ -25,9 +25,9 @@
      inkscape:document-units="mm"
      showgrid="false"
      showguides="true"
-     inkscape:zoom="0.25000001"
-     inkscape:cx="-27.999999"
-     inkscape:cy="-669.99998"
+     inkscape:zoom="0.1767767"
+     inkscape:cx="-22.627416"
+     inkscape:cy="500.63158"
      inkscape:window-width="1920"
      inkscape:window-height="1048"
      inkscape:window-x="0"
@@ -58,38 +58,38 @@
        id="path7"
        sodipodi:nodetypes="cccc" />
     <ellipse
-       style="fill:#51b459;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:9.941"
+       style="fill:#38923f;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:9.941"
        id="path8"
-       cx="69.631874"
-       cy="148.86253"
+       cx="71.005173"
+       cy="148.4716"
        rx="6.9088807"
        ry="5.1635089" />
     <ellipse
-       style="fill:#51b459;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:9.941"
+       style="fill:#38923f;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:9.941"
        id="ellipse8"
        cx="90.124161"
        cy="146.19109"
        rx="6.9088807"
        ry="5.1635089" />
     <rect
-       style="fill:#51b459;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:9.47987"
+       style="fill:#38923f;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:10.6582"
        id="rect8"
-       width="5.4153399"
+       width="6.8452268"
        height="26.526033"
        x="71.008957"
        y="121.77951"
        ry="0" />
     <rect
-       style="fill:#51b459;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:9.24457"
+       style="fill:#38923f;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:10.4205"
        id="rect9"
-       width="5.4153399"
+       width="6.8806252"
        height="25.225546"
-       x="91.623787"
+       x="90.158501"
        y="121.77951"
        ry="0" />
     <path
        id="rect10"
-       style="fill:#51b459;stroke-width:11.5493"
+       style="fill:#38923f;stroke-width:11.5493;fill-opacity:1"
        d="m 96.928959,118.72535 v 8.21436 l -25.955631,3.07992 v -8.21436 z"
        sodipodi:nodetypes="ccccc" />
   </g>

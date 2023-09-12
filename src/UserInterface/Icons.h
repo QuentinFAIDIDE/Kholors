@@ -17,13 +17,16 @@ namespace Icons
     const int           folder_svgSize = 1912;
 
     extern const char*  song_svg;
-    const int           song_svgSize = 3322;
+    const int           song_svgSize = 3334;
 
     extern const char*  loop_svg;
     const int           loop_svgSize = 3461;
 
     extern const char*  move_svg;
     const int           move_svgSize = 3522;
+
+    extern const char*  opened_folder_caret_svg;
+    const int           opened_folder_caret_svgSize = 1761;
 
     extern const char*  unloop_svg;
     const int           unloop_svgSize = 3569;
@@ -33,6 +36,9 @@ namespace Icons
 
     extern const char*  start_svg;
     const int           start_svgSize = 2176;
+
+    extern const char*  closed_folder_caret_svg;
+    const int           closed_folder_caret_svgSize = 1761;
 
     extern const char*  pause_svg;
     const int           pause_svgSize = 2144;

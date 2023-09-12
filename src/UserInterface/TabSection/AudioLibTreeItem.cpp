@@ -5,6 +5,7 @@
 
 #define TREEVIEW_ICONS_AREA_WIDTH 30
 #define TREEVIEW_ICONS_INNER_REDUCED 5
+#define CARET_AREA_REDUCTION 7
 
 AudioLibTreeRoot::AudioLibTreeRoot()
 {
@@ -152,15 +153,16 @@ void AudioLibFile::paintItem(juce::Graphics &g, int width, int height)
 void AudioLibFile::paintOpenCloseButton(juce::Graphics &g, const juce::Rectangle<float> &area,
                                         juce::Colour backgroundColour, bool isMouseOver)
 {
-    g.setColour(juce::Colour(180, 180, 180));
-    auto middlePoint = area.reduced(area.getHeight() / 2).expanded(2);
+    juce::Rectangle<float> reducedArea = area;
+    reducedArea.reduce(CARET_AREA_REDUCTION, CARET_AREA_REDUCTION);
+
     if (isOpen())
     {
-        g.fillRect(middlePoint);
+        sharedIcons->openedCaret->drawWithin(g, reducedArea, juce::RectanglePlacement::centred, 1.0f);
     }
     else
     {
-        g.fillEllipse(middlePoint);
+        sharedIcons->closedCaret->drawWithin(g, reducedArea, juce::RectanglePlacement::centred, 1.0f);
     }
 }
 

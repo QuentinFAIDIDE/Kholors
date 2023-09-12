@@ -19,6 +19,8 @@ struct IconsLoader
     std::unique_ptr<juce::Drawable> folderIcon;
     std::unique_ptr<juce::Drawable> fileIcon;
     std::unique_ptr<juce::Drawable> audioIcon;
+    std::unique_ptr<juce::Drawable> closedCaret;
+    std::unique_ptr<juce::Drawable> openedCaret;
 
   private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(IconsLoader)

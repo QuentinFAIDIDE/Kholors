@@ -30,6 +30,14 @@ IconsLoader::IconsLoader()
         juce::Drawable::createFromImageData(Icons::resize_horizontal_svg, Icons::resize_horizontal_svgSize);
     resizeHorizontalIcon->replaceColour(juce::Colours::white, COLOR_BACKGROUND);
 
+    closedCaret =
+        juce::Drawable::createFromImageData(Icons::closed_folder_caret_svg, Icons::closed_folder_caret_svgSize);
+    closedCaret->replaceColour(juce::Colours::white, COLOR_TEXT_DARKER);
+
+    openedCaret =
+        juce::Drawable::createFromImageData(Icons::opened_folder_caret_svg, Icons::opened_folder_caret_svgSize);
+    openedCaret->replaceColour(juce::Colours::white, COLOR_TEXT_DARKER);
+
     fileIcon = juce::Drawable::createFromImageData(Icons::file_svg, Icons::file_svgSize);
     folderIcon = juce::Drawable::createFromImageData(Icons::folder_svg, Icons::folder_svgSize);
     audioIcon = juce::Drawable::createFromImageData(Icons::song_svg, Icons::song_svgSize);
