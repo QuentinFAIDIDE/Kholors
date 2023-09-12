@@ -21,10 +21,6 @@ LineEntryDialog::LineEntryDialog(ActivityManager &am) : contentValidationRegex("
     textEntry.setMultiLine(false);
     textEntry.setFont(juce::Font(DEFAULT_FONT_SIZE));
     textEntry.setMouseCursor(juce::MouseCursor::IBeamCursor);
-    textEntry.setColour(juce::TextEditor::textColourId, COLOR_TEXT_DARKER);
-    textEntry.setColour(juce::TextEditor::ColourIds::backgroundColourId, COLOR_BACKGROUND_LIGHTER.darker(0.1f));
-    textEntry.setColour(juce::TextEditor::outlineColourId, COLOR_BACKGROUND_LIGHTER);
-    textEntry.setColour(juce::TextEditor::focusedOutlineColourId, COLOR_BACKGROUND_LIGHTER.darker(0.05f));
     addAndMakeVisible(textEntry);
 
     closeButton.addListener(this);
@@ -45,13 +41,13 @@ void LineEntryDialog::paint(juce::Graphics &g)
     g.setColour(COLOR_BACKGROUND);
     g.fillAll();
 
-    auto bounds = getLocalBounds().reduced(4, 4);
-    drawSection(g, bounds, getDialogInstructions() + ":");
-
     auto nameBound = textEntry.getBounds();
-    g.setColour(COLOR_TEXT_DARKER.withAlpha(0.6f));
-    auto bottomLine = juce::Line<int>(nameBound.getBottomLeft(), nameBound.getBottomRight());
-    g.drawLine(bottomLine.toFloat(), 1.0f);
+    g.setColour(COLOR_TEXT);
+    g.drawRect(nameBound.toFloat(), 1.0f);
+
+    auto textOverEntry = nameBound.withY(nameBound.getY() - nameBound.getHeight() - 4);
+    g.setFont(DEFAULT_FONT_SIZE);
+    g.drawText(getDialogInstructions(), textOverEntry, juce::Justification::centredLeft, true);
 }
 
 void LineEntryDialog::resized()

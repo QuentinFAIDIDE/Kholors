@@ -5,13 +5,28 @@
 KholorsLookAndFeel::KholorsLookAndFeel()
 {
     setColour(juce::PopupMenu::ColourIds::backgroundColourId, COLOR_BACKGROUND);
-    setColour(juce::PopupMenu::ColourIds::highlightedBackgroundColourId, COLOR_BACKGROUND_LIGHTER);
+    setColour(juce::PopupMenu::ColourIds::highlightedBackgroundColourId, COLOR_SELECTED_BACKGROUND);
+
     setColour(juce::TabbedButtonBar::ColourIds::tabOutlineColourId, juce::Colours::transparentBlack);
     setColour(juce::TabbedButtonBar::ColourIds::frontOutlineColourId, juce::Colours::transparentBlack);
+
     setColour(juce::TabbedComponent::ColourIds::outlineColourId, juce::Colours::transparentBlack);
+
     setColour(juce::ScrollBar::ColourIds::thumbColourId, COLOR_HIGHLIGHT);
-    setColour(juce::TextEditor::ColourIds::highlightColourId, COLOR_HIGHLIGHT);
+
     setColour(juce::CaretComponent::ColourIds::caretColourId, COLOR_HIGHLIGHT);
+
+    setColour(juce::TreeView::ColourIds::linesColourId, COLOR_TEXT.withAlpha(0.8f));
+    setColour(juce::TreeView::ColourIds::selectedItemBackgroundColourId, COLOR_SELECTED_BACKGROUND);
+
+    setColour(juce::ListBox::ColourIds::backgroundColourId, juce::Colours::transparentBlack);
+    setColour(juce::ListBox::ColourIds::outlineColourId, juce::Colours::transparentBlack);
+
+    setColour(juce::TextEditor::ColourIds::textColourId, COLOR_TEXT);
+    setColour(juce::TextEditor::ColourIds::backgroundColourId, juce::Colours::transparentBlack);
+    setColour(juce::TextEditor::ColourIds::outlineColourId, juce::Colours::transparentBlack);
+    setColour(juce::TextEditor::ColourIds::focusedOutlineColourId, juce::Colours::transparentBlack);
+    setColour(juce::TextEditor::ColourIds::highlightColourId, COLOR_HIGHLIGHT);
 }
 
 void KholorsLookAndFeel::drawTabButton(juce::TabBarButton &tb, juce::Graphics &g, bool isMouseOver, bool)

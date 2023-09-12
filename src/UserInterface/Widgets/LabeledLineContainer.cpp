@@ -19,11 +19,25 @@ void LabeledLineContainer::paint(juce::Graphics &g)
     auto bounds = g.getClipBounds();
     g.setColour(COLOR_BACKGROUND);
     g.fillRect(bounds);
-    g.setColour(COLOR_SEPARATOR_LINE);
+
+    if (isMouseOverOrDragging(true))
+    {
+        g.setColour(COLOR_HIGHLIGHT);
+    }
+    else
+    {
+        g.setColour(COLOR_SEPARATOR_LINE);
+    }
+
     g.drawRect(bounds);
 
     g.setFont(juce::Font(DEFAULT_FONT_SIZE));
-    g.setColour(COLOR_UNITS);
+
+    if (!isMouseOverOrDragging(true))
+    {
+        g.setColour(COLOR_UNITS);
+    }
+
     g.drawText(label, labelLocalBounds, juce::Justification::centredLeft, true);
 }
 

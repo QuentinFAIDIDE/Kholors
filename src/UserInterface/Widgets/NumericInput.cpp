@@ -20,12 +20,27 @@ void NumericInput::paint(juce::Graphics &g)
 
     if (unit != "")
     {
-        g.setColour(COLOR_UNITS);
+        if (isMouseOverOrDragging(true))
+        {
+            g.setColour(COLOR_HIGHLIGHT);
+        }
+        else
+        {
+            g.setColour(COLOR_UNITS);
+        }
+
         auto unitArea = textArea.removeFromRight((charWidth * unit.length()));
         g.drawText(unit, unitArea, juce::Justification::centredRight);
     }
 
-    g.setColour(COLOR_TEXT_DARKER);
+    if (isMouseOverOrDragging(true))
+    {
+        g.setColour(COLOR_HIGHLIGHT);
+    }
+    else
+    {
+        g.setColour(COLOR_TEXT_DARKER);
+    }
     g.drawText(getStringValue(), textArea, juce::Justification::centredRight);
 }
 

@@ -51,14 +51,6 @@ void Table::paint(juce::Graphics &g)
     g.setColour(COLOR_BACKGROUND);
     g.fillAll();
 
-    // unfortunately we had to make this color match the tableRowPaint paintOverChildren one :(
-    // so beware
-    g.setColour(COLOR_BACKGROUND_LIGHTER);
-    g.fillRoundedRectangle(bounds.toFloat(), TABLE_CORNERS_RADIUS);
-
-    g.setColour(COLOR_TABLE_BORDERS);
-    g.drawRoundedRectangle(bounds.toFloat(), TABLE_CORNERS_RADIUS, TABLE_BORDERS_LINE_WIDTH);
-
     auto titleArea = bounds.removeFromTop(TABLE_TITLE_SECTION_HEIGHT);
     g.setColour(COLOR_TEXT);
     g.drawText(name, titleArea, juce::Justification::centred, true);
@@ -350,7 +342,8 @@ void TableRowsPainter::paintOverChildren(juce::Graphics &g)
 {
     for (auto it = greyedOutRowIndexes.begin(); it != greyedOutRowIndexes.end(); it++)
     {
-        // unfortunately, we can't alter cells content colour to make them alpha since
+        // The goal here of this is to grey out cells.
+        // Unfortunately, we can't alter cells content colour to make them alpha since
         // they should be able to display child component that have no way to do that inherit from component class.
         // We will try to do this ugly draw over for now :(
         // The color of the rectangle matches the table paint method background one
