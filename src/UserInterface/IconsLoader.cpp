@@ -29,4 +29,8 @@ IconsLoader::IconsLoader()
     resizeHorizontalIcon =
         juce::Drawable::createFromImageData(Icons::resize_horizontal_svg, Icons::resize_horizontal_svgSize);
     resizeHorizontalIcon->replaceColour(juce::Colours::white, COLOR_BACKGROUND);
+
+    fileIcon = juce::Drawable::createFromImageData(Icons::file_svg, Icons::file_svgSize);
+    folderIcon = juce::Drawable::createFromImageData(Icons::folder_svg, Icons::folder_svgSize);
+    audioIcon = juce::Drawable::createFromImageData(Icons::song_svg, Icons::song_svgSize);
 }

@@ -1,6 +1,7 @@
 #ifndef DEF_AUDIOLIB_TREE_ROOT
 #define DEF_AUDIOLIB_TREE_ROOT
 
+#include "../IconsLoader.h"
 #include <juce_gui_extra/juce_gui_extra.h>
 
 class AudioLibTreeRoot : public juce::TreeViewItem
@@ -38,6 +39,8 @@ class AudioLibFile : public juce::TreeViewItem
     int getItemHeight() const override;
 
   private:
+    juce::SharedResourcePointer<IconsLoader> sharedIcons;
+
     juce::File file;
     bool isFolder;
     juce::String name;

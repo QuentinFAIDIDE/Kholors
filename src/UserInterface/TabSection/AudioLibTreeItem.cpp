@@ -3,6 +3,9 @@
 #include "../../Config.h"
 #include <algorithm>
 
+#define TREEVIEW_ICONS_AREA_WIDTH 30
+#define TREEVIEW_ICONS_INNER_REDUCED 5
+
 AudioLibTreeRoot::AudioLibTreeRoot()
 {
 }
@@ -121,9 +124,28 @@ void AudioLibFile::itemOpennessChanged(bool isNowOpen)
 
 void AudioLibFile::paintItem(juce::Graphics &g, int width, int height)
 {
+
+    auto area = g.getClipBounds();
+
+    area.setX(0);
+    area.setY(0);
+    area.setHeight(height);
+    area.setWidth(width);
+
+    auto iconArea = area.removeFromLeft(TREEVIEW_ICONS_AREA_WIDTH);
+    iconArea.reduce(TREEVIEW_ICONS_INNER_REDUCED, TREEVIEW_ICONS_INNER_REDUCED);
+    if (isFolder)
+    {
+        sharedIcons->folderIcon->drawWithin(g, iconArea.toFloat(), juce::RectanglePlacement::centred, 1.0f);
+    }
+    else
+    {
+        sharedIcons->audioIcon->drawWithin(g, iconArea.toFloat(), juce::RectanglePlacement::centred, 1.0f);
+    }
+
     g.setColour(COLOR_TEXT_DARKER);
     g.setFont(juce::Font(DEFAULT_FONT_SIZE));
-    g.drawText(name, 0, 0, width, height, juce::Justification::left);
+    g.drawText(name, area, juce::Justification::left);
     g.setColour(COLOR_TEXT_DARKER.withAlpha(0.4f));
 }
 
