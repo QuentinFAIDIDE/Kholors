@@ -59,7 +59,9 @@ json SamplePlayer::toJSON()
                    {"high_pass_freq", highPassFreq},
                    {"gain", gainValue},
                    {"low_pass_repeat", lowPassRepeat},
-                   {"high_pass_repeat", highPassRepeat}};
+                   {"high_pass_repeat", highPassRepeat},
+                   {"fade_in_frame_len", fadeInFrameLength},
+                   {"fade_out_frame_len", fadeOutFrameLength}};
 
     return output;
 }
@@ -138,6 +140,18 @@ void SamplePlayer::setupFromJSON(json &stateToRestore)
     setLowPassRepeat(desiredLowPassRepeat);
     setHighPassRepeat(desiredHighPassRepeat);
     gainValue = desiredGain;
+
+    float desiredFadeInLen, desiredFadeOutLen;
+    stateToRestore.at("fade_in_frame_len").get_to(desiredFadeInLen);
+    stateToRestore.at("fade_out_frame_len").get_to(desiredFadeOutLen);
+
+    if (desiredFadeInLen + desiredFadeOutLen > getLength())
+    {
+        throw std::runtime_error("Trying to load a sample with an attack and release longer than sample.");
+    }
+
+    fadeInFrameLength = desiredFadeInLen;
+    fadeOutFrameLength = desiredFadeOutLen;
 }
 
 void SamplePlayer::setDbGain(float gainDb)

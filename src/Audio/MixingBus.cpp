@@ -141,6 +141,18 @@ void MixingBus::unmarshal(std::string &s)
         if (samplePlayersEntry[i].is_null())
         {
             samplePlayers.add(nullptr);
+
+            // this is necessary to increment index of openGL object as well
+            // they must match exactly with samplePlayers lists
+            std::shared_ptr<SampleCreateTask> completedCreateTask =
+                std::make_shared<SampleCreateTask>("", samplePlayers.size() - 1);
+            completedCreateTask->setCompleted(true);
+            completedCreateTask->reuseNewId = false;
+            completedCreateTask->setAllocatedIndex(samplePlayers.size() - 1);
+
+            std::shared_ptr<SampleDisplayTask> displayTask =
+                std::make_shared<SampleDisplayTask>(nullptr, completedCreateTask);
+            activityManager.broadcastNestedTaskNow(displayTask);
         }
         else
         {

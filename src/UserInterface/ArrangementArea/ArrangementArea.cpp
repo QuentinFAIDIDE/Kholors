@@ -809,25 +809,29 @@ void ArrangementArea::createNewSampleMeshAndTaxonomy(std::shared_ptr<SamplePlaye
         }
     }
 
-    // assign default name to sample
-    taxonomyManager.setSampleName(task->getAllocatedIndex(), sp->getFileName());
-    // send the data to the GPUs from the OpenGL thread
-    openGLContext.executeOnGLThread(
-        [this, task](juce::OpenGLContext &c) { samples[task->newIndex]->registerGlObjects(); }, true);
-    // if it's a copy, set the group and update the color
-    if (task->isDuplication())
+    if (sp != nullptr)
     {
-        taxonomyManager.copyTaxonomy(task->getDuplicateTargetId(), task->getAllocatedIndex());
-        setSampleColorFromTaxonomy(task->getAllocatedIndex());
 
-        // refresh properties of the track we just splitted (it changed size of filters)
-        if (task->getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_FREQUENCY ||
-            task->getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_POSITION)
+        // assign default name to sample
+        taxonomyManager.setSampleName(task->getAllocatedIndex(), sp->getFileName());
+        // send the data to the GPUs from the OpenGL thread
+        openGLContext.executeOnGLThread(
+            [this, task](juce::OpenGLContext &c) { samples[task->newIndex]->registerGlObjects(); }, true);
+        // if it's a copy, set the group and update the color
+        if (task->isDuplication())
         {
-            refreshSampleOpenGlView(task->getDuplicateTargetId());
-        }
+            taxonomyManager.copyTaxonomy(task->getDuplicateTargetId(), task->getAllocatedIndex());
+            setSampleColorFromTaxonomy(task->getAllocatedIndex());
 
-        selectedTracks.insert(task->getAllocatedIndex());
+            // refresh properties of the track we just splitted (it changed size of filters)
+            if (task->getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_FREQUENCY ||
+                task->getDuplicationType() == DUPLICATION_TYPE_SPLIT_AT_POSITION)
+            {
+                refreshSampleOpenGlView(task->getDuplicateTargetId());
+            }
+
+            selectedTracks.insert(task->getAllocatedIndex());
+        }
     }
 
     task->setCompleted(true);

@@ -24,7 +24,11 @@ SampleGraphicModel::SampleGraphicModel(std::shared_ptr<SamplePlayer> sp, juce::C
 
     if (sp == nullptr || !sp->hasBeenInitialized())
     {
-        std::cerr << "Warning: trying to display unitialized sample !" << std::endl;
+        loaded = false;
+        disabled = true;
+        // this happens when we load a project and we want to load
+        // an empty sample so that the ids match in mixbus and graphic
+        // models.
         return;
     }
 
