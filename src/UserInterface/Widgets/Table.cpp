@@ -306,7 +306,7 @@ void TableRowsPainter::paint(juce::Graphics &g)
         juce::Rectangle<int> rowRectangle(getLocalBounds().getWidth(), TABLE_ROW_HEIGHT);
         rowRectangle.setPosition(0, hoverRowIndex * TABLE_ROW_HEIGHT);
 
-        g.setColour(COLOR_TABLE_CLICKED_ROW);
+        g.setColour(COLOR_SELECTED_BACKGROUND);
         g.fillRect(rowRectangle);
     }
     else if (rowSelectionMode != TableSelectionMode::TABLE_SELECTION_NONE && hoverRowIndex != -1 &&
@@ -315,7 +315,7 @@ void TableRowsPainter::paint(juce::Graphics &g)
         juce::Rectangle<int> rowRectangle(getLocalBounds().getWidth(), TABLE_ROW_HEIGHT);
         rowRectangle.setPosition(0, hoverRowIndex * TABLE_ROW_HEIGHT);
 
-        g.setColour(COLOR_TABLE_ROW_HOVER);
+        g.setColour(COLOR_SELECTED_BACKGROUND);
         g.fillRect(rowRectangle);
     }
 
