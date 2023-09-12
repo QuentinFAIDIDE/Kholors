@@ -10,6 +10,7 @@
 #define LENS_ICON_AREA_WIDTH SEARCHBAR_HEIGHT
 #define SEARCHBAR_BOTTOM_MARGIN 5
 #define LENS_ADDITIONAL_LEFT_PADDING 3
+#define TEXT_ENTRY_DISPLACEMENT 1 // used to correct text entry that is misplaced a few pixels vertically
 
 AudioLibraryTab::AudioLibraryTab() : Thread("File Search Thread"), resultList("Results", &resultListContent)
 {
@@ -93,6 +94,7 @@ bool AudioLibraryTab::isLibraryPath(std::string path)
 void AudioLibraryTab::paintOverChildren(juce::Graphics &g)
 {
     auto searchbarArea = searchBar.getBoundsInParent();
+    searchbarArea.setY(searchbarArea.getY() + TEXT_ENTRY_DISPLACEMENT);
     // add the area where we plan to draw the lens icon
     searchbarArea.setX(searchbarArea.getX() - LENS_ICON_AREA_WIDTH);
     searchbarArea.setWidth(searchbarArea.getWidth() + LENS_ICON_AREA_WIDTH);
@@ -110,7 +112,7 @@ void AudioLibraryTab::paintOverChildren(juce::Graphics &g)
     // if empty and we don't have the focus, draw a placeholder text
     if (searchBar.isEmpty() && !searchBar.hasKeyboardFocus(true))
     {
-        auto placeholderArea = searchBarBounds;
+        auto placeholderArea = searchBarBounds.withY(searchBarBounds.getY() + TEXT_ENTRY_DISPLACEMENT);
         placeholderArea.reduce(4, 4);
         g.drawText("Search your library here...", placeholderArea, juce::Justification::centredLeft, true);
     }
@@ -194,6 +196,7 @@ void AudioLibraryTab::resized()
     searchBarBounds = searchBarAndFileListArea.removeFromTop(SEARCHBAR_HEIGHT);
     // remove the area where we want to draw the lens icon
     searchBarBounds.removeFromLeft(LENS_ICON_AREA_WIDTH);
+    searchBarBounds.setY(searchBarBounds.getY() - TEXT_ENTRY_DISPLACEMENT);
 
     searchBar.setBounds(searchBarBounds);
     searchBarAndFileListArea.removeFromTop(SEARCHBAR_BOTTOM_MARGIN);
