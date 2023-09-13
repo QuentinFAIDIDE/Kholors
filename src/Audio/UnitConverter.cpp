@@ -72,14 +72,12 @@ float UnitConverter::sigmoidInv(float val)
 
 float UnitConverter::polylens(float v)
 {
-    float res = std::pow(v, 2.0f);
-    return 1.0f - zoomInRangeInv(1.0f - res);
+    return 1.0f - zoomInRangeInv(1.0f - v);
 }
 
 float UnitConverter::polylensInv(float v)
 {
-    float ret = 1.0f - zoomInRange(1.0f - v);
-    return std::pow(ret, 0.5f);
+    return 1.0f - zoomInRange(1.0f - v);
 }
 
 float UnitConverter::magnifyIntensity(float input)
@@ -136,28 +134,26 @@ float UnitConverter::freqToPositionRatio(float freq)
 
 float UnitConverter::zoomInRange(float v)
 {
-    if (v <= 0.1)
+    if (v < 0.4f)
     {
-        return v * 0.5f;
+        return 0.3f * v;
     }
-    if (v <= 0.5)
+    else
     {
-        return 0.05 + ((v - 0.1f) * (0.7f / 0.4f));
+        return 0.12f + ((v - 0.4f) * 1.4666666666666668f);
     }
-    return 0.75 + ((v - 0.5f) / 2.0f);
 }
 
 float UnitConverter::zoomInRangeInv(float v)
 {
-    if (v < 0.05f)
+    if (v < 0.12f)
     {
-        return v * 2.0f;
+        return v * 3.3333333333333335f;
     }
-    if (v < 0.75f)
+    else
     {
-        return 0.1f + ((v - 0.05f) * (0.4f / 0.7f));
+        return 0.4f + ((v - 0.12f) * 0.6818181818181818f);
     }
-    return 0.5f + ((v - 0.75f) * 2.0f);
 }
 
 float UnitConverter::dbFromBufferChannel(const juce::AudioSourceChannelInfo &buffer, int chan)
