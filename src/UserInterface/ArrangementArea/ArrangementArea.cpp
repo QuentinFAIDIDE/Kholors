@@ -1669,6 +1669,8 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key)
                 // use a copy of track selection to prevent iterating over newly added items
                 std::set<std::size_t> selectedTrackAtClick = selectedTracks;
 
+                int groupTaskId = Task::getNewTaskGroupIndex();
+
                 // iterate over selected tracks to duplicate everything
                 std::set<std::size_t>::iterator it = selectedTrackAtClick.begin();
 
@@ -1679,6 +1681,7 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key)
                     newPosition = (viewPosition + (lastMouseX * viewScale)) + (pos - selectionBeginPos);
                     std::shared_ptr<SampleCreateTask> task =
                         std::make_shared<SampleCreateTask>(newPosition, *it, DUPLICATION_TYPE_COPY_AT_POSITION);
+                    task->setTaskGroupIndex(groupTaskId);
                     activityManager.broadcastTask(task);
                     it++;
                 }

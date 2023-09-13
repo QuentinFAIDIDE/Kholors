@@ -53,6 +53,10 @@ class SampleFadeInput : public NumericInput
      */
     void emitIntermediateDragTask(float value) override;
 
+    bool isValueValid(float) override;
+
+    void emitTaskToSetValue(float v) override;
+
   private:
     void startDragging() override;
 
@@ -123,6 +127,10 @@ class SampleGainInput : public NumericInput
      */
     void emitIntermediateDragTask(float value) override;
 
+    bool isValueValid(float) override;
+
+    void emitTaskToSetValue(float v) override;
+
   private:
     // called when the input is dragged
     void startDragging() override;
@@ -191,6 +199,10 @@ class SampleFilterRepeatInput : public NumericInput
      * @brief      Emits the intermediate drag task. See parent class doc. @see NumericInput
      */
     void emitIntermediateDragTask(float value) override;
+
+    bool isValueValid(float) override;
+
+    void emitTaskToSetValue(float v) override;
 
   private:
     // called when the input is dragged

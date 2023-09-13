@@ -5,6 +5,8 @@
 #include <memory>
 #include <string>
 
+#include "../Dialogs/NumericInputSetDialog.h"
+
 NumericInput::NumericInput(bool integers, float minValue, float maxValue, float stepValue)
     : value(0.0f), isInteger(integers), min(minValue), max(maxValue), step(stepValue),
       minDragUpdate(NUMERIC_INPUT_MIN_DRAG_UPDATE), activityManager(nullptr), isDragging(false), unit("")
@@ -71,7 +73,10 @@ void NumericInput::setUnit(std::string newUnit)
 
 void NumericInput::setValue(float val)
 {
+    // this value is therefore not "pending" anymore and is recorded
     lastDragUpdateY = pendingDragUpdateY;
+
+    // we update the displayed value
     if (isInteger)
     {
         value = std::round(val);
@@ -141,6 +146,18 @@ void NumericInput::mouseDrag(const juce::MouseEvent &me)
             }
         }
     }
+}
+
+void NumericInput::mouseDoubleClick(const juce::MouseEvent &)
+{
+    juce::DialogWindow::LaunchOptions launchOptions;
+    launchOptions.dialogTitle = "Set the numeric input value";
+    launchOptions.content.set(new NumericInputSetDialog(*activityManager, this), true);
+    launchOptions.escapeKeyTriggersCloseButton = true;
+    launchOptions.useNativeTitleBar = true;
+    launchOptions.resizable = false;
+    launchOptions.useBottomRightCornerResizer = false;
+    launchOptions.launchAsync();
 }
 
 void NumericInput::setMinDragUpdate(float v)
@@ -223,5 +240,29 @@ void GenericNumericInput::emitFinalDragTask()
 void GenericNumericInput::emitIntermediateDragTask(float newValue)
 {
     std::shared_ptr<NumericInputUpdateTask> task = std::make_shared<NumericInputUpdateTask>(numericInputId, newValue);
+    getActivityManager()->broadcastTask(task);
+}
+
+bool GenericNumericInput::isValueValid(float)
+{
+    // basically, this component is not responsible
+    // for the value and doesn't know if the provided one
+    // is valid. It will just fail if it is and not get updated.
+    // For simplicity's sake, I will not implement a procedure that
+    // would communicate through a task to test if the value can be
+    // entered, and will just let user click "yes" and see no updates.
+    // If I feel like it's really worth it I might change my mind later.
+    // NOTE: in the end, due to existing NumericInput design for str validation
+    // on base class which currently use regexp to grey out button (hello fragile base class),
+    // I am delaying implementation for that purpose and use this func
+    // to ignore tasks instead of greying out confirm button.
+    return true;
+}
+
+void GenericNumericInput::emitTaskToSetValue(float v)
+{
+    std::shared_ptr<NumericInputUpdateTask> task =
+        std::make_shared<NumericInputUpdateTask>(numericInputId, v, getValue());
+    task->setCompleted(false);
     getActivityManager()->broadcastTask(task);
 }

@@ -234,6 +234,59 @@ void SampleFadeInput::startDragging()
     initialValues = currentValues;
 }
 
+bool SampleFadeInput::isValueValid(float)
+{
+    // not used yet
+    return true;
+}
+
+void SampleFadeInput::emitTaskToSetValue(float v)
+{
+    iteratingOverSelection = true;
+
+    auto selectedSamplesCopy = sampleIds;
+    auto it = selectedSamplesCopy.begin();
+
+    std::vector<std::shared_ptr<SampleFadeChange>> tasks;
+    int taskGroupId = Task::getNewTaskGroupIndex();
+
+    for (it = selectedSamplesCopy.begin(); it != selectedSamplesCopy.end(); it++)
+    {
+        std::shared_ptr<SampleFadeChange> task;
+        task = std::make_shared<SampleFadeChange>(*it, 0, v * (float(AUDIO_FRAMERATE) / 1000.0));
+
+        // abort if current value does not exist
+        if (currentValues.find(*it) == currentValues.end())
+        {
+            continue;
+        }
+
+        if (isFadeIn)
+        {
+            task->onlyFadeIn = true;
+            task->previousFadeInFrameLen = currentValues[*it];
+            task->currentFadeInFrameLen = v * (float(AUDIO_FRAMERATE) / 1000.0);
+        }
+        else
+        {
+            task->onlyFadeOut = true;
+            task->previousFadeOutFrameLen = currentValues[*it];
+            task->currentFadeOutFrameLen = v * (float(AUDIO_FRAMERATE) / 1000.0);
+        }
+
+        task->setCompleted(false);
+        task->setTaskGroupIndex(taskGroupId);
+        tasks.push_back(task);
+    }
+
+    for (int i = 0; i < tasks.size(); i++)
+    {
+        getActivityManager()->broadcastTask(tasks[i]);
+    }
+
+    iteratingOverSelection = false;
+}
+
 /////////////////////////////////////////////////////////////////////////
 
 SampleGainInput::SampleGainInput()
@@ -411,6 +464,45 @@ void SampleGainInput::emitIntermediateDragTask(float newValue)
 void SampleGainInput::startDragging()
 {
     initialValues = currentValues;
+}
+
+bool SampleGainInput::isValueValid(float)
+{
+    // not used yet
+    return true;
+}
+
+void SampleGainInput::emitTaskToSetValue(float v)
+{
+    iteratingOverSelection = true;
+
+    auto selectedSamplesCopy = sampleIds;
+    auto it = selectedSamplesCopy.begin();
+
+    std::vector<std::shared_ptr<SampleGainChange>> tasks;
+    int taskGroupId = Task::getNewTaskGroupIndex();
+
+    for (it = selectedSamplesCopy.begin(); it != selectedSamplesCopy.end(); it++)
+    {
+        // abort if current value does not exist
+        if (currentValues.find(*it) == currentValues.end())
+        {
+            continue;
+        }
+
+        // emit the final tasks (already completed) so that we record to be able to revert
+        auto task = std::make_shared<SampleGainChange>(*it, currentValues[*it], v);
+        task->setTaskGroupIndex(taskGroupId);
+        task->setCompleted(false);
+        tasks.push_back(task);
+    }
+
+    for (int i = 0; i < tasks.size(); i++)
+    {
+        getActivityManager()->broadcastTask(tasks[i]);
+    }
+
+    iteratingOverSelection = false;
 }
 
 /////////////////////////////////////////////////////////////
@@ -619,4 +711,49 @@ void SampleFilterRepeatInput::emitIntermediateDragTask(float newValue)
 void SampleFilterRepeatInput::startDragging()
 {
     initialValues = currentValues;
+}
+
+bool SampleFilterRepeatInput::isValueValid(float)
+{
+    // not used yet
+    return true;
+}
+
+void SampleFilterRepeatInput::emitTaskToSetValue(float v)
+{
+    iteratingOverSelection = true;
+
+    auto selectedSamplesCopy = sampleIds;
+    auto it = selectedSamplesCopy.begin();
+
+    std::vector<std::shared_ptr<SampleFilterRepeatChange>> tasks;
+    int taskGroupId = Task::getNewTaskGroupIndex();
+
+    for (it = selectedSamplesCopy.begin(); it != selectedSamplesCopy.end(); it++)
+    {
+
+        // emit the final tasks (already completed) so that we record to be able to revert
+        auto task = std::make_shared<SampleFilterRepeatChange>(*it, isForLowPassFilter, 1, 1);
+        task->setTaskGroupIndex(taskGroupId);
+
+        // ignore missing values (unlikely)
+        if (currentValues.find(*it) == currentValues.end())
+        {
+            continue;
+        }
+
+        task->previousFilterRepeat = currentValues[*it];
+        task->newFilterRepeat = std::round(v / 12.0f);
+        task->setCompleted(false);
+
+        // save task to be posted later when we know we're not missing any sample id value
+        tasks.push_back(task);
+    }
+
+    for (int i = 0; i < tasks.size(); i++)
+    {
+        getActivityManager()->broadcastTask(tasks[i]);
+    }
+
+    iteratingOverSelection = false;
 }

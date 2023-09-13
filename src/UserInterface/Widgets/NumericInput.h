@@ -81,6 +81,12 @@ class NumericInput : public juce::Component, public TaskListener
     void mouseDrag(const juce::MouseEvent &) override;
 
     /**
+     * @brief called when a double click hapenned
+     *
+     */
+    void mouseDoubleClick(const juce::MouseEvent &) override;
+
+    /**
      * @brief      Sets the value of the input.
      *
      * @param[in]  value  The value
@@ -149,6 +155,22 @@ class NumericInput : public juce::Component, public TaskListener
      * @param[in]  v     The new value
      */
     void setMinDragUpdate(float v);
+
+    /**
+     * @brief      Test if a candidate value is okay to be set
+     *             as the current one.
+     *
+     * @param v    candidate new value
+     *
+     */
+    virtual bool isValueValid(float v) = 0;
+
+    /**
+     * @brief      Emit a task that will allow to set the value of the input.
+     *
+     * @param v    new value
+     */
+    virtual void emitTaskToSetValue(float v) = 0;
 
   protected:
     // callback called whenever the dragging of the input is started
@@ -280,6 +302,22 @@ class GenericNumericInput : public NumericInput
      *             this procedure ensure we're safe both ways.
      */
     void fetchValueIfPossible() override;
+
+    /**
+     * @brief      Test if a candidate value is okay to be set
+     *             as the current one.
+     *
+     * @param v    candidate new value
+     *
+     */
+    bool isValueValid(float v) override;
+
+    /**
+     * @brief      Emit a task that will allow to set the value of the input.
+     *
+     * @param v    new value
+     */
+    void emitTaskToSetValue(float v) override;
 
   private:
     // the identifier of the numeric input to pop appropriate update tasks
