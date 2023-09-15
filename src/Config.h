@@ -69,9 +69,9 @@
 #define TABS_HEIGHT 34
 
 // various colors
-#define COLOR_BACKGROUND juce::Colour(22, 24, 24)
-#define COLOR_BACKGROUND_LIGHTER juce::Colour(22, 24, 24)
-#define COLOR_APP_BACKGROUND juce::Colour(22, 24, 24)
+#define COLOR_BACKGROUND juce::Colour(16, 17, 17)
+#define COLOR_BACKGROUND_LIGHTER juce::Colour(16, 17, 17)
+#define COLOR_APP_BACKGROUND juce::Colour(16, 17, 17)
 #define COLOR_BACKGROUND_HIGHLIGHT juce::Colour(28, 28, 28)
 #define COLOR_SAMPLE_BORDER juce::Colour(140, 140, 180)
 #define COLOR_TEXT COLOR_WHITE
