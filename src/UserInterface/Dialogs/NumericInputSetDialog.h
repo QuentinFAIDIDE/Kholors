@@ -22,7 +22,7 @@ class NumericInputSetDialog : public LineEntryDialog
      */
     std::regex getEntryRegex()
     {
-        return std::basic_regex("^[-]{0,1}[1-9]\\d*(\\.\\d+)?$");
+        return std::basic_regex("^[-]{0,1}[0-9]\\d*(\\.\\d+)?$");
     }
 
     /**
