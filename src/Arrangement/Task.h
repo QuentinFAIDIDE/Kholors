@@ -110,6 +110,14 @@ class Task : public Marshalable
     void preventFromGoingToTaskHistory();
 
     /**
+     Some tasks default to not going in task history, beware, and use this if you
+     create them with the bad constructor. I promise I'm actively considering
+     better designs for the shitty tasks :(
+     Declare this task as going into the task history.
+     */
+    void forceGoingToTaskHistory();
+
+    /**
      Called when the task is about to be posted a second time after a rewind. Example of specific use case:
      SampleCreateTask to reuse ids.
      */

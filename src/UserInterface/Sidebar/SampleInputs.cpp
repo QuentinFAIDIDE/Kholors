@@ -274,6 +274,11 @@ void SampleFadeInput::emitTaskToSetValue(float v)
             task->currentFadeOutFrameLen = v * (float(AUDIO_FRAMERATE) / 1000.0);
         }
 
+        // the tasks for sample fade were designed to be used scrolled and
+        // the intermediate steps that actually changing values are not recorded.
+        // So we have to undo that behaviour for when we record the actual change.
+        task->forceGoingToTaskHistory();
+
         task->setCompleted(false);
         task->setTaskGroupIndex(taskGroupId);
         tasks.push_back(task);

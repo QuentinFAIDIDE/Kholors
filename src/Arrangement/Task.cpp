@@ -75,6 +75,11 @@ void Task::declareSelfAsPartOfReversion()
     isPartOfReversion = true;
 }
 
+void Task::forceGoingToTaskHistory()
+{
+    recordableInHistory = true;
+}
+
 void Task::preventFromGoingToTaskHistory()
 {
     recordableInHistory = false;

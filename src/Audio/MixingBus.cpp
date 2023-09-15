@@ -368,6 +368,8 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
         if (fadeChangeTask->sampleId < 0 || fadeChangeTask->sampleId >= samplePlayers.size() ||
             samplePlayers[fadeChangeTask->sampleId] == nullptr)
         {
+            std::cerr << "received a fade change task for a sample id that does not exists: "
+                      << fadeChangeTask->sampleId << std::endl;
             return false;
         }
 
