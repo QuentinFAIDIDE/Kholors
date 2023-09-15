@@ -5,7 +5,7 @@
 
 #include "../Arrangement/ActivityManager.h"
 
-#define MENU_BAR_HEIGHT 25
+#define MENU_BAR_HEIGHT 28
 
 /**
  * @brief      This class describes the topbar menu bar.

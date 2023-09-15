@@ -37,7 +37,7 @@
 #define NO_MENU_ITEMS 4
 
 #define MENU_BAR_LEFT_MARGIN 5 // this is the space to the left of the first menu
-#define MENU_LEFT_MARGIN 8     // these two next are the margins for each top menu entry
+#define MENU_LEFT_MARGIN 16    // these two next are the margins for each top menu entry
 #define MENU_RIGHT_MARGIN 8
 #define MENU_SEPARATOR_WIDTH 1
 #define OPENED_MENU_BOTTOM_LINE_WIDTH 2

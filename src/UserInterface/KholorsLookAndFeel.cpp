@@ -2,6 +2,10 @@
 
 #include "../Config.h"
 
+#define MENU_SEPARATOR_HEIGHT 6
+#define MENU_ITEM_HEIGHT 28
+#define MENU_ITEM_SIDE_PADDING 60 /**< note that it will be divided by two on each side*/
+
 KholorsLookAndFeel::KholorsLookAndFeel()
 {
     setColour(juce::PopupMenu::ColourIds::backgroundColourId, COLOR_BACKGROUND);
@@ -54,6 +58,21 @@ juce::Font KholorsLookAndFeel::getPopupMenuFont()
     return juce::Font(DEFAULT_FONT_SIZE);
 }
 
+void KholorsLookAndFeel::getIdealPopupMenuItemSize(const juce::String &text, bool isSeparator,
+                                                   int standardMenuItemHeight, int &idealWidth, int &idealHeight)
+{
+    if (isSeparator)
+    {
+        idealHeight = MENU_SEPARATOR_HEIGHT;
+        return;
+    }
+
+    auto font = getPopupMenuFont();
+    int textWidth = font.getStringWidth(text);
+    idealWidth = textWidth + MENU_ITEM_SIDE_PADDING;
+    idealHeight = MENU_ITEM_HEIGHT;
+}
+
 int KholorsLookAndFeel::getTabButtonBestWidth(juce::TabBarButton &tbb, int)
 {
     auto font = juce::Font(DEFAULT_FONT_SIZE);
@@ -79,4 +98,20 @@ void KholorsLookAndFeel::drawTabAreaBehindFrontButton(juce::TabbedButtonBar &tb,
     auto line = tabBounds.withY(tabBounds.getY() + tabBounds.getHeight() - TAB_HIGHLIGHT_LINE_WIDTH)
                     .withHeight(TAB_HIGHLIGHT_LINE_WIDTH);
     g.fillRect(line);
+}
+
+int KholorsLookAndFeel::getPopupMenuBorderSize()
+{
+    return 0;
+}
+
+int KholorsLookAndFeel::getPopupMenuBorderSizeWithOptions(const juce::PopupMenu::Options &)
+{
+    return 0;
+}
+
+void KholorsLookAndFeel::drawResizableFrame(juce::Graphics &g, int w, int h, const juce::BorderSize<int> &border)
+{
+    // not working for removing popup menu borders...
+    return;
 }
