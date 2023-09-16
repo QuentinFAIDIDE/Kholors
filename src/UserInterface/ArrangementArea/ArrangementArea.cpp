@@ -6,6 +6,7 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
+#include <string>
 
 #include "../../Arrangement/ColorPalette.h"
 #include "../../Arrangement/NumericInputId.h"
@@ -1253,6 +1254,8 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
     juce::Point<int> newPosition = jme.getPosition();
     bool viewUpdated = false;
 
+    emitPositionTip();
+
     switch (activityManager.getAppState().getUiState())
     {
 
@@ -1496,12 +1499,36 @@ bool ArrangementArea::updateViewResizing(juce::Point<int> &newPosition)
     return (oldViewPosition != viewPosition || oldViewScale != viewScale);
 }
 
+void ArrangementArea::emitPositionTip()
+{
+    float currentFreq = UnitConverter::verticalPositionToFrequency(lastMouseY, getBounds().getHeight());
+    std::string posTip = "" + std::to_string(int(currentFreq + 0.5f)) + " Hz";
+
+    float secs = (viewPosition + (lastMouseX * viewScale)) / float(AUDIO_FRAMERATE);
+    float ms = (secs - std::floor(secs)) * 1000;
+    posTip += "     |    " + std::to_string(int(secs)) +
+              " s"
+              "   " +
+              std::to_string(int(ms + 0.5f)) + " ms";
+
+    posTip += "     |    " + std::to_string(int(viewScale)) + " samples/pixel";
+
+    sharedTips->setPositionStatus(posTip);
+}
+
+void ArrangementArea::mouseExit(const juce::MouseEvent &)
+{
+    sharedTips->setPositionStatus("");
+}
+
 void ArrangementArea::mouseMove(const juce::MouseEvent &jme)
 {
     // saving last mouse position
     juce::Point<int> newPosition = jme.getPosition();
     lastMouseX = newPosition.getX();
     lastMouseY = newPosition.getY();
+
+    emitPositionTip();
 
     switch (activityManager.getAppState().getUiState())
     {

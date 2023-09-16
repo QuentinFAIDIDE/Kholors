@@ -9,7 +9,7 @@ StatusTips::StatusTips()
 void StatusTips::setPositionStatus(std::string newPosStat)
 {
     {
-        std::scoped_lock<std::mutex> lock(positionStatusLock);
+        std::scoped_lock lock(positionStatusLock);
         positionStatus = newPosStat;
     }
 
@@ -25,7 +25,9 @@ std::optional<std::string> StatusTips::getPositionStatus()
 {
     if (positionStatusLock.try_lock())
     {
-        return positionStatus;
+        std::string posStatusToReturn = positionStatus;
+        positionStatusLock.unlock();
+        return posStatusToReturn;
     }
     else
     {

@@ -21,6 +21,7 @@
 #include "../../OpenGL/AlphaMaskTextureLoader.h"
 #include "../../OpenGL/BackgroundModel.h"
 #include "../../OpenGL/SampleGraphicModel.h"
+#include "../StatusTips.h"
 #include "FrequencyGrid.h"
 #include "TempoGrid.h"
 #include "juce_opengl/opengl/juce_gl.h"
@@ -122,6 +123,8 @@ class ArrangementArea : public juce::Component,
      * @brief      Called when mouse is moved, and I seem to recall, not dragged (no mouse button clicked).
      */
     void mouseMove(const juce::MouseEvent &) override;
+
+    void mouseExit(const juce::MouseEvent &) override;
 
     /**
      * @brief      Determines whether the specified file is eligible for file drag.
@@ -283,6 +286,8 @@ class ArrangementArea : public juce::Component,
 
     std::map<int, int> dragDistanceMap;
     std::map<int, float> initFiltersFreqs;
+
+    juce::SharedResourcePointer<StatusTips> sharedTips;
 
     //==============================================================================
     void paintPlayCursor(juce::Graphics &g);
@@ -499,6 +504,12 @@ class ArrangementArea : public juce::Component,
     process.
     */
     void copyAndBroadcastSelection(bool fromWithinTask);
+
+    /**
+     * @brief Set the cursor position tips on the shared status tip object.
+     *
+     */
+    void emitPositionTip();
 };
 
 #endif // DEF_ARRANGEMENTAREA_HPP
