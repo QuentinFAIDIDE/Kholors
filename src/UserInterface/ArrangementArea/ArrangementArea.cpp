@@ -1513,6 +1513,13 @@ void ArrangementArea::emitPositionTip()
 
     posTip += "     |    " + std::to_string(int(viewScale)) + " samples/pixel";
 
+    int sampleUnderMouse = getSampleIdUnderCursor();
+    if (sampleUnderMouse != -1)
+    {
+        std::string name = taxonomyManager.getSampleName(sampleUnderMouse);
+        posTip += "     |    " + name;
+    }
+
     sharedTips->setPositionStatus(posTip);
 }
 

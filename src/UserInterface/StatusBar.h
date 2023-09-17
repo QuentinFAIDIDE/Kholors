@@ -4,6 +4,9 @@
 #include "StatusTips.h"
 #include "juce_gui_basics/juce_gui_basics.h"
 
+#define VERSION_PLACEHOLDER_WIDTH 220
+#define ACTION_PLACEHOLDER_WIDTH 350
+
 class StatusBar : public juce::Component
 {
   public:
