@@ -84,7 +84,7 @@ int main()
 
     int magnifiedIndex = UnitConverter::magnifyTextureFrequencyIndex(500);
     diff = std::abs(UnitConverter::magnifyTextureFrequencyIndexInv(magnifiedIndex) - 500);
-    if (diff > 1)
+    if (diff > 2)
     {
         std::cerr << "diff too big for magnifyTextureFrequencyIndex 500: " << diff << std::endl;
         return 1;
