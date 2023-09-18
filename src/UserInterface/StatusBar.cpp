@@ -21,8 +21,7 @@ void StatusBar::paint(juce::Graphics &g)
     std::string versionPlaceholder = "Kholors Alpha v0.0.0";
     bounds.reduce(TAB_PADDING * 3, 0);
 
-    auto versionArea = bounds.removeFromLeft(VERSION_PLACEHOLDER_WIDTH);
-    auto actionArea = bounds.removeFromRight(ACTION_PLACEHOLDER_WIDTH);
+    auto versionArea = bounds.removeFromRight(VERSION_PLACEHOLDER_WIDTH);
     auto positionArea = bounds;
 
     auto lastPositionTipOpt = sharedStatusTips->getPositionStatus();
@@ -31,7 +30,6 @@ void StatusBar::paint(juce::Graphics &g)
         lastPositionTip = *lastPositionTipOpt;
     }
 
-    g.drawText(versionPlaceholder, versionArea, juce::Justification::centredLeft);
+    g.drawText(versionPlaceholder, versionArea, juce::Justification::centredRight);
     g.drawText(lastPositionTip, positionArea, juce::Justification::centredLeft);
-    g.drawText("Ready", actionArea, juce::Justification::centredRight);
 }
