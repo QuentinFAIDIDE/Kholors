@@ -1,6 +1,7 @@
 #ifndef DEF_APPSTATE_HPP
 #define DEF_APPSTATE_HPP
 
+#include "../OpenGL/TextureManager.h"
 #include "GitWrapper.h"
 #include "Marshalable.h"
 #include "TaskListener.h"
@@ -109,6 +110,7 @@ class AppState : public Marshalable, public TaskListener
 
     juce::SharedResourcePointer<AudioFilesBufferStore>
         sharedAudioFileBuffers; /**< object managing audio buffers read from files */
+    juce::SharedResourcePointer<TextureManager> textureManager;
 
     std::optional<juce::File> repositoryFolder;
 

@@ -186,6 +186,7 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
             // this will prevent the sample from getting unload untill the new project is loaded
             // which helps at reusing loaded files.
             sharedAudioFileBuffers->disableUnusedBuffersRelease();
+            textureManager->lockCurrentTextures();
 
             auto clearTask = std::make_shared<ResetTask>();
             activityManager.broadcastNestedTaskNow(clearTask);
@@ -220,6 +221,9 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
             // loading is finished here and reenable the audio buffer freeing
             sharedAudioFileBuffers->enableUnusedBuffersRelease();
 
+            // we decrement usage count we increased earlier and free non reused textures
+            textureManager->releaseLockedTextures();
+
             // and this will record the task in history (note that broadcastNestTaskNow unlike broadcastTask guarantees
             // execution)
             return true;
@@ -228,6 +232,7 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
         {
             // this need to be reenabled
             sharedAudioFileBuffers->enableUnusedBuffersRelease();
+            textureManager->releaseLockedTextures();
 
             projectOpeningTask->setFailed(true);
             projectOpeningTask->stage = OPEN_PROJECT_STAGE_FAILED;

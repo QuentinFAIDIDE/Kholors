@@ -153,6 +153,7 @@ target_compile_definitions(Kholors
 # TODO: may remove this if cherry picking TestAudioLib linked libs
 target_compile_definitions(TestAudioLib
     PRIVATE
+        WITH_TESTING
         # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_gui_app` call
         JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_gui_app` call
@@ -163,6 +164,7 @@ target_compile_definitions(TestAudioLib
 # TODO: may remove this if cherry picking TestAudioLib linked libs
 target_compile_definitions(TestSamplePlayer
     PRIVATE
+        WITH_TESTING
         # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_gui_app` call
         JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_gui_app` call
@@ -172,6 +174,7 @@ target_compile_definitions(TestSamplePlayer
 
 target_compile_definitions(TestUnitConverter
     PRIVATE
+        WITH_TESTING
         # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_gui_app` call
         JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_gui_app` call
@@ -181,6 +184,7 @@ target_compile_definitions(TestUnitConverter
 
 target_compile_definitions(TestTextureManager
     PRIVATE
+        WITH_TESTING
         # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_gui_app` call
         JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_gui_app` call
@@ -190,6 +194,7 @@ target_compile_definitions(TestTextureManager
 
 target_compile_definitions(TestGitWrapper
     PRIVATE
+        WITH_TESTING
         # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
         JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_gui_app` call
         JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_gui_app` call

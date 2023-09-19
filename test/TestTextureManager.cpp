@@ -57,6 +57,7 @@ int main()
     sp3->getBufferRef().data->getWritePointer(0)[1025] = 0.3f;
 
     TextureManager textureManager;
+    textureManager.setOpenGlContext(nullptr); /**< set garbage just to avoid exceptions */
 
     // these two request should return nothing
     if (textureManager.getTextureIdentifier(sp1).hasValue())
@@ -97,19 +98,22 @@ int main()
     textureManager.declareTextureUsage(10);
     textureManager.declareTextureUsage(10);
 
-    if (textureManager.decrementUsageCount(10))
+    textureManager.decrementUsageCount(10);
+    if (!textureManager.textureIdIsStored(10))
     {
         std::cerr << "Wrong freeing of sp1" << std::endl;
         return 1;
     }
 
-    if (textureManager.decrementUsageCount(10))
+    textureManager.decrementUsageCount(10);
+    if (!textureManager.textureIdIsStored(10))
     {
         std::cerr << "Wrong freeing of sp1" << std::endl;
         return 1;
     }
 
-    if (!textureManager.decrementUsageCount(10))
+    textureManager.decrementUsageCount(10);
+    if (textureManager.textureIdIsStored(10))
     {
         std::cerr << "Missed freeing of sp1" << std::endl;
         return 1;

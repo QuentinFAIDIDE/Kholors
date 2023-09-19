@@ -55,6 +55,8 @@ ArrangementArea::ArrangementArea(MixingBus &mb, ActivityManager &am)
     openGLContext.setContinuousRepainting(false);
     openGLContext.attachTo(*this);
 
+    textureManager->setOpenGlContext(&openGLContext);
+
     addAndMakeVisible(frequencyGrid);
     addAndMakeVisible(tempoGrid);
 }

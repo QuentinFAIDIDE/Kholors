@@ -222,7 +222,7 @@ class ArrangementArea : public juce::Component,
     AlphaMaskTextureLoader alphaMaskTextureLoader;
 
     // NOTE: we will draw each sample fft in OpenGL
-    // with a square on which we map a texture.
+    // with a rectangle on which we map a texture.
     std::vector<std::shared_ptr<SampleGraphicModel>> samples;
     BackgroundModel backgroundGrid;
     std::unique_ptr<juce::OpenGLShaderProgram> texturedPositionedShader;
@@ -288,6 +288,8 @@ class ArrangementArea : public juce::Component,
     std::map<int, float> initFiltersFreqs;
 
     juce::SharedResourcePointer<StatusTips> sharedTips;
+
+    juce::SharedResourcePointer<TextureManager> textureManager;
 
     //==============================================================================
     void paintPlayCursor(juce::Graphics &g);

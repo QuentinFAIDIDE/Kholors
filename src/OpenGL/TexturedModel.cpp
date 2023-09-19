@@ -111,11 +111,7 @@ void TexturedModel::disable()
         glDeleteBuffers(1, &vbo);
         glDeleteBuffers(1, &ebo);
 
-        bool shouldFreeTexture = textureManager->decrementUsageCount(tbo);
-        if (shouldFreeTexture)
-        {
-            glDeleteTextures(1, &tbo);
-        }
+        textureManager->decrementUsageCount(tbo);
     }
 }
 

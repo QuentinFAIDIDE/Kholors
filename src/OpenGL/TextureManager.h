@@ -3,6 +3,8 @@
 
 #include "../Audio/SamplePlayer.h"
 #include "juce_opengl/opengl/juce_gl.h"
+#include <juce_gui_basics/juce_gui_basics.h>
+#include <juce_opengl/juce_opengl.h>
 #include <memory>
 
 #define TEXTURE_MANAGER_HASH_LENGTH 1024
@@ -14,6 +16,15 @@ struct AudioBufferTextureData
     int useCount;
 };
 
+/**
+ * @brief An object responsible for storing allocated texture data
+ *        counting their users objects and eventually freeing the texture
+ *        if the count reaches zero. It serves as a cache for avoiding costly
+ *        re-allocations. Note that while it doesn't load the texture against openGL
+ *        and expect the GLuint to be allocated, it clear them in OpenGL, which no
+ *        textured object should ever do.
+ *
+ */
 class TextureManager
 {
   public:
@@ -30,17 +41,12 @@ class TextureManager
     juce::Optional<GLuint> getTextureIdentifier(std::shared_ptr<SamplePlayer> sp);
 
     /**
-     * @brief      After the textured object was deleted, we ensure its texture
-     *             usage count is decremented so that it can be freed whenever reaching
-     *             zero. When usage count is lowered to zero, true is returned as to
-     *             signal the caller needs to free the texture resource. If this function
-     *             returns false, the texture should not be freed.
+     * @brief      Decrement count of usage of this texture id and eventually frees it.
      *
      * @param[in]  id    the identifier of the texture that the object had.
      *
-     * @return     True if the texture should be freed, false of not.
      */
-    bool decrementUsageCount(GLuint);
+    void decrementUsageCount(GLuint);
 
     /**
      * @brief      Gets the audio buffer corresponding the texture index.
@@ -76,6 +82,35 @@ class TextureManager
      *             This increments usage count.
      */
     void declareTextureUsage(GLuint textureId);
+
+    /**
+     * @brief Increment count of all textures and save em so the count can be later
+     * decrease with releaseLockedTextures.
+     *
+     */
+    void lockCurrentTextures();
+
+    /**
+     * @brief If some texture have been locked, decrement their usage count and
+     * eventually have them freed.
+     *
+     */
+    void releaseLockedTextures();
+
+    /**
+     * @brief Set the Open Gl Context object
+     *
+     */
+    void setOpenGlContext(juce::OpenGLContext *);
+
+    /**
+     * @brief tests if the texture is stored in the texture manager.
+     *
+     * @param textureId OpenGL texture identifier
+     * @return true if the texture is cached in texture maanger
+     * @return false if the texture is not cached in texture manager
+     */
+    bool textureIdIsStored(GLuint textureId);
 
   private:
     /**
@@ -114,8 +149,12 @@ class TextureManager
     // that some sample is already stored here.
     std::map<int, int> texturesLengthCount;
 
+    std::set<GLuint> lockedTextures; /**< texture for which count was incremented (eg "locked") */
+
     // bucket of textures based on their audio left channel hash
     std::map<size_t, std::vector<GLuint>> texturesPerHash;
+
+    std::optional<juce::OpenGLContext *> glContext; /**< A reference to the opengl context where to free textures*/
 
     // map from GLuint texture ids to audio buffer and texture data
     std::map<GLuint, std::shared_ptr<AudioBufferTextureData>> audioBufferTextureData;

@@ -1,10 +1,17 @@
 #include "TextureManager.h"
 #include <limits>
 #include <memory>
+#include <stdexcept>
 
 juce::Optional<GLuint> TextureManager::getTextureIdentifier(std::shared_ptr<SamplePlayer> sp)
 {
     AudioFileBufferRef buffer = sp->getBufferRef();
+
+    // if opengl context to free textures was not set, throw an error
+    if (!glContext.has_value())
+    {
+        throw std::runtime_error("Called a texture manager function before setting opengl context");
+    }
 
     // if length is unique, directly return nothing
     if (texturesLengthCount.find(buffer.data->getNumSamples()) == texturesLengthCount.end())
@@ -31,9 +38,8 @@ juce::Optional<GLuint> TextureManager::getTextureIdentifier(std::shared_ptr<Samp
         AudioFileBufferRef bucketAudioBuffer = getAudioBufferFromTextureId(audioBufferIdentifiersBucket[i]);
         if (bucketAudioBuffer.data == nullptr)
         {
-            std::cerr << "a TextureManager hash bucket had a GLuint texture identifier for which no audio was found"
-                      << std::endl;
-            continue;
+            throw std::runtime_error(
+                "a TextureManager hash bucket had a GLuint texture identifier for which no audio was found");
         }
 
         if (areAudioBufferEqual(*buffer.data, *bucketAudioBuffer.data))
@@ -43,6 +49,11 @@ juce::Optional<GLuint> TextureManager::getTextureIdentifier(std::shared_ptr<Samp
     }
 
     return juce::Optional<GLuint>();
+}
+
+void TextureManager::setOpenGlContext(juce::OpenGLContext *gl)
+{
+    glContext = gl;
 }
 
 bool TextureManager::areAudioBufferEqual(juce::AudioBuffer<float> &a, juce::AudioBuffer<float> &b)
@@ -129,52 +140,63 @@ size_t TextureManager::hashAudioChannel(const float *data, int length)
     return seed;
 }
 
-bool TextureManager::decrementUsageCount(GLuint id)
+void TextureManager::decrementUsageCount(GLuint id)
 {
+    // if opengl context to free textures was not set, throw an error
+    if (!glContext.has_value())
+    {
+        throw std::runtime_error("Called a texture manager function before setting opengl context");
+    }
+
     auto textureSearchIterator = audioBufferTextureData.find(id);
 
     if (textureSearchIterator == audioBufferTextureData.end())
     {
-        std::cerr << "Warning: trying to decrement usage count of a texture id that doesn't exists" << std::endl;
-        return true;
+        throw std::runtime_error("trying to decrement usage count of a texture id that doesn't exists");
     }
 
     textureSearchIterator->second->useCount--;
 
     if (textureSearchIterator->second->useCount < 0)
     {
-        std::cerr << "Warning: texture usage count went negative" << std::endl;
-        return true;
+        throw std::runtime_error("texture usage count went negative");
     }
 
     if (textureSearchIterator->second->useCount == 0)
     {
         clearTextureData(id);
-        return true;
     }
+}
 
-    return false;
+bool TextureManager::textureIdIsStored(GLuint textureId)
+{
+    return audioBufferTextureData.find(textureId) != audioBufferTextureData.end();
 }
 
 void TextureManager::clearTextureData(GLuint textureId)
 {
-    auto textureSearchIterator = audioBufferTextureData.find(textureId);
+    std::cout << "Deleting texture for GLuint " << textureId << std::endl;
 
+    // if opengl context to free textures was not set, throw an error
+    if (!glContext.has_value())
+    {
+        throw std::runtime_error("Called a texture manager function before setting opengl context");
+    }
+
+    // ensure the texture exists
+    auto textureSearchIterator = audioBufferTextureData.find(textureId);
     if (textureSearchIterator == audioBufferTextureData.end())
     {
-        std::cerr << "Warning: trying to clear a texture id that doesn't exists" << std::endl;
-        return;
+        throw std::runtime_error("trying to clear a texture id that doesn't exists");
     }
 
     // first we need to remove the texture count per audio buffer length
     auto audioBuffer = textureSearchIterator->second->audioData;
     auto sampleLength = audioBuffer.data->getNumSamples();
-
     if (texturesLengthCount.find(sampleLength) == texturesLengthCount.end())
     {
-        std::cerr << "Warning: texture to delete had no corresponding length count" << std::endl;
+        throw std::runtime_error("texture to delete had no corresponding length count");
     }
-
     texturesLengthCount[sampleLength] = texturesLengthCount[sampleLength] - 1;
     if (texturesLengthCount[sampleLength] <= 0)
     {
@@ -182,15 +204,13 @@ void TextureManager::clearTextureData(GLuint textureId)
     }
 
     // then we remove the glint from the bucket corresponding to the hash
-    // compute hash
     int hashingLength = juce::jmin(audioBuffer.data->getNumSamples(), TEXTURE_MANAGER_HASH_LENGTH);
     size_t hash = hashAudioChannel(audioBuffer.data->getReadPointer(0), hashingLength);
-
     // if no items for this hash, this sucks really hard
     auto foundHash = texturesPerHash.find(hash);
     if (foundHash == texturesPerHash.end())
     {
-        std::cerr << "A texture to delete had no corresponding hash bucket!" << std::endl;
+        throw std::runtime_error("A texture to delete had no corresponding hash bucket!");
     }
     else
     {
@@ -202,22 +222,39 @@ void TextureManager::clearTextureData(GLuint textureId)
             {
                 audioBufferIdentifiersBucket.erase(audioBufferIdentifiersBucket.begin() + (long)i);
                 clearedIdFromBucket = true;
+                // as we modify the copy, we need to copy it back!
+                texturesPerHash[hash] = audioBufferIdentifiersBucket;
                 break;
             }
         }
         if (!clearedIdFromBucket)
         {
-            std::cerr << "A texture to delete was not found in its hash bucket !!" << std::endl;
+            throw std::runtime_error("A texture to delete was not found in its hash bucket !!");
         }
     }
 
-    // finally we remove the structure with the texture data (note we already checked id exists in there)
+    // we remove the structure with the texture data (note we already checked id exists in there)
     audioBufferTextureData.erase(textureId);
+
+// we only proceed to call opengl if we are not in testing mode
+#ifndef WITH_TESTING
+    // and we execute a call on the openGlThread to free the texture
+    glContext.value()->executeOnGLThread(
+        [textureId](juce::OpenGLContext &) { juce::gl::glDeleteTextures(1, &textureId); }, true);
+#endif
 }
 
 void TextureManager::setTexture(GLuint textureId, std::shared_ptr<SamplePlayer> sp,
                                 std::shared_ptr<std::vector<float>> textureData)
 {
+    std::cout << "Storing texture for GLuint " << textureId << std::endl;
+
+    // if opengl context to free textures was not set, throw an error
+    if (!glContext.has_value())
+    {
+        throw std::runtime_error("Called a texture manager function before setting opengl context");
+    }
+
     // increments textureLength count
     int length = sp->getBufferRef().data->getNumSamples();
     if (texturesLengthCount.find(length) == texturesLengthCount.end())
@@ -258,13 +295,36 @@ void TextureManager::setTexture(GLuint textureId, std::shared_ptr<SamplePlayer> 
 
 void TextureManager::declareTextureUsage(GLuint textureId)
 {
+    // if opengl context to free textures was not set, throw an error
+    if (!glContext.has_value())
+    {
+        throw std::runtime_error("Called a texture manager function before setting opengl context");
+    }
+
     auto textureSearchIterator = audioBufferTextureData.find(textureId);
 
     if (textureSearchIterator == audioBufferTextureData.end())
     {
-        std::cerr << "Warning: trying to increment count for a texture id that doesn't exists" << std::endl;
-        return;
+        throw std::runtime_error("Warning: trying to increment count for a texture id that doesn't exists");
     }
 
     textureSearchIterator->second->useCount++;
+}
+
+void TextureManager::lockCurrentTextures()
+{
+    if (lockedTextures.size() > 0)
+    {
+        throw std::runtime_error("tried to lock textures multiple times");
+    }
+}
+
+void TextureManager::releaseLockedTextures()
+{
+    std::set<GLuint> texturesToFree;
+    texturesToFree.swap(lockedTextures);
+    for (auto it = texturesToFree.begin(); it != texturesToFree.end(); it++)
+    {
+        decrementUsageCount(*it);
+    }
 }
