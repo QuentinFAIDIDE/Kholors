@@ -1,4 +1,5 @@
 #include "FftRunner.h"
+#include <cstring>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
@@ -47,7 +48,7 @@ std::shared_ptr<std::vector<float>> FftRunner::performFft(std::shared_ptr<juce::
 
     // compute size (in # of floats!) and allocate response array
     int respArraySize = audioFile->getNumChannels() * noJobsPerChannel * FFT_OUTPUT_NO_FREQS;
-    std::vector<float> result((size_t)respArraySize);
+    auto result = std::make_shared<std::vector<float>>((size_t)respArraySize);
 
     // jobs sent in the current batch
     std::vector<std::shared_ptr<FftRunnerJob>> batchJobs;
@@ -59,12 +60,17 @@ std::shared_ptr<std::vector<float>> FftRunner::performFft(std::shared_ptr<juce::
     // repeat for each channel
     for (int ch = 0; ch < audioFile->getNumChannels(); ch++)
     {
+        // channel offset in the destination array (result)
+        size_t channelResultArrayOffset = (size_t)ch * (size_t)noJobsPerChannel * FFT_OUTPUT_NO_FREQS;
 
         // pointer to the start of the next job
         const float *nextJobStart = audioFile->getReadPointer(ch);
 
         // total jobs still to be sent for this channel
         int remainingJobs = noJobsPerChannel;
+
+        // index of the fft in posted jobs
+        int fftPosition = 0;
 
         // keep sending batch of jobs to thread while we are not finished
         while (remainingJobs != 0)
@@ -100,16 +106,53 @@ std::shared_ptr<std::vector<float>> FftRunner::performFft(std::shared_ptr<juce::
             // iterate over empty job and set the appropriate input data, length, and reset bool statuses
             for (int i = 0; i < (int)batchJobs.size(); i++)
             {
-                // TODO: set job properties and increment wg here
-                // if this is the last sample, crop the damn size
-                // and don't forget to increment the data pointer position
+                // set job properties and increment wg here
+                batchJobs[(size_t)i]->input = nextJobStart;
+                batchJobs[(size_t)i]->wg = wg;
+                batchJobs[(size_t)i]->position = fftPosition;
+                wg->Add(1);
+                // decrement remaining job
+                remainingJobs--;
+                fftPosition++;
+                // set the appropriate size
+                if (remainingJobs == 0)
+                {
+                    batchJobs[(size_t)i]->inputLength = audioFile->getNumSamples() % FFT_INPUT_NO_INTENSITIES;
+                }
+                else
+                {
+                    batchJobs[(size_t)i]->inputLength = FFT_INPUT_NO_INTENSITIES;
+                }
+                // move the data pointer forward
+                nextJobStart += (size_t)FFT_INPUT_NO_INTENSITIES;
             }
 
             // wait for waitgroup
+            wg->Wait();
 
-            // copy back the response
+            // copy back the responses on we're done
+            for (int i = 0; i < (int)batchJobs.size(); i++)
+            {
+                // helper to locate the destination area
+                size_t fftChannelOffset = ((size_t)batchJobs[(size_t)i]->position * FFT_OUTPUT_NO_FREQS);
+                size_t fftResultArrayOffset = channelResultArrayOffset + fftChannelOffset;
+                // copy the memory from job data to destination buffer
+                memcpy(result->data() + (fftResultArrayOffset * sizeof(float)), batchJobs[(size_t)i]->output,
+                       sizeof(float) * FFT_OUTPUT_NO_FREQS);
+            }
+
+            // put the jobs back into the empty job queue
+            for (int i = 0; i < (int)batchJobs.size(); i++)
+            {
+                std::scoped_lock<std::mutex> lock(emptyJobsMutex);
+                emptyJobPool.push(batchJobs[(size_t)i]);
+            }
+
+            // note that the batchJobs vector is cleared on loop restart
         }
     }
+
+    return result;
 }
 
 void FftRunner::fftThreadsLoop()

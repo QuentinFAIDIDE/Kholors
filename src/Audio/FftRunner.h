@@ -34,13 +34,11 @@
 /**< jobs that are posted in the job queue and picked by threads  */
 struct FftRunnerJob
 {
+    int position;       /**< Position of the fft in the source audio buffer (in index of ffts) */
     const float *input; /**< Audio intensities as inputs. Must be readable up to input+(sizeof(float)*inputLength) */
     float output[FFT_OUTPUT_NO_FREQS]; /**< frequency bins as output */
     float inputLength;                 /**< how many samples in the input are to be picked (from start) */
     std::shared_ptr<WaitGroup> wg;     /**< Synchronisation utility for batch of jobs across threads */
-    std::mutex jobMutex; /**< To ensure atomic bools are synced (yeah wtf c++...) and we don't exit the waitgroup before
-                            the other thread can read their right value */
-    std::atomic<bool> resultFetched; /**< Has the result been fetched already ? */
 };
 
 /**
