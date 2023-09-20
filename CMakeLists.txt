@@ -54,6 +54,7 @@ add_test(NAME TestSamplePlayer COMMAND TestSamplePlayer)
 add_test(NAME TestUnitConverter COMMAND TestUnitConverter)
 add_test(NAME TestTextureManager COMMAND TestTextureManager)
 add_test(NAME TestGitWrapper COMMAND TestGitWrapper)
+add_test(NAME TestFftRunner COMMAND TestFftRunner)
 
 # If your app depends the VST2 SDK, perhaps to host VST2 plugins, CMake needs to be told where
 # to find the SDK on your system. This setup should be done before calling `juce_add_gui_app`.
@@ -79,6 +80,7 @@ juce_add_gui_app(TestSamplePlayer PRODUCT_NAME "TestSamplePlayer")
 juce_add_gui_app(TestUnitConverter PRODUCT_NAME "TestUnitConverter")
 juce_add_gui_app(TestTextureManager PRODUCT_NAME "TestTextureManager")
 juce_add_gui_app(TestGitWrapper PRODUCT_NAME "TestGitWrapper")
+juce_add_gui_app(TestFftRunner PRODUCT_NAME "TestFftRunner")
 
 # `juce_generate_juce_header` will create a JuceHeader.h for a given target, which will be generated
 # into your build tree. This should be included with `#include <JuceHeader.h>`. The include path for
@@ -108,6 +110,11 @@ target_sources(TestGitWrapper
         src/Arrangement/GitWrapper.cpp
         src/Config.cpp
         test/TestGitWrapper.cpp)
+
+target_sources(TestFftRunner
+    PRIVATE
+        src/Audio/FftRunner.cpp
+        test/TestFftRunner.cpp)    
 
 target_sources(TestTextureManager
     PRIVATE
@@ -202,6 +209,17 @@ target_compile_definitions(TestGitWrapper
         JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:Kholors,JUCE_PRODUCT_NAME>"
         JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:Kholors,JUCE_VERSION>")
 
+target_compile_definitions(TestFftRunner
+    PRIVATE
+        WITH_TESTING
+        # JUCE_WEB_BROWSER and JUCE_USE_CURL would be on by default, but you might not need them.
+        JUCE_WEB_BROWSER=0  # If you remove this, add `NEEDS_WEB_BROWSER TRUE` to the `juce_add_gui_app` call
+        JUCE_USE_CURL=0     # If you remove this, add `NEEDS_CURL TRUE` to the `juce_add_gui_app` call
+        JUCE_DISPLAY_SPLASH_SCREEN=0 # added to remove splash screen as we're using gpl
+        JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:Kholors,JUCE_PRODUCT_NAME>"
+        JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:Kholors,JUCE_VERSION>")
+    
+
 # If your target needs extra binary assets, you can add them here. The first argument is the name of
 # a new static library target that will include all the binary resources. There is an optional
 # `NAMESPACE` argument that can specify the namespace of the generated binary data class. Finally,
@@ -230,6 +248,17 @@ target_link_libraries(Kholors
         git2
         ssl
         crypto
+    PUBLIC
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_lto_flags
+        juce::juce_recommended_warning_flags)
+
+target_link_libraries(TestFftRunner
+    PRIVATE
+        juce::juce_gui_extra
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_audio_basics
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
