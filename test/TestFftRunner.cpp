@@ -21,8 +21,14 @@ int main()
     reader->read(bufferPtr.get(), 0, (int)reader->lengthInSamples, 0, true, true);
     auto result = runner.performFft(bufferPtr);
 
-    // TODO: test result size
-    // TODO: test result content
-
+    // test result size
+    std::cout << "result size: " << result->size() << std::endl;
+    // test result content
+    for (size_t i = 0; i < FFT_OUTPUT_NO_FREQS; i++)
+    {
+        float res = *(float *)(result.get()->data() + ((FFT_OUTPUT_NO_FREQS * 100) + i));
+        if (std::abs(res + 64.f) > 20.f)
+            std::cout << "result intensity " << i << ": " << res << std::endl;
+    }
     return 0;
 }

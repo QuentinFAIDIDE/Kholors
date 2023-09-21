@@ -1,5 +1,8 @@
 #include "FftRunner.h"
+#include "../Config.h"
+#include <algorithm>
 #include <chrono>
+#include <complex>
 #include <cstring>
 #include <fftw3.h>
 #include <memory>
@@ -268,11 +271,14 @@ void FftRunner::processJob(std::shared_ptr<FftRunnerJob> job, fftwf_plan *plan, 
     float re, im; /**< real and imaginary parts buffers */
     for (size_t i = 0; i < FFT_OUTPUT_NO_FREQS; i++)
     {
+        // read and normalize output complex
         re = out[i][0] / float(FFTW_INPUT_SIZE);
         im = out[i][1] / float(FFTW_INPUT_SIZE);
-        job->output[i] = std::sqrt((re * re) + (im * im));
+        // absolute value of the complex number
+        job->output[i] = std::sqrt((re * re) + (im * im)) * FFT_ZERO_PADDING_FACTOR;
+        // convert it to dB
+        job->output[i] = job->output[i] > float() ? std::max(MIN_DB, 20.0f * std::log10(job->output[i])) : MIN_DB;
     }
-    // TODO: convert output to dB
 
     job->wg->Done();
 }

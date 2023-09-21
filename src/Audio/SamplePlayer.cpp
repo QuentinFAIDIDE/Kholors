@@ -2,6 +2,7 @@
 #include "AudioFilesBufferStore.h"
 #include "UnitConverter.h"
 
+#include <complex>
 #include <iterator>
 #include <memory>
 #include <stdexcept>
