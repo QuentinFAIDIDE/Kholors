@@ -35,6 +35,10 @@
 /**< Number of floats we send to forward fft in fftw as input */
 #define FFTW_INPUT_SIZE (FFT_INPUT_NO_INTENSITIES * FFT_ZERO_PADDING_FACTOR)
 
+/**< Necessary correction for freq bins amplitudes for the Hanning window function.
+ *  See https://community.sw.siemens.com/s/article/window-correction-factors */
+#define HANN_AMPLITUDE_CORRECTION_FACTOR 2.0f
+
 /**< jobs that are posted in the job queue and picked by threads  */
 struct FftRunnerJob
 {
@@ -91,7 +95,7 @@ class FftRunner
      * @param in The input FFTW data (to copy job input into)
      * @param out The output FFTW data (to copy job output from)
      */
-    static void processJob(std::shared_ptr<FftRunnerJob> jobRef, fftwf_plan *plan, float *in, fftwf_complex *out);
+    void processJob(std::shared_ptr<FftRunnerJob> jobRef, fftwf_plan *plan, float *in, fftwf_complex *out);
 
   private:
     /**
@@ -106,9 +110,10 @@ class FftRunner
     std::vector<std::thread> workerThreads;                 /**< list of worker threads */
     std::queue<std::shared_ptr<FftRunnerJob>> todoJobQueue; /**< queue of jobs to be picked by workers */
     std::queue<std::shared_ptr<FftRunnerJob>>
-        emptyJobPool;          /**< Preallocated structures to carry job information. If empty, please wait. */
-    std::mutex emptyJobsMutex; /**< Prevent race condition if many threads want to run FFTs */
-    std::mutex fftwMutex;      /**< Mutex for non thread safe fftw init functions */
+        emptyJobPool;                   /**< Preallocated structures to carry job information. If empty, please wait. */
+    std::mutex emptyJobsMutex;          /**< Prevent race condition if many threads want to run FFTs */
+    std::mutex fftwMutex;               /**< Mutex for non thread safe fftw init functions */
+    std::vector<float> hannWindowTable; /**< factors of the hann windowing function for our desired input size */
 };
 
 #endif // DEF_FFT_RUNNER_HPP

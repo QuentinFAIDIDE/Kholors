@@ -5,6 +5,7 @@
 #include <complex>
 #include <cstring>
 #include <fftw3.h>
+#include <math.h>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
@@ -24,7 +25,12 @@ FftRunner::FftRunner() : exiting(false)
         emptyJobPool.push(newEmptyJob);
     }
 
-    // TODO: precompute hanning windowing function based on fft windowing size
+    // precompute hanning windowing function based on fft windowing size
+    hannWindowTable.resize(FFT_INPUT_NO_INTENSITIES);
+    for (size_t i = 0; i < hannWindowTable.size(); i++)
+    {
+        hannWindowTable[i] = 0.5 * (1 - std::cos(2.0f * M_PI * (float)i / float(hannWindowTable.size() - 1)));
+    }
 
     // Pick the number of threads and start them.
     // Copy pasted from the post linked in the header file, it's already perfect like this.
@@ -264,18 +270,23 @@ void FftRunner::processJob(std::shared_ptr<FftRunnerJob> job, fftwf_plan *plan, 
             in[i] = 0.0f;
         }
     }
-    // TODO: apply the hanning windowing function
+    // apply the hanning windowing function
+    for (size_t i = 0; i < FFT_INPUT_NO_INTENSITIES; i++)
+    {
+        in[i] = hannWindowTable[i] * in[i];
+    }
     // execute the FFTW plan (and the DFT)
     fftwf_execute(*plan);
     // copy back the output intensities normalized
     float re, im; /**< real and imaginary parts buffers */
     for (size_t i = 0; i < FFT_OUTPUT_NO_FREQS; i++)
     {
-        // read and normalize output complex
-        re = out[i][0] / float(FFTW_INPUT_SIZE);
-        im = out[i][1] / float(FFTW_INPUT_SIZE);
+        // Read and normalize output complex.
+        // Note that zero padding is not accounted for.
+        re = out[i][0] / float(FFT_INPUT_NO_INTENSITIES);
+        im = out[i][1] / float(FFT_INPUT_NO_INTENSITIES);
         // absolute value of the complex number
-        job->output[i] = std::sqrt((re * re) + (im * im)) * FFT_ZERO_PADDING_FACTOR;
+        job->output[i] = std::sqrt((re * re) + (im * im)) * HANN_AMPLITUDE_CORRECTION_FACTOR;
         // convert it to dB
         job->output[i] = job->output[i] > float() ? std::max(MIN_DB, 20.0f * std::log10(job->output[i])) : MIN_DB;
     }

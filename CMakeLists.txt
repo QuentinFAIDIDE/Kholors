@@ -45,6 +45,7 @@ add_subdirectory(JUCE)                    # If you've put JUCE in a subdirectory
 find_package(nlohmann_json 3.11.2 REQUIRED)
 find_package(yaml-cpp)
 find_package(OpenSSL)
+find_package(FFTW3)
 
 # Include tests and Ctest utility
 include(CTest)
@@ -113,6 +114,7 @@ target_sources(TestGitWrapper
 
 target_sources(TestFftRunner
     PRIVATE
+        src/WaitGroup.cpp
         src/Audio/FftRunner.cpp
         test/TestFftRunner.cpp)    
 
@@ -248,6 +250,7 @@ target_link_libraries(Kholors
         git2
         ssl
         crypto
+        fftw3f
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
@@ -259,6 +262,7 @@ target_link_libraries(TestFftRunner
         juce::juce_audio_utils
         juce::juce_dsp
         juce::juce_audio_basics
+        fftw3f
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags

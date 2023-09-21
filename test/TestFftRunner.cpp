@@ -26,7 +26,7 @@ int main()
     // test result content
     for (size_t i = 0; i < FFT_OUTPUT_NO_FREQS; i++)
     {
-        float res = *(float *)(result.get()->data() + ((FFT_OUTPUT_NO_FREQS * 100) + i));
+        float res = *(float *)(result.get()->data() + ((FFT_OUTPUT_NO_FREQS * 500) + i));
         if (std::abs(res + 64.f) > 20.f)
             std::cout << "result intensity " << i << ": " << res << std::endl;
     }
