@@ -8,6 +8,7 @@
 #include <mutex>
 #include <vector>
 
+#include "../Config.h"
 #include "../WaitGroup.h"
 
 // a cool post about C++ thread pools: https://stackoverflow.com/a/32593825
@@ -19,21 +20,6 @@
 /**< How many jobs we will sent together. Beware to keep number of job posting threads (not fft thread pool) below
  * FFT_PREALLOCATED_JOB_STRUCTS / FFT_JOBS_BATCH_SIZE */
 #define FFT_JOBS_BATCH_SIZE 512
-
-/**< How much zeros we pad at the end of fft input intensities for each intensity sample */
-#define FFT_ZERO_PADDING_FACTOR 4
-
-/**< Number of intensities we send as input (not accounting for zero padding after it). */
-#define FFT_INPUT_NO_INTENSITIES 2048 // always choose a power of two!
-
-/***< What is the overlap of subsequent FFT windows. 2 = 50% overlap, 3 = 66.666% overlap, 4=25% ... */
-#define FFT_OVERLAP_DIVISION 2
-
-/**< Size of the output, as the number of frequencies bins */
-#define FFT_OUTPUT_NO_FREQS (((FFT_INPUT_NO_INTENSITIES * FFT_ZERO_PADDING_FACTOR) >> 1) + 1)
-
-/**< Number of floats we send to forward fft in fftw as input */
-#define FFTW_INPUT_SIZE (FFT_INPUT_NO_INTENSITIES * FFT_ZERO_PADDING_FACTOR)
 
 /**< Necessary correction for freq bins amplitudes for the Hanning window function.
  *  See https://community.sw.siemens.com/s/article/window-correction-factors */

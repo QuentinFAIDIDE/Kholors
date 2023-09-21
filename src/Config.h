@@ -147,13 +147,23 @@
 #define KEYMAP_UNDO "ctrl + z"
 #define KEYMAP_REDO "ctrl + shift + z"
 
-#define FREQVIEW_SAMPLE_FFT_ORDER 9
-// total number of fft frequency values. Given that the real part of the result is half of it
-// the effective number of frequency bins from 1 to AUDIO_FRAMERATE (samplerate)
-// is half that.
-#define FREQVIEW_SAMPLE_FFT_SIZE (1 << FREQVIEW_SAMPLE_FFT_ORDER)
 // How many frequencies we will store for each fft.
-#define FREQVIEW_SAMPLE_FFT_SCOPE_SIZE 4096
+#define FFT_STORAGE_SCOPE_SIZE 4096
+
+/**< How much zeros we pad at the end of fft input intensities for each intensity sample */
+#define FFT_ZERO_PADDING_FACTOR 4
+
+/**< Number of intensities we send as input (not accounting for zero padding after it). */
+#define FFT_INPUT_NO_INTENSITIES 2048 // always choose a power of two!
+
+/***< What is the overlap of subsequent FFT windows. 2 = 50% overlap, 3 = 66.666% overlap, 4=25% ... */
+#define FFT_OVERLAP_DIVISION 2
+
+/**< Size of the output, as the number of frequencies bins */
+#define FFT_OUTPUT_NO_FREQS (((FFT_INPUT_NO_INTENSITIES * FFT_ZERO_PADDING_FACTOR) >> 1) + 1)
+
+/**< Number of floats we send to forward fft in fftw as input */
+#define FFTW_INPUT_SIZE (FFT_INPUT_NO_INTENSITIES * FFT_ZERO_PADDING_FACTOR)
 
 // A and B are used to normalize log10
 #define FFT_MAGNIFY_A 0.00009990793

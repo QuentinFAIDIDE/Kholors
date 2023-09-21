@@ -7,7 +7,8 @@ AudioFileBufferRef::AudioFileBufferRef() : data(nullptr), fileFullPath("")
 {
 }
 
-AudioFileBufferRef::AudioFileBufferRef(std::shared_ptr<juce::AudioSampleBuffer> ptr, std::string path)
+AudioFileBufferRef::AudioFileBufferRef(std::shared_ptr<juce::AudioSampleBuffer> ptr, std::string path,
+                                       std::shared_ptr<std::vector<float>> shortTimeDFTs)
     : data(ptr), fileFullPath(path)
 {
     // we now allow nullptr AudioFileBufferRef
@@ -47,6 +48,9 @@ AudioFileBufferRef::AudioFileBufferRef(std::shared_ptr<juce::AudioSampleBuffer> 
     {
         throw std::runtime_error("Unexpected size of sha digest received !");
     }
+
+    // save the FFT data
+    storedFftData = shortTimeDFTs;
 }
 
 std::string AudioFileBufferRef::hashDigest()
@@ -109,7 +113,14 @@ AudioFileBufferRef AudioFilesBufferStore::loadSample(std::string filePath)
     auto bufferPtr = std::make_shared<juce::AudioSampleBuffer>(reader->numChannels, reader->lengthInSamples);
     reader->read(bufferPtr.get(), 0, reader->lengthInSamples, 0, true, true);
 
-    AudioFileBufferRef bufferBox(bufferPtr, fullPath.toStdString());
+    // compute the short time FFTs
+    auto rawShortTimeDfts = fftProcessing->performFft(bufferPtr);
+
+    // apply the transformation to store FFTs
+    std::shared_ptr<std::vector<float>> storedFfts = copyRawFFTsToStorageFormat(rawShortTimeDfts);
+
+    // finally, create the buffer object
+    AudioFileBufferRef bufferBox(bufferPtr, fullPath.toStdString(), storedFfts);
 
     // register in cache
     {

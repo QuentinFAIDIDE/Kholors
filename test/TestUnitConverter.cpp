@@ -5,18 +5,7 @@
 
 int main()
 {
-    float diff = std::abs(UnitConverter::fftToDbInv(UnitConverter::fftToDb(200)) - 200);
-    if (diff > 1)
-    {
-        std::cerr << "diff too big for gainToDbInv: " << diff << std::endl;
-        return 1;
-    }
-    else
-    {
-        std::cerr << "fftToDb and fftToDbInv matched!" << std::endl;
-    }
-
-    diff = std::abs(UnitConverter::magnifyFftIndexInv(UnitConverter::magnifyFftIndex(3000)) - 3000);
+    float diff = std::abs(UnitConverter::magnifyFftIndexInv(UnitConverter::magnifyFftIndex(3000)) - 3000);
     if (diff > 1)
     {
         std::cerr << "diff too big for magnifyFftIndex: " << diff << std::endl;
@@ -107,7 +96,7 @@ int main()
     }
 
     // testing the whole pipeline to go back and forth at 4.6kHz
-    int index4600 = (4600.0f / float(AUDIO_FRAMERATE >> 1)) * float(FREQVIEW_SAMPLE_FFT_SIZE);
+    int index4600 = (4600.0f / float(AUDIO_FRAMERATE >> 1)) * float(FFT_OUTPUT_NO_FREQS);
     int indexStored = UnitConverter::magnifyFftIndexInv(index4600);
     int indexTexture = UnitConverter::magnifyTextureFrequencyIndex(indexStored);
     indexStored = UnitConverter::magnifyTextureFrequencyIndexInv(indexTexture);

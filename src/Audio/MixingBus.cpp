@@ -58,7 +58,7 @@ MixingBus::~MixingBus()
     stopThread(4000);
 
     // delete all tracks
-    for (size_t i = 0; i < samplePlayers.size(); i++)
+    for (size_t i = 0; i < (size_t)samplePlayers.size(); i++)
     {
         auto track = samplePlayers.getUnchecked(i);
         if (track != nullptr)
@@ -135,7 +135,7 @@ void MixingBus::unmarshal(std::string &s)
 
     samplePlayers.clear();
     samplePlayers.ensureStorageAllocated(samplePlayersEntry.size());
-    for (int i = 0; i < samplePlayersEntry.size(); i++)
+    for (size_t i = 0; i < samplePlayersEntry.size(); i++)
     {
         // we leave the previously existing gaps so that the sample ids stay the same
         if (samplePlayersEntry[i].is_null())
@@ -615,7 +615,7 @@ void MixingBus::cropSample(std::shared_ptr<SampleFreqCropTask> task)
     }
 }
 
-bool MixingBus::filePathsValid(const juce::StringArray &files)
+bool MixingBus::filePathsValid(const juce::StringArray &)
 {
     // TODO: implement this
     return true;
@@ -659,7 +659,7 @@ void MixingBus::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
     const juce::ScopedLock lock(mixbusMutex);
     // prepare all inputs
-    for (size_t i = 0; i < samplePlayers.size(); i++)
+    for (size_t i = 0; i < (size_t)samplePlayers.size(); i++)
     {
         if (samplePlayers.getUnchecked(i) != nullptr)
         {
@@ -685,7 +685,7 @@ void MixingBus::releaseResources()
     const juce::ScopedLock lock(mixbusMutex);
 
     // call all inputs releaseResources
-    for (size_t i = 0; i < samplePlayers.size(); i++)
+    for (size_t i = 0; i < (size_t)samplePlayers.size(); i++)
     {
         if (samplePlayers.getUnchecked(i) != nullptr)
         {
@@ -757,7 +757,7 @@ void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFi
             juce::AudioSourceChannelInfo copyBufferDest(&audioThreadBuffer, 0, bufferToFill.numSamples);
 
             // for each input source
-            for (size_t i = 1; i < samplePlayers.size(); i++)
+            for (size_t i = 1; i < (size_t)samplePlayers.size(); i++)
             {
                 if (samplePlayers.getUnchecked(i) == nullptr)
                 {
@@ -790,7 +790,7 @@ void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFi
         }
 
         // create context to apply dsp effects
-        juce::dsp::AudioBlock<float> audioBlockRef(*bufferToFill.buffer, bufferToFill.startSample);
+        juce::dsp::AudioBlock<float> audioBlockRef(*bufferToFill.buffer, (size_t)bufferToFill.startSample);
         juce::dsp::ProcessContextReplacing<float> context(audioBlockRef);
 
         // apply master gain
@@ -951,7 +951,7 @@ void MixingBus::setNextReadPosition(juce::int64 nextReadPosition)
     mixbusDataSource->setPosition(playCursor);
 
     // tell all samplePlayers to update positions
-    for (size_t i = 0; i < samplePlayers.size(); i++)
+    for (size_t i = 0; i < (size_t)samplePlayers.size(); i++)
     {
         if (samplePlayers.getUnchecked(i) != nullptr)
         {
@@ -994,7 +994,7 @@ void MixingBus::pauseIfCursorNotInBound()
 // note that it includes deleted tracks in the count
 size_t MixingBus::getNumTracks() const
 {
-    return samplePlayers.size();
+    return (size_t)samplePlayers.size();
 }
 
 std::shared_ptr<SamplePlayer> MixingBus::getTrack(int index) const

@@ -8,38 +8,36 @@
 class UnitConverter
 {
   public:
-    static float fftToDb(float val);
-    static float fftToDbInv(float val);
-
     /**
-     * Projects the [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE] index of the stored fft data
-     * into the [0, FREQVIEW_SAMPLE_FFT_SIZE/2] range of the Hz frequencies bins
+     * Projects the [0, FFT_STORAGE_SCOPE_SIZE] index of the stored fft data
+     * into the [0, FFT_OUTPUT_NO_FREQS] range of the Hz frequencies bins
      * that are result of the FFT.
      * Ie use this to convert an index of the stored fft data into an index of
      * the fft computing result.
-     * @param  k index in range [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE] (powered of .88 log10 relation to Hz)
-     * @return   index in range [0, FREQVIEW_SAMPLE_FFT_SIZE/2] (linear relation to Hz)
+     * @param  k index in range [0, FFT_STORAGE_SCOPE_SIZE] (powered of .88 log10 relation to Hz)
+     * @return   index in range [0, FFT_OUTPUT_NO_FREQS] (linear relation to Hz)
      */
     static float magnifyFftIndex(float k);
     /**
      * Exact inverse of magnifyFftIndex. Will take an index from the fft and convert it
      * back into an index of the stored data.
-     * @param  k index in range [0, FREQVIEW_SAMPLE_FFT_SIZE/2] (linear relation to Hz)
-     * @return   index in range [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE] (powered of .88 log10 relation to Hz)
+     * @param  k index in range [0, FFT_OUTPUT_NO_FREQS] (linear relation to Hz)
+     * @return   index in range [0, FFT_STORAGE_SCOPE_SIZE] (powered of .88 log10 relation to Hz)
      */
     static float magnifyFftIndexInv(float k);
 
     /**
      * Subsequent layer of magnification to write texture data
      * to opengl for individual samples. Sort of zoom in the index.
-     * @param  k index to magnify in range [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE].
-     * @return   index after zooming in, in range [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE].
+     * @param  k index to magnify in range [0, FFT_STORAGE_SCOPE_SIZE].
+     * @return   index after zooming in, in range [0, FFT_STORAGE_SCOPE_SIZE].
      */
     static float magnifyTextureFrequencyIndex(float k);
+
     /**
      * Invert of the magnifyTextureFrequency function.
-     * @param  k index magnfied in range [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE].
-     * @return   index before zooming in, in range [0, FREQVIEW_SAMPLE_FFT_SCOPE_SIZE].
+     * @param  k index magnfied in range [0, FFT_STORAGE_SCOPE_SIZE].
+     * @return   index before zooming in, in range [0, FFT_STORAGE_SCOPE_SIZE].
      */
     static float magnifyTextureFrequencyIndexInv(float k);
 

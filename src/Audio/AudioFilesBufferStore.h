@@ -1,6 +1,7 @@
 #ifndef DEF_AUDIO_FILES_BUFFER_STORE_HPP
 #define DEF_AUDIO_FILES_BUFFER_STORE_HPP
 
+#include "FftRunner.h"
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_dsp/juce_dsp.h>
 #include <juce_gui_extra/juce_gui_extra.h>
@@ -22,8 +23,10 @@ struct AudioFileBufferRef
      *
      * @param ptr A pointer to an already allocated and read audio buffer for the file
      * @param path  The full file path on disk
+     * @param shortTimeDFTs Sequence of fourrier transforms we will store for that audio file.
      */
-    AudioFileBufferRef(std::shared_ptr<juce::AudioSampleBuffer> ptr, std::string path);
+    AudioFileBufferRef(std::shared_ptr<juce::AudioSampleBuffer> ptr, std::string path,
+                       std::shared_ptr<std::vector<float>> shortTimeDFTs);
 
     /**
      * @brief Construct a an empty object
@@ -40,6 +43,8 @@ struct AudioFileBufferRef
     std::shared_ptr<juce::AudioSampleBuffer> data; /**< pointer to the data */
     std::string fileFullPath;                      /**< full path to the file on disk */
     unsigned char hash[SHA_DIGEST_LENGTH];         /**< hash of the audio content (used for fallback object storage) */
+    std::shared_ptr<std::vector<float>> storedFftData; /**< Disscrete Short time FFTs stored. Each FFT has a storage
+                                                          size that may differ from raw FFT output size. */
 };
 
 /**
@@ -89,10 +94,21 @@ class AudioFilesBufferStore
      */
     void enableUnusedBuffersRelease();
 
+    /**
+     * @brief Copies the raw FFTs into a new storage-ready vector where a correction
+     *        on size and scale has been applied.
+     *
+     * @param rawFFTs Sequence of FFTs of size FFT_OUTPUT_NO_FREQS
+     * @return std::shared_ptr<std::vector<float>> Sequence of FFTs of size
+     */
+    std::shared_ptr<std::vector<float>> copyRawFFTsToStorageFormat(std::shared_ptr<std::vector<float>> rawFFTs);
+
   private:
     juce::AudioFormatManager formatManager;
     bool allowUnusedBufferRelease;
     juce::CriticalSection lock;
+
+    juce::SharedResourcePointer<FftRunner> fftProcessing; /**< Object that maintains threads to run ffts */
 
     std::map<std::string, AudioFileBufferRef> audioBuffersCache; /**< map of full disk paths to audio buffers */
 };

@@ -1,5 +1,6 @@
 #include "SamplePlayer.h"
 #include "AudioFilesBufferStore.h"
+#include "FftRunner.h"
 #include "UnitConverter.h"
 
 #include <complex>
@@ -244,7 +245,7 @@ void SamplePlayer::setBuffer(AudioFileBufferRef targetBuffer, juce::dsp::FFT &ff
     isSampleSet = true;
 
     // allocate the buffer where the fft result will be stored
-    audioBufferFrequencies->resize((size_t)numChannels * (size_t)numFft * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
+    audioBufferFrequencies->resize((size_t)numChannels * (size_t)numFft * FFT_STORAGE_SCOPE_SIZE);
     std::fill(audioBufferFrequencies->begin(), audioBufferFrequencies->end(), 0.0f);
 
     // allocate a buffer to perform a fft (double size of fft)
@@ -287,7 +288,7 @@ void SamplePlayer::setBuffer(AudioFileBufferRef targetBuffer, juce::dsp::FFT &ff
             fft.performFrequencyOnlyForwardTransform(&inputOutputData[0], true);
 
             // fft index in the destination storage
-            auto fftIndex = ((channelFftIndex + j) * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE);
+            auto fftIndex = ((channelFftIndex + j) * FFT_STORAGE_SCOPE_SIZE);
 
             // convert the result into decibels
             for (size_t k = 0; k < (FREQVIEW_SAMPLE_FFT_SIZE >> 1); k++)
@@ -295,7 +296,7 @@ void SamplePlayer::setBuffer(AudioFileBufferRef targetBuffer, juce::dsp::FFT &ff
                 inputOutputData[k] = UnitConverter::fftToDb(inputOutputData[k]);
             }
             // copy back the results
-            for (size_t k = 0; k < FREQVIEW_SAMPLE_FFT_SCOPE_SIZE; k++)
+            for (size_t k = 0; k < FFT_STORAGE_SCOPE_SIZE; k++)
             {
                 // NOTE: The relevant frequency amplitude data is half the fft size
                 // https://docs.juce.com/master/tutorial_spectrum_analyser.html
@@ -339,7 +340,7 @@ void SamplePlayer::setBuffer(AudioFileBufferRef targetBuffer, std::shared_ptr<st
     audioBufferRef = targetBuffer;
 
     int numSamples = targetBuffer.data->getNumSamples();
-    numFft = numSamples / (FREQVIEW_SAMPLE_FFT_SIZE);
+    numFft = FftRunner::getNumFftFromNumSamples(numSamples);
 
     // reset sample length
     bufferStart = 0;
@@ -711,7 +712,7 @@ float SamplePlayer::addOnScreenAmountToFreq(float freq, float screenProportion)
     float textureIndex = UnitConverter::magnifyTextureFrequencyIndex(storedFftDataIndex);
 
     // now we can add the constant amount that matched on scren distance
-    textureIndex = textureIndex + (screenProportion * float(FREQVIEW_SAMPLE_FFT_SCOPE_SIZE));
+    textureIndex = textureIndex + (screenProportion * float(FFT_STORAGE_SCOPE_SIZE));
 
     // now come back to frequency domain and return result
     storedFftDataIndex = UnitConverter::magnifyTextureFrequencyIndexInv(textureIndex);

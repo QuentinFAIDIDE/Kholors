@@ -60,7 +60,7 @@ SampleGraphicModel::SampleGraphicModel(std::shared_ptr<SamplePlayer> sp, juce::C
     horizontalScaleMultiplier = 4;
     numFfts = sp->getNumFft();
     numChannels = sp->getBufferNumChannels();
-    textureHeight = 2 * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE;
+    textureHeight = 2 * FFT_STORAGE_SCOPE_SIZE;
     textureWidth = numFfts * horizontalScaleMultiplier;
     channelTextureShift = textureWidth * (textureHeight >> 1) * 4;
 
@@ -98,20 +98,20 @@ void SampleGraphicModel::loadFftDataToTexture(std::shared_ptr<std::vector<float>
     int texturePos = 0;
     int freqiZoomed = 0;
 
-    int channelFftsShift = numFfts * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE;
+    int channelFftsShift = numFfts * FFT_STORAGE_SCOPE_SIZE;
 
     // for each fourier transform over time
     for (int ffti = 0; ffti < numFfts; ffti++)
     {
         // for each frequency of the texture (linear to displayed texture)
-        for (int freqi = 0; freqi < FREQVIEW_SAMPLE_FFT_SCOPE_SIZE; freqi++)
+        for (int freqi = 0; freqi < FFT_STORAGE_SCOPE_SIZE; freqi++)
         {
             // we apply our polynomial lens freqi transformation to zoom in a bit
             freqiZoomed = UnitConverter::magnifyTextureFrequencyIndex(freqi);
             // as the frequencies in the ffts goes from low to high, we have
             // to flip the freqi to fetch the frequency and it's all good !
             intensity =
-                (*ffts)[(ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + (FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - (freqiZoomed + 1))];
+                (*ffts)[(ffti * FFT_STORAGE_SCOPE_SIZE) + (FFT_STORAGE_SCOPE_SIZE - (freqiZoomed + 1))];
             // increase contrast and map between 0 and 1
             intensity = UnitConverter::magnifyIntensity(intensity);
 
@@ -130,16 +130,16 @@ void SampleGraphicModel::loadFftDataToTexture(std::shared_ptr<std::vector<float>
 
             // pick freq index in the fft
             freqiZoomed =
-                FREQVIEW_SAMPLE_FFT_SCOPE_SIZE -
-                (UnitConverter::magnifyTextureFrequencyIndex((FREQVIEW_SAMPLE_FFT_SCOPE_SIZE - (freqi + 1))) + 1);
+                FFT_STORAGE_SCOPE_SIZE -
+                (UnitConverter::magnifyTextureFrequencyIndex((FFT_STORAGE_SCOPE_SIZE - (freqi + 1))) + 1);
             // get the value depending on if we got a second channel or not
             if (numChannels == 2)
             {
-                intensity = (*ffts)[channelFftsShift + (ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + freqiZoomed];
+                intensity = (*ffts)[channelFftsShift + (ffti * FFT_STORAGE_SCOPE_SIZE) + freqiZoomed];
             }
             else
             {
-                intensity = (*ffts)[(ffti * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE) + freqiZoomed];
+                intensity = (*ffts)[(ffti * FFT_STORAGE_SCOPE_SIZE) + freqiZoomed];
             }
             intensity = UnitConverter::magnifyIntensity(intensity);
 
@@ -438,11 +438,11 @@ float SampleGraphicModel::textureIntensity(float x, float y)
     int freqIndexNormalised = 0;
     if (y < 0.5)
     {
-        freqIndexNormalised = y * 2 * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE;
+        freqIndexNormalised = y * 2 * FFT_STORAGE_SCOPE_SIZE;
     }
     else
     {
-        freqIndexNormalised = (y - 0.5) * 2 * FREQVIEW_SAMPLE_FFT_SCOPE_SIZE;
+        freqIndexNormalised = (y - 0.5) * 2 * FFT_STORAGE_SCOPE_SIZE;
     }
 
     float intensity = texture->data()[getTextureIndex(freqIndexNormalised, timeIndex, 1, y < 0.5) + 3];

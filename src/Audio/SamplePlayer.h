@@ -10,6 +10,7 @@
 
 #include "../Config.h"
 #include "AudioFilesBufferStore.h"
+#include "FftRunner.h"
 #include "UnitConverter.h"
 
 using json = nlohmann::json;
@@ -237,7 +238,7 @@ class SamplePlayer : public juce::PositionableAudioSource
 
     // Store the results of the fft of the buffered audio.
     // LAYOUT: for each channel, for each fft over time, for each intensity at
-    // freq. fft is size FREQVIEW_SAMPLE_FFT_SCOPE_SIZE and there are numFft. an
+    // freq. fft is size FFT_STORAGE_SCOPE_SIZE and there are numFft. an
     // fft covers FREQVIEW_SAMPLE_FFT_SIZE audio samples.
     std::shared_ptr<std::vector<float>> audioBufferFrequencies;
     // how many blocks of FREQVIEW_SAMPLE_FFT_SIZE samples
