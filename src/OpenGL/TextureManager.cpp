@@ -92,7 +92,7 @@ AudioFileBufferRef TextureManager::getAudioBufferFromTextureId(GLuint id)
     // NOTE: it would be better to use a std::optional here rather than making a fake buffer
     if (textureSearchIterator == audioBufferTextureData.end())
     {
-        return AudioFileBufferRef(nullptr, "");
+        return AudioFileBufferRef();
     }
 
     return textureSearchIterator->second->audioData;

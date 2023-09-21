@@ -51,13 +51,15 @@ SampleGraphicModel::SampleGraphicModel(std::shared_ptr<SamplePlayer> sp, juce::C
 
     // set a values related to fft data navigation
     std::shared_ptr<std::vector<float>> ffts = sp->getFftData();
+
     // the texture scaling in opengl use either manhatan distance or linear sum
     // of neigbouring pixels. So as we have less pixel over time than pixel over
     // frequencies, a glitch appear and the values leak to the sides.
     // This multiplier should help reduce horizontal leakage of textures.
     // If this is raised too high, this can blow up the GPU memory real fast.
     // If you change this value, make sure to stress test the loading a bit on shitty GPUs.
-    horizontalScaleMultiplier = 4;
+    horizontalScaleMultiplier = 3;
+
     numFfts = sp->getNumFft();
     numChannels = sp->getBufferNumChannels();
     textureHeight = 2 * FFT_STORAGE_SCOPE_SIZE;
@@ -70,14 +72,14 @@ SampleGraphicModel::SampleGraphicModel(std::shared_ptr<SamplePlayer> sp, juce::C
         // object is broken
         texture = std::make_shared<std::vector<float>>();
         // reserve the size of the displayed texture
-        texture->resize(textureHeight * textureWidth * 4); // 4 is for rgba values
+        texture->resize((size_t)textureHeight * (size_t)textureWidth * 4); // 4 is for rgba values
         std::fill(texture->begin(), texture->end(), 1.0f);
 
-        loadFftDataToTexture(ffts, numFfts, numChannels);
+        loadFftDataToTexture(ffts);
     }
 }
 
-void SampleGraphicModel::loadFftDataToTexture(std::shared_ptr<std::vector<float>> ffts, int fftCount, int channelCount)
+void SampleGraphicModel::loadFftDataToTexture(std::shared_ptr<std::vector<float>> ffts)
 {
 
     // NOTE: we store the texture colors (fft intensity) as RGBA.
@@ -111,7 +113,7 @@ void SampleGraphicModel::loadFftDataToTexture(std::shared_ptr<std::vector<float>
             // as the frequencies in the ffts goes from low to high, we have
             // to flip the freqi to fetch the frequency and it's all good !
             intensity =
-                (*ffts)[(ffti * FFT_STORAGE_SCOPE_SIZE) + (FFT_STORAGE_SCOPE_SIZE - (freqiZoomed + 1))];
+                (*ffts)[((size_t)ffti * FFT_STORAGE_SCOPE_SIZE) + (FFT_STORAGE_SCOPE_SIZE - ((size_t)freqiZoomed + 1))];
             // increase contrast and map between 0 and 1
             intensity = UnitConverter::magnifyIntensity(intensity);
 
@@ -129,17 +131,16 @@ void SampleGraphicModel::loadFftDataToTexture(std::shared_ptr<std::vector<float>
             // first channel instead)
 
             // pick freq index in the fft
-            freqiZoomed =
-                FFT_STORAGE_SCOPE_SIZE -
-                (UnitConverter::magnifyTextureFrequencyIndex((FFT_STORAGE_SCOPE_SIZE - (freqi + 1))) + 1);
+            freqiZoomed = FFT_STORAGE_SCOPE_SIZE -
+                          (UnitConverter::magnifyTextureFrequencyIndex((FFT_STORAGE_SCOPE_SIZE - (freqi + 1))) + 1);
             // get the value depending on if we got a second channel or not
             if (numChannels == 2)
             {
-                intensity = (*ffts)[channelFftsShift + (ffti * FFT_STORAGE_SCOPE_SIZE) + freqiZoomed];
+                intensity = (*ffts)[(size_t)(channelFftsShift + (ffti * FFT_STORAGE_SCOPE_SIZE) + freqiZoomed)];
             }
             else
             {
-                intensity = (*ffts)[(ffti * FFT_STORAGE_SCOPE_SIZE) + freqiZoomed];
+                intensity = (*ffts)[(size_t)((ffti * FFT_STORAGE_SCOPE_SIZE) + freqiZoomed)];
             }
             intensity = UnitConverter::magnifyIntensity(intensity);
 
@@ -177,8 +178,7 @@ void SampleGraphicModel::reloadSampleData(std::shared_ptr<SamplePlayer> sp)
     updateFiltersGainReductionSteps(sp);
 
     // call the function that dynamically generates the vertices
-    generateAndUploadVerticesToGPU(leftX, rightX, lastLowPassFreq, lastHighPassFreq, lastFadeInFrameLength,
-                                   lastFadeOutFrameLength);
+    generateAndUploadVerticesToGPU(leftX, rightX, lastFadeInFrameLength, lastFadeOutFrameLength);
 }
 
 void SampleGraphicModel::updateFiltersGainReductionSteps(std::shared_ptr<SamplePlayer> sp)
@@ -198,8 +198,8 @@ void SampleGraphicModel::updateFiltersGainReductionSteps(std::shared_ptr<SampleP
     }
 }
 
-void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float rightX, float lowPassFreq,
-                                                        float highPassFreq, float fadeInFrames, float fadeOutFrames)
+void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float rightX, float fadeInFrames,
+                                                        float fadeOutFrames)
 {
     // how many vertice line there are vertically (sample fade start, sample start, sample end, sample fade end)
     noVerticalVerticeLines = 4;
@@ -211,13 +211,13 @@ void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float right
     int noTriangles = noSquares * 2;     // how many triangles we have to draw
     int noTriangleIds = noTriangles * 3; // how many ids we need to push to draw the triangles
 
-    vertices.reserve(noVertices);
-    triangleIds.reserve(noTriangleIds);
+    vertices.reserve((size_t)noVertices);
+    triangleIds.reserve((size_t)noTriangleIds);
 
     vertices.clear();
     triangleIds.clear();
 
-    for (size_t i = 0; i < noVertices; i++)
+    for (size_t i = 0; i < (size_t)noVertices; i++)
     {
         vertices.push_back({{0.0f, 0.0f},                                                             // position
                             {color.getFloatRed(), color.getFloatGreen(), color.getFloatBlue(), 1.0f}, // color
@@ -229,7 +229,7 @@ void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float right
     // set values of low pass filter fade out step lines
     for (int i = 0; i < FILTERS_FADE_DEFINITION; i++)
     {
-        float glDistanceToCenter = UnitConverter::freqToPositionRatio(lowPassGainReductionSteps[i]);
+        float glDistanceToCenter = UnitConverter::freqToPositionRatio(lowPassGainReductionSteps[(size_t)i]);
         float textureDistanceToCenter = glDistanceToCenter * 0.5;
         float alphaLevel =
             juce::jlimit(0.0f, 1.0f, (float(FILTERS_FADE_DEFINITION - 1 - i) / float(FILTERS_FADE_DEFINITION)));
@@ -254,7 +254,7 @@ void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float right
     // same for high pass filters
     for (int i = 0; i < FILTERS_FADE_DEFINITION; i++)
     {
-        float glDistanceToCenter = UnitConverter::freqToPositionRatio(highPassGainReductionSteps[i]);
+        float glDistanceToCenter = UnitConverter::freqToPositionRatio(highPassGainReductionSteps[(size_t)i]);
         float textureDistanceToCenter = glDistanceToCenter * 0.5;
         float alphaLevel =
             juce::jlimit(0.0f, 1.0f, (float(FILTERS_FADE_DEFINITION - 1 - i) / float(FILTERS_FADE_DEFINITION)));
@@ -324,9 +324,9 @@ void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float right
 
         for (int j = 0; j < noVerticalVerticeLines - 1; j++)
         {
-            connectSquareFromVertexIds(horizontalLineTopLeftVerticeId + j, horizontalLineTopLeftVerticeId + j + 1,
-                                       horizontalLineBottomLeftVerticeId + j + 1,
-                                       horizontalLineBottomLeftVerticeId + j);
+            connectSquareFromVertexIds(
+                (size_t)(horizontalLineTopLeftVerticeId + j), (size_t)(horizontalLineTopLeftVerticeId + j + 1),
+                (size_t)(horizontalLineBottomLeftVerticeId + j + 1), (size_t)(horizontalLineBottomLeftVerticeId + j));
         }
     }
 
@@ -335,12 +335,12 @@ void SampleGraphicModel::generateAndUploadVerticesToGPU(float leftX, float right
 
 Vertex &SampleGraphicModel::getUpperLeftCorner()
 {
-    return vertices[FILTERS_FADE_DEFINITION * noVerticalVerticeLines];
+    return vertices[FILTERS_FADE_DEFINITION * (size_t)noVerticalVerticeLines];
 }
 
 Vertex &SampleGraphicModel::getUpperRightCorner()
 {
-    return vertices[((FILTERS_FADE_DEFINITION + 1) * noVerticalVerticeLines) - 1];
+    return vertices[((FILTERS_FADE_DEFINITION + 1) * (size_t)noVerticalVerticeLines) - 1];
 }
 
 void SampleGraphicModel::connectSquareFromVertexIds(size_t topLeft, size_t topRight, size_t bottomRight,
@@ -379,8 +379,7 @@ void SampleGraphicModel::setColor(juce::Colour &col)
     float leftX = getUpperLeftCorner().position[0];
     float rightX = getUpperRightCorner().position[0];
     color = col;
-    generateAndUploadVerticesToGPU(leftX, rightX, lastLowPassFreq, lastHighPassFreq, lastFadeInFrameLength,
-                                   lastFadeOutFrameLength);
+    generateAndUploadVerticesToGPU(leftX, rightX, lastFadeInFrameLength, lastFadeOutFrameLength);
 }
 
 // Save position and width when selection dragging begins.
@@ -395,8 +394,7 @@ void SampleGraphicModel::initDrag()
 void SampleGraphicModel::updateDrag(int frameMove)
 {
     int position = dragStartPosition + frameMove;
-    generateAndUploadVerticesToGPU(position, position + lastWidth, lastLowPassFreq, lastHighPassFreq,
-                                   lastFadeInFrameLength, lastFadeOutFrameLength);
+    generateAndUploadVerticesToGPU(position, position + lastWidth, lastFadeInFrameLength, lastFadeOutFrameLength);
 }
 
 void SampleGraphicModel::uploadVerticesToGpu()
@@ -407,10 +405,10 @@ void SampleGraphicModel::uploadVerticesToGpu()
 
     // register and upload the vertices data
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, (long)(sizeof(Vertex) * vertices.size()), vertices.data(), GL_STATIC_DRAW);
     // register and upload indices of the vertices to form the triangles
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * triangleIds.size(), triangleIds.data(),
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, (long)(sizeof(unsigned int) * triangleIds.size()), triangleIds.data(),
                  GL_STATIC_DRAW);
 
     GLenum err;
@@ -499,8 +497,8 @@ int SampleGraphicModel::getFilteringLevel(float yPosition)
     {
         for (int i = 0; i < FILTERS_FADE_DEFINITION - 1; i++)
         {
-            float lowestBandFreqPos = UnitConverter::freqToPositionRatio(highPassGainReductionSteps[i + 1]);
-            float highestBandFreqPos = UnitConverter::freqToPositionRatio(highPassGainReductionSteps[i]);
+            float lowestBandFreqPos = UnitConverter::freqToPositionRatio(highPassGainReductionSteps[(size_t)i + 1]);
+            float highestBandFreqPos = UnitConverter::freqToPositionRatio(highPassGainReductionSteps[(size_t)i]);
 
             if (yChannelPosition >= lowestBandFreqPos && yChannelPosition <= highestBandFreqPos)
             {
@@ -518,8 +516,8 @@ int SampleGraphicModel::getFilteringLevel(float yPosition)
     {
         for (int i = 0; i < FILTERS_FADE_DEFINITION - 1; i++)
         {
-            float lowestBandFreqPos = UnitConverter::freqToPositionRatio(lowPassGainReductionSteps[i]);
-            float highestBandFreqPos = UnitConverter::freqToPositionRatio(lowPassGainReductionSteps[i + 1]);
+            float lowestBandFreqPos = UnitConverter::freqToPositionRatio(lowPassGainReductionSteps[(size_t)i]);
+            float highestBandFreqPos = UnitConverter::freqToPositionRatio(lowPassGainReductionSteps[(size_t)i + 1]);
 
             if (yChannelPosition >= lowestBandFreqPos && yChannelPosition <= highestBandFreqPos)
             {
@@ -595,17 +593,18 @@ void SampleGraphicModel::setVerticeLineValue(VerticeProperty targetPropertyToSet
     if (lineType == HORIZONTAL_VERTEX_LINE)
     {
         int firstLineIndex = lineIndex * noVerticalVerticeLines;
-        for (size_t i = 0; i < noVerticalVerticeLines; i++)
+        for (size_t i = 0; i < (size_t)noVerticalVerticeLines; i++)
         {
-            setVertexProperty(vertices[firstLineIndex + i], targetPropertyToSet, value);
+            setVertexProperty(vertices[(size_t)firstLineIndex + i], targetPropertyToSet, value);
         }
     }
     else if (lineType == VERTICAL_VERTEX_LINE)
     {
         int firstColumnIndex = lineIndex;
-        for (size_t i = 0; i < noHorizontalVerticeLines; i++)
+        for (size_t i = 0; i < (size_t)noHorizontalVerticeLines; i++)
         {
-            setVertexProperty(vertices[firstColumnIndex + (i * noVerticalVerticeLines)], targetPropertyToSet, value);
+            setVertexProperty(vertices[(size_t)firstColumnIndex + (i * (size_t)noVerticalVerticeLines)],
+                              targetPropertyToSet, value);
         }
     }
 }

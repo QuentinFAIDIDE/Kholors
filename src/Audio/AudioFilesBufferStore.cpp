@@ -1,7 +1,10 @@
 #include "AudioFilesBufferStore.h"
 
 #include "../Config.h"
+#include "FftRunner.h"
+#include "UnitConverter.h"
 #include <regex>
+#include <stdexcept>
 
 AudioFileBufferRef::AudioFileBufferRef() : data(nullptr), fileFullPath("")
 {
@@ -131,6 +134,64 @@ AudioFileBufferRef AudioFilesBufferStore::loadSample(std::string filePath)
 
     // return buffer
     return bufferBox;
+}
+
+std::shared_ptr<std::vector<float>> AudioFilesBufferStore::copyRawFFTsToStorageFormat(
+    std::shared_ptr<std::vector<float>> rawFFTs)
+{
+    auto storedFFTs = std::make_shared<std::vector<float>>();
+
+    // throw if the input data stinks
+    if (rawFFTs->size() % FFT_OUTPUT_NO_FREQS != 0)
+    {
+        throw std::runtime_error("FFTs received in copyRawFFTsToStorageFormat have an unexpected size (non dividable "
+                                 "by FFT_OUTPUT_NO_FREQS)");
+    }
+
+    // how many FFT we will transform ?
+    int numFFT = rawFFTs->size() / FFT_OUTPUT_NO_FREQS;
+
+    // allocate appropriate size
+    storedFFTs->resize((size_t)numFFT * FFT_STORAGE_SCOPE_SIZE);
+
+    // max fftIndex in the FFTW output
+    int maxFftIndex = FFT_OUTPUT_NO_FREQS - 1;
+
+    // proceed to iterate over transforming FFTs
+    for (size_t i = 0; i < (size_t)numFFT; i++)
+    {
+        size_t srcFftPosition = i * FFT_OUTPUT_NO_FREQS;
+        size_t dstFftPosition = i * FFT_STORAGE_SCOPE_SIZE;
+
+        for (size_t j = 0; j < FFT_STORAGE_SCOPE_SIZE; j++)
+        {
+
+            // map the index to magnify important frequencies
+            float logIndexFft = UnitConverter::magnifyFftIndex(j);
+
+            // try to do a linear interpolation between the two indexes
+            size_t belowIndex = (size_t)std::floor(logIndexFft);
+            size_t aboveIndex = (size_t)std::ceil(logIndexFft);
+            float interpolationPosition = logIndexFft - std::floor(logIndexFft);
+
+            // tried to prevent reading irrelevant data due to ceiling
+            if (aboveIndex > (size_t)maxFftIndex)
+            {
+                aboveIndex = (size_t)maxFftIndex;
+            }
+
+            if (belowIndex > (size_t)maxFftIndex)
+            {
+                belowIndex = (size_t)maxFftIndex;
+            }
+
+            (*storedFFTs)[dstFftPosition + j] =
+                ((*rawFFTs)[srcFftPosition + belowIndex] * (1.0f - interpolationPosition)) +
+                ((*rawFFTs)[srcFftPosition + aboveIndex] * (interpolationPosition));
+        }
+    }
+
+    return storedFFTs;
 }
 
 void AudioFilesBufferStore::releaseUnusedBuffers()

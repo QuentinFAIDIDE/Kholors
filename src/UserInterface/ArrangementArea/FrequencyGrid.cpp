@@ -35,9 +35,9 @@ void FrequencyGrid::paint(juce::Graphics &g)
 
     g.setFont(juce::Font(10));
 
-    for (int i = 0; i < displayedFreqs.size(); i++)
+    for (int i = 0; i < (int)displayedFreqs.size(); i++)
     {
-        float positionRatio = UnitConverter::freqToPositionRatio(displayedFreqs[i]);
+        float positionRatio = UnitConverter::freqToPositionRatio(displayedFreqs[(size_t)i]);
         lineY = (1.0f - positionRatio) * channelHeight;
 
         // draw the top channel line

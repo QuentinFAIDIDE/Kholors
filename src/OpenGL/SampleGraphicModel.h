@@ -99,8 +99,7 @@ class SampleGraphicModel : public TexturedModel
   private:
     int getTextureIndex(int freqIndex, int timeIndex, int freqDuplicateShift, bool isLeftChannel);
 
-    void generateAndUploadVerticesToGPU(float leftX, float rightX, float lowFreq, float highFreq, float fadeInFrames,
-                                        float fadeOutFrames);
+    void generateAndUploadVerticesToGPU(float leftX, float rightX, float fadeInFrames, float fadeOutFrames);
 
     void connectSquareFromVertexIds(size_t, size_t, size_t, size_t);
 
@@ -114,7 +113,7 @@ class SampleGraphicModel : public TexturedModel
      * @param fftCount     How many fft this array contains.
      * @param channelCount How many channels this array contains.
      */
-    void loadFftDataToTexture(std::shared_ptr<std::vector<float>> ffts, int fftCount, int channelCount);
+    void loadFftDataToTexture(std::shared_ptr<std::vector<float>> ffts);
 
     /**
      * @brief      Updates the filters gain reduction steps we store for visualization.

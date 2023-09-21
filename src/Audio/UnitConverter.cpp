@@ -14,12 +14,12 @@ float UnitConverter::magnifyFftIndex(float k)
     // Disabled during FFT engine migration.
     // TODO: recompute factors
 
-    return juce::jlimit(0.0f, float(FFT_OUTPUT_NO_FREQS), k / float(FFT_STORAGE_SCOPE_SIZE));
+    return juce::jlimit(0.0f, float(FFT_OUTPUT_NO_FREQS), FFT_OUTPUT_NO_FREQS * (k / float(FFT_STORAGE_SCOPE_SIZE)));
 }
 
 float UnitConverter::magnifyFftIndexInv(float k)
 {
-    return juce::jlimit(0.0f, float(FFT_STORAGE_SCOPE_SIZE), k / float(FFT_OUTPUT_NO_FREQS));
+    return juce::jlimit(0.0f, float(FFT_STORAGE_SCOPE_SIZE), FFT_STORAGE_SCOPE_SIZE * (k / float(FFT_OUTPUT_NO_FREQS)));
 }
 
 float UnitConverter::magnifyTextureFrequencyIndex(float k)
@@ -27,17 +27,18 @@ float UnitConverter::magnifyTextureFrequencyIndex(float k)
     // TODO: develop and factor the mixing of polylens to try
     // to find factors to precompute
 
-    // we apply our polynomial lens transformation to zoom in a bit
-    float position = k / float(FFT_STORAGE_SCOPE_SIZE - 1);
-    float index = polylens(position) * float(FFT_STORAGE_SCOPE_SIZE - 1);
-    return juce::jlimit(0.0f, float(FFT_STORAGE_SCOPE_SIZE - 1), index);
+    // Disabled during FFT engine migration.
+    // TODO: recompute factors
+
+    return juce::jlimit(0.0f, float(FFT_STORAGE_SCOPE_SIZE - 1), k);
 }
 
 float UnitConverter::magnifyTextureFrequencyIndexInv(float k)
 {
-    float position = float(k) / float(FFT_STORAGE_SCOPE_SIZE - 1);
-    float index = polylensInv(position) * float(FFT_STORAGE_SCOPE_SIZE - 1);
-    return juce::jlimit(0.0f, float(FFT_STORAGE_SCOPE_SIZE - 1), index);
+    // Disabled during FFT engine migration.
+    // TODO: recompute factors
+
+    return juce::jlimit(0.0f, float(FFT_STORAGE_SCOPE_SIZE - 1), k);
 }
 
 float UnitConverter::sigmoid(float val)

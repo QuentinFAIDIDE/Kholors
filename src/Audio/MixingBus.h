@@ -159,9 +159,6 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pub
     // a buffer value to hold Processing specs for dsp prepare functions
     juce::dsp::ProcessSpec currentAudioSpec;
 
-    // used for fast fourier transforms of buffers
-    juce::dsp::FFT forwardFFT;
-
     UserInterfaceState &uiState;
 
     // Notes on exporting:

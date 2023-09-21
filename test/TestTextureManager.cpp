@@ -36,10 +36,12 @@ std::shared_ptr<SamplePlayer> loadFile(std::string path)
     // read file into buffer
     reader->read(bufferPtr.get(), 0, (int)reader->lengthInSamples, 0, true, true);
 
-    AudioFileBufferRef newBuffer(bufferPtr, testTonality.getFullPathName().toStdString());
+    auto emptyFft = std::make_shared<std::vector<float>>();
+
+    AudioFileBufferRef newBuffer(bufferPtr, testTonality.getFullPathName().toStdString(), emptyFft);
 
     auto newSample = std::make_shared<SamplePlayer>(0);
-    newSample->setBuffer(newBuffer, fft);
+    newSample->setBuffer(newBuffer);
     newSample->setGainRamp(0.0f);
     // set initial position
     newSample->setNextReadPosition(0);

@@ -4,6 +4,8 @@ int testSamplePlayerWithSample(std::string path, int blockSize, int offset, int 
 {
     std::cerr << "testing file " << path << " with block size " << blockSize << " and offset " << offset << std::endl;
 
+    juce::SharedResourcePointer<FftRunner> fftProcessing;
+
     // we need an FFT object for the samplePlayer.
     // I'm a bad man and I decided to hardcode that one here.
     // This is because importing config will add this package
@@ -37,10 +39,16 @@ int testSamplePlayerWithSample(std::string path, int blockSize, int offset, int 
     // read file into buffer
     reader->read(bufferPtr.get(), 0, (int)reader->lengthInSamples, 0, true, true);
 
-    AudioFileBufferRef newBuffer(bufferPtr, testTonality.getFullPathName().toStdString());
+    // compute the short time FFTs
+    auto rawShortTimeDfts = fftProcessing->performFft(bufferPtr);
+
+    // note: we are sending the wrong FFT format, we send FFTW raw output, but in theory this buffer takes the
+    // transformed/normalized version that has a different size and scale.
+
+    AudioFileBufferRef newBuffer(bufferPtr, testTonality.getFullPathName().toStdString(), rawShortTimeDfts);
 
     SamplePlayer *newSample = new SamplePlayer(offset);
-    newSample->setBuffer(newBuffer, fft);
+    newSample->setBuffer(newBuffer);
     newSample->setBufferShift(startShift);
     newSample->setGainRamp(0.0f);
     // set initial position
@@ -102,6 +110,8 @@ int testSamplePlayerWithSample(std::string path, int blockSize, int offset, int 
 int main()
 {
     int retcode = 0;
+
+    juce::SharedResourcePointer<FftRunner> fftProcessing;
 
     retcode = testSamplePlayerWithSample("../test/TestSamples/rise-up-sine.wav", 1024, 0, 0);
     if (retcode != 0)

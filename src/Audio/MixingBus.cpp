@@ -13,8 +13,7 @@
 // initialize the MixingBus, as well as Thread and audio inherited
 // behaviours.
 MixingBus::MixingBus(ActivityManager &am)
-    : Thread("Mixbus Loader Thread"), activityManager(am), numChannels(2), forwardFFT(FREQVIEW_SAMPLE_FFT_ORDER),
-      uiState(am.getAppState().getUiState())
+    : Thread("Mixbus Loader Thread"), activityManager(am), numChannels(2), uiState(am.getAppState().getUiState())
 {
 
     // create instance of mixbusDataSource
@@ -891,7 +890,7 @@ void MixingBus::importNewFile(std::shared_ptr<SampleCreateTask> task)
         std::shared_ptr<SamplePlayer> newSample = std::make_shared<SamplePlayer>(desiredPosition);
 
         // assign buffer to the new SamplePlayer
-        newSample->setBuffer(fileAudioBuffer, forwardFFT);
+        newSample->setBuffer(fileAudioBuffer);
 
         // get a scoped lock for the buffer array
         int newTrackIndex;

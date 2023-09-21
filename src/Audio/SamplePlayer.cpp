@@ -229,111 +229,7 @@ bool SamplePlayer::hasBeenInitialized() const
     return isSampleSet;
 }
 
-void SamplePlayer::setBuffer(AudioFileBufferRef targetBuffer, juce::dsp::FFT &fft)
-{
-    // get lock and change buffer
-    const juce::SpinLock::ScopedLockType lock(playerMutex);
-    audioBufferRef = targetBuffer;
-
-    int numChannels = targetBuffer.data->getNumChannels();
-    int numSamples = targetBuffer.data->getNumSamples();
-    numFft = numSamples / (FREQVIEW_SAMPLE_FFT_SIZE);
-
-    // reset sample length
-    bufferStart = 0;
-    bufferEnd = numSamples - 1;
-    isSampleSet = true;
-
-    // allocate the buffer where the fft result will be stored
-    audioBufferFrequencies->resize((size_t)numChannels * (size_t)numFft * FFT_STORAGE_SCOPE_SIZE);
-    std::fill(audioBufferFrequencies->begin(), audioBufferFrequencies->end(), 0.0f);
-
-    // allocate a buffer to perform a fft (double size of fft)
-    std::vector<float> inputOutputData((FREQVIEW_SAMPLE_FFT_SIZE) << 1, 0.0f);
-
-    float const *audioBufferData;
-    int audioBufferPosition;
-
-    // magic windowing function to reduce spectral leakage in fft
-    juce::dsp::WindowingFunction<float> window(FREQVIEW_SAMPLE_FFT_SIZE, juce::dsp::WindowingFunction<float>::hann);
-
-    // TODO: we currently ignore the remaining samples after all
-    // 1024 (FREQVIEW_SAMPLE_FFT_SIZE) blocks are processed.
-    // This represent maybe 1 / 40 th of a second of signal that are ignored.
-    // We should process it in the future.
-
-    int maxFftIndex = (FREQVIEW_SAMPLE_FFT_SIZE >> 1) - 1;
-
-    // for each channel
-    for (size_t i = 0; i < (size_t)numChannels; i++)
-    {
-        audioBufferData = targetBuffer.data->getReadPointer(i);
-        audioBufferPosition = 0;
-
-        auto channelFftIndex = (i * (size_t)numFft);
-
-        // iterate over buffers of 1024 samples
-        for (size_t j = 0; j < (size_t)numFft; j++)
-        {
-            // fill the input buffer with zeros.
-            // NOTE: is it really necessary ?
-            std::fill(inputOutputData.begin(), inputOutputData.end(), 0.0f);
-            // copy input data and increment position in audio buffer
-            // NOTE: I apologize for using C inside C++, please forgive my ignorance
-            memcpy(&inputOutputData[0], &audioBufferData[audioBufferPosition],
-                   FREQVIEW_SAMPLE_FFT_SIZE * sizeof(float));
-            audioBufferPosition += FREQVIEW_SAMPLE_FFT_SIZE;
-            // do the actual fft processing
-            window.multiplyWithWindowingTable(&inputOutputData[0], FREQVIEW_SAMPLE_FFT_SIZE);
-            fft.performFrequencyOnlyForwardTransform(&inputOutputData[0], true);
-
-            // fft index in the destination storage
-            auto fftIndex = ((channelFftIndex + j) * FFT_STORAGE_SCOPE_SIZE);
-
-            // convert the result into decibels
-            for (size_t k = 0; k < (FREQVIEW_SAMPLE_FFT_SIZE >> 1); k++)
-            {
-                inputOutputData[k] = UnitConverter::fftToDb(inputOutputData[k]);
-            }
-            // copy back the results
-            for (size_t k = 0; k < FFT_STORAGE_SCOPE_SIZE; k++)
-            {
-                // NOTE: The relevant frequency amplitude data is half the fft size
-                // https://docs.juce.com/master/tutorial_spectrum_analyser.html
-
-                // map the index to magnify important frequencies
-                float logIndexFft = UnitConverter::magnifyFftIndex(k);
-
-                // try to do a linear interpolation between the two indexes
-                size_t belowIndex = (size_t)std::floor(logIndexFft);
-                size_t aboveIndex = (size_t)std::ceil(logIndexFft);
-                float interpolationPosition = logIndexFft - std::floor(logIndexFft);
-
-                // tried to prevent reading irrelevant data due to ceiling errors
-                if (aboveIndex > (size_t)maxFftIndex)
-                {
-                    aboveIndex = (size_t)maxFftIndex;
-                }
-
-                if (belowIndex > (size_t)maxFftIndex)
-                {
-                    belowIndex = (size_t)maxFftIndex;
-                }
-
-                (*audioBufferFrequencies)[fftIndex + k] =
-                    (inputOutputData[belowIndex] * (1.0f - interpolationPosition)) +
-                    (inputOutputData[aboveIndex] * (interpolationPosition));
-            }
-        }
-    }
-
-    setGainRamp(SAMPLEPLAYER_DEFAULT_FADE_IN_MS);
-
-    setFadeInLength((AUDIO_FRAMERATE / 1000.0) * SAMPLEPLAYER_DEFAULT_FADE_IN_MS);
-    setFadeOutLength((AUDIO_FRAMERATE / 1000.0) * SAMPLEPLAYER_DEFAULT_FADE_OUT_MS);
-}
-
-void SamplePlayer::setBuffer(AudioFileBufferRef targetBuffer, std::shared_ptr<std::vector<float>> fftData)
+void SamplePlayer::setBuffer(AudioFileBufferRef targetBuffer)
 {
     // get lock and change buffer
     const juce::SpinLock::ScopedLockType lock(playerMutex);
@@ -348,7 +244,7 @@ void SamplePlayer::setBuffer(AudioFileBufferRef targetBuffer, std::shared_ptr<st
     isSampleSet = true;
 
     // set the fft data
-    audioBufferFrequencies = fftData;
+    audioBufferFrequencies = targetBuffer.storedFftData;
 
     setGainRamp(SAMPLEPLAYER_DEFAULT_FADE_IN_MS);
     setFadeInLength((AUDIO_FRAMERATE / 1000.0) * SAMPLEPLAYER_DEFAULT_FADE_IN_MS);
@@ -601,7 +497,7 @@ std::shared_ptr<SamplePlayer> SamplePlayer::createDuplicate(juce::int64 newPosit
     }
 
     std::shared_ptr<SamplePlayer> duplicate = std::make_shared<SamplePlayer>(newPosition);
-    duplicate->setBuffer(audioBufferRef, audioBufferFrequencies);
+    duplicate->setBuffer(audioBufferRef);
     duplicate->setBufferShift(bufferStart);
     duplicate->setLength(getLength());
     duplicate->setLowPassFreq(lowPassFreq);
@@ -650,7 +546,7 @@ std::shared_ptr<SamplePlayer> SamplePlayer::splitAtFrequency(float frequencyLimi
 
     // we make a new sample that will be the low end part
     std::shared_ptr<SamplePlayer> duplicate = std::make_shared<SamplePlayer>(editingPosition);
-    duplicate->setBuffer(audioBufferRef, audioBufferFrequencies);
+    duplicate->setBuffer(audioBufferRef);
     duplicate->setBufferShift(bufferStart);
     duplicate->setLength(getLength());
     duplicate->setLowPassFreq(frequencyLimitHz);
@@ -687,7 +583,7 @@ std::shared_ptr<SamplePlayer> SamplePlayer::splitAtPosition(juce::int64 position
 
     // we make a new sample that will be the last part
     std::shared_ptr<SamplePlayer> duplicate = std::make_shared<SamplePlayer>(editingPosition + positionLimit);
-    duplicate->setBuffer(audioBufferRef, audioBufferFrequencies);
+    duplicate->setBuffer(audioBufferRef);
     duplicate->setBufferShift(bufferStart + positionLimit);
     duplicate->setLength(getLength() - positionLimit);
     duplicate->setLowPassFreq(lowPassFreq);
@@ -707,7 +603,7 @@ std::shared_ptr<SamplePlayer> SamplePlayer::splitAtPosition(juce::int64 position
 float SamplePlayer::addOnScreenAmountToFreq(float freq, float screenProportion)
 {
     // convert from frequency domain to on-screen domain
-    float fftIndex = freq * (float(FREQVIEW_SAMPLE_FFT_SIZE) / float(AUDIO_FRAMERATE));
+    float fftIndex = freq * (float(FFT_OUTPUT_NO_FREQS) / float(AUDIO_FRAMERATE >> 1));
     float storedFftDataIndex = UnitConverter::magnifyFftIndexInv(fftIndex);
     float textureIndex = UnitConverter::magnifyTextureFrequencyIndex(storedFftDataIndex);
 
@@ -717,7 +613,7 @@ float SamplePlayer::addOnScreenAmountToFreq(float freq, float screenProportion)
     // now come back to frequency domain and return result
     storedFftDataIndex = UnitConverter::magnifyTextureFrequencyIndexInv(textureIndex);
     fftIndex = UnitConverter::magnifyFftIndex(storedFftDataIndex);
-    return fftIndex * (float(AUDIO_FRAMERATE / float(FREQVIEW_SAMPLE_FFT_SIZE)));
+    return fftIndex * float(AUDIO_FRAMERATE >> 1) / float(FFT_OUTPUT_NO_FREQS);
 }
 
 void SamplePlayer::prepareToPlay(int, double)

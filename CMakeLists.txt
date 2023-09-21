@@ -124,6 +124,8 @@ target_sources(TestTextureManager
         src/Audio/SamplePlayer.cpp
         test/TestTextureManager.cpp
         src/Audio/AudioFilesBufferStore.cpp
+        src/Audio/FftRunner.cpp
+        src/WaitGroup.cpp
         src/Audio/UnitConverter.cpp)
 
 target_sources(TestAudioLib
@@ -136,7 +138,9 @@ target_sources(TestSamplePlayer
         src/Audio/SamplePlayer.cpp
         test/TestSamplePlayer.cpp
         src/Audio/UnitConverter.cpp
+        src/Audio/FftRunner.cpp
         src/Audio/AudioFilesBufferStore.cpp
+        src/WaitGroup.cpp
         )
 
 target_sources(TestUnitConverter
@@ -307,6 +311,7 @@ target_link_libraries(TestSamplePlayer
         juce::juce_audio_utils
         juce::juce_dsp
         juce::juce_audio_basics
+        fftw3f
         ssl
         crypto
     PUBLIC
@@ -335,6 +340,7 @@ target_link_libraries(TestTextureManager
         juce::juce_audio_utils
         juce::juce_dsp
         juce::juce_audio_basics
+        fftw3f
         ssl
         crypto
     PUBLIC

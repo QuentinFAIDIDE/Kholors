@@ -15,14 +15,19 @@
 
 using json = nlohmann::json;
 
+/**
+ * @brief Describe a class that plays a sample and can be positioned
+ *        in the track. These objects are owned by the mixbus.
+ *
+ */
 class SamplePlayer : public juce::PositionableAudioSource
 {
   public:
     SamplePlayer(int64_t position);
     ~SamplePlayer();
+
     // this tells the SamplePlayer which audio buffer to use
-    void setBuffer(AudioFileBufferRef audioBufferRef, juce::dsp::FFT &fftFunctor);
-    void setBuffer(AudioFileBufferRef audioBufferRef, std::shared_ptr<std::vector<float>> fftData);
+    void setBuffer(AudioFileBufferRef audioBufferRef);
 
     /**
      * @brief      Gets the buffer reference.
