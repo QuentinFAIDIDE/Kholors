@@ -24,7 +24,7 @@
 #define FFT_ZERO_PADDING_FACTOR 4
 
 /**< Number of intensities we send as input (not accounting for zero padding after it). */
-#define FFT_INPUT_NO_INTENSITIES 1024 // always choose a power of two!
+#define FFT_INPUT_NO_INTENSITIES 2048 // always choose a power of two!
 
 /***< What is the overlap of subsequent FFT windows. 2 = 50% overlap, 3 = 66.666% overlap, 4=25% ... */
 #define FFT_OVERLAP_DIVISION 2

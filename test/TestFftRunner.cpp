@@ -19,14 +19,16 @@ int main()
     auto bufferPtr = std::make_shared<juce::AudioSampleBuffer>(reader->numChannels, reader->lengthInSamples);
     // read file into buffer
     reader->read(bufferPtr.get(), 0, (int)reader->lengthInSamples, 0, true, true);
+    std::cout << "start transforming" << std::endl;
     auto result = runner.performFft(bufferPtr);
+    std::cout << "stop transforming" << std::endl;
 
     // test result size
     std::cout << "result size: " << result->size() << std::endl;
     // test result content
     for (size_t i = 0; i < FFT_OUTPUT_NO_FREQS; i++)
     {
-        float res = *(float *)(result.get()->data() + ((FFT_OUTPUT_NO_FREQS * 500) + i));
+        float res = *(float *)(result.get()->data() + ((FFT_OUTPUT_NO_FREQS * 250) + i));
         if (std::abs(res + 64.f) > 20.f)
             std::cout << "result intensity " << i << ": " << res << std::endl;
     }
