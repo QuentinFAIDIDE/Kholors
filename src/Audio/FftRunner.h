@@ -2,6 +2,7 @@
 #define DEF_FFT_RUNNER_HPP
 
 #include <condition_variable>
+#include <fftw3.h>
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <memory>
 #include <mutex>
@@ -29,7 +30,10 @@
 #define FFT_OVERLAP_DIVISION 2
 
 /**< Size of the output, as the number of frequencies bins */
-#define FFT_OUTPUT_NO_FREQS ((FFT_INPUT_NO_INTENSITIES * FFT_ZERO_PADDING_FACTOR) >> 1)
+#define FFT_OUTPUT_NO_FREQS (((FFT_INPUT_NO_INTENSITIES * FFT_ZERO_PADDING_FACTOR) >> 1) + 1)
+
+/**< Number of floats we send to forward fft in fftw as input */
+#define FFTW_INPUT_SIZE (FFT_INPUT_NO_INTENSITIES * FFT_ZERO_PADDING_FACTOR)
 
 /**< jobs that are posted in the job queue and picked by threads  */
 struct FftRunnerJob
@@ -79,6 +83,16 @@ class FftRunner
      */
     std::shared_ptr<std::vector<float>> performFft(std::shared_ptr<juce::AudioSampleBuffer> audioFile);
 
+    /**
+     * @brief Processes a job using the provided fftw processing plan.
+     *
+     * @param jobRef A reference to the job data object.
+     * @param plan A FFTW library optimized processing plan for floats.
+     * @param in The input FFTW data (to copy job input into)
+     * @param out The output FFTW data (to copy job output from)
+     */
+    static void processJob(std::shared_ptr<FftRunnerJob> jobRef, fftwf_plan *plan, float *in, fftwf_complex *out);
+
   private:
     /**
      * @brief Main loop of the threads that are performing FFT.
@@ -94,6 +108,7 @@ class FftRunner
     std::queue<std::shared_ptr<FftRunnerJob>>
         emptyJobPool;          /**< Preallocated structures to carry job information. If empty, please wait. */
     std::mutex emptyJobsMutex; /**< Prevent race condition if many threads want to run FFTs */
+    std::mutex fftwMutex;      /**< Mutex for non thread safe fftw init functions */
 };
 
 #endif // DEF_FFT_RUNNER_HPP

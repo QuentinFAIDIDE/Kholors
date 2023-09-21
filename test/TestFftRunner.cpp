@@ -8,7 +8,7 @@ int main()
 
     juce::AudioFormatManager formatManager;
     formatManager.registerBasicFormats();
-    juce::File testTonality("TestSamples/A_220Hz_9dB.wav");
+    juce::File testTonality("../test/TestSamples/A_220Hz_9dB.wav");
     std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(testTonality));
     if (reader.get() == nullptr)
     {

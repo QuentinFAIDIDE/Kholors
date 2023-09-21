@@ -1,10 +1,15 @@
 #include "FftRunner.h"
+#include <chrono>
 #include <cstring>
+#include <fftw3.h>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
+#include <thread>
 #include <unistd.h>
 #include <vector>
+
+using namespace std::chrono_literals;
 
 FftRunner::FftRunner() : exiting(false)
 {
@@ -29,14 +34,26 @@ FftRunner::FftRunner() : exiting(false)
 
 FftRunner::~FftRunner()
 {
+    {
+        std::scoped_lock<std::mutex> lock(queueMutex);
+        exiting = true;
+    }
+
+    mutexCondition.notify_all();
+
+    for (size_t i = 0; i < workerThreads.size(); i++)
+    {
+        workerThreads[i].join();
+    }
+    workerThreads.clear();
 }
 
 int FftRunner::getNumFftFromNumSamples(int numSamples)
 {
-    // how many fft windows we can fit if we pad the end with zeros
-    int numWindowsWithPadding = std::ceil(float(numSamples) / float(FFT_INPUT_NO_INTENSITIES));
-    // this formula get the exact amount of available windowed bins.
-    return (numWindowsWithPadding * FFT_OVERLAP_DIVISION) - (FFT_OVERLAP_DIVISION - 1);
+    // how many non overlapping fft windows we can fit if we pad the end with zeros
+    int numWindowsNoOverlap = std::ceil(float(numSamples) / float(FFT_INPUT_NO_INTENSITIES));
+    // this formula get the exact amount of available overlapped bins.
+    return (numWindowsNoOverlap * FFT_OVERLAP_DIVISION) - (FFT_OVERLAP_DIVISION - 1);
 }
 
 std::shared_ptr<std::vector<float>> FftRunner::performFft(std::shared_ptr<juce::AudioSampleBuffer> audioFile)
@@ -99,7 +116,7 @@ std::shared_ptr<std::vector<float>> FftRunner::performFft(std::shared_ptr<juce::
                 std::cerr << "Too many threads are trying to perform ffts and buffered jobs could not handle batch "
                              "size for that amount of threads!"
                           << std::endl;
-                sleep(1);
+                sleep(3);
                 continue;
             }
 
@@ -124,8 +141,21 @@ std::shared_ptr<std::vector<float>> FftRunner::performFft(std::shared_ptr<juce::
                     batchJobs[(size_t)i]->inputLength = FFT_INPUT_NO_INTENSITIES;
                 }
                 // move the data pointer forward
-                nextJobStart += (size_t)FFT_INPUT_NO_INTENSITIES;
+                nextJobStart += ((size_t)FFT_INPUT_NO_INTENSITIES / (size_t)FFT_OVERLAP_DIVISION);
             }
+
+            // push all jobs on the todo queue
+            {
+                std::scoped_lock<std::mutex> lock(queueMutex);
+
+                for (size_t i = 0; i < batchJobs.size(); i++)
+                {
+                    todoJobQueue.push(batchJobs[i]);
+                }
+            }
+
+            // here, we notify the threads that work have been pushed
+            mutexCondition.notify_all();
 
             // wait for waitgroup
             wg->Wait();
@@ -137,7 +167,7 @@ std::shared_ptr<std::vector<float>> FftRunner::performFft(std::shared_ptr<juce::
                 size_t fftChannelOffset = ((size_t)batchJobs[(size_t)i]->position * FFT_OUTPUT_NO_FREQS);
                 size_t fftResultArrayOffset = channelResultArrayOffset + fftChannelOffset;
                 // copy the memory from job data to destination buffer
-                memcpy(result->data() + (fftResultArrayOffset * sizeof(float)), batchJobs[(size_t)i]->output,
+                memcpy(result->data() + fftResultArrayOffset, batchJobs[(size_t)i]->output,
                        sizeof(float) * FFT_OUTPUT_NO_FREQS);
             }
 
@@ -157,23 +187,94 @@ std::shared_ptr<std::vector<float>> FftRunner::performFft(std::shared_ptr<juce::
 
 void FftRunner::fftThreadsLoop()
 {
-    // TODO: instanciate fft objects
+    // instanciate fftw objects
+    float *fftInput;
+    fftwf_complex *fftOutput;
+    fftwf_plan fftwPlan;
+    // allocate them and compute the plan
+    {
+        std::scoped_lock<std::mutex> lock(fftwMutex);
+        fftInput = fftwf_alloc_real(FFTW_INPUT_SIZE);
+        fftOutput = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * FFT_OUTPUT_NO_FREQS);
+        fftwPlan = fftwf_plan_dft_r2c_1d(FFTW_INPUT_SIZE, fftInput, fftOutput, FFTW_PATIENT);
+    }
+
+    // Write zeros in input as zero padded part can stay untouched all along.
+    // The job processing will only write the first FFT_INPUT_NO_INTENSITIES floats.
+    for (size_t i = 0; i < FFTW_INPUT_SIZE; i++)
+    {
+        fftInput[i] = 0.0f;
+    }
 
     while (true)
     {
-        std::function<void()> job;
+        // try to pull a job on the queue
+        std::shared_ptr<FftRunnerJob> nextJob = nullptr;
         {
-            std::unique_lock<std::mutex> lock(queue_mutex);
-            mutex_condition.wait(lock, [this] { return !jobs.empty() || should_terminate; });
-            if (should_terminate)
+            std::scoped_lock<std::mutex> lock(queueMutex);
+            if (!todoJobQueue.empty())
             {
+                nextJob = todoJobQueue.front();
+                todoJobQueue.pop();
+            }
+        }
+
+        // if there is one, process it
+        if (nextJob != nullptr)
+        {
+            // note that the processJob function will
+            // call the WaitGroup pointer at by the job
+            // to notify the job poster that is currently waiting.
+            processJob(nextJob, &fftwPlan, fftInput, fftOutput);
+        }
+        else
+        // if no more job on the queue, wait for condition variable
+        {
+            std::unique_lock<std::mutex> lock(queueMutex);
+            mutexCondition.wait(lock, [this] { return !todoJobQueue.empty() || exiting; });
+            if (exiting)
+            {
+                // free the FFTW resources
+                {
+                    std::scoped_lock<std::mutex> lockFftw(fftwMutex);
+                    fftwf_destroy_plan(fftwPlan);
+                    fftwf_free(fftInput);
+                    fftwf_free(fftOutput);
+                }
                 return;
             }
-            job = jobs.front();
-            jobs.pop();
         }
-        job();
     }
+}
+
+void FftRunner::processJob(std::shared_ptr<FftRunnerJob> job, fftwf_plan *plan, float *in, fftwf_complex *out)
+{
+
+    // copy data into the input
+    memcpy(in, job->input, sizeof(float) * job->inputLength);
+    // eventually pad rest of the input with zero if job input is not full size
+    int diffToFullSize = FFT_INPUT_NO_INTENSITIES - job->inputLength;
+    if (diffToFullSize > 0)
+    {
+        for (size_t i = FFT_INPUT_NO_INTENSITIES - 1; i >= job->inputLength; i--)
+        {
+            in[i] = 0.0f;
+        }
+    }
+    // TODO: apply the hanning windowing function
+    // execute the FFTW plan (and the DFT)
+    fftwf_execute(*plan);
+    // copy back the output intensities normalized
+    float re, im; /**< real and imaginary parts buffers */
+    for (size_t i = 0; i < FFT_OUTPUT_NO_FREQS; i++)
+    {
+        re = out[i][0] / float(FFTW_INPUT_SIZE);
+        im = out[i][1] / float(FFTW_INPUT_SIZE);
+        job->output[i] = std::sqrt((re * re) + (im * im));
+    }
+    // TODO: convert output to dB
+
+    job->wg->Done();
 }
 
 ///////////////////////////////////////////
