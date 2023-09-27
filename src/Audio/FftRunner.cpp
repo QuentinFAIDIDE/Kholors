@@ -119,7 +119,8 @@ std::shared_ptr<std::vector<float>> FftRunner::performFft(std::shared_ptr<juce::
 
             // If we have not been able to pull any empty job, emit a warning and sleep
             // Note that this can happen if more than FFT_PREALLOCATED_JOB_STRUCTS / FFT_JOBS_BATCH_SIZE
-            // threads are racing to use the preallocated empty jobs.
+            // threads are racing to use the preallocated empty jobs. But as of now only one thread is requesting FFTs
+            // so t's safe to assume that it should not happen.
             if (batchJobs.size() == 0)
             {
                 std::cerr << "Too many threads are trying to perform ffts and buffered jobs could not handle batch "
