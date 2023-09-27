@@ -83,6 +83,8 @@ std::shared_ptr<std::vector<float>> FftRunner::performFft(std::shared_ptr<juce::
     // waitgroup for successive batches of jobs
     auto wg = std::make_shared<WaitGroup>();
 
+    size_t windowPadding = ((size_t)FFT_INPUT_NO_INTENSITIES / (size_t)FFT_OVERLAP_DIVISION);
+
     // repeat for each channel
     for (int ch = 0; ch < audioFile->getNumChannels(); ch++)
     {
@@ -138,18 +140,21 @@ std::shared_ptr<std::vector<float>> FftRunner::performFft(std::shared_ptr<juce::
                 batchJobs[(size_t)i]->wg = wg;
                 batchJobs[(size_t)i]->position = fftPosition;
                 wg->Add(1);
-                // decrement remaining job
-                remainingJobs--;
-                fftPosition++;
-                // set the appropriate size
-                if (remainingJobs == 0)
+                // if our buffer will extend past end of channel, prevent it
+                size_t windowStart = ((size_t)fftPosition * windowPadding);
+                size_t windowEnd = windowStart + (FFT_INPUT_NO_INTENSITIES - 1);
+                if (windowEnd >= (size_t)audioFile->getNumSamples())
                 {
-                    batchJobs[(size_t)i]->inputLength = audioFile->getNumSamples() % FFT_INPUT_NO_INTENSITIES;
+                    batchJobs[(size_t)i]->inputLength = (size_t)audioFile->getNumSamples() - windowStart;
                 }
+                // if buffer will not overflow, use the full size
                 else
                 {
                     batchJobs[(size_t)i]->inputLength = FFT_INPUT_NO_INTENSITIES;
                 }
+                // decrement remaining job and increment position pointer
+                remainingJobs--;
+                fftPosition++;
                 // move the data pointer forward
                 nextJobStart += ((size_t)FFT_INPUT_NO_INTENSITIES / (size_t)FFT_OVERLAP_DIVISION);
             }

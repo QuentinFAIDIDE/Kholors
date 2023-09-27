@@ -103,7 +103,7 @@ int main()
     for (size_t i = 0; i < reader2->numChannels; i++)
     {
         size_t channelPos = i * (size_t)channelFftNum;
-        std::cout << "intensities for channel " << i << std::endl;
+        std::cout << "intensities for channel " << i << " at 220Hz" << std::endl;
         for (size_t j = 0; j < (size_t)channelFftNum; j++)
         {
             size_t fft_position = (channelPos + j) * FFT_OUTPUT_NO_FREQS;
