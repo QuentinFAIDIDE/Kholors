@@ -88,6 +88,7 @@ NotificationBoxArea NotificationOverlay::paintNotification(juce::Graphics &g, in
     auto numArea = headerArea.removeFromLeft(headerArea.getHeight());
     g.setColour(COLOR_TEXT);
     g.setFont(juce::Font(DEFAULT_FONT_SIZE));
+    numArea.setX(numArea.getX() - 6);
     g.drawText(std::to_string(notifIndex), numArea, juce::Justification::centred, false);
 
     // draw the cross to the right
@@ -104,9 +105,11 @@ NotificationBoxArea NotificationOverlay::paintNotification(juce::Graphics &g, in
 
     // draw the main body of text
     g.setColour(COLOR_TEXT);
-    area.reduce(NOTIF_INNER_MARGINS >> 1, NOTIF_INNER_MARGINS >> 1);
+    areaCopy.reduce(NOTIF_INNER_MARGINS >> 1, NOTIF_INNER_MARGINS >> 1);
     g.drawMultiLineText(notif.message, areaCopy.getTopLeft().getX(),
                         areaCopy.getTopLeft().getY() + NOTIF_BODY_TOP_PADDING, areaCopy.getWidth());
+
+    return NotificationBoxArea(notif.id, area, crossArea);
 }
 
 void NotificationOverlay::update()
@@ -162,7 +165,7 @@ bool NotificationOverlay::hitTest(int x, int y)
 {
     for (size_t i = 0; i < shownNotifAreas.size(); i++)
     {
-        if (shownNotifAreas[i].first.contains(x, y))
+        if (shownNotifAreas[i].box.contains(x, y))
         {
             return true;
         }
@@ -174,4 +177,33 @@ bool NotificationOverlay::hitTest(int x, int y)
 void NotificationOverlay::timerCallback()
 {
     update();
+}
+
+void NotificationOverlay::mouseDown(const juce::MouseEvent &jme)
+{
+    for (size_t i = 0; i < shownNotifAreas.size(); i++)
+    {
+        // if one of the "exit button" is below mouse when clicked
+        if (shownNotifAreas[i].exitButton.contains(jme.getPosition().getX(), jme.getPosition().getY()))
+        {
+            // iterate over notifications and delete clicked one
+            for (size_t j = 0; j < displayedNotifs.size(); j++)
+            {
+                // test the the notification data and displayed model correspond
+                if (displayedNotifs[j].id == shownNotifAreas[i].id)
+                {
+                    displayedNotifs.erase(displayedNotifs.begin() + (int)j);
+
+                    // if no more task to watch, stop the timer
+                    if (displayedNotifs.size() == 0)
+                    {
+                        stopTimer();
+                    }
+
+                    repaint();
+                    return;
+                }
+            }
+        }
+    }
 }

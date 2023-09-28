@@ -51,6 +51,13 @@ class NotificationOverlay : public juce::Component, public TaskListener, public 
     void timerCallback() override;
 
     /**
+     * @brief Called when mouse is clicked over an area that pass this component hitTest.
+     *
+     * @param jme Juce mouse event.
+     */
+    void mouseDown(const juce::MouseEvent &jme) override;
+
+    /**
      * @brief Called by time when animated app component has to update every NOTIF_UPDATE_INTERVAL_MS ms.
      */
     void update();
