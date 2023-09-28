@@ -110,7 +110,7 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
         }
         catch (std::runtime_error err)
         {
-            auto notifTask = std::make_shared<NotificationTask>(std::string(err.what()));
+            auto notifTask = std::make_shared<NotificationTask>(err.what(), ERROR_NOTIF_TYPE);
             activityManager.broadcastNestedTaskNow(notifTask);
 
             std::cerr << "Error while trying to initialize project: " << err.what() << std::endl;
@@ -125,9 +125,10 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
         activityManager.broadcastNestedTaskNow(initGitTask);
 
         // notify user of the sucess :)
-        auto notifTask = std::make_shared<NotificationTask>(
-            std::string("The project repository was sucessfully initialized! \nMake sure to "
-                        "commit changes as often as possible from the versionning menu."));
+        auto notifTask =
+            std::make_shared<NotificationTask>("The project repository was sucessfully initialized! \nMake sure to "
+                                               "commit changes as often as possible from the versionning menu.",
+                                               INFO_NOTIF_TYPE);
         activityManager.broadcastNestedTaskNow(notifTask);
 
         return true;
@@ -149,7 +150,7 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
         }
         catch (std::runtime_error err)
         {
-            auto notifTask = std::make_shared<NotificationTask>(std::string(err.what()));
+            auto notifTask = std::make_shared<NotificationTask>(err.what(), ERROR_NOTIF_TYPE);
             activityManager.broadcastNestedTaskNow(notifTask);
 
             std::cerr << "Error while trying to initialize project: " << err.what() << std::endl;
@@ -164,7 +165,8 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
         activityManager.broadcastNestedTaskNow(commitTask);
 
         // notify user of the sucess :)
-        auto notifTask = std::make_shared<NotificationTask>(std::string("Your changes were successfully committed."));
+        auto notifTask =
+            std::make_shared<NotificationTask>("Your changes were successfully committed.", INFO_NOTIF_TYPE);
         activityManager.broadcastNestedTaskNow(notifTask);
 
         return true;
@@ -239,8 +241,8 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
 
             std::cerr << "Unable to open project: " << err.what() << std::endl;
 
-            auto notifTask =
-                std::make_shared<NotificationTask>(std::string() + "Unable to open project, see logs for more infos.");
+            auto notifTask = std::make_shared<NotificationTask>("Unable to open project, see logs for more infos.",
+                                                                ERROR_NOTIF_TYPE);
             activityManager.broadcastNestedTaskNow(notifTask);
 
             return true;

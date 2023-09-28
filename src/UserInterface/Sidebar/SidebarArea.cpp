@@ -1,12 +1,13 @@
 #include "SidebarArea.h"
 
 #define SECTION_COMPONENTS_PADDING 6
+#define SIDEBAR_REFRESH_FPS 15
 
 SidebarArea::SidebarArea(ActivityManager &am)
     : playButton(am), stopButton(am), loopButton(am), colorPicker(am), trackProperties(am), sampleProperties(am),
       selectionGainVu("SELECTION", VUMETER_ID_SELECTED), masterGainVu("MASTER", VUMETER_ID_MASTER), activityManager(am)
 {
-    setFramesPerSecond(NOTIF_ANIM_FPS);
+    setFramesPerSecond(SIDEBAR_REFRESH_FPS);
 
     addAndMakeVisible(playButton);
     addAndMakeVisible(stopButton);

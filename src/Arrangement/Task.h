@@ -2,6 +2,7 @@
 #define DEF_ACTION_HPP
 
 #include "../Audio/SamplePlayer.h"
+#include "../Notification.h"
 #include "Marshalable.h"
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <memory>
@@ -394,25 +395,14 @@ class NotificationTask : public SilentTask
     /**
      Task to pop a notif from a std string.
      */
-    NotificationTask(std::string path);
-    /**
-     Task to pop a notif from a juce string
-     */
-    NotificationTask(juce::String path);
-
-    /**
-     Return the string message that belongs in the notif.
-     * @return text of the notification
-     */
-    std::string getMessage();
+    NotificationTask(std::string path, NotificationKind type);
 
     /**
      Dumps the task data to a string as json
      */
     std::string marshal() override;
 
-  private:
-    std::string message; // notification text message
+    Notification content; /**< Content of the notification */
 };
 
 /**

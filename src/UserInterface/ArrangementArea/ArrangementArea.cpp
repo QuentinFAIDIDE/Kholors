@@ -334,8 +334,8 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
 
             std::cerr << errMsg << std::endl;
 
-            auto notifTask =
-                std::make_shared<NotificationTask>(std::string() + "Unable to open project. See logs for more infos.");
+            auto notifTask = std::make_shared<NotificationTask>("Unable to open project. See logs for more infos.",
+                                                                ERROR_NOTIF_TYPE);
             activityManager.broadcastNestedTaskNow(notifTask);
         }
 

@@ -8,9 +8,8 @@
 #define DEFAULT_TAB_AREA_HEIGHT 300
 
 MainComponent::MainComponent()
-    : mixingBus(activityManager), arrangementArea(mixingBus, activityManager), topbarArea(activityManager),
-      actionTabs(juce::TabbedButtonBar::Orientation::TabsAtTop), menu(activityManager),
-      tabAreaHeight(DEFAULT_TAB_AREA_HEIGHT)
+    : mixingBus(activityManager), arrangementArea(mixingBus, activityManager), tabAreaHeight(DEFAULT_TAB_AREA_HEIGHT),
+      topbarArea(activityManager), actionTabs(juce::TabbedButtonBar::Orientation::TabsAtTop), menu(activityManager)
 {
 
     activityManager.registerTaskListener(this);
@@ -20,6 +19,7 @@ MainComponent::MainComponent()
     activityManager.registerTaskListener(&mixingBus);
     activityManager.registerTaskListener(&topbarArea);
     activityManager.registerTaskListener(&audioLibraryTab);
+    activityManager.registerTaskListener(&notifArea);
 
     // initialize audio app with two outputs
     setAudioChannels(0, 2);
@@ -43,6 +43,7 @@ MainComponent::MainComponent()
     addAndMakeVisible(menu);
     addAndMakeVisible(layerTabs);
     addAndMakeVisible(statusBar);
+    addAndMakeVisible(notifArea);
 
     // set the mixingBus callback to repaint arrangement area
     mixingBus.setTrackRepaintCallback([this] {
@@ -122,6 +123,8 @@ void MainComponent::resized()
     resizeHandleArea = actionTabs.getBounds();
     resizeHandleArea.setY(resizeHandleArea.getY() - (MAINVIEW_RESIZE_HANDLE_HEIGHT >> 1));
     resizeHandleArea.setHeight(MAINVIEW_RESIZE_HANDLE_HEIGHT);
+
+    notifArea.setBounds(getLocalBounds());
 }
 
 void MainComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate)

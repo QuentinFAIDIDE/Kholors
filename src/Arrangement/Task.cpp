@@ -289,24 +289,29 @@ std::string SampleCreateTask::marshal()
 
 ///////////////////////////////////////////////
 
-NotificationTask::NotificationTask(std::string s) : message(s)
+NotificationTask::NotificationTask(std::string s, NotificationKind type)
 {
-}
+    // get timestamp of now
+    auto now = std::chrono::system_clock::now().time_since_epoch();
+    unsigned int nowTimestamp = std::chrono::duration_cast<std::chrono::seconds>(now).count();
 
-NotificationTask::NotificationTask(juce::String s) : message(s.toStdString())
-{
-}
-
-std::string NotificationTask::getMessage()
-{
-    return message;
+    content.expirationTimeUnix = nowTimestamp + (NOTIF_TIMEOUT / 1000);
+    content.message = s;
+    // lazy reusal of the task group index.
+    // This can create unpredictable deletion of notif and ids will not be unique
+    // if sent in a task group (but why would someone do that ?)
+    content.id = getTaskGroupIndex();
+    content.type = type;
 }
 
 std::string NotificationTask::marshal()
 {
     json taskj = {{"object", "task"},
                   {"task", "notification"},
-                  {"message", message},
+                  {"message", content.message},
+                  {"type", content.type},
+                  {"expiration_unix_ts", content.expirationTimeUnix},
+                  {"id", content.id},
                   {"is_completed", isCompleted()},
                   {"failed", hasFailed()},
                   {"recordable_in_history", recordableInHistory},
@@ -768,7 +773,7 @@ void LoopMovingTask::quantisize(float quantLevel)
     float startPositionInBars = std::round(float(currentLoopBeginFrame) / quantLevel);
     float stopPositionInBars = std::round(float(currentLoopEndFrame) / quantLevel);
 
-    if (startPositionInBars == stopPositionInBars)
+    if (int(startPositionInBars) == int(stopPositionInBars))
     {
         stopPositionInBars += 1.0f;
     }

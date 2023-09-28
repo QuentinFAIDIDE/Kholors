@@ -110,8 +110,8 @@ void OpenProjectDialog::buttonClicked(juce::Button *button)
         {
             std::string errMsg = std::string() + "Unable to open project: " + err.what();
             std::cerr << errMsg << std::endl;
-            auto notifTask =
-                std::make_shared<NotificationTask>(std::string() + "Unable to open project, see logs for more infos.");
+            auto notifTask = std::make_shared<NotificationTask>("Unable to open project, see logs for more infos.",
+                                                                ERROR_NOTIF_TYPE);
             activityManager.broadcastTask(notifTask);
         }
     }

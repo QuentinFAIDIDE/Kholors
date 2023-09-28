@@ -520,8 +520,8 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
             projectLoadingTask->stage = OPEN_PROJECT_STAGE_FAILED;
             std::cerr << "unable to open project on mixbus side: " << err.what() << std::endl;
 
-            auto notifTask =
-                std::make_shared<NotificationTask>(std::string() + "Unable to open project. See logs for more infos.");
+            auto notifTask = std::make_shared<NotificationTask>("Unable to open project. See logs for more infos.",
+                                                                ERROR_NOTIF_TYPE);
             activityManager.broadcastNestedTaskNow(notifTask);
         }
 
@@ -933,7 +933,8 @@ void MixingBus::importNewFile(std::shared_ptr<SampleCreateTask> task)
     {
         std::cerr << "File " << pathToOpen << " failed to be loaded: " << err.what() << std::endl;
 
-        auto notif = std::make_shared<NotificationTask>(juce::String("Unable to import file: ") + err.what());
+        auto notif = std::make_shared<NotificationTask>(std::string() + "Unable to import file: " + err.what(),
+                                                        ERROR_NOTIF_TYPE);
 
         activityManager.broadcastTask(notif); /* note that if called from within a task broadcastTask will wait after
                                                  execution of current task to perform the new one */

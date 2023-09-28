@@ -15,6 +15,7 @@
 #include "KholorsLookAndFeel.h"
 #include "LayerBar.h"
 #include "MenuBar.h"
+#include "NotificationOverlay.h"
 #include "Sidebar/SidebarArea.h"
 #include "StatusBar.h"
 #include "TabSection/AudioLibraryTab.h"
@@ -80,6 +81,8 @@ class MainComponent : public juce::AudioAppComponent, public juce::DragAndDropCo
     StatusBar statusBar;
 
     MenuBar menu;
+
+    NotificationOverlay notifArea;
 
     juce::SharedResourcePointer<Config> sharedConfig;
 

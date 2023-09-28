@@ -47,14 +47,11 @@
 
 // notification constants
 #define NOTIF_WIDTH 400
-#define NOTIF_HEIGHT 100
+#define NOTIF_HEIGHT 180
 #define NOTIF_INNER_MARGINS 20
 #define NOTIF_OUTTER_MARGINS 20
-#define NOTIF_BORDER_RADIUS 8.0
-#define NOTIF_ANIMATION_SPEED_PIXEL_MS 0.65
-#define NOTIF_TIMEOUT 7000
-#define NOTIF_ANIM_FPS 28
-#define NOTIF_MAX_QUEUE_SIZE 6
+#define NOTIF_TIMEOUT 5000
+#define NOTIF_PADDING 10
 
 #define SIDEBAR_OUTTER_MARGINS 14
 #define SIDEBAR_SECTIONS_INNER_MARGINS 8
@@ -87,6 +84,10 @@
 #define COLOR_SEPARATOR_LINE juce::Colour(80, 80, 80)
 #define COLOR_HIGHLIGHT juce::Colour(56, 110, 155)
 #define COLOR_SELECTED_BACKGROUND juce::Colour(35, 36, 38)
+
+#define COLOR_NOTIF_INFO juce::Colour(64, 86, 165)
+#define COLOR_NOTIF_WARN juce::Colour(155, 95, 49)
+#define COLOR_NOTIF_ERROR juce::Colour(198, 66, 100)
 
 #define COLOR_UNITS COLOR_TEXT_DARKER.withAlpha(0.5f)
 
