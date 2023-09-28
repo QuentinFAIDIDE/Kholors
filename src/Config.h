@@ -192,7 +192,7 @@
 #define REPO_NAME_VALIDATION_REGEX "[A-Za-zà-üÀ-Ü0-9_-]{3,30}"
 #define MAIL_REGEX "^[A-Za-z0-9_\\.-]{2,40}@[A-Za-z-_]{2,40}.[a-z]{2,4}$"
 #define NAME_REGEX "[A-Za-z à-üÀ-Ü]{3,30}"
-#define GIT_COMMIT_REGEX "[A-Za-z à-üÀ-Ü _%,;\\.:-]{3,130}"
+#define GIT_COMMIT_REGEX "[A-Za-z à-ü0-9À-Ü _%,;\\.:-]{3,130}"
 
 #define DATETIME_FORMAT_1 "%Y-%m-%d %H:%M:%S"
 
