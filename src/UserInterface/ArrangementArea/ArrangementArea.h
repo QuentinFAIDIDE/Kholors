@@ -330,6 +330,13 @@ class ArrangementArea : public juce::Component,
     int getSampleIdUnderCursor();
 
     /**
+     * @brief Get the Texture Intensity if exists at mouse position.
+     *
+     * @return float the texture intensity between 0 and 1, being 0 if nothing is below the mouse cursor.
+     */
+    float getTextureIntensityUnderCursor();
+
+    /**
      * @brief      Will copy the selected track ids, and iteratively remove them by posting the deletion task.
      *             Will group the tasks for efficiency.
      */

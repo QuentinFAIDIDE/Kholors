@@ -1033,7 +1033,7 @@ void ArrangementArea::saveInitialSelectionGainRamps()
     std::set<size_t>::iterator itr;
     for (itr = selectedTracks.begin(); itr != selectedTracks.end(); itr++)
     {
-        if (*itr < 0 || *itr >= mixingBus.getNumTracks() || mixingBus.getTrack(*itr) == nullptr)
+        if (*itr >= mixingBus.getNumTracks() || mixingBus.getTrack(*itr) == nullptr)
         {
             continue;
         }
@@ -1043,11 +1043,6 @@ void ArrangementArea::saveInitialSelectionGainRamps()
     }
 }
 
-/**
- * Give id of track clicked (label or sample fft).
- * @return     Index of the sample clicked in the tracks/samples arrays. -1 if
- * no match.
- */
 int ArrangementArea::getSampleIdUnderCursor()
 {
     size_t nTracks = samples.size();
@@ -1069,7 +1064,7 @@ int ArrangementArea::getSampleIdUnderCursor()
     // for each track
     for (size_t i = 0; i < nTracks; i++)
     {
-        // skip nullptr in tracks list (should not happen)
+        // skip nullptr in tracks list
         if (samples[i]->isDisabled())
         {
             continue;
@@ -1103,6 +1098,46 @@ int ArrangementArea::getSampleIdUnderCursor()
     {
         return -1;
     }
+}
+
+float ArrangementArea::getTextureIntensityUnderCursor()
+{
+    size_t nTracks = samples.size();
+    int64_t trackPosition;
+
+    int bestTrackIndex = -1;
+    float bestTrackIntensity = 0.0f;
+    float currentIntensity;
+
+    // for each track
+    for (size_t i = 0; i < nTracks; i++)
+    {
+        // skip nullptr in tracks list
+        if (samples[i]->isDisabled())
+        {
+            continue;
+        }
+
+        trackPosition = (samples[i]->getFramePosition() - viewPosition) / viewScale;
+
+        // if it's inbound, return the index
+        if (lastMouseX > trackPosition && lastMouseX < trackPosition + (samples[i]->getFrameLength() / viewScale))
+        {
+            float x = float(lastMouseX - trackPosition) / (float(samples[i]->getFrameLength()) / float(viewScale));
+
+            float y = float(lastMouseY) / bounds.getHeight();
+
+            currentIntensity = samples[i]->textureIntensity(x, y);
+
+            if (bestTrackIndex == -1 || currentIntensity > bestTrackIntensity)
+            {
+                bestTrackIndex = i;
+                bestTrackIntensity = currentIntensity;
+            }
+        }
+    }
+
+    return bestTrackIntensity;
 }
 
 void ArrangementArea::initSelectedTracksDrag()
@@ -1523,6 +1558,10 @@ void ArrangementArea::emitPositionTip()
         std::string name = taxonomyManager.getSampleName(sampleUnderMouse);
         posTip += "     |    " + name;
     }
+
+    float intensity = getTextureIntensityUnderCursor();
+    float intensityDB = UnitConverter::magnifyIntensityInv(intensity);
+    posTip += "     |    " + std::to_string(intensityDB) + " dB";
 
     sharedTips->setPositionStatus(posTip);
 }

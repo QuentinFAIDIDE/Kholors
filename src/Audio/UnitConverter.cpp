@@ -71,11 +71,17 @@ float UnitConverter::polylensInv(float v)
 
 float UnitConverter::magnifyIntensity(float input)
 {
+    // NOTE: we disabled all intensity correction here.
     // TODO: factor and develop calculus to save on computing power.
     float intensity = input;
     // we need to normalize the frequency by mapping the range
     intensity = juce::jmap(intensity, MIN_DB, MAX_DB, 0.0f, 1.0f);
     return intensity;
+}
+
+float UnitConverter::magnifyIntensityInv(float v)
+{
+    return juce::jmap(v, 0.0f, 1.0f, MIN_DB, MAX_DB);
 }
 
 float UnitConverter::verticalPositionToFrequency(int y, int viewHeight)

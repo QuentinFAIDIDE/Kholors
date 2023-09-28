@@ -49,6 +49,13 @@ class UnitConverter
     static float magnifyIntensity(float dbValue);
 
     /**
+     * Maps from the range [0, 1] to
+     * [MIN_DB, MAX_DB] and invert the contrast enhancement of
+     * magnifyIntensity
+     */
+    static float magnifyIntensityInv(float v);
+
+    /**
      * polynomial transformation to zoom in the middle of frequencies
      * and make important frequencies stand out.
      * Works on floats between 0 and 1.
