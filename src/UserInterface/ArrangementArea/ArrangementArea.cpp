@@ -167,11 +167,11 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
     std::shared_ptr<SampleDeletionDisplayTask> disableTask = std::dynamic_pointer_cast<SampleDeletionDisplayTask>(task);
     if (disableTask != nullptr && !disableTask->isCompleted() && !disableTask->hasFailed())
     {
-        samples[disableTask->id]->disable();
+        samples[(size_t)disableTask->id]->disable();
 
-        if (selectedTracks.find(disableTask->id) != selectedTracks.end())
+        if (selectedTracks.find((size_t)disableTask->id) != selectedTracks.end())
         {
-            selectedTracks.erase(disableTask->id);
+            selectedTracks.erase((size_t)disableTask->id);
             copyAndBroadcastSelection(true);
         }
 
@@ -183,15 +183,16 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
     std::shared_ptr<SampleRestoreDisplayTask> restoreTask = std::dynamic_pointer_cast<SampleRestoreDisplayTask>(task);
     if (restoreTask != nullptr && !restoreTask->isCompleted() && !restoreTask->hasFailed())
     {
-        samples[restoreTask->id].reset();
+        samples[(size_t)restoreTask->id].reset();
 
-        samples[restoreTask->id] = std::make_shared<SampleGraphicModel>(
+        samples[(size_t)restoreTask->id] = std::make_shared<SampleGraphicModel>(
             restoreTask->restoredSample, taxonomyManager.getSampleColor(restoreTask->id));
 
         // when a sample openGL model is created it doesn't allocate the GPU
         // data unless we ask for it.
         openGLContext.executeOnGLThread(
-            [this, restoreTask](juce::OpenGLContext &c) { samples[restoreTask->id]->registerGlObjects(); }, true);
+            [this, restoreTask](juce::OpenGLContext &) { samples[(size_t)restoreTask->id]->registerGlObjects(); },
+            true);
 
         // we will repaint to display the sample again
         repaint();
@@ -203,8 +204,8 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
     if (updateTask != nullptr && !updateTask->isCompleted() && !updateTask->hasFailed())
     {
         openGLContext.executeOnGLThread(
-            [this, updateTask](juce::OpenGLContext &c) {
-                samples[updateTask->id]->reloadSampleData(updateTask->sample);
+            [this, updateTask](juce::OpenGLContext &) {
+                samples[(size_t)updateTask->id]->reloadSampleData(updateTask->sample);
             },
             true);
 
@@ -268,8 +269,8 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
         mixingBus.getTrack(fadeChange->sampleId) != nullptr)
     {
         openGLContext.executeOnGLThread(
-            [this, fadeChange](juce::OpenGLContext &c) {
-                samples[fadeChange->sampleId]->reloadSampleData(mixingBus.getTrack(fadeChange->sampleId));
+            [this, fadeChange](juce::OpenGLContext &) {
+                samples[(size_t)fadeChange->sampleId]->reloadSampleData(mixingBus.getTrack(fadeChange->sampleId));
             },
             true);
 
@@ -281,8 +282,9 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
         mixingBus.getTrack(filterRepChange->sampleId) != nullptr)
     {
         openGLContext.executeOnGLThread(
-            [this, filterRepChange](juce::OpenGLContext &c) {
-                samples[filterRepChange->sampleId]->reloadSampleData(mixingBus.getTrack(filterRepChange->sampleId));
+            [this, filterRepChange](juce::OpenGLContext &) {
+                samples[(size_t)filterRepChange->sampleId]->reloadSampleData(
+                    mixingBus.getTrack(filterRepChange->sampleId));
             },
             true);
 
@@ -480,7 +482,7 @@ void ArrangementArea::paintLabels(juce::Graphics &g)
     int viewLeftMostFrame = viewPosition;
     int viewRightMostFrame = viewPosition + (bounds.getWidth() * viewScale);
 
-    for (int i = 0; i < samples.size(); i++)
+    for (size_t i = 0; i < samples.size(); i++)
     {
         if (samples[i]->isDisabled())
         {
@@ -575,7 +577,7 @@ SampleAreaRectangle ArrangementArea::addLabelAndPreventOverlaps(std::vector<Samp
 
 bool ArrangementArea::rectangleIntersects(SampleAreaRectangle &target, std::vector<SampleAreaRectangle> &rectangles)
 {
-    for (int i = 0; i < rectangles.size(); i++)
+    for (size_t i = 0; i < rectangles.size(); i++)
     {
         if (target.intersects(rectangles[i]))
         {
@@ -587,7 +589,7 @@ bool ArrangementArea::rectangleIntersects(SampleAreaRectangle &target, std::vect
 
 bool ArrangementArea::overlapSampleArea(SampleAreaRectangle &rect, int sampleIndex, int margin)
 {
-    auto sampleRects = samples[sampleIndex]->getPixelBounds(viewPosition, viewScale, bounds.getHeight());
+    auto sampleRects = samples[(size_t)sampleIndex]->getPixelBounds(viewPosition, viewScale, bounds.getHeight());
 
     for (size_t i = 0; i < sampleRects.size(); i++)
     {
@@ -601,7 +603,7 @@ bool ArrangementArea::overlapSampleArea(SampleAreaRectangle &rect, int sampleInd
 
 void ArrangementArea::paintSampleLabel(juce::Graphics &g, juce::Rectangle<float> &box, int index)
 {
-    bool selected = selectedTracks.find(index) != selectedTracks.end();
+    bool selected = selectedTracks.find((size_t)index) != selectedTracks.end();
 
     // different border width depending on if selected or not
     if (selected)
@@ -779,7 +781,7 @@ void ArrangementArea::renderOpenGL()
     alphaMaskTextureLoader.bindTexture();
     texturedPositionedShader->use();
 
-    for (int i = 0; i < samples.size(); i++)
+    for (size_t i = 0; i < samples.size(); i++)
     {
         samples[i]->drawGlObjects();
     }
@@ -795,7 +797,7 @@ void ArrangementArea::createNewSampleMeshAndTaxonomy(std::shared_ptr<SamplePlaye
     // create graphic objects from the sample
     if (task->reuseNewId)
     {
-        samples[task->newIndex]->reenable();
+        samples[(size_t)task->newIndex]->reenable();
     }
     else
     {
@@ -804,7 +806,7 @@ void ArrangementArea::createNewSampleMeshAndTaxonomy(std::shared_ptr<SamplePlaye
         samples.push_back(sampleRef);
 
         // fatal error if sample ids are different
-        if ((samples.size() - 1) != task->getAllocatedIndex())
+        if ((samples.size() - 1) != (size_t)task->getAllocatedIndex())
         {
             std::cerr << "FATAL: Sample ids don't match in Mixbus and ArrangementArea" << std::endl;
             juce::JUCEApplicationBase::quit();
@@ -819,7 +821,7 @@ void ArrangementArea::createNewSampleMeshAndTaxonomy(std::shared_ptr<SamplePlaye
         taxonomyManager.setSampleName(task->getAllocatedIndex(), sp->getFileName());
         // send the data to the GPUs from the OpenGL thread
         openGLContext.executeOnGLThread(
-            [this, task](juce::OpenGLContext &c) { samples[task->newIndex]->registerGlObjects(); }, true);
+            [this, task](juce::OpenGLContext &) { samples[(size_t)task->newIndex]->registerGlObjects(); }, true);
         // if it's a copy, set the group and update the color
         if (task->isDuplication())
         {
@@ -833,7 +835,7 @@ void ArrangementArea::createNewSampleMeshAndTaxonomy(std::shared_ptr<SamplePlaye
                 refreshSampleOpenGlView(task->getDuplicateTargetId());
             }
 
-            selectedTracks.insert(task->getAllocatedIndex());
+            selectedTracks.insert((size_t)task->getAllocatedIndex());
         }
     }
 
@@ -879,7 +881,7 @@ void ArrangementArea::mouseDown(const juce::MouseEvent &jme)
     }
 }
 
-void ArrangementArea::handleMiddleButterDown(const juce::MouseEvent &jme)
+void ArrangementArea::handleMiddleButterDown(const juce::MouseEvent &)
 {
     // handle resize/mode mode activation
     if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT)
@@ -958,17 +960,17 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
                 if (!jme.mods.isCtrlDown())
                 {
                     selectedTracks.clear();
-                    selectedTracks.insert(clickedTrack);
+                    selectedTracks.insert((size_t)clickedTrack);
                 }
                 else
                 {
-                    if (selectedTracks.find(clickedTrack) == selectedTracks.end())
+                    if (selectedTracks.find((size_t)clickedTrack) == selectedTracks.end())
                     {
-                        selectedTracks.insert(clickedTrack);
+                        selectedTracks.insert((size_t)clickedTrack);
                     }
                     else
                     {
-                        selectedTracks.erase(clickedTrack);
+                        selectedTracks.erase((size_t)clickedTrack);
                     }
                 }
 
@@ -1078,7 +1080,7 @@ int ArrangementArea::getSampleIdUnderCursor()
         // if it's inbound, return the index
         if (lastMouseX > trackPosition && lastMouseX < trackPosition + (samples[i]->getFrameLength() / viewScale))
         {
-            float x = float(lastMouseX - trackPosition) / float(samples[i]->getFrameLength() / viewScale);
+            float x = float(lastMouseX - trackPosition) / (float(samples[i]->getFrameLength()) / float(viewScale));
 
             float y = float(lastMouseY) / bounds.getHeight();
 
@@ -1118,7 +1120,7 @@ void ArrangementArea::updateSelectedTracksDrag(int pixelShift)
     for (itr = selectedTracks.begin(); itr != selectedTracks.end(); itr++)
     {
         openGLContext.executeOnGLThread(
-            [this, itr, pixelShift](juce::OpenGLContext &c) { samples[*itr]->updateDrag(pixelShift * viewScale); },
+            [this, itr, pixelShift](juce::OpenGLContext &) { samples[*itr]->updateDrag(pixelShift * viewScale); },
             true);
     }
 }
@@ -1144,7 +1146,7 @@ void ArrangementArea::mouseUp(const juce::MouseEvent &jme)
     }
 }
 
-void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent &jme)
+void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent &)
 {
 
     switch (activityManager.getAppState().getUiState())
@@ -1202,7 +1204,7 @@ void ArrangementArea::emitTimeDragTasks(bool cropBeginning)
     int taskGroupId = Task::getNewTaskGroupIndex();
     for (it = dragDistanceMap.begin(); it != dragDistanceMap.end(); it++)
     {
-        if (it->first < 0 || it->first >= mixingBus.getNumTracks() || mixingBus.getTrack(it->first) == nullptr)
+        if (it->first < 0 || (size_t)it->first >= mixingBus.getNumTracks() || mixingBus.getTrack(it->first) == nullptr)
         {
             continue;
         }
@@ -1440,8 +1442,8 @@ void ArrangementArea::refreshSampleOpenGlView(int index)
     {
         return;
     }
-    openGLContext.executeOnGLThread([this, index, sp](juce::OpenGLContext &c) { samples[index]->reloadSampleData(sp); },
-                                    true);
+    openGLContext.executeOnGLThread(
+        [this, index, sp](juce::OpenGLContext &) { samples[(size_t)index]->reloadSampleData(sp); }, true);
 }
 
 bool ArrangementArea::updateViewResizing(juce::Point<int> &newPosition)
@@ -1777,8 +1779,8 @@ bool ArrangementArea::keyPressed(const juce::KeyPress &key)
 void ArrangementArea::setSampleColorFromTaxonomy(int sampleIndex)
 {
     openGLContext.executeOnGLThread(
-        [this, sampleIndex](juce::OpenGLContext &c) {
-            samples[sampleIndex]->setColor(taxonomyManager.getSampleColor(sampleIndex));
+        [this, sampleIndex](juce::OpenGLContext &) {
+            samples[(size_t)sampleIndex]->setColor(taxonomyManager.getSampleColor(sampleIndex));
         },
         true);
 }
@@ -1839,7 +1841,7 @@ void ArrangementArea::deleteSelectedTracks()
     repaint();
 }
 
-bool ArrangementArea::keyStateChanged(bool isKeyDown)
+bool ArrangementArea::keyStateChanged(bool)
 {
     // if in drag mode
     if (activityManager.getAppState().getUiState() == UI_STATE_KEYBOARD_SAMPLE_DRAG)
@@ -1933,7 +1935,7 @@ bool ArrangementArea::isInterestedInFileDrag(const juce::StringArray &files)
     return mixingBus.filePathsValid(files);
 }
 
-void ArrangementArea::filesDropped(const juce::StringArray &files, int x, int y)
+void ArrangementArea::filesDropped(const juce::StringArray &files, int x, int)
 {
     // converts x to an valid position in audio frame
     int64_t framePos = viewPosition + (x * viewScale);
@@ -1985,7 +1987,7 @@ void ArrangementArea::recolorSelection(std::shared_ptr<SampleGroupRecolor> task)
             if (changedGroups.find(gid) == changedGroups.end())
             {
                 changedGroups.insert(gid);
-                taxonomyManager.setGroupColor(gid, colourPalette[task->colorId]);
+                taxonomyManager.setGroupColor(gid, colourPalette[(size_t)task->colorId]);
 
                 // now for each group we add its samples to the changed set
                 std::set<int> groupSamples = taxonomyManager.getGroupSamples(gid);
@@ -1999,7 +2001,7 @@ void ArrangementArea::recolorSelection(std::shared_ptr<SampleGroupRecolor> task)
             }
         }
 
-        task->newColor = colourPalette[task->colorId];
+        task->newColor = colourPalette[(size_t)task->colorId];
         task->changedSampleIds = changedIds;
         task->colorsPerId = oldSampleColours;
     }
