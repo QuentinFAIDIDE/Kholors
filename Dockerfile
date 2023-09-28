@@ -8,5 +8,6 @@ RUN pacman -S --noconfirm yaml-cpp
 RUN pacman -S --noconfirm nlohmann-json
 RUN pacman -S --noconfirm ccache
 RUN pacman -S --noconfirm libgit2
+RUN pacman -S --noconfirm fftw
 
 WORKDIR /src/app

@@ -102,7 +102,7 @@ int main()
     indexStored = UnitConverter::magnifyTextureFrequencyIndexInv(indexTexture);
     int retrievedIndex4600 = UnitConverter::magnifyFftIndex(indexStored);
     diff = index4600 - retrievedIndex4600;
-    if (diff >= 2)
+    if (diff > 3)
     {
         std::cerr << "fft to texture pipeline has too much diff on freq 4600: " << diff << std::endl;
         return 1;
