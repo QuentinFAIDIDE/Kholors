@@ -82,17 +82,17 @@ class ActivityManager
     void clearTaskHistory();
 
   private:
-    std::shared_ptr<Task> history[ACTIVITY_HISTORY_RING_BUFFER_SIZE]; // ring buffer with the last executed tasks
-    int historyNextIndex;                                             // the index of the next recorded history entry
-    std::stack<std::shared_ptr<Task>> canceledTasks;                  // stack of canceled tasks
+    std::shared_ptr<Task> history[ACTIVITY_HISTORY_RING_BUFFER_SIZE]; /**< ring buffer with the last executed tasks */
+    int historyNextIndex;                            /**<  the index of the next recorded history entry */
+    std::stack<std::shared_ptr<Task>> canceledTasks; //**<  stack of canceled tasks */
 
     AppState appState; // an object representing the application state
 
-    std::vector<TaskListener *> taskListeners;   // a list of object we broadcast tasks to
-    std::queue<std::shared_ptr<Task>> taskQueue; // the queue of tasks to be broadcasted
-    juce::SpinLock taskQueueLock;                // the lock to prevent race condition on the task queue
-    juce::SpinLock broadcastLock;                // the lock to prevent concurrent broadcast of tasks
-    bool taskBroadcastStopped;                   // boolean to tell if the broadcasting processing is enabled
+    std::vector<TaskListener *> taskListeners;   /**<  a list of object we broadcast tasks to */
+    std::queue<std::shared_ptr<Task>> taskQueue; /**<  the queue of tasks to be broadcasted */
+    juce::SpinLock taskQueueLock;                /**<  the lock to prevent race condition on the task queue */
+    juce::SpinLock broadcastLock;                /**<  the lock to prevent concurrent broadcast of tasks */
+    bool taskBroadcastStopped;                   /**<  boolean to tell if the broadcasting processing is enabled */
 };
 
 #endif // DEF_ACTIVITY_MANAGER_HPP
