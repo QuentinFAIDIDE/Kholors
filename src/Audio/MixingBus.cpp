@@ -294,13 +294,21 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
         }
         else
         {
+            // If in loop mode, a reset takes you to loop start.
+            // If not it goes to the track beginning.
+            int appropriateResetPositon = 0;
+            if (loopingToggledOn)
+            {
+                appropriateResetPositon = loopSectionStartFrame;
+            }
+
             if (!isPlaying)
             {
                 if (playUpdate->shouldResetPosition)
                 {
                     {
                         const juce::ScopedLock lock(mixbusMutex);
-                        playCursor = 0;
+                        playCursor = appropriateResetPositon;
                         // spread update to each track/sample who
                         // have their own position copy
                         setNextReadPosition(playCursor);
@@ -323,7 +331,7 @@ bool MixingBus::taskHandler(std::shared_ptr<Task> task)
                 if (playUpdate->shouldResetPosition)
                 {
                     const juce::ScopedLock lock(mixbusMutex);
-                    playCursor = 0;
+                    playCursor = appropriateResetPositon;
                     // spread update to each track/sample who
                     // have their own position copy
                     setNextReadPosition(playCursor);
