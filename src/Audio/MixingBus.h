@@ -19,31 +19,83 @@
 
 /**
  * @brief MixingBus will load, mix, process and play
- *        the audio samples.
+ *        the audio samples. It manages the main audio mixbus.
  *
  */
 class MixingBus : public juce::PositionableAudioSource, public TaskListener, public Marshalable, private juce::Thread
 {
   public:
+    /**
+     * @brief Construct a new Mixing Bus object
+     *
+     */
     MixingBus(ActivityManager &);
+
+    /**
+     * @brief Destroy the Mixing Bus object
+     *
+     */
     ~MixingBus();
 
-    // reset the state of the mixbus to a fresh new one
+    /**
+     * @brief reset the state of the mixbus to a fresh new one. (used for reseting app state.)
+     */
     void reset();
 
-    // this is the handler for the app's broadcasted tasks
+    /**
+     * @brief This is where we receive tasks and decide if we act on them.
+     *
+     * @param task The task that is broadcasted to all listeners.
+     * @return true If we stop and intercept the broadcasting of the task now (will still go to history).
+     * @return false If we let the task continue its way down the listeners.
+     */
     bool taskHandler(std::shared_ptr<Task> task) override;
 
-    // when called, add sample from file path with position
+    //
+    /**
+     * @brief Initially supposed to check that path for imported files are valid, but we decided to fail later
+     *         and this function is both deprecated and blocked to returning always true.
+     *
+     * @return true is always returned
+     * @return false is never returned
+     */
     bool filePathsValid(const juce::StringArray &);
 
-    // inherited from audio source
+    /**
+     * @brief Get the Next Audio Block object. What it specifically does here is called
+     *        getAudioBlock once, or twice if reaching the loop end.
+     *
+     * @param asci Audio buffer to fill with necessary informations.
+     */
     void getNextAudioBlock(const juce::AudioSourceChannelInfo &) override;
+
+    /**
+     * @brief Get a block of audio from the sample players. Used in getNextAudioBlock
+     *        to trick it into handling end of loop (by separating the AudioSourceChannelInfo in two parts).
+     *        DOES NOT TAKE THE MIXBUS LOCK, TAKE IT BEFORE CALLING IT !
+     *
+     * @param asci Audio buffer to fill with necessary informations.
+     */
+    void getAudioBlock(const juce::AudioSourceChannelInfo &asci);
+
+    /**
+     * @brief Juce inherited method to prepare resources to start the audio thread playbook.
+     *
+     */
     void prepareToPlay(int, double) override;
+
+    /**
+     * @brief Release audio resources at audio thread stop.
+     *
+     */
     void releaseResources() override;
 
-    // inherited from positionable audio source
+    /**
+     * @brief Set the next read position in all sample players. Note that it does not takes
+     *        the mixbus lock, and you should take it before calling it !
+     */
     void setNextReadPosition(juce::int64) override;
+
     juce::int64 getNextReadPosition() const override;
     juce::int64 getTotalLength() const override;
     bool isLooping() const override;
@@ -87,8 +139,7 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pub
 
     ActivityManager &activityManager;
 
-    // play cursom position in audio frames
-    int playCursor;
+    int playCursor; /**< Play cursor position in audio frames. This is the index of the next audio frame to be read. */
 
     // number of channels
     juce::int64 numChannels;
@@ -99,7 +150,8 @@ class MixingBus : public juce::PositionableAudioSource, public TaskListener, pub
     // is the loop mode on ?
     bool loopingToggledOn;
 
-    // position of the ends of the loop section in audio frames
+    // Position of the ends of the loop section in audio frames. Loop should
+    // include start frame and include the end frame.
     int64_t loopSectionStartFrame, loopSectionEndFrame;
 
     // a shared pointer to an instance of a MixbusDataSource we can share with GUI

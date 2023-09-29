@@ -25,7 +25,10 @@
  *  See https://community.sw.siemens.com/s/article/window-correction-factors */
 #define HANN_AMPLITUDE_CORRECTION_FACTOR 2.0f
 
-/**< jobs that are posted in the job queue and picked by threads  */
+/**
+ * @brief Jobs that are posted in the job queue and picked by threads.
+ *        Preallocated at runner startup.
+ */
 struct FftRunnerJob
 {
     int position;       /**< Position of the fft in the source audio buffer (in index of ffts) */
@@ -66,7 +69,7 @@ class FftRunner
     static int getNumFftFromNumSamples(int numSamples);
 
     /**
-     * @brief Perfom a Fast Fourier Transform on an audio buffer and return its data.
+     * @brief Perfom a (sequence of short) Fast Fourier Transform on an audio buffer and return its data.
      *
      * @param audioFile A JUCE library audio sample buffer with the audio samples inside.
      * @return std::shared_ptr<std::vector<float>>  A vector of resulting fourier transform.

@@ -631,6 +631,7 @@ void MixingBus::startPlayback()
 {
     if (!isPlaying)
     {
+        const juce::ScopedLock lock(mixbusMutex);
         setNextReadPosition(playCursor);
         isPlaying = true;
     }
@@ -707,11 +708,57 @@ void MixingBus::releaseResources()
 
 void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill)
 {
+    const juce::ScopedLock sl(mixbusMutex);
+
+    int nextPlayPosition = (playCursor + bufferToFill.numSamples);
+    bool needToLoop = loopingToggledOn && playCursor <= loopSectionEndFrame && nextPlayPosition > loopSectionEndFrame;
+
+    // if not in loop mode or the end of the loop section is not in range, just proceed to get the full block
+    if (!needToLoop)
+    {
+        getAudioBlock(bufferToFill);
+    }
+    else
+    {
+        // we will basically split the work in two AudioSourceChannelInfo
+
+        // we will need to shift the start position of the second AudioSourceChannelInfo
+        int numSamplesInLoopBounds = (loopSectionEndFrame - playCursor) + 1;
+        int nextBufferStart = bufferToFill.startSample + numSamplesInLoopBounds;
+        // as well as reduce its length
+        int nextBufferLength = bufferToFill.numSamples - numSamplesInLoopBounds;
+
+        // and we will also need to shrink the first one
+        int currentBufferLength = numSamplesInLoopBounds;
+
+        // we execute the first part (untill we read the last sample of the loop)
+        juce::AudioSourceChannelInfo loopEndBufferRead(bufferToFill.buffer, bufferToFill.startSample,
+                                                       currentBufferLength);
+        getAudioBlock(loopEndBufferRead);
+
+        // we reset the position to the start of the loop
+        setNextReadPosition(loopSectionStartFrame);
+
+        // If the queried section perfectly fit loop end, next buffer will have size of zero and second step is
+        // unecessary
+        if (nextBufferLength > 0)
+        {
+            // and fetch the rest of the buffer
+            juce::AudioSourceChannelInfo loopStartBufferRead(bufferToFill.buffer, nextBufferStart, nextBufferLength);
+            getAudioBlock(loopStartBufferRead);
+        }
+    }
+}
+
+void MixingBus::getAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill)
+{
     // the mixing code here was initially based on the MixerAudioSource one from
     // Juce.
 
-    // get scoped lock of the reentering mutex
-    const juce::ScopedLock sl(mixbusMutex);
+    // Honestly, I feel like it should be rewritten in a more straightforward manner
+    // that would always call clearActiveBufferRegion at first and then add the samples audio blocks.
+    // It would then have a much simpler structure.
+    // It could also benefit from factoring out the various steps and utilities at the end under their own functions.
 
     // if there is more then one input track and we are playing
     if (samplePlayers.size() > 0 && isPlaying)
@@ -839,13 +886,6 @@ void MixingBus::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFi
         {
             notify();
         }
-    }
-
-    // loop if this buffer covers the end of the loop section
-    if (loopingToggledOn && loopSectionStartFrame != loopSectionEndFrame && loopSectionEndFrame >= playCursor &&
-        loopSectionEndFrame <= playCursor + bufferToFill.numSamples)
-    {
-        setNextReadPosition(loopSectionStartFrame);
     }
 }
 
