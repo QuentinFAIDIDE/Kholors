@@ -125,6 +125,13 @@ void MixingBus::unmarshal(std::string &s)
     float masterGainLinear = masterGainEntry.template get<float>();
     masterGain.setGainLinear(masterGainLinear);
 
+    // we should request a broadcast of the loop section status (toggle and position)
+    auto loopResetTask = std::make_shared<LoopMovingTask>();
+    activityManager.broadcastNestedTaskNow(loopResetTask);
+
+    auto loopToggle = std::make_shared<LoopToggleTask>();
+    activityManager.broadcastNestedTaskNow(loopToggle);
+
     auto samplePlayersEntry = input.at("sample_players");
 
     if (!samplePlayersEntry.is_array())
