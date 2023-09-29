@@ -903,13 +903,13 @@ void SamplePlayer::applyFilters(const juce::AudioSourceChannelInfo &bufferToFill
         float *audioSamples = bufferToFill.buffer->getWritePointer(channel);
         for (size_t i = 0; i < (size_t)highPassRepeat; i++)
         {
-            highPassFilters[i].processSamples(audioSamples + (unsigned long)bufferToFill.startSample * sizeof(float),
+            highPassFilters[i].processSamples(audioSamples + (unsigned long)bufferToFill.startSample,
                                               bufferToFill.numSamples);
         }
 
         for (size_t i = 0; i < (size_t)lowPassRepeat; i++)
         {
-            lowPassFilters[i].processSamples(audioSamples + (unsigned long)bufferToFill.startSample * sizeof(float),
+            lowPassFilters[i].processSamples(audioSamples + (unsigned long)bufferToFill.startSample,
                                              bufferToFill.numSamples);
         }
     }

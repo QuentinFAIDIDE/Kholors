@@ -1,7 +1,7 @@
 #include "PlayButton.h"
 #include <memory>
 
-PlayButton::PlayButton(ActivityManager &am) : activityManager(am)
+PlayButton::PlayButton(ActivityManager &am) : activityManager(am), isPlaying(false)
 {
     activityManager.registerTaskListener(this);
 }
