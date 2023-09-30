@@ -52,7 +52,6 @@ ArrangementArea::ArrangementArea(MixingBus &mb, ActivityManager &am)
     setOpaque(true);
 
     openGLContext.setRenderer(this);
-    openGLContext.setContinuousRepainting(false);
     openGLContext.attachTo(*this);
 
     textureManager->setOpenGlContext(&openGLContext);
@@ -86,6 +85,7 @@ void ArrangementArea::resetArrangement()
 ArrangementArea::~ArrangementArea()
 {
     openGLContext.detach();
+    openGLContext.setRenderer(nullptr);
 }
 
 void ArrangementArea::paint(juce::Graphics &g)
