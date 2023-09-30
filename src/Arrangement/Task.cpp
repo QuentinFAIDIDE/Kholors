@@ -617,12 +617,6 @@ NumericInputUpdateTask::NumericInputUpdateTask(int id)
 std::vector<std::shared_ptr<Task>> NumericInputUpdateTask::getOppositeTasks()
 {
     std::vector<std::shared_ptr<Task>> tasks;
-    // do nothing if it's not meant to be reverted.
-    // tbh the reversion call shouldn't even happen anyway but who knows.
-    if (!recordableInHistory)
-    {
-        return tasks;
-    }
 
     std::shared_ptr<NumericInputUpdateTask> task =
         std::make_shared<NumericInputUpdateTask>(numericalInputId, oldValue, newValue);
