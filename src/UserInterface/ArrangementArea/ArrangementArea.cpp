@@ -754,16 +754,16 @@ void ArrangementArea::computeShadersGridUniformsVars()
     int framesPerMinutes = (60 * 44100);
 
     grid0FrameWidth = (float(framesPerMinutes) / float(tempo));
-    grid0PixelWidth = grid0FrameWidth / float(viewScale);
-    grid0PixelShift = (grid0FrameWidth - (viewPosition % int(grid0FrameWidth))) / viewScale;
-
     grid1FrameWidth = (float(framesPerMinutes) / float(tempo * 4));
-    grid1PixelWidth = grid1FrameWidth / float(viewScale);
-    grid1PixelShift = (grid1FrameWidth - (viewPosition % int(grid1FrameWidth))) / viewScale;
-
     grid2FrameWidth = (float(framesPerMinutes) / float(tempo * 16));
+
     grid2PixelWidth = grid2FrameWidth / float(viewScale);
-    grid2PixelShift = (grid2FrameWidth - (viewPosition % int(grid2FrameWidth))) / viewScale;
+    grid1PixelWidth = grid2PixelWidth * 4;
+    grid0PixelWidth = grid1PixelWidth * 4;
+
+    grid0PixelShift = (int(grid0FrameWidth + 0.5f) - (viewPosition % int(grid0FrameWidth + 0.5f))) / viewScale;
+    grid1PixelShift = int(grid0PixelShift + 0.5f) % int(grid1PixelWidth + 0.5f);
+    grid2PixelShift = int(grid1PixelShift + 0.5f) % int(grid2PixelWidth + 0.5f);
 }
 
 void ArrangementArea::renderOpenGL()
