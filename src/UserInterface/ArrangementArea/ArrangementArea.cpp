@@ -33,14 +33,6 @@ ArrangementArea::ArrangementArea(MixingBus &mb, ActivityManager &am)
 {
     activityManager.registerTaskListener(this);
 
-    resetArrangement();
-
-    // broadcast tempo value as a task
-    std::shared_ptr<NumericInputUpdateTask> tempoUpdate = std::make_shared<NumericInputUpdateTask>(NUM_INPUT_ID_TEMPO);
-    tempoUpdate->newValue = tempo;
-    tempoUpdate->setCompleted(true);
-    activityManager.broadcastTask(tempoUpdate);
-
     // play cursor color
     cursorColor = juce::Colour(240, 240, 240);
     // enable keyboard events
@@ -58,6 +50,12 @@ ArrangementArea::ArrangementArea(MixingBus &mb, ActivityManager &am)
 
     addAndMakeVisible(frequencyGrid);
     addAndMakeVisible(tempoGrid);
+
+    resetArrangement();
+
+    // ask for a broadcast of the tempo value
+    std::shared_ptr<NumericInputUpdateTask> tempoUpdate = std::make_shared<NumericInputUpdateTask>(NUM_INPUT_ID_TEMPO);
+    activityManager.broadcastTask(tempoUpdate);
 }
 
 void ArrangementArea::resetArrangement()
@@ -228,39 +226,19 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
 
     std::shared_ptr<NumericInputUpdateTask> numFieldUpdateTask =
         std::dynamic_pointer_cast<NumericInputUpdateTask>(task);
-    if (numFieldUpdateTask != nullptr && !numFieldUpdateTask->isCompleted())
+    if (numFieldUpdateTask != nullptr && numFieldUpdateTask->isCompleted())
     {
         // if it's a task to apply a tempo update, do it, mark completed, and broadcast change
         if (numFieldUpdateTask->numericalInputId == NUM_INPUT_ID_TEMPO)
         {
+            // +0.5f to round instead of truncating
+            tempo = int(numFieldUpdateTask->newValue + 0.5f);
+            tempoGrid.updateTempo(tempo);
+            // this one has the side effect of uploading new tempo grid widths for the background shader
+            shaderUniformUpdateThreadWrapper();
+            repaint();
 
-            // if it's just a broadcasting request, simply broadcast existing value
-            if (numFieldUpdateTask->isBroadcastRequest)
-            {
-                numFieldUpdateTask->newValue = tempo;
-                numFieldUpdateTask->setCompleted(true);
-                activityManager.broadcastNestedTaskNow(numFieldUpdateTask);
-                return true;
-            }
-
-            // if this task wants to set a new value, well set it if possible
-            if (numFieldUpdateTask->newValue <= MAX_TEMPO && numFieldUpdateTask->newValue >= MIN_TEMPO)
-            {
-                // +0.5f to round instead of truncating
-                tempo = int(numFieldUpdateTask->newValue + 0.5f);
-
-                tempoGrid.updateTempo(tempo);
-
-                // this one has the side effect of uploading new tempo grid widths for the background shader
-                shaderUniformUpdateThreadWrapper();
-
-                numFieldUpdateTask->setCompleted(true);
-                activityManager.broadcastNestedTaskNow(numFieldUpdateTask);
-
-                repaint();
-
-                return true;
-            }
+            return false;
         }
     }
 
@@ -295,13 +273,6 @@ bool ArrangementArea::taskHandler(std::shared_ptr<Task> task)
     if (resetTask != nullptr)
     {
         resetArrangement();
-
-        // broadcast tempo value as a task
-        std::shared_ptr<NumericInputUpdateTask> tempoUpdate =
-            std::make_shared<NumericInputUpdateTask>(NUM_INPUT_ID_TEMPO);
-        tempoUpdate->newValue = tempo;
-        tempoUpdate->setCompleted(true);
-        activityManager.broadcastNestedTaskNow(tempoUpdate);
 
         taxonomyManager.reset();
 

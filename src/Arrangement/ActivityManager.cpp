@@ -6,6 +6,7 @@ ActivityManager::ActivityManager() : appState(*this)
     taskBroadcastStopped = false;
     historyNextIndex = 0;
     registerTaskListener(&appState);
+    registerTaskListener(&appState.getTimeQuantisizer());
 }
 
 ActivityManager::~ActivityManager()

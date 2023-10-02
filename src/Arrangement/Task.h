@@ -644,7 +644,7 @@ class NumericInputUpdateTask : public Task
     /**
      * @brief      This task simply asks to be assigned the current
      *             value of the input and marked completed.
-     *             This is generally emitted by the NumericInput component
+     *             This is generally emitted by a taskListener
      *             so that it can get the value through the completed event.
      *
      * @param[in]  inputId   The input identifier

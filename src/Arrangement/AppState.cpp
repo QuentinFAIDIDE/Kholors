@@ -5,13 +5,14 @@
 #include "NumericInputId.h"
 #include "Task.h"
 #include "TaxonomyManager.h"
+#include "TimeQuantization.h"
 #include "UserInterfaceState.h"
 #include <memory>
 
 #include <stdexcept>
 #define APP_STATE_API_VERSION "v0"
 
-AppState::AppState(ActivityManager &am) : activityManager(am)
+AppState::AppState(ActivityManager &am) : activityManager(am), timeQuantisizer(am)
 {
     uiState = UI_STATE_DEFAULT;
 
@@ -39,7 +40,7 @@ std::string AppState::marshal()
 {
     json appjson = {
         {"api_version", APP_STATE_API_VERSION},
-        {"tempo", tempo},
+        {"tempo", timeQuantisizer.getTempo()},
     };
     return appjson.dump(JSON_STATE_SAVING_INDENTATION);
 }
@@ -63,8 +64,7 @@ void AppState::unmarshal(std::string &s)
         throw std::runtime_error("Undefined tempo or wrong format in app json");
     }
 
-    tempo = (float)appjson["tempo"];
-    auto tempoTask = std::make_shared<NumericInputUpdateTask>(NUM_INPUT_ID_TEMPO, tempo);
+    auto tempoTask = std::make_shared<NumericInputUpdateTask>(NUM_INPUT_ID_TEMPO, (float)appjson["tempo"]);
     activityManager.broadcastNestedTaskNow(tempoTask);
 
     if (tempoTask->hasFailed())
@@ -96,7 +96,7 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
     {
         git.setWorkingDirectory("");
         repositoryFolder.reset();
-        tempo = DEFAULT_TEMPO;
+        timeQuantisizer.reset();
         resetTask->markStepDoneAndCheckCompletion();
         return false;
     }
@@ -170,14 +170,6 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
         activityManager.broadcastNestedTaskNow(notifTask);
 
         return true;
-    }
-
-    // mirror tempo updates here
-    auto tempoUpdate = std::dynamic_pointer_cast<NumericInputUpdateTask>(task);
-    if (tempoUpdate != nullptr && tempoUpdate->numericalInputId == NUM_INPUT_ID_TEMPO && tempoUpdate->isCompleted())
-    {
-        tempo = tempoUpdate->newValue;
-        return false;
     }
 
     auto projectOpeningTask = std::dynamic_pointer_cast<OpenProjectTask>(task);
@@ -380,4 +372,9 @@ void AppState::dumpProjectFiles()
     juce::File uiJsonFile = repositoryFolder->getFullPathName() + "/ui.json";
     uiJsonFile.create();
     uiJsonFile.replaceWithText(uiJSON);
+}
+
+TimeQuantization &AppState::getTimeQuantisizer()
+{
+    return timeQuantisizer;
 }

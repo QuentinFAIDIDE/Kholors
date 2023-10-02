@@ -6,6 +6,7 @@
 #include "Marshalable.h"
 #include "TaskListener.h"
 #include "TaxonomyManager.h"
+#include "TimeQuantization.h"
 #include "UserInterfaceState.h"
 #include <optional>
 
@@ -96,13 +97,20 @@ class AppState : public Marshalable, public TaskListener
      */
     void setExternalAppStateFileHandlers(Marshalable *uiStateHandler, Marshalable *mixbusStateHandler);
 
+    /**
+     * @brief Get the Time Quantisizer object
+     *
+     * @return TimeQuantization& reference to the TimeQuantisizer object
+     */
+    TimeQuantization &getTimeQuantisizer();
+
   private:
     TaxonomyManager taxonomy;
     UserInterfaceState uiState;
     ActivityManager &activityManager;
     juce::SharedResourcePointer<Config> sharedConfig;
     GitWrapper git;
-    float tempo;
+    TimeQuantization timeQuantisizer;
 
     Marshalable *uiStateFileHandler;
     Marshalable *mixbusStateFileHandler;

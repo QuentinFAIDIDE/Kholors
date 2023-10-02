@@ -1,6 +1,5 @@
 #include "AudioLibraryManager.h"
 
-#include <X11/Xlib.h>
 #include <bits/stdc++.h>
 
 #include <climits>

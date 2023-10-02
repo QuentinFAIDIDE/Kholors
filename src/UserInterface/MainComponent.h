@@ -61,8 +61,6 @@ class MainComponent : public juce::AudioAppComponent, public juce::DragAndDropCo
 
     ActivityManager activityManager;
 
-    // widgets
-    // the object responsible for managing the various samples imported
     MixingBus mixingBus;
 
     ArrangementArea arrangementArea;
