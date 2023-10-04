@@ -253,4 +253,6 @@ void ActivityManager::clearTaskHistory()
 
     // this is quite useless but I like it like this
     historyNextIndex = 0;
+
+    std::cout << "cleared history" << std::endl;
 }

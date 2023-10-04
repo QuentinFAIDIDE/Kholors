@@ -129,10 +129,5 @@ void TexturedModel::reenable()
 TexturedModel::~TexturedModel()
 {
     // free resources if sample model is loaded and enabled
-    if (loaded && !disabled)
-    {
-        glDeleteVertexArrays(1, &vao);
-        glDeleteBuffers(1, &vbo);
-        glDeleteBuffers(1, &ebo);
-    }
+    disable();
 }

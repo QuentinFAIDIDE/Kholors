@@ -54,7 +54,7 @@ void MixingBus::reset()
 MixingBus::~MixingBus()
 {
     // stop thread with a 4sec timeout to kill it
-    stopThread(4000);
+    stopThread(5000);
 
     // delete all tracks
     for (size_t i = 0; i < (size_t)samplePlayers.size(); i++)
@@ -910,13 +910,14 @@ void MixingBus::run()
         // do we need to stop playback because the cursor is not in bounds ?
         pauseIfCursorNotInBound();
         // wait untill next thread iteration
-        wait(500);
+        wait(3000);
     }
 }
 
 void MixingBus::checkForCursorRedraw()
 {
-    // if we were notified to redraw, do it
+    // if we were notified to redraw, do it.
+    // NOTE: It might actually be bloody cocking useless, since we check for redraw in the getAudioBlock callbacks
     if (abs(lastDrawnCursor - playCursor) > FREQVIEW_MIN_REDRAW_DISTANCE_FRAMES)
     {
         lastDrawnCursor = playCursor;

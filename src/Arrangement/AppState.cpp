@@ -97,6 +97,7 @@ bool AppState::taskHandler(std::shared_ptr<Task> task)
         git.setWorkingDirectory("");
         repositoryFolder.reset();
         timeQuantisizer.reset();
+        activityManager.clearTaskHistory();
         resetTask->markStepDoneAndCheckCompletion();
         return false;
     }
