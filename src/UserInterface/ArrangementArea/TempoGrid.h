@@ -3,6 +3,7 @@
 
 #include "../../Arrangement/ActivityManager.h"
 #include "../IconsLoader.h"
+#include "../ViewPosition.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <memory>
 
@@ -15,7 +16,7 @@
  Component that draw a tempo grid in the middle
  of the view with bar counts.
  */
-class TempoGrid : public juce::Component, public TaskListener
+class TempoGrid : public juce::Component, public TaskListener, public ViewPositionListener
 {
   public:
     TempoGrid(ActivityManager &am);
@@ -29,11 +30,6 @@ class TempoGrid : public juce::Component, public TaskListener
      Updates the track tempo.
      */
     void updateTempo(float);
-
-    /**
-     Update position of view
-     */
-    void updateView(int viewPosition, float viewScale);
 
     /**
      * @brief      Test whether the click should be handled
@@ -83,12 +79,14 @@ class TempoGrid : public juce::Component, public TaskListener
      */
     void mouseMove(const juce::MouseEvent &me) override;
 
-  private:
-    // the position in the track in audio frames
-    int viewPosition;
-    // the scale in frames per pixels
-    float viewScale;
+    /**
+     * @brief Called when the view position in audio frames is updated.
+     *
+     * @param int the position of the view in audio frames (samples).
+     */
+    void viewPositionUpdateCallback() override;
 
+  private:
     // track tempo
     float tempo;
 
@@ -114,6 +112,11 @@ class TempoGrid : public juce::Component, public TaskListener
      * Shared svg icons.
      */
     juce::SharedResourcePointer<IconsLoader> sharedIcons;
+
+    /**
+     * Object where to read position updates from
+     */
+    juce::SharedResourcePointer<ViewPosition> viewPositionManager;
 
     ///////////////////////////////
 

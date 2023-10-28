@@ -1,11 +1,6 @@
 #ifndef DEF_ARRANGEMENTAREA_HPP
 #define DEF_ARRANGEMENTAREA_HPP
 
-// CMake builds don't use an AppConfig.h, so it's safe to include juce module
-// headers directly. If you need to remain compatible with Projucer-generated
-// builds, and have called `juce_generate_juce_header(<thisTarget>)` in your
-// CMakeLists.txt, you could `#include <JuceHeader.h>` here instead, to make all
-// your module headers visible.
 #include <juce_gui_extra/juce_gui_extra.h>
 #include <juce_opengl/juce_opengl.h>
 
@@ -22,6 +17,7 @@
 #include "../../OpenGL/BackgroundModel.h"
 #include "../../OpenGL/SampleGraphicModel.h"
 #include "../StatusTips.h"
+#include "../ViewPosition.h"
 #include "FrequencyGrid.h"
 #include "TempoGrid.h"
 #include "juce_opengl/opengl/juce_gl.h"
@@ -45,9 +41,8 @@ enum SampleDirection
  *             on if it's on left (top) or right (bottom) audio channel, it's in
  *             opposite directions).
  */
-class SampleBorder
+struct SampleBorder
 {
-  public:
     SampleBorder(int i, Border b, SampleDirection dir) : id(i), border(b), direction(dir)
     {
     }
@@ -66,7 +61,8 @@ class ArrangementArea : public juce::Component,
                         public juce::DragAndDropTarget,
                         public juce::OpenGLRenderer,
                         public TaskListener,
-                        public Marshalable
+                        public Marshalable,
+                        public ViewPositionListener
 {
   public:
     ArrangementArea(MixingBus &, ActivityManager &);
@@ -205,6 +201,13 @@ class ArrangementArea : public juce::Component,
      */
     void unmarshal(std::string &s) override;
 
+    /**
+     * @brief Called when the view position in audio frames is updated.
+     *
+     * @param int the position of the view in audio frames (samples).
+     */
+    void viewPositionUpdateCallback() override;
+
   private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArrangementArea)
@@ -241,13 +244,9 @@ class ArrangementArea : public juce::Component,
     int grid2PixelShift;
     float grid2FrameWidth;
 
-    // the index in audio frame of the view (relation to seconds depends on
-    // framerate)
-    int64_t viewPosition;
-    // how many audio frames per pixel to display
-    int64_t viewScale;
     // tempo in beats per minute
     int tempo;
+
     // size and position of main content widget
     juce::Rectangle<int> bounds;
     // last mouse coordinates
@@ -290,6 +289,8 @@ class ArrangementArea : public juce::Component,
     juce::SharedResourcePointer<StatusTips> sharedTips;
 
     juce::SharedResourcePointer<TextureManager> textureManager;
+
+    juce::SharedResourcePointer<ViewPosition> viewPositionManager;
 
     //==============================================================================
     void paintPlayCursor(juce::Graphics &g);

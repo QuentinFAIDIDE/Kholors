@@ -32,6 +32,7 @@ ArrangementArea::ArrangementArea(MixingBus &mb, ActivityManager &am)
     : activityManager(am), taxonomyManager(am.getAppState().getTaxonomy()), tempoGrid(am), mixingBus(mb)
 {
     activityManager.registerTaskListener(this);
+    viewPositionManager->attachViewPositionListener(this);
 
     // play cursor color
     cursorColor = juce::Colour(240, 240, 240);
@@ -62,14 +63,11 @@ void ArrangementArea::resetArrangement()
 {
     // save reference to the sample manager
     // initialize grid and position
-    viewPosition = 0;
-    viewScale = 100;
+    viewPositionManager->reset();
     lastMouseX = 0;
     lastMouseY = 0;
     lastPlayCursorPosition = 0;
     trackMovingInitialPosition = -1;
-
-    tempoGrid.updateView(viewPosition, viewScale);
 
     tempo = DEFAULT_TEMPO;
     tempoGrid.updateTempo(DEFAULT_TEMPO);
@@ -78,6 +76,12 @@ void ArrangementArea::resetArrangement()
     copyAndBroadcastSelection(true);
 
     samples.clear();
+}
+
+void ArrangementArea::viewPositionUpdateCallback()
+{
+    shaderUniformUpdateThreadWrapper(false);
+    repaint();
 }
 
 ArrangementArea::~ArrangementArea()
@@ -126,6 +130,9 @@ void ArrangementArea::paintSelection(juce::Graphics &g)
         // ignore deleted selected tracks
         if (mixingBus.getTrack(*itr) != nullptr)
         {
+            int viewPosition = viewPositionManager->getViewPosition();
+            int viewScale = viewPositionManager->getViewScale();
+
             auto samplesRects = samples[*itr]->getPixelBounds(viewPosition, viewScale, bounds.getHeight());
 
             for (size_t i = 0; i < samplesRects.size(); i++)
@@ -331,6 +338,10 @@ void ArrangementArea::paintSplitLocation(juce::Graphics &g)
     std::set<size_t>::iterator itr;
     for (itr = selectedTracks.begin(); itr != selectedTracks.end(); itr++)
     {
+
+        int viewPosition = viewPositionManager->getViewPosition();
+        int viewScale = viewPositionManager->getViewScale();
+
         auto samplesRects = samples[*itr]->getPixelBounds(viewPosition, viewScale, bounds.getHeight());
 
         for (size_t i = 0; i < samplesRects.size(); i++)
@@ -450,6 +461,9 @@ void ArrangementArea::paintLabels(juce::Graphics &g)
 
     int currentSampleLeftSideFrame, currentSampleRightSideFrame;
 
+    int viewPosition = viewPositionManager->getViewPosition();
+    int viewScale = viewPositionManager->getViewScale();
+
     int viewLeftMostFrame = viewPosition;
     int viewRightMostFrame = viewPosition + (bounds.getWidth() * viewScale);
 
@@ -560,6 +574,10 @@ bool ArrangementArea::rectangleIntersects(SampleAreaRectangle &target, std::vect
 
 bool ArrangementArea::overlapSampleArea(SampleAreaRectangle &rect, int sampleIndex, int margin)
 {
+
+    int viewPosition = viewPositionManager->getViewPosition();
+    int viewScale = viewPositionManager->getViewScale();
+
     auto sampleRects = samples[(size_t)sampleIndex]->getPixelBounds(viewPosition, viewScale, bounds.getHeight());
 
     for (size_t i = 0; i < sampleRects.size(); i++)
@@ -701,6 +719,10 @@ void ArrangementArea::shaderUniformUpdateThreadWrapper(bool fromGlThread)
 
 void ArrangementArea::updateShadersViewAndGridUniforms()
 {
+
+    int viewPosition = viewPositionManager->getViewPosition();
+    int viewScale = viewPositionManager->getViewScale();
+
     texturedPositionedShader->use();
     texturedPositionedShader->setUniform("viewPosition", (GLfloat)viewPosition);
     texturedPositionedShader->setUniform("viewWidth", (GLfloat)(bounds.getWidth() * viewScale));
@@ -722,6 +744,10 @@ void ArrangementArea::updateShadersViewAndGridUniforms()
 
 void ArrangementArea::computeShadersGridUniformsVars()
 {
+
+    int viewPosition = viewPositionManager->getViewPosition();
+    int viewScale = viewPositionManager->getViewScale();
+
     int framesPerMinutes = (60 * 44100);
 
     grid0FrameWidth = (float(framesPerMinutes) / float(tempo));
@@ -821,6 +847,9 @@ void ArrangementArea::paintPlayCursor(juce::Graphics &g)
     // by using the mouse value
     if (activityManager.getAppState().getUiState() != UI_STATE_CURSOR_MOVING)
     {
+        int viewPosition = viewPositionManager->getViewPosition();
+        int viewScale = viewPositionManager->getViewScale();
+
         lastPlayCursorPosition = ((mixingBus.getNextReadPosition() - viewPosition) / viewScale);
         g.fillRect(lastPlayCursorPosition - (PLAYCURSOR_WIDTH >> 1), 0, PLAYCURSOR_WIDTH, getBounds().getHeight());
     }
@@ -980,6 +1009,10 @@ void ArrangementArea::handleLeftButtonDown(const juce::MouseEvent &jme)
             }
             else
             {
+
+                int viewPosition = viewPositionManager->getViewPosition();
+                int viewScale = viewPositionManager->getViewScale();
+
                 auto xSampleLocations = samples[*it]->getPixelBounds(viewPosition, viewScale, bounds.getHeight());
                 if (lastMouseX > xSampleLocations[0].getX() &&
                     lastMouseX < xSampleLocations[0].getX() + xSampleLocations[0].getWidth())
@@ -1031,6 +1064,9 @@ int ArrangementArea::getSampleIdUnderCursor()
             return onScreenLabelsPixelsCoords[i].getSampleIndex();
         }
     }
+
+    int viewPosition = viewPositionManager->getViewPosition();
+    int viewScale = viewPositionManager->getViewScale();
 
     // for each track
     for (size_t i = 0; i < nTracks; i++)
@@ -1089,6 +1125,9 @@ float ArrangementArea::getTextureIntensityUnderCursor()
             continue;
         }
 
+        int viewPosition = viewPositionManager->getViewPosition();
+        int viewScale = viewPositionManager->getViewScale();
+
         trackPosition = (samples[i]->getFramePosition() - viewPosition) / viewScale;
 
         // if it's inbound, return the index
@@ -1122,11 +1161,15 @@ void ArrangementArea::initSelectedTracksDrag()
 
 void ArrangementArea::updateSelectedTracksDrag(int pixelShift)
 {
+    int viewScale = viewPositionManager->getViewScale();
+
     std::set<size_t>::iterator itr;
     for (itr = selectedTracks.begin(); itr != selectedTracks.end(); itr++)
     {
         openGLContext.executeOnGLThread(
-            [this, itr, pixelShift](juce::OpenGLContext &) { samples[*itr]->updateDrag(pixelShift * viewScale); },
+            [this, itr, viewScale, pixelShift](juce::OpenGLContext &) {
+                samples[*itr]->updateDrag(pixelShift * viewScale);
+            },
             true);
     }
 }
@@ -1154,6 +1197,9 @@ void ArrangementArea::mouseUp(const juce::MouseEvent &jme)
 
 void ArrangementArea::handleLeftButtonUp(const juce::MouseEvent &)
 {
+
+    int viewPosition = viewPositionManager->getViewPosition();
+    int viewScale = viewPositionManager->getViewScale();
 
     switch (activityManager.getAppState().getUiState())
     {
@@ -1262,7 +1308,6 @@ void ArrangementArea::emitFilterDragTasks(bool isLowPass)
 void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
 {
     juce::Point<int> newPosition = jme.getPosition();
-    bool viewUpdated = false;
 
     emitPositionTip();
 
@@ -1270,8 +1315,9 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
     {
 
     case UI_STATE_VIEW_RESIZING:
-        viewUpdated = updateViewResizing(newPosition);
+        updateViewResizing(newPosition);
         break;
+
     case UI_STATE_MOUSE_DRAG_SAMPLE_START:
         cropSelectedSamplesPos(true);
         break;
@@ -1318,7 +1364,7 @@ void ArrangementArea::mouseDrag(const juce::MouseEvent &jme)
     lastMouseY = newPosition.getY();
 
     // if updated view or in cursor moving mode, repaint
-    if (viewUpdated || activityManager.getAppState().getUiState() == UI_STATE_CURSOR_MOVING)
+    if (activityManager.getAppState().getUiState() == UI_STATE_CURSOR_MOVING)
     {
         shaderUniformUpdateThreadWrapper();
         repaint();
@@ -1329,6 +1375,9 @@ void ArrangementArea::addToSelectionFromSelectionArea()
 {
     currentSelectionRect = juce::Rectangle<float>(juce::Point<float>(startSelectX, startSelectY),
                                                   juce::Point<float>(lastMouseX, lastMouseY));
+
+    int viewPosition = viewPositionManager->getViewPosition();
+    int viewScale = viewPositionManager->getViewScale();
 
     for (size_t i = 0; i < samples.size(); i++)
     {
@@ -1353,6 +1402,9 @@ void ArrangementArea::addToSelectionFromSelectionArea()
 
 void ArrangementArea::mouseWheelMove(const juce::MouseEvent &e, const juce::MouseWheelDetails &wheel)
 {
+    int viewPosition = viewPositionManager->getViewPosition();
+    int viewScale = viewPositionManager->getViewScale();
+
     if (activityManager.getAppState().getUiState() == UI_STATE_DEFAULT)
     {
         if (!wheel.isInertial && std::abs(wheel.deltaY) > 0.001)
@@ -1381,9 +1433,7 @@ void ArrangementArea::mouseWheelMove(const juce::MouseEvent &e, const juce::Mous
                 }
             }
 
-            tempoGrid.updateView(viewPosition, viewScale);
-            repaint();
-            shaderUniformUpdateThreadWrapper(false);
+            viewPositionManager->updateView(viewPosition, viewScale);
         }
     }
 }
@@ -1454,6 +1504,10 @@ void ArrangementArea::refreshSampleOpenGlView(int index)
 
 bool ArrangementArea::updateViewResizing(juce::Point<int> &newPosition)
 {
+
+    int viewPosition = viewPositionManager->getViewPosition();
+    int viewScale = viewPositionManager->getViewScale();
+
     // ratio from horizontal to vertical movement
     float movementRatio = ((float)abs(lastMouseX - newPosition.getX())) / ((float)abs(lastMouseY - newPosition.getY()));
 
@@ -1503,14 +1557,21 @@ bool ArrangementArea::updateViewResizing(juce::Point<int> &newPosition)
         }
     }
 
-    tempoGrid.updateView(viewPosition, viewScale);
+    bool viewUpdated = (oldViewPosition != viewPosition || oldViewScale != viewScale);
+    if (viewUpdated)
+    {
+        viewPositionManager->updateView(viewPosition, viewScale);
+    }
 
-    // save some repait by comparing viewScale and viewPosition
-    return (oldViewPosition != viewPosition || oldViewScale != viewScale);
+    // we return that value for historical reasons and kept it because it can't hurt for the future to have it available
+    return viewUpdated;
 }
 
 void ArrangementArea::emitPositionTip()
 {
+    int viewPosition = viewPositionManager->getViewPosition();
+    int viewScale = viewPositionManager->getViewScale();
+
     float currentFreq = UnitConverter::verticalPositionToFrequency(lastMouseY, getBounds().getHeight());
     std::string posTip = "" + std::to_string(int(currentFreq + 0.5f)) + " Hz";
 
@@ -1582,6 +1643,8 @@ void ArrangementArea::mouseMove(const juce::MouseEvent &jme)
 
 void ArrangementArea::cropSelectedSamplesPos(bool cropFront)
 {
+    int viewScale = viewPositionManager->getViewScale();
+
     // compute distange to beginning
     int distanceInFrames = (lastMouseX - dragLastPosition) * viewScale;
     if (abs(distanceInFrames) < FREQVIEW_MIN_RESIZE_FRAMES)
@@ -1680,6 +1743,9 @@ bool ArrangementArea::mouseOverPlayCursor()
 
 bool ArrangementArea::keyPressed(const juce::KeyPress &key)
 {
+    int viewPosition = viewPositionManager->getViewPosition();
+    int viewScale = viewPositionManager->getViewScale();
+
     // if the space key is pressed, play or pause
     if (key == juce::KeyPress::spaceKey)
     {
@@ -1853,6 +1919,8 @@ void ArrangementArea::deleteSelectedTracks()
 
 bool ArrangementArea::keyStateChanged(bool)
 {
+    int viewScale = viewPositionManager->getViewScale();
+
     // if in drag mode
     if (activityManager.getAppState().getUiState() == UI_STATE_KEYBOARD_SAMPLE_DRAG)
     {
@@ -1947,6 +2015,9 @@ bool ArrangementArea::isInterestedInFileDrag(const juce::StringArray &files)
 
 void ArrangementArea::filesDropped(const juce::StringArray &files, int x, int)
 {
+    int viewPosition = viewPositionManager->getViewPosition();
+    int viewScale = viewPositionManager->getViewScale();
+
     // converts x to an valid position in audio frame
     int64_t framePos = viewPosition + (x * viewScale);
     // we try to load the samples
@@ -1959,6 +2030,9 @@ void ArrangementArea::filesDropped(const juce::StringArray &files, int x, int)
 
 void ArrangementArea::itemDropped(const SourceDetails &dragSourceDetails)
 {
+    int viewPosition = viewPositionManager->getViewPosition();
+    int viewScale = viewPositionManager->getViewScale();
+
     int x = dragSourceDetails.localPosition.getX();
     // converts x to an valid position in audio frame
     int64_t framePos = viewPosition + (x * viewScale);
@@ -2059,19 +2133,20 @@ void ArrangementArea::copyAndBroadcastSelection(bool fromWithinTask)
 
 std::string ArrangementArea::marshal()
 {
+    int viewPosition = viewPositionManager->getViewPosition();
+    int viewScale = viewPositionManager->getViewScale();
     json output = {{"view_position", viewPosition}, {"view_scale", viewScale}};
     return output.dump(JSON_STATE_SAVING_INDENTATION);
 }
 
 void ArrangementArea::unmarshal(std::string &s)
 {
+    int viewPosition = viewPositionManager->getViewPosition();
+    int viewScale = viewPositionManager->getViewScale();
+
     json input = json::parse(s);
     input.at("view_position").get_to(viewPosition);
     input.at("view_scale").get_to(viewScale);
 
-    tempoGrid.updateView(viewPosition, viewScale);
-
-    shaderUniformUpdateThreadWrapper(false);
-
-    repaint();
+    viewPositionManager->updateView(viewPosition, viewScale);
 }

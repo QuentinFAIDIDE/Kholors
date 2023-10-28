@@ -16,18 +16,9 @@ class ViewPositionListener
 {
   public:
     /**
-     * @brief Called when the view position in audio frames is updated.
-     *
-     * @param int the position of the view in audio frames (samples).
+     * @brief Called when the view position or scale is updated.
      */
-    virtual void viewPositionUpdateCallback(int) = 0;
-
-    /**
-     * @brief Called when the view scale is updated.
-     *
-     * @param int View scale in frames per pixels.s
-     */
-    virtual void viewScaleUpdateCallback(int) = 0;
+    virtual void viewPositionUpdateCallback() = 0;
 };
 
 /**
@@ -55,21 +46,14 @@ class ViewPosition
 
     /**
      * @brief Move the view to a new position in audio frames (we call "audio frames" the
-     *        audio samples to prevent confusion with the samples that are the audio files).
+     *        audio samples to prevent confusion with the samples that are the audio files) and
+     *        scale it.
      *        Will call the updating callback of all ViewPositionListener objects attached.
      *
-     * @param position
+     * @param position the view position in audio samples (frames)
+     * @param scale the view scale in samples (audio frames) per pixels
      */
-    void updateAppPosition(int position);
-
-    /**
-     * @brief Changes the scale of the view (zoom) in frames per pixels (we call "audio frames" the
-     *        audio samples to prevent confusion with the samples that are the audio files).
-     *        Will call the updating callback of all ViewPositionListener objects attached.
-     *
-     * @param framesPerPixel
-     */
-    void updateAppScale(int framesPerPixel);
+    void updateView(int position, int scale);
 
     /**
      * @brief Attach the view position listener so that his callback are called when
@@ -79,17 +63,25 @@ class ViewPosition
      */
     void attachViewPositionListener(ViewPositionListener *vpl);
 
+    /**
+     * @brief Get the View Position value
+     *
+     * @return int View position in frames
+     */
+    int getViewPosition() const;
+
+    /**
+     * @brief Get the View Scale value
+     *
+     * @return int view scale in frames per pixels
+     */
+    int getViewScale() const;
+
   private:
     /**
      * @brief Call each VIewPositionListener position callback (viewPositionUpdateCallback).
      */
-    void broadcastViewPosition();
-
-    /**
-     * @brief Call each ViewPositionListener scale callback (viewScaleUpdateCallback).
-     *
-     */
-    void broadcastViewScale();
+    void broadcastViewUpdate();
 
     ///////////////////
 

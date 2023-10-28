@@ -18,6 +18,7 @@ TempoGrid::TempoGrid(ActivityManager &am) : activityManager(am)
     loopSectionStopFrame = 0;
 
     activityManager.registerTaskListener(this);
+    viewPositionManager->attachViewPositionListener(this);
 }
 
 void TempoGrid::paint(juce::Graphics &g)
@@ -67,10 +68,10 @@ void TempoGrid::paintTicks(juce::Graphics &g, juce::Rectangle<int> bounds, juce:
     float barFrameWidth = float(AUDIO_FRAMERATE * 60) / tempo;
 
     // width of a tempo bar in pixels
-    float barPixelWidth = barFrameWidth / viewScale;
+    float barPixelWidth = barFrameWidth / viewPositionManager->getViewScale();
 
     // what's the position of the view in bars
-    float viewStartBarIndex = viewPosition / barFrameWidth;
+    float viewStartBarIndex = viewPositionManager->getViewPosition() / barFrameWidth;
 
     float barPixelShift = barPixelWidth * (1.0f - (viewStartBarIndex - std::floor(viewStartBarIndex)));
 
@@ -86,7 +87,7 @@ void TempoGrid::paintTicks(juce::Graphics &g, juce::Rectangle<int> bounds, juce:
     // now we prepare to draw the 4x4 sub tempo bars
     float subBarPixelWidth = barPixelWidth / 4.0f;
     float subBarFrameWidth = barFrameWidth / 4.0f;
-    float subBarViewIndex = viewPosition / subBarFrameWidth;
+    float subBarViewIndex = viewPositionManager->getViewPosition() / subBarFrameWidth;
     float subBarPixelShift = subBarPixelWidth * (1.0f - (subBarViewIndex - std::floor(subBarViewIndex)));
 
     for (int i = 0; i <= noBars * 4; i++)
@@ -151,20 +152,16 @@ void TempoGrid::updateTempo(float newTempo)
     tempo = newTempo;
 }
 
-void TempoGrid::updateView(int vp, float vs)
-{
-    viewPosition = vp;
-    viewScale = vs;
-}
-
 void TempoGrid::paintLoopSection(juce::Graphics &g)
 {
     int screenWidth = getLocalBounds().getWidth();
 
-    int64_t viewFrameWidth = screenWidth * viewScale;
+    int64_t viewFrameWidth = screenWidth * viewPositionManager->getViewScale();
 
-    float loopStartScreenPosProportion = (float(loopSectionStartFrame) - float(viewPosition)) / float(viewFrameWidth);
-    float loopStopScreenPosProportion = (float(loopSectionStopFrame) - float(viewPosition)) / float(viewFrameWidth);
+    float loopStartScreenPosProportion =
+        (float(loopSectionStartFrame) - float(viewPositionManager->getViewPosition())) / float(viewFrameWidth);
+    float loopStopScreenPosProportion =
+        (float(loopSectionStopFrame) - float(viewPositionManager->getViewPosition())) / float(viewFrameWidth);
 
     // if loop has a length of zero, we don't draw anything
     if (loopSectionStartFrame == loopSectionStopFrame)
@@ -261,7 +258,7 @@ juce::Rectangle<int> TempoGrid::getLoopHandleArea(bool left)
 {
     int screenWidth = getLocalBounds().getWidth();
     int screenHeight = getLocalBounds().getHeight();
-    int64_t viewFrameWidth = screenWidth * viewScale;
+    int64_t viewFrameWidth = screenWidth * viewPositionManager->getViewScale();
 
     juce::Rectangle<int> bordersRect(LOOP_SECTION_BORDERS_RECT_WIDTH, LOOP_SECTION_BORDERS_RECT_HEIGHT);
     bordersRect.setY(screenHeight - LOOP_SECTION_BORDERS_RECT_HEIGHT);
@@ -269,11 +266,13 @@ juce::Rectangle<int> TempoGrid::getLoopHandleArea(bool left)
     float handleScreenPos;
     if (left)
     {
-        handleScreenPos = (float(loopSectionStartFrame) - float(viewPosition)) / float(viewFrameWidth);
+        handleScreenPos =
+            (float(loopSectionStartFrame) - float(viewPositionManager->getViewPosition())) / float(viewFrameWidth);
     }
     else
     {
-        handleScreenPos = (float(loopSectionStopFrame) - float(viewPosition)) / float(viewFrameWidth);
+        handleScreenPos =
+            (float(loopSectionStopFrame) - float(viewPositionManager->getViewPosition())) / float(viewFrameWidth);
     }
 
     bordersRect.setX((handleScreenPos * screenWidth) - (LOOP_SECTION_BORDERS_RECT_WIDTH / 2));
@@ -350,7 +349,8 @@ void TempoGrid::mouseDrag(const juce::MouseEvent &me)
 {
     if (activityManager.getAppState().getUiState() == UI_STATE_MOVE_LOOP_SECTION)
     {
-        int64_t mouseFramePosition = viewPosition + (me.getPosition().getX() * viewScale);
+        int64_t mouseFramePosition =
+            viewPositionManager->getViewPosition() + (me.getPosition().getX() * viewPositionManager->getViewScale());
 
         std::shared_ptr<LoopMovingTask> task;
 
@@ -396,4 +396,9 @@ void TempoGrid::mouseMove(const juce::MouseEvent &me)
 
         setMouseCursor(juce::MouseCursor::NormalCursor);
     }
+}
+
+void TempoGrid::viewPositionUpdateCallback()
+{
+    repaint();
 }
