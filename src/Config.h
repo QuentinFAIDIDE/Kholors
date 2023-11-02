@@ -116,7 +116,7 @@
 #define DSP_DEFAULT_MASTER_LIMITER_RELEASE_MS 50.0
 
 // maximum number of seconds above which we refuse to load it
-#define SAMPLE_MAX_DURATION_SEC 10
+#define SAMPLE_MAX_DURATION_SEC 600
 // minimum number of audio samples (frame in our taxonomy) a sample must have
 #define SAMPLE_MIN_DURATION_FRAMES 1024
 // the maximum number of elements a song can have
