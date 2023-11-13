@@ -4,9 +4,9 @@ imported samples are sharing the same on screen spectrum editor.
 You can make track with it by importing samples, and save the
 projects a git projects. See [this demo on YouTube](https://www.youtube.com/watch?v=TeF4ExiSIbU).
 
-The use case is to make surgical mixdowns for electronic music.
+![](design/screenshot.png)
 
-Only works on Linux.
+The use case is to make surgical mixdowns for electronic music. Only works on Linux.
 
 It has been discontinued in favor of a full rewrite that will try to learn from the lessons
 of this project, and will focus on:
